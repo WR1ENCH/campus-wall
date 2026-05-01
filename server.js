@@ -215,6 +215,28 @@ app.post('/api/admin/login', (req, res) => {
   });
 });
 
+// 修改密码（需输入旧密码确认）
+app.post('/api/admin/change-pwd', requireAdmin, (req, res) => {
+  const { oldPwd, newPwd } = req.body;
+  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '请填写完整' });
+  if (newPwd.length < 6) return res.json({ ok: false, msg: '新密码至少6位' });
+
+  const admins = readAdmins();
+  const idx = admins.findIndex(a => a.id === req.admin.id);
+  if (idx === -1) return res.json({ ok: false, msg: '管理员不存在' });
+
+  // 验证旧密码
+  if (!verifyPassword(oldPwd, admins[idx].password)) {
+    return res.json({ ok: false, msg: '旧密码错误' });
+  }
+
+  // 更新密码
+  admins[idx].password = hashPassword(newPwd);
+  writeAdmins(admins);
+
+  res.json({ ok: true, msg: '密码修改成功，请重新登录' });
+});
+
 // 验证当前登录状态
 app.get('/api/admin/me', requireAdmin, (req, res) => {
   const admins = readAdmins();

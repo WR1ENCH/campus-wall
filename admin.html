@@ -629,6 +629,7 @@
           <div class="name" id="userName">管理员</div>
           <div class="role" id="userRole">管理员</div>
         </div>
+        <button class="logout-btn" onclick="openChangePwdModal()" title="修改密码" style="font-size:16px;">🔑</button>
         <button class="logout-btn" onclick="doLogout()" title="退出登录">⎋</button>
       </div>
     </div>
@@ -887,6 +888,41 @@
   </div>
 
   </div>
+
+<!-- ===== 修改密码弹窗 ===== -->
+<div class="modal-overlay" id="changePwdModal" onclick="if(event.target===this)closeChangePwdModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>🔒 修改密码</h3>
+      <button class="modal-close" onclick="closeChangePwdModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="oldPwdInput">旧密码 <span style="color:var(--danger);">*</span></label>
+        <input type="password" id="oldPwdInput" class="form-input"
+               placeholder="请输入当前密码" maxlength="30"
+               onkeydown="if(event.key==='Enter')doChangePwd()">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="newPwdInput">新密码 <span style="color:var(--danger);">*</span></label>
+        <input type="password" id="newPwdInput" class="form-input"
+               placeholder="至少6位" maxlength="30"
+               onkeydown="if(event.key==='Enter')doChangePwd()">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="newPwdInput2">确认新密码 <span style="color:var(--danger);">*</span></label>
+        <input type="password" id="newPwdInput2" class="form-input"
+               placeholder="再次输入新密码" maxlength="30"
+               onkeydown="if(event.key==='Enter')doChangePwd()">
+      </div>
+      <div id="changePwdError" style="color:var(--danger);font-size:13px;min-height:20px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeChangePwdModal()">取消</button>
+      <button class="btn-primary" onclick="doChangePwd()">确认修改</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== Toast 容器 ===== -->
 <div class="toast-container" id="toastContainer"></div>
@@ -1699,6 +1735,48 @@
 
   function closeResetPwdModal() {
     document.getElementById('resetPwdModal').classList.remove('show');
+  }
+
+  // ===== 修改密码 =====
+  function openChangePwdModal() {
+    document.getElementById('oldPwdInput').value = '';
+    document.getElementById('newPwdInput').value = '';
+    document.getElementById('newPwdInput2').value = '';
+    document.getElementById('changePwdError').textContent = '';
+    document.getElementById('changePwdModal').classList.add('show');
+    setTimeout(() => document.getElementById('oldPwdInput').focus(), 100);
+  }
+  function closeChangePwdModal() {
+    document.getElementById('changePwdModal').classList.remove('show');
+  }
+  async function doChangePwd() {
+    const oldPwd = document.getElementById('oldPwdInput').value;
+    const newPwd = document.getElementById('newPwdInput').value;
+    const newPwd2 = document.getElementById('newPwdInput2').value;
+    const errEl = document.getElementById('changePwdError');
+
+    if (!oldPwd) { errEl.textContent = '请输入旧密码'; return; }
+    if (!newPwd || newPwd.length < 6) { errEl.textContent = '新密码至少6位'; return; }
+    if (newPwd !== newPwd2) { errEl.textContent = '两次新密码不一致'; return; }
+
+    errEl.textContent = '提交中…';
+    try {
+      const res = await fetch('/api/admin/change-pwd', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ oldPwd, newPwd })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        closeChangePwdModal();
+        showToast('密码修改成功，即将重新登录…', 'success');
+        setTimeout(() => { clearToken(); location.reload(); }, 1500);
+      } else {
+        errEl.textContent = json.msg || '修改失败';
+      }
+    } catch {
+      errEl.textContent = '网络错误，请检查服务器';
+    }
   }
 
   // ===== 确认弹窗 =====
