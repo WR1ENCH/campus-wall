@@ -728,6 +728,9 @@
           <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()">
             🤍 点赞
           </button>
+          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px;">
+            🗑️ 删除
+          </button>
           <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
             ⚠️ 举报
           </button>
@@ -1305,6 +1308,14 @@
       likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';
       likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
+      // 删除按钮：仅帖子作者可见
+      const deleteBtn = document.getElementById('detailDeleteBtn');
+      if (currentUser && post.userId && currentUser.id === post.userId) {
+        deleteBtn.style.display = '';
+      } else {
+        deleteBtn.style.display = 'none';
+      }
+
       currentDetailId = id;
       document.getElementById('noteDetailOverlay').classList.add('show');
     }
@@ -1329,6 +1340,28 @@
         likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
         renderNotes(currentFilter);
+      }
+    }
+
+    async function doDeleteMyPost() {
+      if (!currentDetailId) return;
+      if (!confirm('确定要删除这条帖子吗？删除后无法恢复。')) return;
+      try {
+        const res = await fetch('/api/user/posts/' + currentDetailId, {
+          method: 'DELETE',
+          headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          closeNoteDetail();
+          showToast('帖子已删除');
+          posts = posts.filter(p => p.id !== currentDetailId);
+          renderNotes(currentFilter);
+        } else {
+          showToast(json.msg || '删除失败');
+        }
+      } catch {
+        showToast('网络错误，请稍后重试');
       }
     }
 

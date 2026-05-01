@@ -639,7 +639,7 @@ app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deleted: before - posts.length });
 });
 
-// 删除帖子
+// 删除帖子（仅管理员）
 app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   let posts = readPosts();
   const before = posts.length;
@@ -650,6 +650,23 @@ app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   }
 
   writePosts(posts);
+  res.json({ ok: true });
+});
+
+// 用户删除自己发的帖子
+app.delete('/api/user/posts/:id', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.userId !== session.id) return res.json({ ok: false, msg: '无权删除他人的帖子' });
+
+  const updated = posts.filter(p => p.id !== req.params.id);
+  writePosts(updated);
   res.json({ ok: true });
 });
 
