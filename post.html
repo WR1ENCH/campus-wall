@@ -342,6 +342,11 @@
       color: #ef4444; transition: opacity 0.15s;
     }
     .comment-del-btn:hover { opacity: 1; }
+    .comment-report-btn {
+      font-size: 12px; cursor: pointer; opacity: 0.5;
+      color: #b45309; transition: opacity 0.15s;
+    }
+    .comment-report-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
@@ -540,6 +545,7 @@
               <span class="comment-like-btn ${c.liked ? 'liked' : ''}" onclick="toggleCommentLike('${c.id}')">
                 ${c.liked ? '❤️' : '🤍'} ${c.likes || 0}
               </span>
+              <span class="comment-report-btn" onclick="openCommentReport('${c.id}')">⚠️ 举报</span>
               ${canDelete ? `<span class="comment-del-btn" onclick="deleteComment('${c.id}')">🗑️ 删除</span>` : ''}
             </div>
           </div>
@@ -665,10 +671,26 @@
   // ===== 举报 =====
   const REPORT_REASONS = ['垃圾信息', '人身攻击', '违规内容', '虚假信息', '其他'];
   let _selectedReason = '垃圾信息';
+  let _reportTarget = { type: 'post', id: null }; // { type: 'post', id: postId } | { type: 'comment', id: commentId }
 
   function openReport() {
     menuOpen = false;
     document.getElementById('menuDropdown').classList.remove('show');
+    _reportTarget = { type: 'post', id: POST_ID };
+    document.querySelector('.report-title').textContent = '⚠️ 举报帖子';
+    const reasonsHtml = REPORT_REASONS.map(r =>
+      `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
+        <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
+      </div>`
+    ).join('');
+    document.getElementById('reportReasons').innerHTML = reasonsHtml;
+    document.getElementById('reportText').value = '';
+    document.getElementById('reportOverlay').classList.add('show');
+  }
+
+  function openCommentReport(commentId) {
+    _reportTarget = { type: 'comment', id: commentId };
+    document.querySelector('.report-title').textContent = '⚠️ 举报评论';
     const reasonsHtml = REPORT_REASONS.map(r =>
       `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
         <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
@@ -689,12 +711,22 @@
   }
   async function submitReport() {
     const text = document.getElementById('reportText').value.trim();
+    const reason = _selectedReason + (text ? ': ' + text : '');
     try {
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-token': USER_TOKEN || '' },
-        body: JSON.stringify({ postId: POST_ID, reason: _selectedReason + (text ? ': ' + text : '') })
-      });
+      let res;
+      if (_reportTarget.type === 'comment') {
+        res = await fetch('/api/comments/' + _reportTarget.id + '/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': USER_TOKEN || '' },
+          body: JSON.stringify({ postId: POST_ID, reason })
+        });
+      } else {
+        res = await fetch('/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': USER_TOKEN || '' },
+          body: JSON.stringify({ postId: POST_ID, reason })
+        });
+      }
       const json = await res.json();
       closeReport();
       if (json.ok) {
