@@ -800,6 +800,24 @@
   </div>
 
   <script>
+    // ===== 全局输入过滤：禁止特殊字符 =====
+    // 允许的字符：中文、英文、数字、下划线、空格
+    // 禁止的字符：~!@#$%^&*()+=[{}]|\\;:'",./<>? 以及反引号
+    function sanitizeInput(val) {
+      return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
+    }
+    function onInputFilter(e) {
+      const el = e.target;
+      const cleaned = sanitizeInput(el.value);
+      if (el.value !== cleaned) el.value = cleaned;
+    }
+    // 给所有输入框和文本域绑定过滤
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('input[type="text"], input[type="password"], textarea').forEach(el => {
+        el.addEventListener('input', onInputFilter);
+      });
+    });
+
     // ===== 配置 =====
     const API = '';  // 同源，留空即可
     const USER_KEY = 'campus_wall_user';   // localStorage key

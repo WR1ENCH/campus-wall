@@ -43,6 +43,26 @@ const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
 // 中间件
 app.use(cors());
 app.use(express.json());
+
+// 全局输入过滤：禁止特殊字符（对 JSON body 和 URL query 生效）
+const SPECIAL_CHAR_REGEX = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
+function sanitizeString(val) {
+  if (typeof val === 'string') return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
+  if (Array.isArray(val)) return val.map(sanitizeString);
+  if (val && typeof val === 'object') {
+    const cleaned = {};
+    for (const k in val) cleaned[k] = sanitizeString(val[k]);
+    return cleaned;
+  }
+  return val;
+}
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    req.body = sanitizeString(req.body);
+  }
+  next();
+});
+
 app.use(express.static(__dirname)); // 静态文件服务
 
 // ===== 数据读写 =====

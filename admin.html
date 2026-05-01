@@ -932,6 +932,25 @@
     alert('JS错误: ' + msg + ' (行:' + line + ')');
     return false;
   };
+
+  // ===== 全局输入过滤：禁止特殊字符 =====
+  // 允许的字符：中文、英文、数字、下划线、空格
+  // 禁止的字符：~!@#$%^&*()+=[{}]|\\;:'",./<>? 以及反引号
+  function sanitizeInput(val) {
+    return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
+  }
+  function onInputFilter(e) {
+    const el = e.target;
+    const cleaned = sanitizeInput(el.value);
+    if (el.value !== cleaned) el.value = cleaned;
+  }
+  // 给所有输入框和文本域绑定过滤（DOMContentLoaded 后执行）
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[type="text"], input[type="password"], textarea').forEach(el => {
+      el.addEventListener('input', onInputFilter);
+    });
+  });
+
   // ===== 常量 =====
   const PAGE_SIZE = 15;
   const TOKEN_KEY = 'campus_admin_token';
