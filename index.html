@@ -587,7 +587,7 @@
       background: rgba(0,0,0,0.08); border: none;
       padding: 6px 14px; border-radius: 3px;
       font-family: inherit; font-size: 14px; cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s; white-space: nowrap;
     }
     .note-detail-box .detail-like-btn:hover { background: rgba(0,0,0,0.15); }
     .note-detail-box .detail-like-btn.liked { background: rgba(255,0,0,0.12); }
@@ -596,7 +596,7 @@
       background: rgba(239,68,68,0.1); border: none;
       padding: 6px 14px; border-radius: 3px;
       font-family: inherit; font-size: 14px; cursor: pointer;
-      color: #b91c1c; transition: background 0.15s;
+      color: #b91c1c; transition: background 0.15s; white-space: nowrap;
     }
     .note-detail-box .detail-report-btn:hover { background: rgba(239,68,68,0.2); }
 
@@ -726,14 +726,14 @@
           <span id="detailAuthor"></span>
           <span class="note-time" id="detailTime"></span>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()">
+        <div style="display:flex; gap:8px; flex-wrap:nowrap;">
+          <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()" style="white-space:nowrap;">
             🤍 点赞
           </button>
-          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px;">
+          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:13px; white-space:nowrap;">
             🗑️ 删除
           </button>
-          <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
+          <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()" style="white-space:nowrap;">
             ⚠️ 举报
           </button>
         </div>
