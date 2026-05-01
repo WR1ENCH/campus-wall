@@ -569,6 +569,14 @@ app.get('/api/posts', (req, res) => {
   res.json({ ok: true, data: posts });
 });
 
+// 获取单个帖子（用于详情页）
+app.get('/api/posts/:id', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  res.json({ ok: true, data: post });
+});
+
 // 发布新帖子
 app.post('/api/posts', (req, res) => {
   const { type, content, avatar, author, userId } = req.body;

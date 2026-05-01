@@ -1200,7 +1200,7 @@
                 <span>${post.author}</span>
                 <span class="note-time">· ${post.time}</span>
               </div>
-              <div style="display:flex;gap:4px;">
+              <div style="display:flex;gap:4px;align-items:center;">
                 <button class="note-action ${post.liked ? 'liked' : ''}"
                         onclick="handleLike('${post.id}')" title="点赞">
                   ${post.liked ? '❤️' : '🤍'} ${post.likes}
@@ -1208,6 +1208,10 @@
                 <button class="note-action report-action" title="举报"
                         onclick="event.stopPropagation(); openReportModalFromCard('${post.id}')">
                   ⚠️
+                </button>
+                <button class="note-action" title="查看详情"
+                        onclick="event.stopPropagation(); window.open('post.html?id=${post.id}', '_blank')">
+                  🔗
                 </button>
               </div>
             </div>
