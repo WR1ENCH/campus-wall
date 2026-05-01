@@ -554,11 +554,14 @@
     }).join('');
   }
 
+  const SPECIAL_CHAR_REG = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
+
   async function submitComment() {
     const input = document.getElementById('commentInput');
     const btn = document.getElementById('commentSubmitBtn');
     const content = input.value.trim();
     if (!content) { toast('请输入评论内容'); return; }
+    if (SPECIAL_CHAR_REG.test(content)) { toast('⚠️ 评论包含特殊字符，请移除后重试'); return; }
 
     let author = '匿名', avatar = '🙈', userId = null;
     if (USER_TOKEN) {

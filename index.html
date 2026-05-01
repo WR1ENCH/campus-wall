@@ -812,29 +812,11 @@
   </div>
 
   <script>
-    // ===== 全局输入过滤：禁止特殊字符 =====
-    // 允许的字符：中文、英文、数字、下划线、空格
-    // 禁止的字符：~!@#$%^&*()+=[{}]|\\;:'",./<>? 以及反引号
-    function sanitizeInput(val) {
-      return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
+    // ===== 特殊字符检测 =====
+    const SPECIAL_CHAR_REG = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
+    function hasSpecialChars(val) {
+      return SPECIAL_CHAR_REG.test(val);
     }
-    function onInputFilter(e) {
-      const el = e.target;
-      const cleaned = sanitizeInput(el.value);
-      if (el.value !== cleaned) {
-        el.value = cleaned;
-        if (!el._warnTimer) {
-          showToast('禁止输入特殊符号');
-          el._warnTimer = setTimeout(() => { el._warnTimer = null; }, 1500);
-        }
-      }
-    }
-    // 给所有输入框和文本域绑定过滤
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('input[type="text"], input[type="password"], textarea').forEach(el => {
-        el.addEventListener('input', onInputFilter);
-      });
-    });
 
     // ===== 配置 =====
     const API = '';  // 同源，留空即可
@@ -883,6 +865,7 @@
         document.getElementById('userLoginError').textContent = '请输入账号和密码';
         return;
       }
+      if (hasSpecialChars(username)) { showToast('⚠️ 账号包含特殊字符，请重新输入'); return; }
       try {
         const res = await fetch('/api/user/login', {
           method: 'POST',
@@ -915,6 +898,8 @@
         document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
         return;
       }
+      if (hasSpecialChars(username)) { showToast('⚠️ 账号包含特殊字符，请重新输入'); return; }
+      if (hasSpecialChars(nickname)) { showToast('⚠️ 昵称包含特殊字符，请重新输入'); return; }
       try {
         const res = await fetch('/api/user/register', {
           method: 'POST',
@@ -1587,6 +1572,7 @@
       const input = document.getElementById('noteInput');
       const content = input.value.trim();
       if (!content) { showToast('⚠️ 便利贴不能空白哦～'); return; }
+      if (hasSpecialChars(content)) { showToast('⚠️ 内容包含特殊字符，请移除后重试'); return; }
 
       const newPost = await createPost(currentTag, content);
       if (newPost) {
