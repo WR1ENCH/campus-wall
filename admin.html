@@ -520,7 +520,8 @@
 
 <!-- ===== 登录页 ===== -->
 <div id="loginScreen">
-  <div class="login-box">
+  <!-- 登录表单（已有管理员时显示） -->
+  <div class="login-box" id="loginBox">
     <div class="login-logo">📌</div>
     <div class="login-title">校园墙管理后台</div>
     <div class="login-subtitle">请输入管理员账号登录</div>
@@ -538,6 +539,37 @@
     </div>
     <button class="login-btn" onclick="doLogin()">登 录</button>
     <div class="login-error" id="loginError"></div>
+  </div>
+
+  <!-- 初始化表单（首次使用、无管理员时显示） -->
+  <div class="login-box" id="initBox" style="display:none;">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">首次设置</div>
+    <div class="login-subtitle" style="color:var(--warning);">首次使用，请设置最高管理员账号</div>
+    <div class="login-field">
+      <label class="login-label" for="initId">账号</label>
+      <input type="text" id="initId" class="login-input"
+             placeholder="3-20位字母、数字、下划线" maxlength="20">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="initName">昵称</label>
+      <input type="text" id="initName" class="login-input"
+             placeholder="在后台显示的名称" maxlength="15">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="initPwd">密码</label>
+      <input type="password" id="initPwd" class="login-input"
+             placeholder="至少6位" maxlength="30"
+             onkeydown="if(event.key==='Enter') doInit()">
+    </div>
+    <div class="login-field">
+      <label class="login-label" for="initPwd2">确认密码</label>
+      <input type="password" id="initPwd2" class="login-input"
+             placeholder="再次输入密码" maxlength="30"
+             onkeydown="if(event.key==='Enter') doInit()">
+    </div>
+    <button class="login-btn" onclick="doInit()">创建管理员</button>
+    <div class="login-error" id="initError"></div>
   </div>
 </div>
 
@@ -1038,9 +1070,20 @@
 
   // 自动登录检查
   async function checkSession() {
-    const t = getToken();
-    if (!t) return;
     try {
+      // 先检查是否需要初始化
+      const checkRes = await fetch('/api/admin/check-init');
+      const checkJson = await checkRes.json();
+      if (checkJson.ok && checkJson.data.needInit) {
+        // 需要初始化，显示初始化表单
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('initBox').style.display = 'block';
+        return;
+      }
+
+      // 检查是否有保存的 token
+      const t = getToken();
+      if (!t) return;
       const res = await fetch('/api/admin/me', { headers: authHeaders() });
       const json = await res.json();
       if (json.ok) {
@@ -1050,7 +1093,48 @@
         clearToken();
       }
     } catch {
-      clearToken();
+      // 网络错误，静默处理
+    }
+  }
+
+  // 初始化管理员
+  async function doInit() {
+    const id = document.getElementById('initId').value.trim();
+    const name = document.getElementById('initName').value.trim();
+    const pwd = document.getElementById('initPwd').value;
+    const pwd2 = document.getElementById('initPwd2').value;
+    const errEl = document.getElementById('initError');
+
+    // 验证
+    if (!id) { errEl.textContent = '请输入账号'; return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(id)) {
+      errEl.textContent = '账号：3-20位字母、数字、下划线';
+      return;
+    }
+    if (!name) { errEl.textContent = '请输入昵称'; return; }
+    if (!pwd || pwd.length < 6) { errEl.textContent = '密码至少6位'; return; }
+    if (pwd !== pwd2) { errEl.textContent = '两次密码不一致'; return; }
+
+    errEl.textContent = '创建中…';
+    try {
+      const res = await fetch('/api/admin/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, password: pwd })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        // 保存 token 并登录
+        setToken(json.data.token);
+        currentAdmin = json.data;
+        localStorage.setItem('campus_admin_name', currentAdmin.name);
+        localStorage.setItem('campus_admin_role', currentAdmin.role);
+        showMainApp();
+      } else {
+        errEl.textContent = json.msg || '创建失败';
+      }
+    } catch {
+      errEl.textContent = '网络错误，请检查服务器';
     }
   }
 

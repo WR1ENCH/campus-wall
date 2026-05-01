@@ -77,22 +77,17 @@ function readAdmins() {
   try {
     ensureDir();
     if (!fs.existsSync(ADMINS_FILE)) {
-      // 初始化：创建超级管理员（使用哈希存储密码）
-      const defaultAdmins = [{
-        id: 'wr1Ench',
-        password: hashPassword('cai-091226'),
-        name: '最高管理员',
-        role: 'super',
-        createdAt: new Date().toISOString()
-      }];
-      fs.writeFileSync(ADMINS_FILE, JSON.stringify(defaultAdmins, null, 2), 'utf-8');
-      return defaultAdmins;
+      return []; // 不自动创建，等待首次设置
     }
     return JSON.parse(fs.readFileSync(ADMINS_FILE, 'utf-8'));
   } catch (e) {
     console.error('读取管理员失败:', e);
     return [];
   }
+}
+
+function hasAdmins() {
+  return fs.existsSync(ADMINS_FILE) && readAdmins().length > 0;
 }
 
 function writeAdmins(admins) {
@@ -140,6 +135,61 @@ function makeToken(admin) {
     loginAt: Date.now()
   })).toString('base64');
 }
+
+// ===== 初始化接口 =====
+
+// 检查是否需要初始化（是否存在管理员）
+app.get('/api/admin/check-init', (req, res) => {
+  res.json({ ok: true, data: { needInit: !hasAdmins() } });
+});
+
+// 创建首个管理员（仅在没有任何管理员时可用）
+app.post('/api/admin/init', (req, res) => {
+  // 如果已有管理员，拒绝初始化
+  if (hasAdmins()) {
+    return res.json({ ok: false, msg: '系统已初始化，请直接登录', code: 'ALREADY_INIT' });
+  }
+
+  const { id, password, name } = req.body;
+
+  // 验证账号格式（3-20位字母、数字、下划线）
+  if (!id || !/^[a-zA-Z0-9_]{3,20}$/.test(id)) {
+    return res.json({ ok: false, msg: '账号格式：3-20位字母、数字、下划线', code: 'INVALID_ID' });
+  }
+
+  // 验证密码（至少6位）
+  if (!password || password.length < 6) {
+    return res.json({ ok: false, msg: '密码至少6位', code: 'INVALID_PWD' });
+  }
+
+  // 验证昵称
+  if (!name || name.trim().length === 0) {
+    return res.json({ ok: false, msg: '请输入管理员昵称', code: 'INVALID_NAME' });
+  }
+
+  // 创建首个超级管理员
+  const newAdmin = {
+    id: id.trim(),
+    password: hashPassword(password),
+    name: name.trim(),
+    role: 'super',
+    createdAt: new Date().toISOString()
+  };
+
+  writeAdmins([newAdmin]);
+
+  console.log(`✅ 首个管理员已创建: ${id}`);
+
+  res.json({
+    ok: true,
+    data: {
+      token: makeToken(newAdmin),
+      id: newAdmin.id,
+      name: newAdmin.name,
+      role: newAdmin.role
+    }
+  });
+});
 
 // ===== 管理员 API =====
 
