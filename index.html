@@ -809,7 +809,13 @@
     function onInputFilter(e) {
       const el = e.target;
       const cleaned = sanitizeInput(el.value);
-      if (el.value !== cleaned) el.value = cleaned;
+      if (el.value !== cleaned) {
+        el.value = cleaned;
+        if (!el._warnTimer) {
+          showToast('禁止输入特殊符号');
+          el._warnTimer = setTimeout(() => { el._warnTimer = null; }, 1500);
+        }
+      }
     }
     // 给所有输入框和文本域绑定过滤
     document.addEventListener('DOMContentLoaded', () => {
