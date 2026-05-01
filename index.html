@@ -599,6 +599,7 @@
       color: #b91c1c; transition: background 0.15s; white-space: nowrap;
     }
     .note-detail-box .detail-report-btn:hover { background: rgba(239,68,68,0.2); }
+    .note-detail-box .detail-link-btn:hover { background: rgba(59,130,246,0.25); }
 
     .note-detail-box .detail-close {
       position: absolute; top: 10px; right: 14px;
@@ -735,6 +736,9 @@
           </button>
           <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()" style="white-space:nowrap;">
             ⚠️ 举报
+          </button>
+          <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()" style="background:rgba(59,130,246,0.12); border:none; border-radius:3px; padding:6px 14px; font-family:inherit; font-size:14px; cursor:pointer; color:#1d4ed8; transition:background 0.15s; white-space:nowrap;">
+            🔍 查看详情
           </button>
         </div>
       </div>
@@ -1337,6 +1341,11 @@
       if (e && e.target !== e.currentTarget) return;
       document.getElementById('noteDetailOverlay').classList.remove('show');
       currentDetailId = null;
+    }
+
+    function openDetailInNewWindow() {
+      if (!currentDetailId) return;
+      window.open('post.html?id=' + currentDetailId, '_blank');
     }
 
     async function handleDetailLike() {
