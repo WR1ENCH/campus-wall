@@ -1223,7 +1223,14 @@
         temp.innerHTML = `
           <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
           <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${post.content}</div>
-          <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);">${post.avatar} ${post.author}</div>
+          <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
+            <span>${post.avatar} ${post.author}</span>
+            <span style="display:flex;gap:4px;align-items:center;">
+              <span>${post.liked ? '❤️' : '🤍'} ${post.likes}</span>
+              <span>⚠️</span>
+              <span>🔗</span>
+            </span>
+          </div>
         `;
         tempContainer.appendChild(temp);
         const measuredHeight = temp.offsetHeight + 8;
