@@ -519,11 +519,6 @@
       list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
       return;
     }
-    const list = document.getElementById('commentList');
-    if (!comments || comments.length === 0) {
-      list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
-      return;
-    }
     const currentUserId = USER_TOKEN ? (() => {
       try { return JSON.parse(atob(USER_TOKEN)).id; } catch { return null; }
     })() : null;
