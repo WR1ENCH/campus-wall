@@ -272,6 +272,64 @@
       color: var(--note-yellow);
       font-size: 14px;
     }
+
+    /* ===== 评论区域 ===== */
+    .comment-section {
+      margin-top: 28px;
+    }
+    .comment-title {
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 14px; opacity: 0.8;
+    }
+    .comment-input-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .comment-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      font-family: inherit; font-size: 14px;
+      outline: none; resize: none;
+      transition: border-color 0.2s;
+      background: rgba(255,255,255,0.85);
+    }
+    .comment-input:focus { border-color: var(--accent); }
+    .comment-submit-btn {
+      padding: 10px 18px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 10px;
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .comment-submit-btn:hover { background: var(--accent-hover); }
+    .comment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .comment-list { display: flex; flex-direction: column; gap: 12px; }
+    .comment-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .comment-avatar { font-size: 22px; flex-shrink: 0; }
+    .comment-body { flex: 1; min-width: 0; }
+    .comment-author {
+      font-size: 12px; font-weight: 700; opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .comment-text {
+      font-size: 14px; line-height: 1.5;
+      word-break: break-word;
+      background: rgba(255,255,255,0.7);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    .comment-time { font-size: 11px; opacity: 0.5; margin-top: 5px; }
+    .comment-empty { text-align: center; padding: 24px; opacity: 0.5; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -289,6 +347,21 @@
     <div class="loading-wrap">
       <div class="spinner"></div>
       <div>加载中…</div>
+    </div>
+  </div>
+
+  <!-- 帖子卡片容器 -->
+  <div class="main" id="postCardContainer" style="display:none;"></div>
+
+  <!-- 评论区域 -->
+  <div class="main" id="commentSection" style="display:none;">
+    <div class="comment-section">
+      <div class="comment-title">💬 评论</div>
+      <div class="comment-input-row" id="commentInputRow">
+        <textarea class="comment-input" id="commentInput" placeholder="写下你的评论…" rows="2"></textarea>
+        <button class="comment-submit-btn" id="commentSubmitBtn" onclick="submitComment()">发布</button>
+      </div>
+      <div class="comment-list" id="commentList"></div>
     </div>
   </div>
 
@@ -340,6 +413,10 @@
       if (json.ok) {
         postData = json.data;
         renderPost(postData);
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('postCardContainer').style.display = 'block';
+        document.getElementById('commentSection').style.display = 'block';
+        loadComments();
       } else {
         showNotFound();
       }
@@ -406,10 +483,83 @@
         </div>
       </div>
     `;
-    document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('postCardContainer').innerHTML = html;
   }
 
   // ===== 点赞 =====
+
+  // ===== 评论 =====
+  async function loadComments() {
+    try {
+      const res = await fetch('/api/posts/' + POST_ID + '/comments');
+      const json = await res.json();
+      if (json.ok) {
+        renderComments(json.data || []);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  function renderComments(comments) {
+    const list = document.getElementById('commentList');
+    if (!comments || comments.length === 0) {
+      list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
+      return;
+    }
+    list.innerHTML = comments.map(c => {
+      const d = new Date(c.time);
+      const t = d.toLocaleString('zh-CN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `
+        <div class="comment-item">
+          <span class="comment-avatar">${escHtml(c.avatar || '🙈')}</span>
+          <div class="comment-body">
+            <div class="comment-author">${escHtml(c.author || '匿名')}</div>
+            <div class="comment-text">${escHtml(c.content)}</div>
+            <div class="comment-time">${t}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function submitComment() {
+    const input = document.getElementById('commentInput');
+    const btn = document.getElementById('commentSubmitBtn');
+    const content = input.value.trim();
+    if (!content) { toast('请输入评论内容'); return; }
+
+    let author = '匿名', avatar = '🙈', userId = null;
+    if (USER_TOKEN) {
+      try {
+        const u = JSON.parse(atob(USER_TOKEN));
+        author = u.nickname || '匿名';
+        avatar = u.avatar || '🙈';
+        userId = u.id;
+      } catch {}
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/posts/' + POST_ID + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': USER_TOKEN || '' },
+        body: JSON.stringify({ content, author, avatar, userId })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        input.value = '';
+        await loadComments();
+        toast('评论发布成功');
+      } else {
+        toast(json.msg || '评论失败');
+      }
+    } catch {
+      toast('网络错误');
+    } finally {
+      btn.disabled = false;
+    }
+  }
   async function doLike() {
     try {
       const res = await fetch('/api/posts/' + POST_ID + '/like', { method: 'POST' });

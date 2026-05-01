@@ -600,6 +600,7 @@ app.post('/api/posts', (req, res) => {
     time: new Date().toISOString(),
     likes: 0,
     comments: 0,
+    commentsCount: 0,
     liked: false,
     rotate: (Math.random() - 0.5) * 8,
     zIndex: Math.floor(Math.random() * 5) + 1
@@ -632,6 +633,43 @@ app.post('/api/posts/:id/like', (req, res) => {
   writePosts(posts);
 
   res.json({ ok: true, data: { liked: post.liked, likes: post.likes } });
+});
+
+// 获取帖子评论
+app.get('/api/posts/:id/comments', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) {
+    return res.json({ ok: false, msg: '帖子不存在' });
+  }
+  const comments = post.comments || [];
+  res.json({ ok: true, data: comments });
+});
+
+// 发表评论
+app.post('/api/posts/:id/comments', (req, res) => {
+  const { content, author, avatar, userId } = req.body;
+  if (!content || !content.trim()) {
+    return res.json({ ok: false, msg: '评论内容不能为空' });
+  }
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) {
+    return res.json({ ok: false, msg: '帖子不存在' });
+  }
+  if (!post.comments) post.comments = [];
+  const newComment = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    content: content.trim(),
+    author: author || '匿名',
+    avatar: avatar || '🙈',
+    userId: userId || null,
+    time: new Date().toISOString()
+  };
+  post.comments.push(newComment);
+  post.commentsCount = post.comments.length;
+  writePosts(posts);
+  res.json({ ok: true, data: newComment });
 });
 
 // 批量删除帖子
