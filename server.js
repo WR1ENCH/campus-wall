@@ -664,12 +664,113 @@ app.post('/api/posts/:id/comments', (req, res) => {
     author: author || '匿名',
     avatar: avatar || '🙈',
     userId: userId || null,
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    likes: 0,
+    liked: false
   };
   post.comments.push(newComment);
   post.commentsCount = post.comments.length;
   writePosts(posts);
   res.json({ ok: true, data: newComment });
+});
+
+// 评论点赞
+app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.postId);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+  comment.liked = !comment.liked;
+  comment.likes = (comment.likes || 0) + (comment.liked ? 1 : -1);
+  comment.likes = Math.max(0, comment.likes);
+  writePosts(posts);
+  res.json({ ok: true, data: { liked: comment.liked, likes: comment.likes } });
+});
+
+// 删除评论（评论作者或帖子作者可删）
+app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
+  const userId = req.headers['x-user-token'] ? (() => {
+    try { return JSON.parse(Buffer.from(req.headers['x-user-token'].split('.')[1], 'base64').toString()).id; } catch { return null; }
+  })() : null;
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.postId);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  const idx = (post.comments || []).findIndex(c => c.id === req.params.commentId);
+  if (idx === -1) return res.json({ ok: false, msg: '评论不存在' });
+  const comment = post.comments[idx];
+  const isCommentAuthor = userId && comment.userId && userId === comment.userId;
+  const isPostAuthor = userId && post.userId && userId === post.userId;
+  if (!isCommentAuthor && !isPostAuthor) {
+    return res.json({ ok: false, msg: '无权删除此评论' });
+  }
+  post.comments.splice(idx, 1);
+  post.commentsCount = post.comments.length;
+  writePosts(posts);
+  res.json({ ok: true });
+});
+
+// 举报评论
+app.post('/api/comments/:commentId/report', (req, res) => {
+  const { postId, reason } = req.body;
+  if (!reason) return res.json({ ok: false, msg: '请填写举报原因' });
+  const reports = readReports();
+  // 去重
+  const existing = reports.find(r => r.targetId === req.params.commentId && r.type === 'comment');
+  if (existing) return res.json({ ok: false, msg: '已举报过此评论' });
+  reports.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: 'comment',
+    targetId: req.params.commentId,
+    postId: postId,
+    reason,
+    status: 'pending',
+    time: new Date().toISOString()
+  });
+  writeReports(reports);
+  res.json({ ok: true });
+});
+
+// 批量删除评论（管理后台）
+app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  let found = false;
+  posts.forEach(post => {
+    const idx = (post.comments || []).findIndex(c => c.id === req.params.commentId);
+    if (idx !== -1) {
+      post.comments.splice(idx, 1);
+      post.commentsCount = post.comments.length;
+      found = true;
+    }
+  });
+  if (!found) return res.json({ ok: false, msg: '评论不存在' });
+  writePosts(posts);
+  // 同时删除该评论的举报记录
+  const reports = readReports();
+  const remaining = reports.filter(r => r.targetId !== req.params.commentId || r.type !== 'comment');
+  writeReports(reports);
+  res.json({ ok: true });
+});
+
+app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) return res.json({ ok: false, msg: '请提供要删除的评论 ID 列表' });
+  const posts = readPosts();
+  let deletedCount = 0;
+  posts.forEach(post => {
+    const before = post.comments ? post.comments.length : 0;
+    if (post.comments) {
+      post.comments = post.comments.filter(c => !ids.includes(c.id));
+      post.commentsCount = post.comments.length;
+      deletedCount += before - post.comments.length;
+    }
+  });
+  writePosts(posts);
+  // 同时删除相关的举报记录
+  const reports = readReports();
+  const remainingReports = reports.filter(r => !ids.includes(r.targetId) || r.type !== 'comment');
+  writeReports(reports);
+  res.json({ ok: true, deleted: deletedCount });
 });
 
 // 批量删除帖子
@@ -862,6 +963,24 @@ app.get('/api/admin/reports', requireAdmin, (req, res) => {
   res.json({ ok: true, data: filtered });
 });
 
+// 获取所有评论（供管理后台）
+app.get('/api/admin/comments', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  const allComments = [];
+  posts.forEach(post => {
+    (post.comments || []).forEach(c => {
+      allComments.push({
+        ...c,
+        postId: post.id,
+        postAuthor: post.author,
+        postContent: post.content.slice(0, 50)
+      });
+    });
+  });
+  allComments.sort((a, b) => new Date(b.time) - new Date(a.time));
+  res.json({ ok: true, data: allComments });
+});
+
 // 处理举报（标记 resolved / ignored，仅管理员）
 app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   const { status, action } = req.body;
@@ -882,6 +1001,17 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   if (action === 'delete_post' && report.postId) {
     let posts = readPosts();
     posts = posts.filter(p => p.id !== report.postId);
+    writePosts(posts);
+  }
+  // 如果 action 是 delete_comment，同时删除被举报的评论
+  if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
+    let posts = readPosts();
+    posts.forEach(post => {
+      if (post.comments) {
+        post.comments = post.comments.filter(c => c.id !== report.targetId);
+        post.commentsCount = post.comments.length;
+      }
+    });
     writePosts(posts);
   }
 

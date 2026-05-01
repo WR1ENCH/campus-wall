@@ -330,6 +330,18 @@
     }
     .comment-time { font-size: 11px; opacity: 0.5; margin-top: 5px; }
     .comment-empty { text-align: center; padding: 24px; opacity: 0.5; font-size: 14px; }
+    .comment-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .comment-like-btn {
+      font-size: 12px; cursor: pointer; opacity: 0.6;
+      transition: opacity 0.15s;
+    }
+    .comment-like-btn:hover { opacity: 1; }
+    .comment-like-btn.liked { color: #e11d48; opacity: 1; }
+    .comment-del-btn {
+      font-size: 12px; cursor: pointer; opacity: 0.5;
+      color: #ef4444; transition: opacity 0.15s;
+    }
+    .comment-del-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
@@ -507,20 +519,39 @@
       list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
       return;
     }
+    const list = document.getElementById('commentList');
+    if (!comments || comments.length === 0) {
+      list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
+      return;
+    }
+    const currentUserId = USER_TOKEN ? (() => {
+      try { return JSON.parse(atob(USER_TOKEN)).id; } catch { return null; }
+    })() : null;
+    const isPostAuthor = currentUserId && postData && postData.userId && currentUserId === postData.userId;
+
     list.innerHTML = comments.map(c => {
       const d = new Date(c.time);
       const t = d.toLocaleString('zh-CN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      const isCommentAuthor = currentUserId && c.userId && currentUserId === c.userId;
+      const canDelete = isCommentAuthor || isPostAuthor;
       return `
-        <div class="comment-item">
+        <div class="comment-item" id="comment-${c.id}">
           <span class="comment-avatar">${escHtml(c.avatar || '🙈')}</span>
           <div class="comment-body">
             <div class="comment-author">${escHtml(c.author || '匿名')}</div>
             <div class="comment-text">${escHtml(c.content)}</div>
-            <div class="comment-time">${t}</div>
+            <div class="comment-meta">
+              <span class="comment-time">${t}</span>
+              <span class="comment-like-btn ${c.liked ? 'liked' : ''}" onclick="toggleCommentLike('${c.id}')">
+                ${c.liked ? '❤️' : '🤍'} ${c.likes || 0}
+              </span>
+              ${canDelete ? `<span class="comment-del-btn" onclick="deleteComment('${c.id}')">🗑️ 删除</span>` : ''}
+            </div>
           </div>
         </div>
       `;
     }).join('');
+  }
   }
 
   async function submitComment() {
@@ -560,6 +591,34 @@
       btn.disabled = false;
     }
   }
+
+  async function toggleCommentLike(commentId) {
+    try {
+      const res = await fetch('/api/posts/' + POST_ID + '/comments/' + commentId + '/like', { method: 'POST' });
+      const json = await res.json();
+      if (json.ok) {
+        await loadComments();
+      }
+    } catch { toast('网络错误'); }
+  }
+
+  async function deleteComment(commentId) {
+    if (!confirm('确定删除这条评论吗？')) return;
+    try {
+      const res = await fetch('/api/posts/' + POST_ID + '/comments/' + commentId, {
+        method: 'DELETE',
+        headers: { 'x-user-token': USER_TOKEN || '' }
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast('评论已删除');
+        await loadComments();
+      } else {
+        toast(json.msg || '删除失败');
+      }
+    } catch { toast('网络错误'); }
+  }
+
   async function doLike() {
     try {
       const res = await fetch('/api/posts/' + POST_ID + '/like', { method: 'POST' });
