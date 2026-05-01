@@ -1,0 +1,17 @@
+{
+  "name": "campus-wall",
+  "version": "1.0.0",
+  "description": "中学校园墙 - 便利贴",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

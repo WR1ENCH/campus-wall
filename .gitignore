@@ -1,0 +1,30 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 数据库
+data/
+
+# 日志
+*.log
+npm-debug.log*
+
+# 临时/调试脚本
+cleanup*.js
+fix_html.js
+start_server.py
+console.log('not*
+
+# OS 文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# WorkBuddy 内部数据
+.workbuddy/
