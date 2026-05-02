@@ -39,6 +39,7 @@ const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
+const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
 
 // 中间件
 app.use(cors());
@@ -218,14 +219,22 @@ app.post('/api/admin/init', (req, res) => {
 // 登录
 app.post('/api/admin/login', (req, res) => {
   const { id, password } = req.body;
-  if (!id || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
+  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ua = req.headers['user-agent'] || '-';
+
+  if (!id || !password) {
+    addLoginLog('admin', null, false, ip, ua);
+    return res.json({ ok: false, msg: '请输入账号和密码' });
+  }
 
   const admins = readAdmins();
   const admin = admins.find(a => a.id === id);
   if (!admin || !verifyPassword(password, admin.password)) {
+    addLoginLog('admin', id, false, ip, ua);
     return res.json({ ok: false, msg: '账号或密码错误' });
   }
 
+  addLoginLog('admin', admin.name, true, ip, ua);
   res.json({
     ok: true,
     data: {
@@ -265,6 +274,12 @@ app.get('/api/admin/me', requireAdmin, (req, res) => {
   const admin = admins.find(a => a.id === req.admin.id);
   if (!admin) return res.json({ ok: false, msg: '管理员不存在', code: 'NOT_FOUND' });
   res.json({ ok: true, data: { id: admin.id, name: admin.name, role: admin.role } });
+});
+
+// 获取登录记录
+app.get('/api/admin/login-logs', requireAdmin, (req, res) => {
+  const logs = readLogs();
+  res.json({ ok: true, data: logs });
 });
 
 // 获取管理员列表（仅超级管理员）
@@ -381,6 +396,44 @@ function writeUsers(users) {
   }
 }
 
+function readLogs() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(LOGS_FILE)) {
+      fs.writeFileSync(LOGS_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(LOGS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取登录记录失败:', e);
+    return [];
+  }
+}
+
+function writeLogs(logs) {
+  try {
+    ensureDir();
+    fs.writeFileSync(LOGS_FILE, JSON.stringify(logs, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入登录记录失败:', e);
+  }
+}
+
+function addLoginLog(type, account, success, ip, ua) {
+  const logs = readLogs();
+  logs.unshift({
+    id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    type,
+    account: account || '未登录用户',
+    success,
+    ip: ip || '-',
+    ua: ua || '-',
+    time: new Date().toISOString()
+  });
+  if (logs.length > 500) logs.splice(500);
+  writeLogs(logs);
+}
+
 // 生成用户 token
 function makeUserToken(user) {
   return Buffer.from(JSON.stringify({
@@ -455,17 +508,26 @@ app.post('/api/user/register', (req, res) => {
 // 登录
 app.post('/api/user/login', (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
+  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ua = req.headers['user-agent'] || '-';
+
+  if (!username || !password) {
+    addLoginLog('user', null, false, ip, ua);
+    return res.json({ ok: false, msg: '请输入账号和密码' });
+  }
 
   const users = readUsers();
   const user = users.find(u => u.username === username);
   if (!user || !verifyPassword(password, user.password)) {
+    addLoginLog('user', username, false, ip, ua);
     return res.json({ ok: false, msg: '账号或密码错误' });
   }
   if (user.status === 'banned') {
+    addLoginLog('user', username, false, ip, ua);
     return res.json({ ok: false, msg: '该账号已被禁用' });
   }
 
+  addLoginLog('user', user.nickname, true, ip, ua);
   res.json({
     ok: true,
     data: {
