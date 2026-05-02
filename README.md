@@ -1,5 +1,7 @@
 # 📌 校园墙 (Campus Wall)
 
+<p align="center"><i>powered by wr1Ench</i></p>
+
 一个简洁优雅的校园匿名留言板系统，支持发帖、点赞、评论、举报，以及完整的内容管理后台。
 
 ![预览图](https://img.shields.io/badge/Node.js-18+-green) ![预览图](https://img.shields.io/badge/Express-4.x-blue) ![预览图](https://img.shields.io/badge/License-GPL%20V3-yellow)
