@@ -511,10 +511,12 @@
       <div class="user-header">
         <div class="user-avatar" id="userAvatar">👤</div>
         <div class="user-info">
-          <h1 id="userNickname">加载中...</h1>
+          <h1 id="userNickname">加载中... <span id="adminBadge" style="display:none;"></span></h1>
           <div class="user-meta">
             <span id="userUsername">@username</span>
             <span id="userJoinDate">加入日期：--</span>
+            <span id="bindAdminTag" style="display:none; cursor:pointer; text-decoration:underline;" onclick="openBindAdminModal()"></span>
+            <span id="unbindAdminTag" style="display:none; cursor:pointer; color:#c44545; text-decoration:underline; margin-left:8px;">解除绑定</span>
           </div>
           <div class="user-stats">
             <div class="stat">
@@ -571,6 +573,32 @@
           <div class="modal-actions">
             <button class="modal-btn modal-btn-secondary" id="cancelEditBtn">取消</button>
             <button class="modal-btn modal-btn-primary" id="saveEditBtn">保存更改</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 绑定管理员模态框 -->
+    <div id="bindAdminModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">🔗 绑定管理员账号</div>
+        <div class="modal-body">
+          <div id="bindAdminStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:16px; font-weight:bold; display:none;"></div>
+          <div class="form-group">
+            <label class="form-label">你的账号密码</label>
+            <input type="password" id="bindUserPwd" class="form-input" placeholder="输入你的账号密码以验证身份">
+          </div>
+          <div class="form-group">
+            <label class="form-label">管理员账号</label>
+            <input type="text" id="bindAdminId" class="form-input" placeholder="管理员账号">
+          </div>
+          <div class="form-group">
+            <label class="form-label">管理员密码</label>
+            <input type="password" id="bindAdminPwd" class="form-input" placeholder="管理员密码">
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" id="cancelBindBtn">取消</button>
+            <button class="modal-btn modal-btn-primary" id="confirmBindBtn">确认绑定</button>
           </div>
         </div>
       </div>
@@ -646,6 +674,36 @@
       } else {
         avatarEl.textContent = user.nickname.charAt(0) || '👤';
       }
+      // 管理员认证标识
+      const badge = document.getElementById('adminBadge');
+      const bindTag = document.getElementById('bindAdminTag');
+      const unbindTag = document.getElementById('unbindAdminTag');
+      if (user.bindAdminRole === 'super') {
+        badge.textContent = '🔴';
+        badge.title = '最高管理员';
+        badge.style.display = '';
+      } else if (user.bindAdminRole === 'admin') {
+        badge.textContent = '🟡';
+        badge.title = '管理员';
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+      // 绑定/解绑入口：仅当前登录用户查看自己的主页时显示
+      if (currentLoggedInUser && currentLoggedInUser.id === user.id) {
+        if (user.bindAdminRole) {
+          bindTag.style.display = 'none';
+          unbindTag.style.display = '';
+          unbindTag.onclick = doUnbindAdmin;
+        } else {
+          bindTag.textContent = '🔗 绑定管理员账号';
+          bindTag.style.display = '';
+          unbindTag.style.display = 'none';
+        }
+      } else {
+        bindTag.style.display = 'none';
+        unbindTag.style.display = 'none';
+      }
     }
 
     // 计算帖子的总点赞和评论
@@ -710,7 +768,7 @@
           <div class="note-meta">
             <div class="note-author">
               <div class="note-avatar">${post.avatar || '🙈'}</div>
-              <span>${post.author || '匿名'}</span>
+              <span>${post.author || '匿名'}${post.authorAdminRole === 'super' ? '🔴' : post.authorAdminRole === 'admin' ? '🟡' : ''}</span>
             </div>
             <div class="note-stats">
               <span>❤️ ${post.likes || 0}</span>
@@ -863,6 +921,83 @@
       }
     }
 
+    // 打开绑定管理员模态框
+    function openBindAdminModal() {
+      document.getElementById('bindUserPwd').value = '';
+      document.getElementById('bindAdminId').value = '';
+      document.getElementById('bindAdminPwd').value = '';
+      document.getElementById('bindAdminStatus').style.display = 'none';
+      document.getElementById('bindAdminModal').classList.add('show');
+    }
+
+    // 关闭绑定管理员模态框
+    function closeBindAdminModal() {
+      document.getElementById('bindAdminModal').classList.remove('show');
+    }
+
+    // 确认绑定管理员
+    async function doBindAdmin() {
+      const password = document.getElementById('bindUserPwd').value.trim();
+      const adminId = document.getElementById('bindAdminId').value.trim();
+      const adminPassword = document.getElementById('bindAdminPwd').value;
+      if (!password || !adminId || !adminPassword) {
+        alert('请填写完整信息');
+        return;
+      }
+      const token = localStorage.getItem('campus_user_token');
+      if (!token) {
+        alert('登录已过期，请重新登录');
+        return;
+      }
+      try {
+        const resp = await fetch('/api/user/bind-admin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-token': token
+          },
+          body: JSON.stringify({ password, adminId, adminPassword })
+        });
+        const data = await resp.json();
+        if (!data.ok) {
+          throw new Error(data.msg || '绑定失败');
+        }
+        // 更新当前用户信息
+        currentLoggedInUser.bindAdminId = data.data.bindAdminId;
+        currentLoggedInUser.bindAdminRole = data.data.bindAdminRole;
+        // 重新渲染（user 对象来自 currentLoggedInUser）
+        renderUser(currentLoggedInUser);
+        closeBindAdminModal();
+        alert('绑定成功！');
+      } catch (err) {
+        alert('绑定失败：' + err.message);
+      }
+    }
+
+    // 解除绑定
+    async function doUnbindAdmin() {
+      if (!confirm('确定要解除管理员绑定吗？')) return;
+      const token = localStorage.getItem('campus_user_token');
+      if (!token) {
+        alert('登录已过期，请重新登录');
+        return;
+      }
+      try {
+        const resp = await fetch('/api/user/bind-admin', {
+          method: 'DELETE',
+          headers: { 'x-user-token': token }
+        });
+        const data = await resp.json();
+        if (!data.ok) throw new Error(data.msg || '解除绑定失败');
+        currentLoggedInUser.bindAdminId = null;
+        currentLoggedInUser.bindAdminRole = null;
+        renderUser(currentLoggedInUser);
+        alert('已解除绑定');
+      } catch (err) {
+        alert('解除绑定失败：' + err.message);
+      }
+    }
+
     // 初始化事件监听器
     function initEventListeners() {
       // 编辑按钮
@@ -876,6 +1011,12 @@
       // 点击模态框外部关闭
       document.getElementById('editProfileModal').addEventListener('click', function(event) {
         if (event.target === this) closeEditModal();
+      });
+      // 绑定管理员模态框
+      document.getElementById('cancelBindBtn').addEventListener('click', closeBindAdminModal);
+      document.getElementById('confirmBindBtn').addEventListener('click', doBindAdmin);
+      document.getElementById('bindAdminModal').addEventListener('click', function(event) {
+        if (event.target === this) closeBindAdminModal();
       });
     }
 

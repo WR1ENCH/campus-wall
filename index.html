@@ -736,6 +736,7 @@
           <a href="#" id="detailAuthorLink" style="text-decoration:none; color:inherit;">
             <span id="detailAuthor"></span>
           </a>
+          <span id="detailAdminBadge" style="display:none; margin:0 4px;"></span>
           <span class="note-time" id="detailTime"></span>
         </div>
         <div class="detail-btn-group">
@@ -1206,7 +1207,7 @@
                 <span>${post.avatar}</span>
                 ${post.userId ? '</a>' : ''}
                 ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
-                <span>${post.author}</span>
+                <span>${post.author}</span>${post.authorAdminRole === 'super' ? '🔴' : post.authorAdminRole === 'admin' ? '🟡' : ''}
                 ${post.userId ? '</a>' : ''}
                 <span class="note-time">· ${post.time}</span>
               </div>
@@ -1234,7 +1235,7 @@
           <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
           <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${post.content}</div>
           <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
-            <span>${post.avatar} ${post.author}</span>
+            <span>${post.avatar} ${post.author}${post.authorAdminRole === 'super' ? '🔴' : post.authorAdminRole === 'admin' ? '🟡' : ''}</span>
             <span style="display:flex;gap:4px;align-items:center;">
               <span>${post.liked ? '❤️' : '🤍'} ${post.likes}</span>
               <span>⚠️</span>
@@ -1324,6 +1325,19 @@
       document.getElementById('detailAvatar').textContent = post.avatar;
       document.getElementById('detailAuthor').textContent = post.author;
       document.getElementById('detailTime').textContent = '· ' + post.time;
+      // 管理员认证标识
+      const adminBadge = document.getElementById('detailAdminBadge');
+      if (post.authorAdminRole === 'super') {
+        adminBadge.textContent = '🔴';
+        adminBadge.title = '最高管理员';
+        adminBadge.style.display = '';
+      } else if (post.authorAdminRole === 'admin') {
+        adminBadge.textContent = '🟡';
+        adminBadge.title = '管理员';
+        adminBadge.style.display = '';
+      } else {
+        adminBadge.style.display = 'none';
+      }
 
       // 设置用户主页链接
       const avatarLink = document.getElementById('detailAvatarLink');

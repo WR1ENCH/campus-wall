@@ -433,7 +433,9 @@ app.post('/api/user/register', (req, res) => {
     avatar: null,
     createdAt: new Date().toISOString(),
     status: 'active',
-    postCount: 0
+    postCount: 0,
+    bindAdminId: null,
+    bindAdminRole: null
   };
   users.push(newUser);
   writeUsers(users);
@@ -486,7 +488,7 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
 });
 
 // 更新当前用户资料（昵称、头像）
@@ -550,6 +552,60 @@ app.patch('/api/user/me', (req, res) => {
   res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar } });
 });
 
+// 绑定管理员账号
+app.post('/api/user/bind-admin', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  const user = users[userIndex];
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
+
+  const { password, adminId, adminPassword } = req.body;
+  if (!password || !adminId || !adminPassword) {
+    return res.json({ ok: false, msg: '请填写完整信息' });
+  }
+
+  // 验证用户密码
+  if (!verifyPassword(password, user.password)) {
+    return res.json({ ok: false, msg: '账号密码错误，绑定失败' });
+  }
+
+  // 查找管理员账号
+  const admins = readAdmins();
+  const admin = admins.find(a => a.id === adminId);
+  if (!admin || !verifyPassword(adminPassword, admin.password)) {
+    return res.json({ ok: false, msg: '管理员账号或密码错误，绑定失败' });
+  }
+
+  // 绑定
+  users[userIndex].bindAdminId = admin.id;
+  users[userIndex].bindAdminRole = admin.role;
+  writeUsers(users);
+
+  res.json({ ok: true, data: { bindAdminId: admin.id, bindAdminRole: admin.role } });
+});
+
+// 解绑管理员账号
+app.delete('/api/user/bind-admin', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  users[userIndex].bindAdminId = null;
+  users[userIndex].bindAdminRole = null;
+  writeUsers(users);
+
+  res.json({ ok: true });
+});
+
 // 获取指定用户公开信息（通过用户ID）
 app.get('/api/users/:id', (req, res) => {
   const users = readUsers();
@@ -557,7 +613,7 @@ app.get('/api/users/:id', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   // 不返回密码等敏感信息
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
 });
 
 // 获取指定用户发布的帖子
@@ -650,7 +706,18 @@ function incUserPostCount(nickname) {
 // 获取所有帖子
 app.get('/api/posts', (req, res) => {
   const posts = readPosts();
-  res.json({ ok: true, data: posts });
+  const users = readUsers();
+  // 为每个帖子附加作者的管理员角色信息
+  const postsWithAdmin = posts.map(p => {
+    if (p.userId) {
+      const author = users.find(u => u.id === p.userId);
+      if (author && author.bindAdminRole) {
+        return { ...p, authorAdminRole: author.bindAdminRole, authorBindAdminId: author.bindAdminId };
+      }
+    }
+    return p;
+  });
+  res.json({ ok: true, data: postsWithAdmin });
 });
 
 // 获取单个帖子（用于详情页）
@@ -658,6 +725,13 @@ app.get('/api/posts/:id', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.userId) {
+    const users = readUsers();
+    const author = users.find(u => u.id === post.userId);
+    if (author && author.bindAdminRole) {
+      return res.json({ ok: true, data: { ...post, authorAdminRole: author.bindAdminRole, authorBindAdminId: author.bindAdminId } });
+    }
+  }
   res.json({ ok: true, data: post });
 });
 
@@ -674,6 +748,18 @@ app.post('/api/posts', (req, res) => {
 
   const posts = readPosts();
 
+  // 如果有 userId，查询用户是否绑定了管理员
+  let authorAdminRole = null;
+  let authorBindAdminId = null;
+  if (userId) {
+    const users = readUsers();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      authorAdminRole = user.bindAdminRole || null;
+      authorBindAdminId = user.bindAdminId || null;
+    }
+  }
+
   const newPost = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type,
@@ -687,7 +773,9 @@ app.post('/api/posts', (req, res) => {
     commentsCount: 0,
     liked: false,
     rotate: (Math.random() - 0.5) * 8,
-    zIndex: Math.floor(Math.random() * 5) + 1
+    zIndex: Math.floor(Math.random() * 5) + 1,
+    authorAdminRole: authorAdminRole,
+    authorBindAdminId: authorBindAdminId
   };
 
   posts.unshift(newPost);
