@@ -662,8 +662,12 @@
       <!-- 用户信息区 -->
       <div id="userInfoBar" style="display:none;">
         <div class="user-info-bar">
-          <span class="user-avatar-sm" id="topUserAvatar">🙈</span>
-          <span class="user-name-sm" id="topUserName"></span>
+          <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
+            <span class="user-avatar-sm" id="topUserAvatar">🙈</span>
+          </a>
+          <a href="#" id="topUserNameLink" style="text-decoration:none; color:inherit;">
+            <span class="user-name-sm" id="topUserName"></span>
+          </a>
           <span id="topUserAccount" style="font-size:11px;color:rgba(255,255,255,0.6);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
           <button class="user-logout-sm" onclick="doUserLogout()">退出</button>
         </div>
@@ -726,8 +730,12 @@
       <div class="detail-content" id="detailContent"></div>
       <div class="detail-footer">
         <div class="detail-author">
-          <span id="detailAvatar"></span>
-          <span id="detailAuthor"></span>
+          <a href="#" id="detailAvatarLink" style="text-decoration:none; color:inherit;">
+            <span id="detailAvatar"></span>
+          </a>
+          <a href="#" id="detailAuthorLink" style="text-decoration:none; color:inherit;">
+            <span id="detailAuthor"></span>
+          </a>
           <span class="note-time" id="detailTime"></span>
         </div>
         <div class="detail-btn-group">
@@ -946,6 +954,10 @@
         document.getElementById('topUserAvatar').textContent = currentUser.avatar || '🙈';
         document.getElementById('topUserName').textContent = currentUser.nickname;
         document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
+        // 设置用户主页链接
+        const userProfileUrl = `user.html?id=${currentUser.id}`;
+        document.getElementById('topUserNameLink').href = userProfileUrl;
+        document.getElementById('topUserAvatarLink').href = userProfileUrl;
         barEl.style.display = 'block';
         entranceEl.style.display = 'none';
       } else {
@@ -1190,8 +1202,12 @@
             <div class="note-content">${post.content}</div>
             <div class="note-footer" onclick="event.stopPropagation()">
               <div class="note-author">
+                ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
                 <span>${post.avatar}</span>
+                ${post.userId ? '</a>' : ''}
+                ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
                 <span>${post.author}</span>
+                ${post.userId ? '</a>' : ''}
                 <span class="note-time">· ${post.time}</span>
               </div>
               <div style="display:flex;gap:4px;align-items:center;">
@@ -1308,6 +1324,23 @@
       document.getElementById('detailAvatar').textContent = post.avatar;
       document.getElementById('detailAuthor').textContent = post.author;
       document.getElementById('detailTime').textContent = '· ' + post.time;
+
+      // 设置用户主页链接
+      const avatarLink = document.getElementById('detailAvatarLink');
+      const authorLink = document.getElementById('detailAuthorLink');
+      if (post.userId) {
+        const userProfileUrl = `user.html?id=${post.userId}`;
+        avatarLink.href = userProfileUrl;
+        authorLink.href = userProfileUrl;
+        avatarLink.style.cursor = 'pointer';
+        authorLink.style.cursor = 'pointer';
+      } else {
+        // 没有 userId，可能是匿名帖子，移除链接
+        avatarLink.href = '#';
+        authorLink.href = '#';
+        avatarLink.style.cursor = 'default';
+        authorLink.style.cursor = 'default';
+      }
 
       const likeBtn = document.getElementById('detailLikeBtn');
       likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';

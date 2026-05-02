@@ -42,7 +42,7 @@ const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
 
 // 中间件
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // 全局输入过滤：禁止特殊字符（对 JSON body 和 URL query 生效）
 const SPECIAL_CHAR_REGEX = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
@@ -58,7 +58,9 @@ function sanitizeString(val) {
 }
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    req.body = sanitizeString(req.body);
+    // 排除 avatar 字段不过滤（base64 包含 +,/,= 等合法字符）
+    const { avatar, ...rest } = req.body;
+    req.body = { ...sanitizeString(rest), ...(avatar !== undefined ? { avatar } : {}) };
   }
   next();
 });
@@ -485,6 +487,88 @@ app.get('/api/user/me', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status } });
+});
+
+// 更新当前用户资料（昵称、头像）
+app.patch('/api/user/me', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  const user = users[userIndex];
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
+
+  const { nickname, avatar } = req.body;
+  let updated = false;
+
+  // 更新昵称
+  if (nickname !== undefined) {
+    if (nickname.length < 2 || nickname.length > 12) {
+      return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
+    }
+    user.nickname = nickname;
+    updated = true;
+  }
+
+  // 更新头像（base64 data URL）
+  if (avatar !== undefined) {
+    // 验证头像格式和大小
+    if (typeof avatar !== 'string') {
+      return res.json({ ok: false, msg: '头像数据格式错误' });
+    }
+    // 检查是否为 data URL（兼容 jpeg/jpg/jpe 等多种 MIME 变体）
+    if (!/^data:image\/jpe?g;base64,/.test(avatar)) {
+      return res.json({ ok: false, msg: '头像仅支持 JPG 格式（.jpg）' });
+    }
+    const base64Data = avatar.split(',')[1];
+    if (!base64Data) {
+      return res.json({ ok: false, msg: '头像数据不完整' });
+    }
+    // 计算 base64 数据大小（约等于原文件的 4/3）
+    if (base64Data.length > 700000) { // 对应约 500KB 的 JPG 文件
+      return res.json({ ok: false, msg: '头像图片太大，请压缩到 500KB 以内' });
+    }
+    // 可选：验证 base64 有效性
+    try {
+      Buffer.from(base64Data, 'base64');
+    } catch (e) {
+      return res.json({ ok: false, msg: '头像数据格式无效' });
+    }
+    user.avatar = avatar;
+    updated = true;
+  }
+
+  if (!updated) {
+    return res.json({ ok: false, msg: '未提供可更新的字段' });
+  }
+
+  users[userIndex] = user;
+  writeUsers(users);
+  res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar } });
+});
+
+// 获取指定用户公开信息（通过用户ID）
+app.get('/api/users/:id', (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
+  // 不返回密码等敏感信息
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status } });
+});
+
+// 获取指定用户发布的帖子
+app.get('/api/users/:id/posts', (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
+  const posts = readPosts();
+  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname);
+  res.json({ ok: true, data: userPosts });
 });
 
 // 获取用户列表（仅管理员）
