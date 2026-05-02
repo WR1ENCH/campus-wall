@@ -482,7 +482,7 @@
         <div class="note-footer">
           <div class="note-author">
             <span>${escHtml(post.avatar || '🙈')}</span>
-            <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '🔴' : post.authorAdminRole === 'admin' ? '🟡' : ''}</span>
+            <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}</span>
             <span style="opacity:0.5">· ${formatTime(post.time)}</span>
           </div>
           <div class="note-actions">

@@ -354,6 +354,12 @@
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.3s, visibility 0.3s;
+      pointer-events: none;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
     .modal-overlay.show {
       opacity: 1;
@@ -511,8 +517,9 @@
       <div class="user-header">
         <div class="user-avatar" id="userAvatar">👤</div>
         <div class="user-info">
-          <h1 id="userNickname">加载中... <span id="adminBadge" style="display:none;"></span></h1>
+          <h1 id="userNickname">加载中...</h1>
           <div class="user-meta">
+            <span id="adminBadge" style="display:none; font-size:16px; vertical-align:middle;"></span>
             <span id="userUsername">@username</span>
             <span id="userJoinDate">加入日期：--</span>
             <span id="bindAdminTag" style="display:none; cursor:pointer; text-decoration:underline;" onclick="openBindAdminModal()"></span>
@@ -658,6 +665,7 @@
 
     // 渲染用户信息
     function renderUser(user) {
+      if (!user) return;
       document.getElementById('userNickname').textContent = user.nickname || '匿名';
       document.getElementById('userUsername').textContent = `@${user.username}`;
       const joinDate = new Date(user.createdAt).toLocaleDateString('zh-CN');
@@ -679,12 +687,10 @@
       const bindTag = document.getElementById('bindAdminTag');
       const unbindTag = document.getElementById('unbindAdminTag');
       if (user.bindAdminRole === 'super') {
-        badge.textContent = '🔴';
-        badge.title = '最高管理员';
+        badge.textContent = '🔴 超管认证';
         badge.style.display = '';
       } else if (user.bindAdminRole === 'admin') {
-        badge.textContent = '🟡';
-        badge.title = '管理员';
+        badge.textContent = '🟡 普管认证';
         badge.style.display = '';
       } else {
         badge.style.display = 'none';
@@ -768,7 +774,7 @@
           <div class="note-meta">
             <div class="note-author">
               <div class="note-avatar">${post.avatar || '🙈'}</div>
-              <span>${post.author || '匿名'}${post.authorAdminRole === 'super' ? '🔴' : post.authorAdminRole === 'admin' ? '🟡' : ''}</span>
+              <span>${post.author || '匿名'}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}</span>
             </div>
             <div class="note-stats">
               <span>❤️ ${post.likes || 0}</span>
