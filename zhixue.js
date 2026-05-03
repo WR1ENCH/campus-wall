@@ -20,14 +20,14 @@ const { chromium } = require('playwright');
  * @param {number} timeoutMs - 等待用户完成验证的超时（ms），默认 90 秒
  * @returns {Promise<object>} 用户信息
  */
-async function loginZhixue(username, password, timeoutMs = 90000) {
+async function loginZhixue(username, password, timeoutMs = 120000) {
   if (!username || !password) {
     throw new Error('智学网账号和密码不能为空');
   }
 
   const browser = await chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
 
   let context, page;
@@ -38,43 +38,158 @@ async function loginZhixue(username, password, timeoutMs = 90000) {
     page = await context.newPage();
 
     // 1. 打开登录页
-    await page.goto('https://www.zhixue.com/', { waitUntil: 'domcontentloaded', timeout: 20000 });
+    console.log('[zhixue] 正在打开智学网登录页...');
+    await page.goto('https://www.zhixue.com/', { waitUntil: 'networkidle', timeout: 30000 });
+    console.log('[zhixue] 页面已加载，当前URL:', page.url());
 
-    // 2. 尝试点击登录入口（页面结构可能变化）
-    try {
-      await page.waitForSelector('#loginBtn, .login-btn, a[href*="login"]', { timeout: 8000 });
-      await page.click('#loginBtn, .login-btn, a[href*="login"]', { timeout: 5000 }).catch(() => {});
-    } catch (_) { /* 可能已经在登录页 */ }
+    // 2. 截图调试（保存到项目目录）
+    await page.screenshot({ path: 'zhixue_debug_1_loaded.png' });
+    console.log('[zhixue] 已保存截图: zhixue_debug_1_loaded.png');
 
-    // 3. 等待账号输入框出现
-    await page.waitForSelector('input[type="text"], input[name="username"], input[placeholder*="账号"]', { timeout: 15000 });
-
-    // 4. 填入账号密码
-    const userSelector = 'input[type="text"], input[name="username"], input[placeholder*="账号"], input[placeholder*="用户名"]';
-    const passSelector = 'input[type="password"], input[name="password"]';
-    await page.fill(userSelector, username);
-    await page.fill(passSelector, password);
-
-    // 5. 点击登录按钮，等待跳转或错误提示
-    const loginBtnSelector = 'button[type="submit"], .login-btn, button:has-text("登录"), button:has-text("登 录")';
-    await page.click(loginBtnSelector).catch(async () => {
-      // 如果点击失败，尝试按回车
-      await page.press(userSelector, 'Enter');
-    });
-
-    // 6. 等待登录成功（URL 变化或出现用户信息元素）
-    //    智学网通常跳转到 /home 或 /student/...
-    let loginOk = false;
-    try {
-      await page.waitForURL('**/home**', { timeout: 8000 });
-      loginOk = true;
-    } catch (_) {
-      // 备用：等待页面中出现退出按钮或用户昵称
+    // 3. 尝试点击登录入口（多种可能的选择器）
+    const loginSelectors = [
+      '#loginBtn', '.login-btn', '.loginLink', 
+      'a[href*="login"]', 'a[href*="Login"]',
+      'button:has-text("登录")', 'a:has-text("登录")',
+      '.header-login', '.nav-login', '.user-login'
+    ];
+    
+    for (const sel of loginSelectors) {
       try {
-        await page.waitForSelector('a[href*="logout"], .user-name, .avatar, [class*="user"]', { timeout: 8000 });
-        loginOk = true;
-      } catch (_) { /* 继续判断 */ }
+        const el = await page.$(sel);
+        if (el) {
+          console.log('[zhixue] 点击登录入口:', sel);
+          await el.click();
+          await page.waitForTimeout(2000);
+          break;
+        }
+      } catch (_) {}
     }
+
+    // 4. 再次截图
+    await page.screenshot({ path: 'zhixue_debug_2_after_login_click.png' });
+
+    // 5. 等待账号输入框出现（更灵活的选择器）
+    const usernameSelectors = [
+      'input[type="text"]',
+      'input[name="username"]',
+      'input[name="userName"]',
+      'input[name="account"]',
+      'input[placeholder*="账号"]',
+      'input[placeholder*="用户名"]',
+      'input[placeholder*="手机"]',
+      'input[id*="username"]',
+      'input[id*="user"]',
+      '#username',
+      '#userName',
+      '#account'
+    ];
+
+    let usernameInput = null;
+    for (const sel of usernameSelectors) {
+      try {
+        const el = await page.waitForSelector(sel, { timeout: 5000 });
+        if (el) {
+          usernameInput = sel;
+          console.log('[zhixue] 找到账号输入框:', sel);
+          break;
+        }
+      } catch (_) {}
+    }
+
+    if (!usernameInput) {
+      // 最后尝试：获取页面所有 input 并截图
+      const inputs = await page.$$eval('input', els => els.map(e => e.outerHTML));
+      console.log('[zhixue] 页面所有input:', inputs);
+      await page.screenshot({ path: 'zhixue_debug_3_no_input.png' });
+      throw new Error('未找到账号输入框，请查看截图 zhixue_debug_3_no_input.png');
+    }
+
+    // 6. 填入账号密码
+    const passSelectors = [
+      'input[type="password"]',
+      'input[name="password"]',
+      'input[name="pwd"]',
+      'input[id*="password"]',
+      '#password',
+      '#pwd'
+    ];
+    let passInput = null;
+    for (const sel of passSelectors) {
+      try {
+        const el = await page.waitForSelector(sel, { timeout: 3000 });
+        if (el) {
+          passInput = sel;
+          break;
+        }
+      } catch (_) {}
+    }
+
+    console.log('[zhixue] 填写账号密码...');
+    await page.fill(usernameInput, username);
+    if (passInput) {
+      await page.fill(passInput, password);
+    } else {
+      // 尝试通用的密码选择器
+      await page.fill('input[type="password"]', password);
+    }
+
+    // 7. 截图确认填写
+    await page.screenshot({ path: 'zhixue_debug_4_filled.png' });
+
+    // 8. 点击登录按钮
+    const loginBtnSelectors = [
+      'button[type="submit"]',
+      'button:has-text("登录")',
+      'button:has-text("登 录")',
+      '.login-btn',
+      '.login-button',
+      '#loginBtn',
+      '#login',
+      'a:has-text("登录")'
+    ];
+
+    for (const sel of loginBtnSelectors) {
+      try {
+        const el = await page.$(sel);
+        if (el) {
+          console.log('[zhixue] 点击登录按钮:', sel);
+          await el.click();
+          break;
+        }
+      } catch (_) {}
+    }
+
+    // 等待一段时间让页面跳转
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'zhixue_debug_5_after_submit.png' });
+
+    // 9. 等待登录成功（URL 变化或出现用户信息元素）
+    //    智学网通常跳转到 /home 或 /student/...
+    console.log('[zhixue] 等待登录跳转，当前URL:', page.url());
+    let loginOk = false;
+    
+    try {
+      await page.waitForURL('**/home**', { timeout: 10000 });
+      loginOk = true;
+      console.log('[zhixue] URL跳转到home页');
+    } catch (_) {
+      try {
+        await page.waitForURL('**/student/**', { timeout: 10000 });
+        loginOk = true;
+        console.log('[zhixue] URL跳转到student页');
+      } catch (_) {
+        // 备用：等待页面中出现退出按钮或用户昵称
+        try {
+          await page.waitForSelector('a[href*="logout"], .user-name, .avatar, [class*="user"], [class*="nick"]', { timeout: 10000 });
+          loginOk = true;
+          console.log('[zhixue] 页面出现用户信息元素');
+        } catch (_) { /* 继续判断 */ }
+      }
+    }
+
+    // 截图记录登录后状态
+    await page.screenshot({ path: 'zhixue_debug_6_after_login.png' });
 
     // 7. 检查是否有错误提示
     const errorText = await page.evaluate(() => {
