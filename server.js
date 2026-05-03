@@ -682,8 +682,8 @@ app.delete('/api/user/bind-admin', (req, res) => {
 
 // ===== 智学网账号绑定 =====
 
-// 绑定智学网账号（自动登录抓取姓名/学校）
-app.post('/api/user/bind-zhixue', async (req, res) => {
+// 绑定智学网账号（提交审核）
+app.post('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
@@ -693,36 +693,32 @@ app.post('/api/user/bind-zhixue', async (req, res) => {
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
-  if (!loginZhixue) {
-    return res.json({ ok: false, msg: '服务器未安装 Playwright，暂不支持智学网绑定。请管理员安装：npm install playwright && npx playwright install chromium' });
+  const { zhixueUsername, realName, school, className } = req.body;
+  if (!zhixueUsername) {
+    return res.json({ ok: false, msg: '请填写智学网账号' });
   }
 
-  const { zhixueUsername, zhixuePassword } = req.body;
-  if (!zhixueUsername || !zhixuePassword) {
-    return res.json({ ok: false, msg: '请填写智学网账号和密码' });
+  // 如果状态是已认证，需要先解除才能重新提交
+  if (users[userIndex].zhixueStatus === 'approved') {
+    return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
   }
 
-  try {
-    const info = await loginZhixue(zhixueUsername, zhixuePassword);
-    // 只存账号和抓取到的信息，不存密码
-    users[userIndex].zhixueUsername = zhixueUsername;
-    users[userIndex].zhixueRealName = info.realName || '';
-    users[userIndex].zhixueSchool = info.schoolName || '';
-    users[userIndex].zhixueClass = info.className || '';
-    writeUsers(users);
+  // 保存账号信息，状态设为待审核
+  users[userIndex].zhixueUsername = zhixueUsername;
+  users[userIndex].zhixueRealName = realName || '';
+  users[userIndex].zhixueSchool = school || '';
+  users[userIndex].zhixueClass = className || '';
+  users[userIndex].zhixueStatus = 'pending';
+  users[userIndex].zhixueSubmittedAt = new Date().toISOString();
+  users[userIndex].zhixueReviewedAt = null;
+  users[userIndex].zhixueReviewedBy = null;
+  writeUsers(users);
 
-    res.json({
-      ok: true,
-      data: {
-        zhixueUsername,
-        realName: info.realName || '',
-        school: info.schoolName || '',
-        class: info.className || ''
-      }
-    });
-  } catch (e) {
-    res.json({ ok: false, msg: '智学网登录失败：' + e.message });
-  }
+  res.json({
+    ok: true,
+    msg: '提交成功，请等待管理员审核',
+    data: { zhixueUsername, status: 'pending' }
+  });
 });
 
 // 解绑智学网账号
@@ -739,6 +735,10 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   users[userIndex].zhixueRealName = null;
   users[userIndex].zhixueSchool = null;
   users[userIndex].zhixueClass = null;
+  users[userIndex].zhixueStatus = null;
+  users[userIndex].zhixueSubmittedAt = null;
+  users[userIndex].zhixueReviewedAt = null;
+  users[userIndex].zhixueReviewedBy = null;
   writeUsers(users);
 
   res.json({ ok: true });
@@ -764,9 +764,53 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
       zhixueUsername: user.zhixueUsername,
       realName: user.zhixueRealName || '',
       school: user.zhixueSchool || '',
-      class: user.zhixueClass || ''
+      class: user.zhixueClass || '',
+      status: user.zhixueStatus || 'pending',
+      submittedAt: user.zhixueSubmittedAt || null
     }
   });
+});
+
+// ===== 管理员智学网审核 =====
+
+// 获取待审核列表（仅管理员）
+app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const pending = users.filter(u => u.zhixueUsername && u.zhixueStatus === 'pending');
+  const list = pending.map(u => ({
+    id: u.id,
+    nickname: u.nickname,
+    avatar: u.avatar,
+    zhixueUsername: u.zhixueUsername,
+    realName: u.zhixueRealName || '',
+    school: u.zhixueSchool || '',
+    class: u.zhixueClass || '',
+    submittedAt: u.zhixueSubmittedAt
+  }));
+  res.json({ ok: true, data: list });
+});
+
+// 审核智学网账号（通过/拒绝）
+app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
+  const { action, realName, school, className } = req.body; // action: approve | reject
+  if (!['approve', 'reject'].includes(action)) {
+    return res.json({ ok: false, msg: '无效的操作' });
+  }
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === req.params.userId);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  users[userIndex].zhixueStatus = action === 'approve' ? 'approved' : 'rejected';
+  users[userIndex].zhixueReviewedAt = new Date().toISOString();
+  users[userIndex].zhixueReviewedBy = req.session.id;
+  if (action === 'approve') {
+    if (realName !== undefined) users[userIndex].zhixueRealName = realName;
+    if (school !== undefined) users[userIndex].zhixueSchool = school;
+    if (className !== undefined) users[userIndex].zhixueClass = className;
+  }
+  writeUsers(users);
+
+  res.json({ ok: true, msg: action === 'approve' ? '已通过审核' : '已拒绝' });
 });
 
 // 获取指定用户公开信息（通过用户ID）
