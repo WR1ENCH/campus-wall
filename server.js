@@ -8,7 +8,7 @@ const crypto = require('crypto');
 let loginZhixue = null;
 try {
   const zhixueModule = require('./zhixue');
-  loginZhiXue = zhixueModule.loginZhixue;
+  loginZhixue = zhixueModule.loginZhixue;
   console.log('[zhixue] 智学网模块加载成功');
 } catch (e) {
   console.warn('[zhixue] 智学网模块未加载（缺失 Playwright 或 zhixue.js）：', e.message);
