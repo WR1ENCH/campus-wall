@@ -996,6 +996,8 @@
           hideLoginModal();
           updateUserBar();
           showToast('🎉 注册成功，欢迎 ' + n + '！');
+          _spotlight.step = 0;
+          localStorage.removeItem('newbieGuideShown');
           setTimeout(() => showNewbieGuide(), 800);
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '注册失败';
@@ -1270,6 +1272,7 @@
         const html = `
           <div class="sticky-note ${cfg.color} ${sizeInfo.sizeClass}"
                style="width:${sizeInfo.width}px; padding:${sizeInfo.padding}px; padding-top:${sizeInfo.padding + 10}px; transform:rotate(${post.rotate}deg); z-index:${post.zIndex}; animation-delay:${idx * 0.04}s"
+               data-id="${post.id}"
                onclick="openNoteDetail('${post.id}')">
             ${pinHtml}
             <div class="note-type">${cfg.emoji} ${post.type}</div>
@@ -1643,13 +1646,6 @@
       }
 
       try {
-        // 调试：把 reason 值打到页面上
-        console.log('[举报] reason=', JSON.stringify(reason), 'postId=', _reportId);
-        // 临时：在页面角落显示 reason 值，方便确认
-        let dbg = document.getElementById('reportDebug');
-        if (!dbg) { dbg = document.createElement('div'); dbg.id = 'reportDebug'; dbg.style.cssText = 'position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:6px 10px;font-size:12px;z-index:9999;border-radius:6px;'; document.body.appendChild(dbg); }
-        dbg.textContent = 'reason=' + reason;
-
         const res = await fetch('/api/posts/' + _reportId + '/report', {
           method: 'POST',
           headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
@@ -1686,6 +1682,8 @@
       document.getElementById('modalOverlay').classList.remove('show');
     }
 
+    var _justPostedId = null;  // 记录刚发的帖子ID，供引导使用
+
     async function submitNote() {
       const input = document.getElementById('noteInput');
       const content = input.value.trim();
@@ -1698,10 +1696,15 @@
         newPost.rotate = rand(-4, 4);
         newPost.zIndex = randInt(1, 5);
         posts.unshift(newPost);
+        _justPostedId = newPost.id;  // 记录刚发的帖子ID
         input.value = '';
         closeModal();
         renderNotes(currentFilter);
         showToast('📌 便利贴已贴上！');
+        // 发帖成功后，如果引导在第1步，重新渲染以高亮刚发的帖子
+        if (_spotlight && _spotlight.container && _spotlight.container.style.display === 'block') {
+          setTimeout(_renderSpotlightStep, 300);
+        }
       } else {
         showToast('⚠️ 发帖失败，请检查服务器');
       }
@@ -1747,17 +1750,26 @@
       step: 0,
       steps: [
         {
-          selector: '#noteInput',
+          selector: '.compose-btn',
           title: '发帖子 ✏️',
-          desc: '点击右上角的「✏️ 贴一张」按钮<br>写下你想分享的内容',
+          desc: '点击「✏️ 贴一张」按钮<br>写下你想分享的内容',
           openModal: true,
           btnText: '知道了',
           position: 'bottom'
         },
         {
-          selector: '.note-card',
-          title: '浏览 & 评论 💬',
-          desc: '点击任意便利贴卡片<br>可以查看详情并发表评论',
+          // 第2步：高亮刚发的帖子（通过 _getGuideSelector 动态获取）
+          selector: '',
+          title: '你的帖子已发布 📝',
+          desc: '点击这张便利贴<br>查看帖子详情',
+          btnText: '点击查看',
+          position: 'top',
+          dynamicSelector: true  // 标记为动态选择器
+        },
+        {
+          selector: '#detailLinkBtn',
+          title: '查看详情 🔍',
+          desc: '点击「查看详情」<br>在新窗口打开完整内容',
           btnText: '下一步',
           position: 'top'
         },
@@ -1832,8 +1844,24 @@
       var s = _spotlight;
       var info = s.steps[s.step];
       if (!info) { _endSpotlight(); return; }
-      var r = _getRect(info.selector);
-      if (!r || r.width === 0) { s.step++; _renderSpotlightStep(); return; }
+
+      // 动态选择器：第2步高亮刚发的帖子
+      if (info.dynamicSelector) {
+        if (_justPostedId) {
+          info._realSelector = '[data-id="' + _justPostedId + '"]';
+        } else {
+          var first = document.querySelector('.sticky-note');
+          info._realSelector = first ? '.sticky-note' : null;
+        }
+      }
+      var selector = info._realSelector || info.selector;
+      if (!selector) { hideNewbieGuide(); return; }
+
+      var r = _getRect(selector);
+      if (!r || r.width === 0) {
+        hideNewbieGuide();
+        return;
+      }
       var vw = window.innerWidth, vh = window.innerHeight;
       var tp = _getTooltipPos(r, info.position || 'bottom');
       var isLast = s.step === s.steps.length - 1;
@@ -1853,46 +1881,67 @@
     }
 
     function _nextSpotlight() {
-      var info = _spotlight.steps[_spotlight.step];
-      // 第1步：用户点了"知道了"就打开发帖模态框
-      if (_spotlight.step === 0 && info.openModal) {
-        closeNoteDetail(); // 确保详情页关闭
+      var s = _spotlight, step = s.step;
+      var info = s.steps[step];
+
+      // step 0：打开发帖模态框
+      if (step === 0 && info.openModal) {
+        closeNoteDetail();
         openModal();
       }
-      // 第2步：用户点了"下一步"就尝试打开第一张帖子的详情
-      if (_spotlight.step === 1) {
-        closeNoteDetail();
-        var firstCard = document.querySelector('.note-card');
-        if (firstCard) { firstCard.click(); }
+      // step 1：点击刚发的帖子，打开详情页
+      if (step === 1) {
+        var selector = info._realSelector || info.selector;
+        var card = document.querySelector(selector);
+        if (card) { card.click(); }
       }
-      // 第3步：确保详情页打开
-      if (_spotlight.step === 2) {
+      // step 3（点赞按钮）完成后：关闭详情页，回到首页再引导头像
+      if (step === 3) {
         closeNoteDetail();
-        var firstCard = document.querySelector('.note-card');
-        if (firstCard) { firstCard.click(); }
+        s.step = step + 1; // 先更新 step 到 4
+        s.container.style.display = 'block';
+        s.tooltip.style.display = 'block';
+        setTimeout(_renderSpotlightStep, 600);
+        return; // 跳过下面的统一 step++ 逻辑
       }
-      _spotlight.step++;
-      _spotlight.container.style.display = 'block';
-      _spotlight.tooltip.style.display = 'block';
+
+      s.step = step + 1;
+      s.container.style.display = 'block';
+      s.tooltip.style.display = 'block';
       setTimeout(_renderSpotlightStep, 200);
     }
 
     function showNewbieGuide() {
-      if (localStorage.getItem('newbieGuideShown')) return;
+      if (localStorage.getItem('newbieGuideForceOff') === '1') return;
+      var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+      if (!curUser) return;
+      if (localStorage.getItem('newbieGuideShown') === curUser.username) return;
+      // 同一用户只触发一次；不同用户或首次注册重新触发
+      if (localStorage.getItem('newbieGuideShown') === curUser.username) return;
       if (!_spotlight.container) {
         _spotlight.container = document.getElementById('spotlightOverlay');
         _spotlight.tooltip  = document.getElementById('spotlightTooltip');
       }
-      _spotlight.step = 0;
+      // 强制重置到第一步，用新对象替代防止污染
+      _spotlight = { step: 0, steps: _spotlight.steps,
+        container: _spotlight.container, tooltip: _spotlight.tooltip };
       _spotlight.container.style.display = 'block';
       _spotlight.tooltip.style.display  = 'block';
-      setTimeout(_renderSpotlightStep, 100);
+      setTimeout(_renderSpotlightStep, 120);
     }
 
     function hideNewbieGuide() {
       if (!_spotlight.container) {
         _spotlight.container = document.getElementById('spotlightOverlay');
         _spotlight.tooltip  = document.getElementById('spotlightTooltip');
+      }
+      var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+      if (curUser && curUser.username) {
+        localStorage.setItem('newbieGuideShown', curUser.username);
+      }
+      var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+      if (curUser && curUser.username) {
+        localStorage.setItem('newbieGuideShown', curUser.username);
       }
       _spotlight.container.style.display = 'none';
       _spotlight.tooltip.style.display  = 'none';
