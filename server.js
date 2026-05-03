@@ -4,6 +4,16 @@ const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
 
+// 智学网自动登录模块（需 Playwright / Chromium）
+let loginZhixue = null;
+try {
+  const zhixueModule = require('./zhixue');
+  loginZhiXue = zhixueModule.loginZhixue;
+  console.log('[zhixue] 智学网模块加载成功');
+} catch (e) {
+  console.warn('[zhixue] 智学网模块未加载（缺失 Playwright 或 zhixue.js）：', e.message);
+}
+
 // ===== 密码哈希工具（SHA-256 + 随机盐，无需外部依赖）=====
 const SALT_LEN = 16;
 const ITERATIONS = 100000; // PBKDF2 迭代次数，防暴力
@@ -668,6 +678,95 @@ app.delete('/api/user/bind-admin', (req, res) => {
   writeUsers(users);
 
   res.json({ ok: true });
+});
+
+// ===== 智学网账号绑定 =====
+
+// 绑定智学网账号（自动登录抓取姓名/学校）
+app.post('/api/user/bind-zhixue', async (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
+
+  if (!loginZhixue) {
+    return res.json({ ok: false, msg: '服务器未安装 Playwright，暂不支持智学网绑定。请管理员安装：npm install playwright && npx playwright install chromium' });
+  }
+
+  const { zhixueUsername, zhixuePassword } = req.body;
+  if (!zhixueUsername || !zhixuePassword) {
+    return res.json({ ok: false, msg: '请填写智学网账号和密码' });
+  }
+
+  try {
+    const info = await loginZhixue(zhixueUsername, zhixuePassword);
+    // 只存账号和抓取到的信息，不存密码
+    users[userIndex].zhixueUsername = zhixueUsername;
+    users[userIndex].zhixueRealName = info.realName || '';
+    users[userIndex].zhixueSchool = info.schoolName || '';
+    users[userIndex].zhixueClass = info.className || '';
+    writeUsers(users);
+
+    res.json({
+      ok: true,
+      data: {
+        zhixueUsername,
+        realName: info.realName || '',
+        school: info.schoolName || '',
+        class: info.className || ''
+      }
+    });
+  } catch (e) {
+    res.json({ ok: false, msg: '智学网登录失败：' + e.message });
+  }
+});
+
+// 解绑智学网账号
+app.delete('/api/user/bind-zhixue', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  users[userIndex].zhixueUsername = null;
+  users[userIndex].zhixueRealName = null;
+  users[userIndex].zhixueSchool = null;
+  users[userIndex].zhixueClass = null;
+  writeUsers(users);
+
+  res.json({ ok: true });
+});
+
+// 获取当前用户绑定的智学网信息（用于前端展示）
+app.get('/api/user/me/zhixue-info', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  if (!user.zhixueUsername) {
+    return res.json({ ok: true, data: null });
+  }
+
+  res.json({
+    ok: true,
+    data: {
+      zhixueUsername: user.zhixueUsername,
+      realName: user.zhixueRealName || '',
+      school: user.zhixueSchool || '',
+      class: user.zhixueClass || ''
+    }
+  });
 });
 
 // 获取指定用户公开信息（通过用户ID）
