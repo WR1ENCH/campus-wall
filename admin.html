@@ -600,6 +600,14 @@
         <span class="nav-icon">📋</span>
         <span>帖子管理</span>
       </div>
+      <div class="nav-item" onclick="showPage('comments', this)">
+        <span class="nav-icon">💬</span>
+        <span>评论管理</span>
+      </div>
+      <div class="nav-item" onclick="showPage('reports', this)">
+        <span class="nav-icon">⚠️</span>
+        <span>举报处理</span>
+      </div>
     </div>
 
     <!-- 用户管理（独立一级菜单） -->
@@ -622,18 +630,6 @@
       <div class="nav-item" onclick="showPage('admins', this)">
         <span class="nav-icon">👥</span>
         <span>管理员</span>
-      </div>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">内容审核</div>
-      <div class="nav-item" onclick="showPage('reports', this)">
-        <span class="nav-icon">⚠️</span>
-        <span>举报处理</span>
-      </div>
-      <div class="nav-item" onclick="showPage('comments', this)">
-        <span class="nav-icon">💬</span>
-        <span>评论管理</span>
       </div>
     </div>
 
@@ -811,9 +807,14 @@
     <!-- 评论管理页 -->
     <div class="page" id="page-comments" style="display:none;">
       <div class="post-toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="commentSearchInput" placeholder="搜索评论内容、作者…" oninput="filterComments()">
+        </div>
         <div style="flex:1;">
           <span style="font-size:14px;color:var(--text-sub);">
             共 <strong id="commentTotalCount">0</strong> 条评论
+            <span id="commentFilteredCount" style="color:var(--text-sub);"></span>
           </span>
         </div>
         <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadComments()">🔄 刷新</button>
@@ -1209,10 +1210,28 @@
       if (!json.ok) throw new Error(json.msg);
       allComments = json.data || [];
       document.getElementById('commentTotalCount').textContent = allComments.length;
-      renderComments(allComments);
+      filterComments();
     } catch (e) {
       document.getElementById('commentsBody').innerHTML = '<div class="empty-tip">⚠️ 加载失败：' + escHtml(e.message) + '</div>';
     }
+  }
+
+  function filterComments() {
+    const kw = (document.getElementById('commentSearchInput').value || '').trim().toLowerCase();
+    const filtered = kw
+      ? allComments.filter(c =>
+          (c.author || '').toLowerCase().includes(kw) ||
+          (c.content || '').toLowerCase().includes(kw) ||
+          (c.postContent || '').toLowerCase().includes(kw)
+        )
+      : allComments;
+    const countEl = document.getElementById('commentFilteredCount');
+    if (kw && filtered.length !== allComments.length) {
+      countEl.textContent = '（筛选 ' + filtered.length + ' 条）';
+    } else {
+      countEl.textContent = '';
+    }
+    renderComments(filtered);
   }
 
   function renderComments(comments) {
