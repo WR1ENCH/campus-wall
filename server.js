@@ -680,9 +680,9 @@ app.delete('/api/user/bind-admin', (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 智学网账号绑定 =====
+// ===== 同学认证 =====
 
-// 绑定智学网账号（提交审核）
+// 提交同学认证（账号+密码，提交审核）
 app.post('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
@@ -693,9 +693,12 @@ app.post('/api/user/bind-zhixue', (req, res) => {
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
-  const { zhixueUsername, realName, school, className } = req.body;
+  const { zhixueUsername, zhixuePassword } = req.body;
   if (!zhixueUsername) {
     return res.json({ ok: false, msg: '请填写智学网账号' });
+  }
+  if (!zhixuePassword) {
+    return res.json({ ok: false, msg: '请填写智学网密码' });
   }
 
   // 如果状态是已认证，需要先解除才能重新提交
@@ -703,11 +706,9 @@ app.post('/api/user/bind-zhixue', (req, res) => {
     return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
   }
 
-  // 保存账号信息，状态设为待审核
+  // 保存账号和密码，状态设为待审核
   users[userIndex].zhixueUsername = zhixueUsername;
-  users[userIndex].zhixueRealName = realName || '';
-  users[userIndex].zhixueSchool = school || '';
-  users[userIndex].zhixueClass = className || '';
+  users[userIndex].zhixuePassword = zhixuePassword; // 明文存储，供管理员手动验证
   users[userIndex].zhixueStatus = 'pending';
   users[userIndex].zhixueSubmittedAt = new Date().toISOString();
   users[userIndex].zhixueReviewedAt = null;
@@ -721,7 +722,7 @@ app.post('/api/user/bind-zhixue', (req, res) => {
   });
 });
 
-// 解绑智学网账号
+// 解绑同学认证
 app.delete('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
@@ -732,9 +733,7 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   users[userIndex].zhixueUsername = null;
-  users[userIndex].zhixueRealName = null;
-  users[userIndex].zhixueSchool = null;
-  users[userIndex].zhixueClass = null;
+  users[userIndex].zhixuePassword = null;
   users[userIndex].zhixueStatus = null;
   users[userIndex].zhixueSubmittedAt = null;
   users[userIndex].zhixueReviewedAt = null;
@@ -744,7 +743,7 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   res.json({ ok: true });
 });
 
-// 获取当前用户绑定的智学网信息（用于前端展示）
+// 获取当前用户同学认证信息（用于前端展示）
 app.get('/api/user/me/zhixue-info', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
@@ -762,16 +761,13 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
     ok: true,
     data: {
       zhixueUsername: user.zhixueUsername,
-      realName: user.zhixueRealName || '',
-      school: user.zhixueSchool || '',
-      class: user.zhixueClass || '',
       status: user.zhixueStatus || 'pending',
       submittedAt: user.zhixueSubmittedAt || null
     }
   });
 });
 
-// ===== 管理员智学网审核 =====
+// ===== 管理员同学认证审核 =====
 
 // 获取待审核列表（仅管理员）
 app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
@@ -782,17 +778,15 @@ app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
     nickname: u.nickname,
     avatar: u.avatar,
     zhixueUsername: u.zhixueUsername,
-    realName: u.zhixueRealName || '',
-    school: u.zhixueSchool || '',
-    class: u.zhixueClass || '',
+    zhixuePassword: u.zhixuePassword || '',
     submittedAt: u.zhixueSubmittedAt
   }));
   res.json({ ok: true, data: list });
 });
 
-// 审核智学网账号（通过/拒绝）
+// 审核同学认证（通过/拒绝）
 app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
-  const { action, realName, school, className } = req.body; // action: approve | reject
+  const { action } = req.body; // action: approve | reject
   if (!['approve', 'reject'].includes(action)) {
     return res.json({ ok: false, msg: '无效的操作' });
   }
@@ -802,11 +796,10 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
 
   users[userIndex].zhixueStatus = action === 'approve' ? 'approved' : 'rejected';
   users[userIndex].zhixueReviewedAt = new Date().toISOString();
-  users[userIndex].zhixueReviewedBy = req.session.id;
+  users[userIndex].zhixueReviewedBy = req.admin.id;
+  // 通过后隐藏密码
   if (action === 'approve') {
-    if (realName !== undefined) users[userIndex].zhixueRealName = realName;
-    if (school !== undefined) users[userIndex].zhixueSchool = school;
-    if (className !== undefined) users[userIndex].zhixueClass = className;
+    users[userIndex].zhixuePassword = null;
   }
   writeUsers(users);
 

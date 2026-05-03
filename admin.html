@@ -610,7 +610,7 @@
       </div>
       <div class="nav-item" onclick="showPage('zhixue', this)">
         <span class="nav-icon">🎓</span>
-        <span>智学网审核</span>
+        <span>同学认证审核</span>
       </div>
     </div>
 
@@ -808,7 +808,7 @@
       </div>
     </div>
 
-    <!-- 智学网审核页 -->
+    <!-- 同学认证审核页 -->
     <div class="page" id="page-zhixue" style="display:none;">
       <div class="post-toolbar">
         <div style="flex:1;">
@@ -821,7 +821,7 @@
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header" id="zhixueHeader">
           <div style="display:flex;align-items:center;gap:8px;">
-            <span>智学网认证申请</span>
+            <span>同学认证申请</span>
           </div>
         </div>
         <div id="zhixueBody">
@@ -1395,63 +1395,60 @@
     }
   }
 
-  // ===== 智学网审核 =====
-  async function loadZhixuePending() {
-    try {
-      const res = await fetch('/api/admin/zhixue-pending', { headers: adminHeaders() });
-      const json = await res.json();
-      if (!json.ok) { document.getElementById('zhixueBody').innerHTML = '<div class="error">' + json.msg + '</div>'; return; }
-      const list = json.data || [];
-      document.getElementById('zhixuePendingCount').textContent = list.length;
-      if (list.length === 0) {
-        document.getElementById('zhixueBody').innerHTML = '<div class="empty">暂无待审核申请</div>';
-        return;
-      }
-      let html = '';
-      list.forEach(u => {
-        const submittedAt = u.submittedAt ? new Date(u.submittedAt).toLocaleString('zh-CN') : '-';
-        html += `
+    // ===== 同学认证审核 =====
+    async function loadZhixuePending() {
+      try {
+        const res = await fetch('/api/admin/zhixue-pending', { headers: adminHeaders() });
+        const json = await res.json();
+        if (!json.ok) { document.getElementById('zhixueBody').innerHTML = '<div class="error">' + json.msg + '</div>'; return; }
+        const list = json.data || [];
+        document.getElementById('zhixuePendingCount').textContent = list.length;
+        if (list.length === 0) {
+          document.getElementById('zhixueBody').innerHTML = '<div class="empty">暂无待审核申请</div>';
+          return;
+        }
+        let html = '';
+        list.forEach(u => {
+          const submittedAt = u.submittedAt ? new Date(u.submittedAt).toLocaleString('zh-CN') : '-';
+          html += `
           <div class="user-card" style="padding:16px; border-bottom:1px solid var(--border);">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
               <div class="user-avatar" style="width:40px;height:40px;font-size:18px;">${u.avatar || u.nickname?.charAt(0) || '👤'}</div>
               <div>
                 <div style="font-weight:600;">${u.nickname || '匿名'}</div>
-                <div style="font-size:12px;color:var(--text-sub);">账号：${u.zhixueUsername}</div>
+                <div style="font-size:12px;color:var(--text-sub);">智学网账号：${u.zhixueUsername}</div>
               </div>
             </div>
             <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">
-              <div style="margin-bottom:4px;">姓名：${u.realName || '-'}</div>
-              <div style="margin-bottom:4px;">学校：${u.school || '-'}</div>
-              <div style="margin-bottom:4px;">班级：${u.class || '-'}</div>
               <div style="font-size:12px;">提交时间：${submittedAt}</div>
+              <div style="font-size:11px; margin-top:4px; color:var(--text-sub);">管理员需手动用账号密码登录智学网验证身份</div>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}', '${u.zhixueUsername}', '${u.realName}', '${u.school}', '${u.class}')">✅ 通过</button>
+              <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}')">✅ 通过</button>
               <button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="rejectZhixue('${u.id}')">❌ 拒绝</button>
-              <button class="btn-edit" style="font-size:12px;padding:6px 14px;" onclick="openEditZhixueModal('${u.id}', '${u.realName}', '${u.school}', '${u.class}')">✏️ 编辑信息</button>
             </div>
           </div>
         `;
-      });
-      document.getElementById('zhixueBody').innerHTML = html;
-    } catch (e) {
-      document.getElementById('zhixueBody').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+        });
+        document.getElementById('zhixueBody').innerHTML = html;
+      } catch (e) {
+        document.getElementById('zhixueBody').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+      }
     }
-  }
 
-  async function approveZhixue(userId, username, realName, school, className) {
-    if (!confirm(`确定通过 ${username} 的认证申请？`)) return;
-    try {
-      const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
-        method: 'PUT',
-        headers: { ...adminHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', realName, school, className })
-      });
-      const json = await res.json();
-      if (json.ok) { alert('已通过审核'); loadZhixuePending(); }
-      else alert(json.msg || '操作失败');
-    } catch (e) { alert('操作失败：' + e.message); }
-  }
+    async function approveZhixue(userId) {
+      if (!confirm(`确定通过此同学认证申请？`)) return;
+      try {
+        const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
+          method: 'PUT',
+          headers: { ...adminHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'approve' })
+        });
+        const json = await res.json();
+        if (json.ok) { alert('已通过审核'); loadZhixuePending(); }
+        else alert(json.msg || '操作失败');
+      } catch (e) { alert('操作失败：' + e.message); }
+    }
 
   async function rejectZhixue(userId) {
     if (!confirm('确定拒绝该认证申请？')) return;
@@ -1467,59 +1464,7 @@
     } catch (e) { alert('操作失败：' + e.message); }
   }
 
-  function openEditZhixueModal(userId, realName, school, className) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <div class="modal-header">✏️ 编辑认证信息</div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">真实姓名</label>
-            <input type="text" id="editZhixueRealName" class="form-input" value="${realName || ''}" placeholder="真实姓名">
-          </div>
-          <div class="form-group">
-            <label class="form-label">学校名称</label>
-            <input type="text" id="editZhixueSchool" class="form-input" value="${school || ''}" placeholder="学校名称">
-          </div>
-          <div class="form-group">
-            <label class="form-label">班级</label>
-            <input type="text" id="editZhixueClass" class="form-input" value="${className || ''}" placeholder="班级">
-          </div>
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal-overlay').remove()">取消</button>
-            <button class="modal-btn modal-btn-primary" onclick="doEditZhixue('${userId}')">保存</button>
-          </div>
-        </div>
-      </div>
-    `;
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    document.body.appendChild(modal);
-    requestAnimationFrame(() => modal.classList.add('show'));
-  }
-
-  async function doEditZhixue(userId) {
-    const realName = document.getElementById('editZhixueRealName').value.trim();
-    const school = document.getElementById('editZhixueSchool').value.trim();
-    const className = document.getElementById('editZhixueClass').value.trim();
-    try {
-      const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
-        method: 'PUT',
-        headers: { ...adminHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', realName, school, className })
-      });
-      const json = await res.json();
-      if (json.ok) {
-        document.querySelector('.modal-overlay:last-child').remove();
-        alert('保存成功');
-        loadZhixuePending();
-      } else {
-        alert(json.msg || '保存失败');
-      }
-    } catch (e) { alert('保存失败：' + e.message); }
-  }
-
-  function updateClock() {
+    function updateClock() {
     const now = new Date();
     document.getElementById('currentTime').textContent =
       now.toLocaleDateString('zh-CN') + ' ' +
@@ -1534,7 +1479,7 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', loginlogs: '登录日志', zhixue: '智学网审核' };
+    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', loginlogs: '登录日志', zhixue: '同学认证审核' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();

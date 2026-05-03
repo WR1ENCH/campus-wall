@@ -500,6 +500,16 @@
       background: rgba(139,111,94,0.25);
       border-color: rgba(139,111,94,0.5);
     }
+    /* 同学认证绿色按钮 */
+    .bind-zhixue-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+    .bind-zhixue-btn:hover {
+      background: #16a34a;
+    }
   </style>
 </head>
 <body>
@@ -541,17 +551,15 @@
           </div>
           <div style="margin-top: 20px; text-align: center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <button id="editProfileBtn" class="edit-btn" style="display:none;">📝 编辑资料</button>
-            <button id="bindZhixueBtn" class="edit-btn" style="display:none; background:var(--primary);">🎓 绑定智学网</button>
+            <button id="bindZhixueBtn" class="edit-btn bind-zhixue-btn" style="display:none;">🎓 同学认证</button>
           </div>
-          <!-- 智学网认证信息展示 -->
+          <!-- 同学认证信息展示 -->
           <div id="zhixueInfo" style="margin-top:16px; padding:12px 16px; background:var(--bg-main); border-radius:12px; font-size:13px; color:var(--text-sub); display:none;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-              <span style="font-weight:600; color:var(--text-main);">🎓 智学网认证</span>
+              <span style="font-weight:600; color:var(--text-main);">🎓 同学认证</span>
               <span id="zhixueStatusBadge" style="padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;"></span>
             </div>
-            <div id="zhixueRealName" style="margin-bottom:4px;"></div>
-            <div id="zhixueSchool" style="margin-bottom:4px;"></div>
-            <div id="zhixueClass" style="margin-bottom:8px;"></div>
+            <div id="zhixueUsername" style="margin-bottom:4px;"></div>
             <div id="zhixueSubmittedAt" style="margin-bottom:8px; font-size:11px; color:var(--text-sub);"></div>
             <button id="unbindZhixueBtn" style="font-size:12px; color:var(--danger); background:none; border:none; cursor:pointer; padding:0;">解除绑定</button>
           </div>
@@ -816,7 +824,7 @@
       bindZhixueBtn.addEventListener('click', openBindZhixueModal);
     }
 
-    // 查询当前用户是否已绑定智学网
+    // 查询当前用户是否已绑定智学网（同学认证）
     async function loadZhixueInfo() {
       try {
         const resp = await fetch('/api/user/me/zhixue-info', {
@@ -825,9 +833,7 @@
         const data = await resp.json();
         if (data.ok && data.data) {
           const info = data.data;
-          document.getElementById('zhixueRealName').textContent = '姓名：' + (info.realName || '待审核');
-          document.getElementById('zhixueSchool').textContent = '学校：' + (info.school || '待审核');
-          document.getElementById('zhixueClass').textContent = info.class ? '班级：' + info.class : '';
+          document.getElementById('zhixueUsername').textContent = '账号：' + (info.zhixueUsername || '待审核');
           // 状态标签
           const statusBadge = document.getElementById('zhixueStatusBadge');
           const style = statusStyles[info.status] || statusStyles.pending;
@@ -851,11 +857,11 @@
           if (bindZhixueBtn) bindZhixueBtn.style.display = '';
         }
       } catch (e) {
-        console.error('加载智学网信息失败', e);
+        console.error('加载同学认证信息失败', e);
       }
     }
 
-    // 打开绑定弹窗
+    // 打开绑定弹窗（同学认证）
     function openBindZhixueModal() {
       const old = document.getElementById('bindZhixueModal');
       if (old) old.remove();
@@ -865,7 +871,7 @@
       modal.className = 'modal-overlay';
       modal.innerHTML = `
         <div class="modal">
-          <div class="modal-header">🎓 提交智学网认证</div>
+          <div class="modal-header">🎓 同学认证</div>
           <div class="modal-body">
             <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:16px; font-weight:bold; display:none;"></div>
             <div class="form-group">
@@ -873,20 +879,12 @@
               <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
             </div>
             <div class="form-group">
-              <label class="form-label">真实姓名</label>
-              <input type="text" id="zhixueInputRealName" class="form-input" placeholder="你的真实姓名">
-            </div>
-            <div class="form-group">
-              <label class="form-label">学校名称</label>
-              <input type="text" id="zhixueInputSchool" class="form-input" placeholder="学校名称">
-            </div>
-            <div class="form-group">
-              <label class="form-label">班级</label>
-              <input type="text" id="zhixueInputClass" class="form-input" placeholder="班级（如：高一1班）">
+              <label class="form-label">智学网密码</label>
+              <input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">
             </div>
             <div class="modal-actions">
               <button class="modal-btn modal-btn-secondary" onclick="closeBindZhixueModal()">取消</button>
-              <button class="modal-btn modal-btn-primary" onclick="doBindZhixue()">提交审核</button>
+              <button class="modal-btn bind-zhixue-btn" onclick="doBindZhixue()">提交审核</button>
             </div>
           </div>
         </div>
@@ -902,9 +900,7 @@
 
     async function doBindZhixue() {
       const username = document.getElementById('zhixueInputUsername').value.trim();
-      const realName = document.getElementById('zhixueInputRealName').value.trim();
-      const school = document.getElementById('zhixueInputSchool').value.trim();
-      const className = document.getElementById('zhixueInputClass').value.trim();
+      const password = document.getElementById('zhixueInputPassword').value;
       const statusEl = document.getElementById('bindZhixueStatus');
 
       if (!username) {
@@ -914,18 +910,25 @@
         statusEl.style.color = 'var(--danger)';
         return;
       }
+      if (!password) {
+        statusEl.textContent = '❌ 请填写智学网密码';
+        statusEl.style.display = '';
+        statusEl.style.background = 'rgba(255,68,68,0.1)';
+        statusEl.style.color = 'var(--danger)';
+        return;
+      }
 
       statusEl.textContent = '⏳ 正在提交...';
       statusEl.style.display = '';
-      statusEl.style.background = 'rgba(22,115,295,0.1)';
-      statusEl.style.color = 'var(--primary)';
+      statusEl.style.background = 'rgba(76,175,80,0.1)';
+      statusEl.style.color = 'var(--success)';
 
       try {
         const token = localStorage.getItem('campus_user_token');
         const resp = await fetch('/api/user/bind-zhixue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-          body: JSON.stringify({ zhixueUsername: username, realName, school, className })
+          body: JSON.stringify({ zhixueUsername: username, zhixuePassword: password })
         });
         const data = await resp.json();
         if (data.ok) {
