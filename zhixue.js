@@ -37,39 +37,75 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
     });
     page = await context.newPage();
 
-    // 1. 打开登录页
+    // 1. 直接访问登录页（避免首页弹窗逻辑）
     console.log('[zhixue] 正在打开智学网登录页...');
-    await page.goto('https://www.zhixue.com/', { waitUntil: 'networkidle', timeout: 30000 });
-    console.log('[zhixue] 页面已加载，当前URL:', page.url());
+    
+    // 尝试多个可能的登录页URL
+    const loginUrls = [
+      'https://www.zhixue.com/login.html',
+      'https://www.zhixue.com/login',
+      'https://www.zhixue.com/',
+      'https://www.zhixue.com/web/index.html'
+    ];
+    
+    let pageLoaded = false;
+    for (const url of loginUrls) {
+      try {
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+        console.log('[zhixue] 页面已加载:', url, '当前URL:', page.url());
+        pageLoaded = true;
+        break;
+      } catch (e) {
+        console.log('[zhixue] 打开失败:', url, e.message);
+      }
+    }
+    
+    if (!pageLoaded) {
+      throw new Error('无法打开智学网登录页');
+    }
 
-    // 2. 截图调试（保存到项目目录）
+    // 2. 截图调试
     await page.screenshot({ path: 'zhixue_debug_1_loaded.png' });
     console.log('[zhixue] 已保存截图: zhixue_debug_1_loaded.png');
 
-    // 3. 尝试点击登录入口（多种可能的选择器）
-    const loginSelectors = [
+    // 3. 检查是否有登录弹窗/iframe，尝试切换到登录框
+    // 智学网可能是弹窗形式，尝试点击登录按钮打开弹窗
+    const loginBtnSelectors = [
       '#loginBtn', '.login-btn', '.loginLink', 
       'a[href*="login"]', 'a[href*="Login"]',
       'button:has-text("登录")', 'a:has-text("登录")',
-      '.header-login', '.nav-login', '.user-login'
+      '.header-login', '.nav-login', '.user-login',
+      '.login', '#login', '[class*="login"]'
     ];
     
-    for (const sel of loginSelectors) {
+    for (const sel of loginBtnSelectors) {
       try {
         const el = await page.$(sel);
         if (el) {
-          console.log('[zhixue] 点击登录入口:', sel);
+          const text = await el.textContent();
+          console.log('[zhixue] 找到登录按钮:', sel, '文本:', text);
           await el.click();
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(3000);
           break;
         }
       } catch (_) {}
     }
 
-    // 4. 再次截图
+    // 4. 检查是否有iframe（登录可能在iframe里）
+    const frames = page.frames();
+    console.log('[zhixue] 页面帧数:', frames.length);
+    for (let i = 0; i < frames.length; i++) {
+      const frameUrl = frames[i].url();
+      console.log('[zhixue] 帧', i, 'URL:', frameUrl);
+    }
+
+    // 5. 再次截图
     await page.screenshot({ path: 'zhixue_debug_2_after_login_click.png' });
 
-    // 5. 等待账号输入框出现（更灵活的选择器）
+    // 6. 等待账号输入框出现（更灵活的选择器）
+    // 也检查所有iframe里的输入框
+    const allFrames = [page, ...page.frames()];
+    
     const usernameSelectors = [
       'input[type="text"]',
       'input[name="username"]',
@@ -86,26 +122,37 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
     ];
 
     let usernameInput = null;
-    for (const sel of usernameSelectors) {
+    let inputFrame = null;
+    
+    for (const frame of allFrames) {
       try {
-        const el = await page.waitForSelector(sel, { timeout: 5000 });
-        if (el) {
-          usernameInput = sel;
-          console.log('[zhixue] 找到账号输入框:', sel);
-          break;
+        const url = frame.url();
+        for (const sel of usernameSelectors) {
+          try {
+            const el = await frame.waitForSelector(sel, { timeout: 3000 });
+            if (el) {
+              usernameInput = sel;
+              inputFrame = frame;
+              console.log('[zhixue] 在帧', url, '找到账号输入框:', sel);
+              break;
+            }
+          } catch (_) {}
         }
+        if (usernameInput) break;
       } catch (_) {}
     }
 
     if (!usernameInput) {
       // 最后尝试：获取页面所有 input 并截图
-      const inputs = await page.$$eval('input', els => els.map(e => e.outerHTML));
-      console.log('[zhixue] 页面所有input:', inputs);
+      const inputs = await page.$$eval('input', els => els.map(e => ({ tag: e.tagName, type: e.type, name: e.name, id: e.id, placeholder: e.placeholder })));
+      console.log('[zhixue] 页面所有input:', JSON.stringify(inputs));
       await page.screenshot({ path: 'zhixue_debug_3_no_input.png' });
       throw new Error('未找到账号输入框，请查看截图 zhixue_debug_3_no_input.png');
     }
 
-    // 6. 填入账号密码
+    // 7. 填入账号密码（在找到输入框的frame里）
+    const targetFrame = inputFrame || page;
+    
     const passSelectors = [
       'input[type="password"]',
       'input[name="password"]',
@@ -117,7 +164,7 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
     let passInput = null;
     for (const sel of passSelectors) {
       try {
-        const el = await page.waitForSelector(sel, { timeout: 3000 });
+        const el = await targetFrame.waitForSelector(sel, { timeout: 3000 });
         if (el) {
           passInput = sel;
           break;
@@ -126,18 +173,18 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
     }
 
     console.log('[zhixue] 填写账号密码...');
-    await page.fill(usernameInput, username);
+    await targetFrame.fill(usernameInput, username);
     if (passInput) {
-      await page.fill(passInput, password);
+      await targetFrame.fill(passInput, password);
     } else {
       // 尝试通用的密码选择器
-      await page.fill('input[type="password"]', password);
+      await targetFrame.fill('input[type="password"]', password);
     }
 
     // 7. 截图确认填写
     await page.screenshot({ path: 'zhixue_debug_4_filled.png' });
 
-    // 8. 点击登录按钮
+    // 8. 点击登录按钮（在目标frame里）
     const loginBtnSelectors = [
       'button[type="submit"]',
       'button:has-text("登录")',
@@ -151,7 +198,7 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
 
     for (const sel of loginBtnSelectors) {
       try {
-        const el = await page.$(sel);
+        const el = await targetFrame.$(sel);
         if (el) {
           console.log('[zhixue] 点击登录按钮:', sel);
           await el.click();
