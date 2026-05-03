@@ -478,12 +478,14 @@ app.post('/api/user/register', (req, res) => {
     return res.json({ ok: false, msg: '账号已被注册' });
   }
 
+  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
   const newUser = {
     id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
     username,
     password: hashPassword(password),
     nickname,
     avatar: null,
+    regIp: ip,
     createdAt: new Date().toISOString(),
     status: 'active',
     postCount: 0,
@@ -698,6 +700,7 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
     username: u.username,
     nickname: u.nickname,
     avatar: u.avatar,
+    regIp: u.regIp || '-',
     createdAt: u.createdAt,
     status: u.status,
     postCount: posts.filter(p => p.author === u.nickname || p.userId === u.id).length
