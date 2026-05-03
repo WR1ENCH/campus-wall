@@ -1,6 +1,6 @@
 # 📌 校园墙 (Campus Wall)
 
-<p align="center"><i>powered by wr1Ench</i></p>
+<p align="center"><i>powered by wr1Ench</i><i>自由主义万岁</i></p>
 
 一个简洁优雅的校园匿名留言板系统，支持发帖、点赞、评论、举报，以及完整的内容管理后台。
 
