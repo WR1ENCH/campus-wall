@@ -185,7 +185,7 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
     await page.screenshot({ path: 'zhixue_debug_4_filled.png' });
 
     // 8. 点击登录按钮（在目标frame里）
-    const loginBtnSelectors = [
+    const submitBtnSelectors = [
       'button[type="submit"]',
       'button:has-text("登录")',
       'button:has-text("登 录")',
@@ -196,7 +196,7 @@ async function loginZhixue(username, password, timeoutMs = 120000) {
       'a:has-text("登录")'
     ];
 
-    for (const sel of loginBtnSelectors) {
+    for (const sel of submitBtnSelectors) {
       try {
         const el = await targetFrame.$(sel);
         if (el) {
