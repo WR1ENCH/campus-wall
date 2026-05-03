@@ -800,6 +800,11 @@
     const zhixueInfo = document.getElementById('zhixueInfo');
     const unbindZhixueBtn = document.getElementById('unbindZhixueBtn');
 
+    // 绑定按钮点击事件
+    if (bindZhixueBtn) {
+      bindZhixueBtn.addEventListener('click', openBindZhixueModal);
+    }
+
     // 查询当前用户是否已绑定智学网
     async function loadZhixueInfo() {
       try {
