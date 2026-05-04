@@ -833,7 +833,11 @@
         const data = await resp.json();
         if (data.ok && data.data) {
           const info = data.data;
-          document.getElementById('zhixueUsername').textContent = '账号：' + (info.zhixueUsername || '待审核');
+          if (info.type === 'manual') {
+            document.getElementById('zhixueUsername').textContent = '📄 手动认证';
+          } else {
+            document.getElementById('zhixueUsername').textContent = '账号：' + (info.zhixueUsername || '待审核');
+          }
           // 状态标签
           const statusBadge = document.getElementById('zhixueStatusBadge');
           const style = statusStyles[info.status] || statusStyles.pending;
@@ -870,18 +874,57 @@
       modal.id = 'bindZhixueModal';
       modal.className = 'modal-overlay';
       modal.innerHTML = `
-        <div class="modal">
+        <div class="modal" style="max-width:420px;">
           <div class="modal-header">🎓 同学认证</div>
           <div class="modal-body">
-            <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:16px; font-weight:bold; display:none;"></div>
-            <div class="form-group">
-              <label class="form-label">智学网账号</label>
-              <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
+            <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-weight:bold; display:none;"></div>
+            <!-- Tab 切换 -->
+            <div style="display:flex; gap:0; border-radius:12px; overflow:hidden; border:2px solid var(--border); margin-bottom:16px;">
+              <button id="tabZhixue" onclick="switchCertTab('zhixue')"
+                style="flex:1; padding:9px 0; font-size:13px; font-weight:600; border:none; cursor:pointer;
+                       background:#22c55e; color:#fff; transition:all 0.2s;">
+                🖥️ 智学认证
+              </button>
+              <button id="tabManual" onclick="switchCertTab('manual')"
+                style="flex:1; padding:9px 0; font-size:13px; font-weight:600; border:none; cursor:pointer;
+                       background:var(--bg-main); color:var(--text-sub); transition:all 0.2s;">
+                📄 手动认证
+              </button>
             </div>
-            <div class="form-group">
-              <label class="form-label">智学网密码</label>
-              <input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">
+
+            <!-- 智学认证表单 -->
+            <div id="certPanelZhixue">
+              <div class="form-group">
+                <label class="form-label">智学网账号</label>
+                <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
+              </div>
+              <div class="form-group">
+                <label class="form-label">智学网密码</label>
+                <input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">
+              </div>
             </div>
+
+            <!-- 手动认证表单 -->
+            <div id="certPanelManual" style="display:none;">
+              <div class="form-group">
+                <label class="form-label">说明</label>
+                <textarea id="manualNote" class="form-input" rows="3"
+                  style="resize:vertical; min-height:70px;"
+                  placeholder="请填写认证说明（如：学校、班级、姓名等）"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">证明图片附件</label>
+                <div id="manualImagesPreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
+                <label style="display:block; padding:10px; text-align:center; border:2px dashed var(--border);
+                              border-radius:12px; cursor:pointer; font-size:13px; color:var(--text-sub);">
+                  📎 点击选择 JPG 图片（最多3张，每张 ≤10MB）
+                  <input type="file" id="manualImageInput" accept=".jpg,.jpeg" multiple
+                    style="display:none;" onchange="handleManualImages(event)">
+                </label>
+                <div id="manualImageError" style="font-size:12px; color:var(--danger); margin-top:4px; display:none;"></div>
+              </div>
+            </div>
+
             <div class="modal-actions">
               <button class="modal-btn modal-btn-secondary" onclick="closeBindZhixueModal()">取消</button>
               <button class="modal-btn bind-zhixue-btn" onclick="doBindZhixue()">提交审核</button>
@@ -893,29 +936,108 @@
       requestAnimationFrame(() => modal.classList.add('show'));
     }
 
+    // Tab 切换
+    function switchCertTab(tab) {
+      const isZhixue = tab === 'zhixue';
+      document.getElementById('certPanelZhixue').style.display = isZhixue ? '' : 'none';
+      document.getElementById('certPanelManual').style.display = isZhixue ? 'none' : '';
+      document.getElementById('tabZhixue').style.background = isZhixue ? '#22c55e' : 'var(--bg-main)';
+      document.getElementById('tabZhixue').style.color = isZhixue ? '#fff' : 'var(--text-sub)';
+      document.getElementById('tabManual').style.background = isZhixue ? 'var(--bg-main)' : '#22c55e';
+      document.getElementById('tabManual').style.color = isZhixue ? 'var(--text-sub)' : '#fff';
+    }
+
+    // 处理手动认证图片选择
+    const manualImages = []; // 存储 base64
+    function handleManualImages(event) {
+      const errEl = document.getElementById('manualImageError');
+      const preview = document.getElementById('manualImagesPreview');
+      errEl.style.display = 'none';
+      const files = Array.from(event.target.files);
+
+      if (manualImages.length + files.length > 3) {
+        errEl.textContent = '❌ 最多上传3张图片';
+        errEl.style.display = '';
+        event.target.value = '';
+        return;
+      }
+
+      files.forEach(file => {
+        if (!file.name.toLowerCase().match(/\.(jpg|jpeg)$/)) {
+          errEl.textContent = '❌ 只允许上传 JPG 格式图片';
+          errEl.style.display = '';
+          return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          errEl.textContent = '❌ 图片大小不能超过 10MB（' + file.name + '）';
+          errEl.style.display = '';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          manualImages.push(e.target.result);
+          // 添加预览
+          const img = document.createElement('div');
+          const idx = manualImages.length - 1;
+          img.style.cssText = 'position:relative; width:72px; height:72px;';
+          img.innerHTML = `
+            <img src="${e.target.result}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
+            <button onclick="removeManualImage(${idx})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
+          `;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    function removeManualImage(idx) {
+      manualImages.splice(idx, 1);
+      // 重新渲染预览
+      const preview = document.getElementById('manualImagesPreview');
+      preview.innerHTML = '';
+      manualImages.forEach((src, i) => {
+        const img = document.createElement('div');
+        img.style.cssText = 'position:relative; width:72px; height:72px;';
+        img.innerHTML = `
+          <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
+          <button onclick="removeManualImage(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
+        `;
+        preview.appendChild(img);
+      });
+    }
+
     function closeBindZhixueModal() {
       const modal = document.getElementById('bindZhixueModal');
       if (modal) modal.remove();
     }
 
     async function doBindZhixue() {
-      const username = document.getElementById('zhixueInputUsername').value.trim();
-      const password = document.getElementById('zhixueInputPassword').value;
       const statusEl = document.getElementById('bindZhixueStatus');
+      // 判断当前 Tab
+      const isZhixueTab = document.getElementById('certPanelZhixue').style.display !== 'none';
 
-      if (!username) {
-        statusEl.textContent = '❌ 请填写智学网账号';
+      function showErr(msg) {
+        statusEl.textContent = msg;
         statusEl.style.display = '';
         statusEl.style.background = 'rgba(255,68,68,0.1)';
         statusEl.style.color = 'var(--danger)';
-        return;
       }
-      if (!password) {
-        statusEl.textContent = '❌ 请填写智学网密码';
-        statusEl.style.display = '';
-        statusEl.style.background = 'rgba(255,68,68,0.1)';
-        statusEl.style.color = 'var(--danger)';
-        return;
+
+      let body;
+      if (isZhixueTab) {
+        // 智学认证
+        const username = document.getElementById('zhixueInputUsername').value.trim();
+        const password = document.getElementById('zhixueInputPassword').value;
+        if (!username) { showErr('❌ 请填写智学网账号'); return; }
+        if (!password) { showErr('❌ 请填写智学网密码'); return; }
+        body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
+      } else {
+        // 手动认证
+        const note = document.getElementById('manualNote').value.trim();
+        if (!note) { showErr('❌ 请填写认证说明'); return; }
+        if (manualImages.length === 0) { showErr('❌ 请至少上传一张证明图片'); return; }
+        body = { type: 'manual', manualNote: note, manualImages: [...manualImages] };
       }
 
       statusEl.textContent = '⏳ 正在提交...';
@@ -928,7 +1050,7 @@
         const resp = await fetch('/api/user/bind-zhixue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-          body: JSON.stringify({ zhixueUsername: username, zhixuePassword: password })
+          body: JSON.stringify(body)
         });
         const data = await resp.json();
         if (data.ok) {

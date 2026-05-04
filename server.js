@@ -53,7 +53,7 @@ const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
 
 // 中间件
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // 全局输入过滤：禁止特殊字符（对 JSON body 和 URL query 生效）
 const SPECIAL_CHAR_REGEX = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
@@ -682,7 +682,7 @@ app.delete('/api/user/bind-admin', (req, res) => {
 
 // ===== 同学认证 =====
 
-// 提交同学认证（账号+密码，提交审核）
+// 提交同学认证（智学认证 或 手动认证）
 app.post('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
@@ -693,33 +693,62 @@ app.post('/api/user/bind-zhixue', (req, res) => {
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
-  const { zhixueUsername, zhixuePassword } = req.body;
-  if (!zhixueUsername) {
-    return res.json({ ok: false, msg: '请填写智学网账号' });
-  }
-  if (!zhixuePassword) {
-    return res.json({ ok: false, msg: '请填写智学网密码' });
-  }
-
   // 如果状态是已认证，需要先解除才能重新提交
   if (users[userIndex].zhixueStatus === 'approved') {
     return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
   }
 
-  // 保存账号和密码，状态设为待审核
-  users[userIndex].zhixueUsername = zhixueUsername;
-  users[userIndex].zhixuePassword = zhixuePassword; // 明文存储，供管理员手动验证
+  const { type } = req.body;
+
+  if (type === 'zhixue') {
+    // 智学认证：账号 + 密码
+    const { zhixueUsername, zhixuePassword } = req.body;
+    if (!zhixueUsername) return res.json({ ok: false, msg: '请填写智学网账号' });
+    if (!zhixuePassword) return res.json({ ok: false, msg: '请填写智学网密码' });
+
+    users[userIndex].zhixueCertType = 'zhixue';
+    users[userIndex].zhixueUsername = zhixueUsername;
+    users[userIndex].zhixuePassword = zhixuePassword;
+    users[userIndex].zhixueManualNote = null;
+    users[userIndex].zhixueManualImages = null;
+
+  } else if (type === 'manual') {
+    // 手动认证：说明 + 图片
+    const { manualNote, manualImages } = req.body;
+    if (!manualNote || !manualNote.trim()) return res.json({ ok: false, msg: '请填写认证说明' });
+    if (!manualImages || !Array.isArray(manualImages) || manualImages.length === 0) {
+      return res.json({ ok: false, msg: '请至少上传一张证明图片' });
+    }
+    if (manualImages.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+    // 验证图片格式与大小（base64 data URL）
+    for (const img of manualImages) {
+      if (!img.startsWith('data:image/jpeg') && !img.startsWith('data:image/jpg')) {
+        return res.json({ ok: false, msg: '只允许上传 JPG 格式图片' });
+      }
+      const base64Data = img.split(',')[1] || '';
+      const sizeBytes = Math.ceil(base64Data.length * 3 / 4);
+      if (sizeBytes > 10 * 1024 * 1024) {
+        return res.json({ ok: false, msg: '单张图片不能超过 10MB' });
+      }
+    }
+
+    users[userIndex].zhixueCertType = 'manual';
+    users[userIndex].zhixueUsername = null;
+    users[userIndex].zhixuePassword = null;
+    users[userIndex].zhixueManualNote = manualNote.trim();
+    users[userIndex].zhixueManualImages = manualImages;
+
+  } else {
+    return res.json({ ok: false, msg: '无效的认证类型' });
+  }
+
   users[userIndex].zhixueStatus = 'pending';
   users[userIndex].zhixueSubmittedAt = new Date().toISOString();
   users[userIndex].zhixueReviewedAt = null;
   users[userIndex].zhixueReviewedBy = null;
   writeUsers(users);
 
-  res.json({
-    ok: true,
-    msg: '提交成功，请等待管理员审核',
-    data: { zhixueUsername, status: 'pending' }
-  });
+  res.json({ ok: true, msg: '提交成功，请等待管理员审核', data: { type, status: 'pending' } });
 });
 
 // 解绑同学认证
@@ -732,8 +761,11 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   const userIndex = users.findIndex(u => u.id === session.id);
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
+  users[userIndex].zhixueCertType = null;
   users[userIndex].zhixueUsername = null;
   users[userIndex].zhixuePassword = null;
+  users[userIndex].zhixueManualNote = null;
+  users[userIndex].zhixueManualImages = null;
   users[userIndex].zhixueStatus = null;
   users[userIndex].zhixueSubmittedAt = null;
   users[userIndex].zhixueReviewedAt = null;
@@ -753,13 +785,14 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  if (!user.zhixueUsername) {
+  if (!user.zhixueUsername && !user.zhixueManualNote) {
     return res.json({ ok: true, data: null });
   }
 
   res.json({
     ok: true,
     data: {
+      type: user.zhixueCertType || 'zhixue',
       zhixueUsername: user.zhixueUsername,
       status: user.zhixueStatus || 'pending',
       submittedAt: user.zhixueSubmittedAt || null
@@ -772,13 +805,16 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
 // 获取待审核列表（仅管理员）
 app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
   const users = readUsers();
-  const pending = users.filter(u => u.zhixueUsername && u.zhixueStatus === 'pending');
+  const pending = users.filter(u => u.zhixueStatus === 'pending');
   const list = pending.map(u => ({
     id: u.id,
     nickname: u.nickname,
     avatar: u.avatar,
+    certType: u.zhixueCertType || 'zhixue',
     zhixueUsername: u.zhixueUsername,
     zhixuePassword: u.zhixuePassword || '',
+    manualNote: u.zhixueManualNote || '',
+    manualImages: u.zhixueManualImages || [],
     submittedAt: u.zhixueSubmittedAt
   }));
   res.json({ ok: true, data: list });

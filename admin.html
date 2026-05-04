@@ -1410,20 +1410,46 @@
         let html = '';
         list.forEach(u => {
           const submittedAt = u.submittedAt ? new Date(u.submittedAt).toLocaleString('zh-CN') : '-';
+          const isManual = u.certType === 'manual';
+          const typeBadge = isManual
+            ? '<span style="background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">📄 手动认证</span>'
+            : '<span style="background:#22c55e;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">🖥️ 智学认证</span>';
+
+          // 认证详细信息
+          let certDetail = '';
+          if (isManual) {
+            certDetail = `
+              <div style="font-size:13px; margin-bottom:10px; padding:10px; background:var(--bg-main); border-radius:10px;">
+                <div style="font-weight:600; margin-bottom:6px; color:var(--text-main);">说明</div>
+                <div style="color:var(--text-sub); white-space:pre-wrap; font-size:13px;">${u.manualNote || '-'}</div>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                ${(u.manualImages || []).map((src, idx) => `
+                  <img src="${src}" onclick="viewCertImage('${src}')"
+                    style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;"
+                    title="点击查看大图">
+                `).join('')}
+              </div>`;
+          } else {
+            certDetail = `
+              <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px; padding:10px; background:var(--bg-main); border-radius:10px;">
+                <div style="margin-bottom:4px;">账号：<strong style="color:var(--text-main);">${u.zhixueUsername || '-'}</strong></div>
+                <div>密码：<strong style="color:var(--text-main);">${u.zhixuePassword || '-'}</strong></div>
+              </div>`;
+          }
+
           html += `
           <div class="user-card" style="padding:16px; border-bottom:1px solid var(--border);">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
               <div class="user-avatar" style="width:40px;height:40px;font-size:18px;">${u.avatar || u.nickname?.charAt(0) || '👤'}</div>
-              <div>
-                <div style="font-weight:600;">${u.nickname || '匿名'}</div>
-                <div style="font-size:12px;color:var(--text-sub);">账号：${u.zhixueUsername}</div>
-                <div style="font-size:12px;color:var(--text-sub);">密码：${u.zhixuePassword || '-'}</div>
+              <div style="flex:1;">
+                <div style="font-weight:600; display:flex; align-items:center; gap:8px;">
+                  ${u.nickname || '匿名'} ${typeBadge}
+                </div>
+                <div style="font-size:12px;color:var(--text-sub);">提交时间：${submittedAt}</div>
               </div>
             </div>
-            <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">
-              <div style="font-size:12px;">提交时间：${submittedAt}</div>
-              <div style="font-size:11px; margin-top:4px; color:var(--text-sub);">管理员需手动用账号密码登录智学网验证身份</div>
-            </div>
+            ${certDetail}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}')">✅ 通过</button>
               <button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="rejectZhixue('${u.id}')">❌ 拒绝</button>
@@ -1435,6 +1461,18 @@
       } catch (e) {
         document.getElementById('zhixueBody').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
       }
+    }
+
+    // 查看认证图片大图
+    function viewCertImage(src) {
+      const old = document.getElementById('certImageViewer');
+      if (old) old.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'certImageViewer';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+      overlay.innerHTML = `<img src="${src}" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;">`;
+      overlay.onclick = () => overlay.remove();
+      document.body.appendChild(overlay);
     }
 
     async function approveZhixue(userId) {
