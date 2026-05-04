@@ -69,9 +69,13 @@ function sanitizeString(val) {
 }
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    // 排除 avatar 字段不过滤（base64 包含 +,/,= 等合法字符）
-    const { avatar, ...rest } = req.body;
-    req.body = { ...sanitizeString(rest), ...(avatar !== undefined ? { avatar } : {}) };
+    // 排除包含 base64 的字段不过滤（data URL 包含 :, /, ; 等特殊字符）
+    const { avatar, manualImages, ...rest } = req.body;
+    req.body = {
+      ...sanitizeString(rest),
+      ...(avatar !== undefined ? { avatar } : {}),
+      ...(manualImages !== undefined ? { manualImages } : {})
+    };
   }
   next();
 });
@@ -595,9 +599,9 @@ app.patch('/api/user/me', (req, res) => {
     if (typeof avatar !== 'string') {
       return res.json({ ok: false, msg: '头像数据格式错误' });
     }
-    // 检查是否为 data URL（兼容 jpeg/jpg/jpe 等多种 MIME 变体）
-    if (!/^data:image\/jpe?g;base64,/.test(avatar)) {
-      return res.json({ ok: false, msg: '头像仅支持 JPG 格式（.jpg）' });
+    // 检查是否为图片 data URL
+    if (!/^data:image\/.*;base64,/.test(avatar)) {
+      return res.json({ ok: false, msg: '头像仅支持图片格式' });
     }
     const base64Data = avatar.split(',')[1];
     if (!base64Data) {
@@ -721,11 +725,20 @@ app.post('/api/user/bind-zhixue', (req, res) => {
     }
     if (manualImages.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
     // 验证图片格式与大小（base64 data URL）
-    for (const img of manualImages) {
-      if (!img.startsWith('data:image/jpeg') && !img.startsWith('data:image/jpg')) {
-        return res.json({ ok: false, msg: '只允许上传 JPG 格式图片' });
+    // 修正被 express.json() 破坏的 data URL（data:image/jpeg;base64 → dataimagejpegbase64）
+    for (let i = 0; i < manualImages.length; i++) {
+      const img = manualImages[i];
+      let fixed = img;
+      // 匹配 dataimagejpegbase64, 或 dataimage/jpegbase64, 等各种变体
+      const m = img.match(/^dataimage\/?(jpeg|jpg|png|gif|webp|svg\xml)base64,/i)
+              || img.match(/^data:image\/?(jpeg|jpg|png|gif|webp|svg\xml);base64,/i);
+      if (m) {
+        fixed = 'data:image/' + m[1] + ';base64,' + img.slice(m[0].length);
+      } else if (!/^data:image\//i.test(img)) {
+        return res.json({ ok: false, msg: '只允许上传图片文件' });
       }
-      const base64Data = img.split(',')[1] || '';
+      manualImages[i] = fixed;
+      const base64Data = fixed.split(',')[1] || '';
       const sizeBytes = Math.ceil(base64Data.length * 3 / 4);
       if (sizeBytes > 10 * 1024 * 1024) {
         return res.json({ ok: false, msg: '单张图片不能超过 10MB' });

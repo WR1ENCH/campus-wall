@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>调试引导</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; }
+    .compose-btn { padding: 12px 24px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    #spotlightOverlay { display: none; position: fixed; inset: 0; z-index: 9999; }
+    #spotlightTooltip { display: none; position: fixed; z-index: 10000; }
+  </style>
+</head>
+<body>
+  <h1>引导调试页面</h1>
+  <button class="compose-btn">✏️ 贴一张</button>
+  
+  <div id="spotlightOverlay"></div>
+  <div id="spotlightTooltip"></div>
+  
+  <script>
+    var _spotlight = {
+      step: 0,
+      steps: [
+        {
+          selector: '.compose-btn',
+          title: '发帖子 ✏️',
+          desc: '点击按钮发帖',
+          btnText: '知道了',
+          position: 'bottom'
+        }
+      ],
+      container: null,
+      tooltip: null
+    };
+    
+    function _getRect(selector) {
+      var el = document.querySelector(selector);
+      if (!el) { console.log('[debug] 元素未找到:', selector); return null; }
+      var r = el.getBoundingClientRect();
+      console.log('[debug] 元素位置:', selector, r);
+      return { top: r.top, left: r.left, width: r.width, height: r.height };
+    }
+    
+    function showNewbieGuide() {
+      _spotlight.container = document.getElementById('spotlightOverlay');
+      _spotlight.tooltip = document.getElementById('spotlightTooltip');
+      _spotlight.container.style.display = 'block';
+      _spotlight.tooltip.style.display = 'block';
+      _renderSpotlightStep();
+    }
+    
+    function _renderSpotlightStep() {
+      var s = _spotlight;
+      var info = s.steps[s.step];
+      if (!info) { console.log('[debug] info 为空'); return; }
+      console.log('[debug] 当前step:', s.step, 'selector:', info.selector);
+      
+      var r = _getRect(info.selector);
+      if (!r || r.width === 0) {
+        console.log('[debug] 元素不存在或宽度为0，结束引导');
+        return;
+      }
+      console.log('[debug] 渲染引导，元素位置:', r);
+      s.tooltip.innerHTML = '<div style="background:white;padding:16px;border-radius:8px;">' +
+        '<h3>' + info.title + '</h3>' +
+        '<p>' + info.desc + '</p>' +
+        '<button onclick="nextStep()">' + info.btnText + '</button></div>';
+      s.tooltip.style.left = (r.left - 50) + 'px';
+      s.tooltip.style.top = (r.top + r.height + 10) + 'px';
+    }
+    
+    function nextStep() {
+      _spotlight.step++;
+      _renderSpotlightStep();
+    }
+    
+    // 3秒后自动触发引导
+    setTimeout(() => {
+      console.log('[debug] 触发引导...');
+      showNewbieGuide();
+    }, 1000);
+  </script>
+</body>
+</html>

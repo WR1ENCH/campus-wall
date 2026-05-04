@@ -917,8 +917,8 @@
                 <div id="manualImagesPreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
                 <label style="display:block; padding:10px; text-align:center; border:2px dashed var(--border);
                               border-radius:12px; cursor:pointer; font-size:13px; color:var(--text-sub);">
-                  📎 点击选择 JPG 图片（最多3张，每张 ≤10MB）
-                  <input type="file" id="manualImageInput" accept=".jpg,.jpeg" multiple
+                  📎 点击选择图片（最多3张，每张 ≤10MB）
+                  <input type="file" id="manualImageInput" accept="image/*" multiple
                     style="display:none;" onchange="handleManualImages(event)">
                 </label>
                 <div id="manualImageError" style="font-size:12px; color:var(--danger); margin-top:4px; display:none;"></div>
@@ -963,8 +963,9 @@
       }
 
       files.forEach(file => {
-        if (!file.name.toLowerCase().match(/\.(jpg|jpeg)$/)) {
-          errEl.textContent = '❌ 只允许上传 JPG 格式图片';
+        // 同时校验后缀名和 MIME 类型，更健壮
+        if (!file.type.startsWith('image/')) {
+          errEl.textContent = '❌ 只允许上传图片文件（' + file.name + '）';
           errEl.style.display = '';
           return;
         }
@@ -975,6 +976,9 @@
         }
         const reader = new FileReader();
         reader.onload = (e) => {
+      
+
+
           manualImages.push(e.target.result);
           // 添加预览
           const img = document.createElement('div');
