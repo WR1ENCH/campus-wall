@@ -1110,27 +1110,7 @@
 
   // ===== 全局输入过滤：禁止特殊字符 =====
   // 允许的字符：中文、英文、数字、下划线、空格
-  // 禁止的字符：~!@#$%^&*()+=[{}]|\\;:'",./<>? 以及反引号
-  function sanitizeInput(val) {
-    return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
-  }
-  function onInputFilter(e) {
-    const el = e.target;
-    const cleaned = sanitizeInput(el.value);
-    if (el.value !== cleaned) {
-      el.value = cleaned;
-      if (!el._warnTimer) {
-        showToast('禁止输入特殊符号', 'warning');
-        el._warnTimer = setTimeout(() => { el._warnTimer = null; }, 1500);
-      }
-    }
-  }
-  // 给所有输入框和文本域绑定过滤（DOMContentLoaded 后执行）
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('input[type="text"], input[type="password"], textarea').forEach(el => {
-      el.addEventListener('input', onInputFilter);
-    });
-  });
+  // 禁止的字符：~!@#$%^&*()+=[{}]|\\;:'",./<>? 以及反引号（已移除全局过滤，仅保留提交时验证）
 
   // ===== 常量 =====
   const PAGE_SIZE = 15;
@@ -2392,7 +2372,6 @@
     const title = document.getElementById('discussionTitleInput').value.trim();
     const expiresAt = document.getElementById('discussionExpiresInput').value || null;
     if (!title) { showToast('⚠️ 标题不能为空', 'error'); return; }
-    if (hasSpecialChars(title)) { showToast('⚠️ 标题包含特殊字符', 'error'); return; }
 
     try {
       const url = currentDiscussionId ? '/api/discussions/' + currentDiscussionId : '/api/discussions';
