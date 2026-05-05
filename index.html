@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📌 校园墙 · 便利贴</title>
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     :root {
       --note-yellow: #fff9b1;
@@ -300,6 +301,24 @@
       font-family: 'ZCOOL KuaiLe', cursive;
       font-size: 20px; margin-bottom: 14px;
     }
+    .ann-content {
+      font-size: 14px; line-height: 1.7; margin-top: 8px;
+      max-height: 60vh; overflow-y: auto;
+      word-break: break-word;
+    }
+    .ann-content h1, .ann-content h2, .ann-content h3 { margin: 0.6em 0 0.3em; font-weight: 700; }
+    .ann-content h1 { font-size: 18px; }
+    .ann-content h2 { font-size: 16px; }
+    .ann-content h3 { font-size: 15px; }
+    .ann-content p { margin: 0.5em 0; }
+    .ann-content ul, .ann-content ol { margin: 0.5em 0; padding-left: 20px; }
+    .ann-content li { margin: 0.2em 0; }
+    .ann-content strong { font-weight: 700; }
+    .ann-content em { font-style: italic; }
+    .ann-content code { background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 3px; font-family: monospace; }
+    .ann-content blockquote { border-left: 3px solid rgba(0,0,0,0.2); margin: 0.5em 0; padding-left: 12px; color: rgba(90,74,0,0.75); }
+    .ann-content a { color: #1a3a6b; }
+    .ann-content hr { border: none; border-top: 1px solid rgba(0,0,0,0.15); margin: 0.8em 0; }
     .modal-note textarea {
       width: 100%; min-height: 120px;
       background: rgba(255,255,255,0.4);
@@ -954,7 +973,7 @@
     <div class="modal-note" onclick="event.stopPropagation()" style="max-width:520px;">
       <div class="tape" style="--tape-rotate: -3deg;"></div>
       <h3 id="announcementTitle">📢 公告</h3>
-      <div id="announcementContent" style="white-space:pre-wrap;line-height:1.7;font-size:14px;margin-top:8px;max-height:60vh;overflow-y:auto;"></div>
+      <div id="announcementContent" class="ann-content"></div>
       <div style="text-align:center;margin-top:16px;">
         <button onclick="closeAnnouncement()" style="padding:8px 32px;background:var(--note-yellow);border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 3px 8px rgba(0,0,0,0.2);">我已知悉</button>
       </div>
@@ -1222,7 +1241,7 @@
 
     function showAnnouncement(ann) {
       document.getElementById('announcementTitle').textContent = '📢 ' + ann.title;
-      document.getElementById('announcementContent').textContent = ann.content;
+      document.getElementById('announcementContent').innerHTML = marked.parse(ann.content || '');
       document.getElementById('announcementOverlay').style.display = 'flex';
       localStorage.setItem('announcement_id', ann.publishedAt);
     }

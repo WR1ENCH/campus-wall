@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📌 校园墙 · 管理后台</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     :root {
       --bg: #f0f2f5;
@@ -837,15 +838,16 @@
           <input type="text" id="announcementTitleInput" class="form-input" placeholder="例如：关于近期活动的通知" maxlength="50">
         </div>
         <div class="form-group">
-          <label class="form-label">公告内容（支持多行，换行自动保留格式）</label>
-          <textarea id="announcementContentInput" class="form-input" style="height:240px;resize:vertical;font-family:inherit;line-height:1.7;" placeholder="输入公告内容...&#10;&#10;支持多行文本&#10;每一行会保留格式显示"></textarea>
+          <label class="form-label">公告内容（支持 Markdown 语法）</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <button type="button" id="annMdEditBtn" class="chip all active" onclick="switchAnnMdView('edit')" style="font-size:12px;padding:4px 10px;">✏️ 编辑</button>
+            <button type="button" id="annMdPreviewBtn" class="chip all" onclick="switchAnnMdView('preview')" style="font-size:12px;padding:4px 10px;">👁️ 预览</button>
+          </div>
+          <textarea id="announcementContentInput" class="form-input" style="height:240px;resize:vertical;font-family:inherit;line-height:1.7;" placeholder="支持 Markdown 语法，例如：&#10;&#10;# 标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用文字"></textarea>
+          <div id="announcementPreviewBox" style="display:none;background:var(--note-yellow);border-radius:4px;padding:16px;line-height:1.7;font-size:14px;color:#5a4a00;box-shadow:2px 3px 8px rgba(0,0,0,0.15);min-height:240px;overflow-y:auto;"></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:8px;">
           <button class="btn-confirm" onclick="saveAnnouncement()">📢 发布公告</button>
-        </div>
-        <div id="announcementPreview" style="margin-top:16px;display:none;">
-          <div class="form-label">预览</div>
-          <div id="announcementPreviewBox" style="background:var(--note-yellow);border-radius:4px;padding:16px;white-space:pre-wrap;line-height:1.7;font-size:14px;color:#5a4a00;box-shadow:2px 3px 8px rgba(0,0,0,0.15);"></div>
         </div>
       </div>
     </div>
@@ -1337,8 +1339,9 @@
         document.getElementById('announcementStatusText').textContent = '暂无公告';
         document.getElementById('announcementTitleInput').value = '';
         document.getElementById('announcementContentInput').value = '';
-        document.getElementById('announcementPreview').style.display = 'none';
+        document.getElementById('announcementPreviewBox').innerHTML = '';
       }
+      switchAnnMdView('edit');
     } catch (e) {
       showToast('⚠️ 加载公告失败', 'error');
     }
@@ -1394,20 +1397,41 @@
   function previewAnnouncement() {
     const title = document.getElementById('announcementTitleInput').value.trim();
     const content = document.getElementById('announcementContentInput').value;
-    const previewBox = document.getElementById('announcementPreview');
     const previewContent = document.getElementById('announcementPreviewBox');
-    if (title || content) {
-      previewBox.style.display = 'block';
-      previewContent.textContent = (title ? title + '\n\n' : '公告\n\n') + content;
+    if (content) {
+      const fullContent = (title ? '# ' + title + '\n\n' : '') + content;
+      previewContent.innerHTML = marked.parse(fullContent);
     } else {
-      previewBox.style.display = 'none';
+      previewContent.innerHTML = '';
     }
   }
 
-  // 实时预览
+  let annMdView = 'edit';
+  function switchAnnMdView(view) {
+    annMdView = view;
+    const ta = document.getElementById('announcementContentInput');
+    const previewBox = document.getElementById('announcementPreviewBox');
+    const editBtn = document.getElementById('annMdEditBtn');
+    const previewBtn = document.getElementById('annMdPreviewBtn');
+    if (view === 'edit') {
+      ta.style.display = 'block';
+      previewBox.style.display = 'none';
+      editBtn.classList.add('active');
+      previewBtn.classList.remove('active');
+    } else {
+      ta.style.display = 'none';
+      previewBox.style.display = 'block';
+      previewAnnouncement();
+      previewBtn.classList.add('active');
+      editBtn.classList.remove('active');
+    }
+  }
+
+  // 实时预览（编辑时同步更新预览）
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('announcementContentInput')?.addEventListener('input', previewAnnouncement);
-    document.getElementById('announcementTitleInput')?.addEventListener('input', previewAnnouncement);
+    document.getElementById('announcementContentInput')?.addEventListener('input', () => {
+      previewAnnouncement();
+    });
   });
 
   // ===== 评论管理 =====
