@@ -386,6 +386,29 @@ app.put('/api/admin/:id', requireAdmin, requireSuper, (req, res) => {
   res.json({ ok: true, data: { id: admin.id, name: admin.name, role: admin.role } });
 });
 
+// ===== 通用工具函数 =====
+function hasSpecialChars(str) {
+  return /[<>\"'&]/.test(str);
+}
+
+// 解析 datetime-local 格式（支持 YYYY-MM-DDTHH:mm 或 YYYY-MM-DDTHHmm）
+function parseLocalDateTime(str) {
+  if (!str) return null;
+  // 支持标准格式 YYYY-MM-DDTHH:mm 和非标准格式 YYYY-MM-DDTHHmm
+  let match = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (match) {
+    const [, year, month, day, hour, minute] = match;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+  }
+  // 兼容没有冒号的格式
+  match = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})$/);
+  if (match) {
+    const [, year, month, day, hour, minute] = match;
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
+  }
+  return null;
+}
+
 // ===== 用户数据读写 =====
 function readUsers() {
   try {
@@ -1314,6 +1337,302 @@ function writeReports(reports) {
   }
 }
 
+// ===== 讨论数据读写 =====
+const DISCUSSIONS_FILE = path.join(DATA_DIR, 'discussions.json');
+const DISCUSSION_COMMENTS_FILE = path.join(DATA_DIR, 'discussion_comments.json');
+
+function readDiscussions() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(DISCUSSIONS_FILE)) {
+      fs.writeFileSync(DISCUSSIONS_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(DISCUSSIONS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取讨论话题失败:', e);
+    return [];
+  }
+}
+
+function writeDiscussions(discussions) {
+  try {
+    ensureDir();
+    fs.writeFileSync(DISCUSSIONS_FILE, JSON.stringify(discussions, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入讨论话题失败:', e);
+  }
+}
+
+function readDiscussionComments() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(DISCUSSION_COMMENTS_FILE)) {
+      fs.writeFileSync(DISCUSSION_COMMENTS_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(DISCUSSION_COMMENTS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取讨论评论失败:', e);
+    return [];
+  }
+}
+
+function writeDiscussionComments(comments) {
+  try {
+    ensureDir();
+    fs.writeFileSync(DISCUSSION_COMMENTS_FILE, JSON.stringify(comments, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入讨论评论失败:', e);
+  }
+}
+
+// ===== 讨论 API =====
+
+// 获取所有讨论话题（公开）
+app.get('/api/discussions', (req, res) => {
+  const discussions = readDiscussions();
+  const now = new Date();
+  const active = discussions
+    .filter(d => !d.expiresAt || parseLocalDateTime(d.expiresAt) > now)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: active });
+});
+
+// 创建讨论话题（管理员，最多3个）
+app.post('/api/discussions', requireAdmin, (req, res) => {
+  const { title, expiresAt } = req.body;
+  if (!title || !title.trim()) {
+    return res.json({ ok: false, msg: '话题标题不能为空' });
+  }
+  if (hasSpecialChars(title)) {
+    return res.json({ ok: false, msg: '标题包含特殊字符' });
+  }
+
+  const discussions = readDiscussions();
+  const now = new Date();
+  const active = discussions.filter(d => !d.expiresAt || parseLocalDateTime(d.expiresAt) > now);
+  if (active.length >= 3) {
+    return res.json({ ok: false, msg: '最多只能设置 3 个讨论话题，请先删除或等待过期' });
+  }
+
+  const newDiscussion = {
+    id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    title: title.trim(),
+    expiresAt: expiresAt || null, // null 表示无限期
+    createdBy: req.admin.id,
+    createdAt: new Date().toISOString(),
+    commentCount: 0
+  };
+  discussions.push(newDiscussion);
+  writeDiscussions(discussions);
+  res.json({ ok: true, data: newDiscussion });
+});
+
+// 更新讨论话题（管理员）
+app.put('/api/discussions/:id', requireAdmin, (req, res) => {
+  const { title, expiresAt } = req.body;
+  const discussions = readDiscussions();
+  const idx = discussions.findIndex(d => d.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '话题不存在' });
+
+  if (title !== undefined) {
+    if (!title.trim()) return res.json({ ok: false, msg: '标题不能为空' });
+    if (hasSpecialChars(title)) return res.json({ ok: false, msg: '标题包含特殊字符' });
+    discussions[idx].title = title.trim();
+  }
+  if (expiresAt !== undefined) discussions[idx].expiresAt = expiresAt || null;
+  writeDiscussions(discussions);
+  res.json({ ok: true, data: discussions[idx] });
+});
+
+// 删除讨论话题（管理员）
+app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
+  let discussions = readDiscussions();
+  const before = discussions.length;
+  discussions = discussions.filter(d => d.id !== req.params.id);
+  if (discussions.length === before) return res.json({ ok: false, msg: '话题不存在' });
+  writeDiscussions(discussions);
+
+  // 同时删除该话题下的所有评论
+  let comments = readDiscussionComments();
+  const remaining = comments.filter(c => c.discussionId !== req.params.id);
+  writeDiscussionComments(remaining);
+
+  res.json({ ok: true });
+});
+
+// 获取某个话题的评论（嵌套结构）
+app.get('/api/discussions/:id/comments', (req, res) => {
+  const comments = readDiscussionComments();
+  const discussionComments = comments
+    .filter(c => c.discussionId === req.params.id)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+  // 构建嵌套结构
+  const topLevel = [];
+  const byId = {};
+  discussionComments.forEach(c => {
+    c.replies = [];
+    byId[c.id] = c;
+  });
+  discussionComments.forEach(c => {
+    if (c.parentId && byId[c.parentId]) {
+      byId[c.parentId].replies.push(c);
+    } else {
+      topLevel.push(c);
+    }
+  });
+
+  res.json({ ok: true, data: topLevel });
+});
+
+// 发表讨论评论（需登录）
+app.post('/api/discussions/:id/comments', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const { content, parentId } = req.body;
+  if (!content || !content.trim()) {
+    return res.json({ ok: false, msg: '评论内容不能为空' });
+  }
+  if (hasSpecialChars(content)) {
+    return res.json({ ok: false, msg: '评论包含特殊字符' });
+  }
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user || user.status === 'banned') {
+    return res.json({ ok: false, msg: '账号已被禁用' });
+  }
+
+  const discussions = readDiscussions();
+  const discussion = discussions.find(d => d.id === req.params.id);
+  if (!discussion) return res.json({ ok: false, msg: '话题不存在' });
+
+  const comments = readDiscussionComments();
+  const newComment = {
+    id: 'dc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    discussionId: req.params.id,
+    parentId: parentId || null,
+    content: content.trim(),
+    author: user.nickname || '匿名',
+    avatar: user.avatar || '🙈',
+    userId: user.id,
+    createdAt: new Date().toISOString(),
+    likes: 0,
+    liked: false,
+    reportCount: 0,
+    hidden: false
+  };
+  comments.push(newComment);
+  writeDiscussionComments(comments);
+
+  // 更新话题评论数
+  discussion.commentCount = (discussion.commentCount || 0) + 1;
+  writeDiscussions(discussions);
+
+  res.json({ ok: true, data: newComment });
+});
+
+// 删除讨论评论（发送者或管理员可删）
+app.delete('/api/discussions/comments/:id', (req, res) => {
+  const token = req.headers['x-user-token'];
+  const adminToken = req.headers['x-admin-token'];
+
+  let isAdmin = false;
+  let userId = null;
+
+  if (adminToken) {
+    try {
+      const session = JSON.parse(Buffer.from(adminToken, 'base64').toString());
+      isAdmin = true;
+    } catch {}
+  }
+
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) userId = session.id;
+  }
+
+  if (!isAdmin && !userId) {
+    return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  }
+
+  const comments = readDiscussionComments();
+  const idx = comments.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '评论不存在' });
+
+  const comment = comments[idx];
+  // 检查权限：评论作者、回复作者、管理员
+  const isAuthor = userId && comment.userId && userId === comment.userId;
+  const isParentAuthor = userId && comment.parentId
+    ? (() => { const parent = comments.find(c => c.id === comment.parentId); return parent && parent.userId && parent.userId === userId; })()
+    : false;
+
+  if (!isAdmin && !isAuthor && !isParentAuthor) {
+    return res.json({ ok: false, msg: '无权删除此评论' });
+  }
+
+  comments.splice(idx, 1);
+  // 同时删除所有子回复
+  const children = comments.filter(c => c.parentId === req.params.id);
+  const childIds = children.map(c => c.id);
+  const remaining = comments.filter(c => c.id !== req.params.id && !childIds.includes(c.id));
+  writeDiscussionComments(remaining);
+
+  res.json({ ok: true });
+});
+
+// 举报讨论评论
+app.post('/api/discussions/comments/:id/report', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const { reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.json({ ok: false, msg: '请填写举报原因' });
+  }
+
+  const commentId = req.params.id;
+  const comments = readDiscussionComments();
+  const comment = comments.find(c => c.id === commentId);
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+
+  // 去重：同一用户只能举报同一条评论一次
+  const reports = readReports();
+  const alreadyReported = reports.some(r => r.targetId === commentId && r.type === 'discussion_comment' && r.reportedBy === session.id);
+  if (alreadyReported) {
+    return res.json({ ok: false, msg: '您已经举报过此评论' });
+  }
+
+  reports.push({
+    id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: 'discussion_comment',
+    targetId: commentId,
+    discussionId: comment.discussionId,
+    reason: reason.trim(),
+    reportedBy: session.id,
+    reporterName: session.nickname || '未知',
+    createdAt: new Date().toISOString(),
+    status: 'pending'
+  });
+  writeReports(reports);
+
+  // 更新评论举报计数
+  comment.reportCount = (comment.reportCount || 0) + 1;
+  if (comment.reportCount > 20) {
+    comment.hidden = true;
+  }
+  writeDiscussionComments(comments);
+
+  res.json({ ok: true, data: { reportCount: comment.reportCount, hidden: comment.hidden } });
+});
+
 // ===== 举报 API =====
 
 // 提交举报（任意用户，需登录 token）
@@ -1435,6 +1754,12 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
       }
     });
     writePosts(posts);
+  }
+  // 如果 action 是 delete_discussion_comment，同时删除被举报的讨论区评论
+  if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
+    const comments = readDiscussionComments();
+    const filtered = comments.filter(c => c.id !== report.targetId);
+    writeDiscussionComments(filtered);
   }
 
   writeReports(reports);
