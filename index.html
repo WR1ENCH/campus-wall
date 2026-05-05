@@ -1241,7 +1241,11 @@
 
     function showAnnouncement(ann) {
       document.getElementById('announcementTitle').textContent = '📢 ' + ann.title;
-      document.getElementById('announcementContent').innerHTML = marked.parse(ann.content || '');
+      const raw = ann.content || '';
+      document.getElementById('announcementContent').innerHTML =
+        (typeof marked !== 'undefined' && marked.parse)
+          ? marked.parse(raw)
+          : raw.replace(/\n/g, '<br>');
       document.getElementById('announcementOverlay').style.display = 'flex';
       localStorage.setItem('announcement_id', ann.publishedAt);
     }
