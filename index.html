@@ -949,6 +949,18 @@
     </div>
   </div>
 
+  <!-- ===== 公告弹窗 ===== -->
+  <div class="modal-overlay" id="announcementOverlay" style="display:none;z-index:1000;">
+    <div class="modal-note" onclick="event.stopPropagation()" style="max-width:520px;">
+      <div class="tape" style="--tape-rotate: -3deg;"></div>
+      <h3 id="announcementTitle">📢 公告</h3>
+      <div id="announcementContent" style="white-space:pre-wrap;line-height:1.7;font-size:14px;margin-top:8px;max-height:60vh;overflow-y:auto;"></div>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="closeAnnouncement()" style="padding:8px 32px;background:var(--note-yellow);border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 3px 8px rgba(0,0,0,0.2);">我已知悉</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 用户登录弹窗 ===== -->
   <div class="user-login-overlay" id="userLoginOverlay">
     <div class="user-login-box">
@@ -1083,6 +1095,7 @@
           hideLoginModal();
           updateUserBar();
           showToast('🎉 欢迎回来，' + nickname + '！');
+          checkAnnouncement();
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '登录失败';
         }
@@ -1184,11 +1197,38 @@
         }
       }
       updateUserBar();
+      checkAnnouncement();
       // 首次访问（无记录）→ 弹出登录框
       if (!currentUser && !localStorage.getItem('campus_wall_visited')) {
         localStorage.setItem('campus_wall_visited', '1');
         showLoginModal();
       }
+    }
+
+    // ===== 公告 =====
+    async function checkAnnouncement() {
+      try {
+        const res = await fetch('/api/announcement');
+        const json = await res.json();
+        if (json.ok && json.data) {
+          const ann = json.data;
+          const lastId = localStorage.getItem('announcement_id');
+          if (lastId !== ann.publishedAt) {
+            showAnnouncement(ann);
+          }
+        }
+      } catch (e) { /* silently ignore */ }
+    }
+
+    function showAnnouncement(ann) {
+      document.getElementById('announcementTitle').textContent = '📢 ' + ann.title;
+      document.getElementById('announcementContent').textContent = ann.content;
+      document.getElementById('announcementOverlay').style.display = 'flex';
+      localStorage.setItem('announcement_id', ann.publishedAt);
+    }
+
+    function closeAnnouncement() {
+      document.getElementById('announcementOverlay').style.display = 'none';
     }
 
     const typeConfig = {

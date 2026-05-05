@@ -1340,6 +1340,27 @@ function writeReports(reports) {
 // ===== 讨论数据读写 =====
 const DISCUSSIONS_FILE = path.join(DATA_DIR, 'discussions.json');
 const DISCUSSION_COMMENTS_FILE = path.join(DATA_DIR, 'discussion_comments.json');
+const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
+
+function readAnnouncement() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(ANNOUNCEMENT_FILE)) return null;
+    return JSON.parse(fs.readFileSync(ANNOUNCEMENT_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取公告失败:', e);
+    return null;
+  }
+}
+
+function writeAnnouncement(data) {
+  try {
+    ensureDir();
+    fs.writeFileSync(ANNOUNCEMENT_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入公告失败:', e);
+  }
+}
 
 function readDiscussions() {
   try {
@@ -1386,6 +1407,36 @@ function writeDiscussionComments(comments) {
     console.error('写入讨论评论失败:', e);
   }
 }
+
+// ===== 公告 API =====
+
+// 获取当前公告（公开）
+app.get('/api/announcement', (req, res) => {
+  const announcement = readAnnouncement();
+  res.json({ ok: true, data: announcement });
+});
+
+// 发布/更新公告（管理员）
+app.post('/api/announcement', requireAdmin, (req, res) => {
+  const { title, content } = req.body;
+  if (!content || !content.trim()) {
+    return res.json({ ok: false, msg: '公告内容不能为空' });
+  }
+  const data = {
+    title: title ? title.trim() : '公告',
+    content: content.trim(),
+    publishedAt: new Date().toISOString(),
+    publishedBy: req.admin.name
+  };
+  writeAnnouncement(data);
+  res.json({ ok: true, data });
+});
+
+// 删除公告（管理员）
+app.delete('/api/announcement', requireAdmin, (req, res) => {
+  writeAnnouncement(null);
+  res.json({ ok: true });
+});
 
 // ===== 讨论 API =====
 
