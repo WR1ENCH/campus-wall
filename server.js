@@ -1405,9 +1405,6 @@ app.post('/api/discussions', requireAdmin, (req, res) => {
   if (!title || !title.trim()) {
     return res.json({ ok: false, msg: '话题标题不能为空' });
   }
-  if (hasSpecialChars(title)) {
-    return res.json({ ok: false, msg: '标题包含特殊字符' });
-  }
 
   const discussions = readDiscussions();
   const now = new Date();
@@ -1438,7 +1435,6 @@ app.put('/api/discussions/:id', requireAdmin, (req, res) => {
 
   if (title !== undefined) {
     if (!title.trim()) return res.json({ ok: false, msg: '标题不能为空' });
-    if (hasSpecialChars(title)) return res.json({ ok: false, msg: '标题包含特殊字符' });
     discussions[idx].title = title.trim();
   }
   if (expiresAt !== undefined) discussions[idx].expiresAt = expiresAt || null;
