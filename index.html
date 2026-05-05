@@ -717,6 +717,133 @@
       position: fixed; z-index: 9999; pointer-events: none;
     }
     .spotlight-arrow svg { display: block; }
+
+    /* ===== 讨论弹窗 ===== */
+    .discussion-overlay {
+      display: none; position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .discussion-overlay.show { display: flex; }
+    .discussion-modal {
+      background: white; border-radius: 18px;
+      width: 92%; max-width: 620px; max-height: 82vh;
+      overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      display: flex; flex-direction: column;
+      animation: discIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes discIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    .discussion-header {
+      padding: 20px 24px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .discussion-header h3 { font-size: 20px; font-weight: 700; margin: 0; color: #1a1a2e; }
+    .discussion-close {
+      background: rgba(0,0,0,0.06); border: none; font-size: 22px; cursor: pointer;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #6b7280; transition: all 0.15s;
+    }
+    .discussion-close:hover { background: rgba(0,0,0,0.12); color: #1a1a2e; }
+    .discussion-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+    /* 话题列表 */
+    .discussion-topics { display: flex; flex-direction: column; gap: 14px; }
+    .discussion-topic {
+      padding: 18px 20px; border-radius: 14px;
+      border: 2px solid rgba(0,0,0,0.08); cursor: pointer;
+      transition: all 0.2s; position: relative;
+    }
+    .discussion-topic:hover { border-color: #3d6ce8; background: #f8f9ff; transform: translateY(-1px); }
+    .discussion-topic h4 { font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a1a2e; }
+    .discussion-topic-meta { font-size: 13px; color: #6b7280; }
+
+    /* 评论区 */
+    .discussion-comments { display: flex; flex-direction: column; gap: 16px; }
+    .discussion-back {
+      background: none; border: none; color: #3d6ce8; cursor: pointer;
+      font-size: 14px; padding: 6px 0; margin-bottom: 10px; font-family: inherit; font-weight: 600;
+      align-self: flex-start;
+    }
+    .discussion-back:hover { text-decoration: underline; }
+    #currentDiscussionTitle { font-size: 17px; font-weight: 700; margin: 0 0 14px 0; color: #1a1a2e; }
+
+    /* 评论输入框 */
+    .discussion-comment-input { display: flex; gap: 10px; margin-bottom: 18px; align-items: flex-end; }
+    .discussion-comment-input textarea {
+      flex: 1; padding: 12px 14px; border: 2px solid rgba(0,0,0,0.12);
+      border-radius: 12px; font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+      outline: none; resize: vertical; min-height: 60px; color: #1a1a2e;
+      transition: border-color 0.2s;
+    }
+    .discussion-comment-input textarea:focus { border-color: #3d6ce8; }
+    .discussion-comment-input button {
+      padding: 12px 22px; background: linear-gradient(135deg, #3d6ce8, #2563eb);
+      color: white; border: none; border-radius: 12px; cursor: pointer;
+      font-size: 14px; font-weight: 700; font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 3px 10px rgba(59,130,246,0.25);
+    }
+    .discussion-comment-input button:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(59,130,246,0.35); }
+
+    /* 评论列表 */
+    .discussion-comments-list { display: flex; flex-direction: column; gap: 14px; }
+    .discussion-comment {
+      padding: 14px 16px; border-radius: 12px; background: #f8f9ff;
+      position: relative; border: 1px solid rgba(0,0,0,0.04);
+    }
+    .discussion-comment-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .discussion-comment-avatar { font-size: 22px; }
+    .discussion-comment-author { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+    .discussion-comment-time { font-size: 11px; color: #9ca3af; margin-left: auto; }
+    .discussion-comment-content { font-size: 14px; color: #374151; line-height: 1.65; white-space: pre-wrap; }
+    .discussion-comment-actions {
+      display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .discussion-comment-actions button {
+      background: none; border: none; cursor: pointer;
+      font-size: 12px; padding: 5px 10px; border-radius: 6px;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .reply-btn { color: #3d6ce8; }
+    .reply-btn:hover { background: #eff6ff; }
+    .delete-btn { color: #ef4444; }
+    .delete-btn:hover { background: #fee2e2; }
+    .report-btn { color: #f59e0b; }
+    .report-btn:hover { background: #fef3c7; }
+
+    /* 嵌套回复 */
+    .discussion-replies {
+      margin-left: 24px; margin-top: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      border-left: 2px solid rgba(0,0,0,0.06); padding-left: 14px;
+    }
+    .discussion-reply {
+      padding: 12px 14px; border-radius: 10px;
+      background: white; border: 1px solid rgba(0,0,0,0.06);
+    }
+    .discussion-reply-header {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    }
+    .discussion-reply-avatar { font-size: 18px; }
+    .discussion-reply-author { font-size: 13px; font-weight: 600; color: #374151; }
+    .discussion-reply-time { font-size: 11px; color: #9ca3af; margin-left: auto; }
+    .discussion-reply-content { font-size: 13px; color: #4b5563; line-height: 1.55; white-space: pre-wrap; }
+    .discussion-reply-actions {
+      display: flex; gap: 6px; margin-top: 8px;
+    }
+    .discussion-reply-actions button {
+      background: none; border: none; cursor: pointer;
+      font-size: 11px; padding: 4px 8px; border-radius: 5px;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .discussion-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -751,14 +878,7 @@
 
     <div class="action-bar">
       <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
-      <div class="filter-chips">
-        <button class="chip all active" data-filter="全部" onclick="filterNotes(this)">全部</button>
-        <button class="chip daily" data-filter="日常" onclick="filterNotes(this)">💬 日常</button>
-        <button class="chip love" data-filter="表白" onclick="filterNotes(this)">💕 表白</button>
-        <button class="chip tree" data-filter="树洞" onclick="filterNotes(this)">🌳 树洞</button>
-        <button class="chip lost" data-filter="失物招领" onclick="filterNotes(this)">🔍 失物招领</button>
-        <button class="chip event" data-filter="活动" onclick="filterNotes(this)">🎉 活动</button>
-      </div>
+      <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
     </div>
 
     <div class="notes-area">
@@ -1947,8 +2067,321 @@
       _spotlight.tooltip.style.display  = 'none';
     }
 
-    function _endSpotlight() { hideNewbieGuide(); }
+    // ===== 讨论功能 =====
+    let currentDiscussionId = null;
+
+    function openDiscussionModal() {
+      const overlay = document.getElementById('discussionOverlay');
+      overlay.style.display = 'flex';
+      showDiscussionTopics();
+      loadDiscussions();
+    }
+
+    function closeDiscussionModal() {
+      document.getElementById('discussionOverlay').style.display = 'none';
+      currentDiscussionId = null;
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // 格式化 datetime-local 时间为本地可读字符串
+    function formatDateTimeLocal(str) {
+      if (!str) return '无限期';
+      // 兼容有冒号(YYYY-MM-DDTHH:mm)和无冒号(YYYY-MM-DDTHHmm)格式
+      const normalized = str.replace(/T(\d{2})(\d{2})$/, 'T$1:$2');
+      const d = new Date(normalized);
+      if (isNaN(d.getTime())) return str;
+      return d.toLocaleString('zh-CN');
+    }
+
+    async function loadDiscussions() {
+      try {
+        const res = await fetch('/api/discussions');
+        const json = await res.json();
+        if (json.ok) {
+          renderDiscussionTopics(json.data || []);
+        }
+      } catch (e) {
+        document.getElementById('discussionTopics').innerHTML = '<div class="discussion-empty">加载失败，请刷新重试</div>';
+      }
+    }
+
+    function renderDiscussionTopics(topics) {
+      const container = document.getElementById('discussionTopics');
+      if (!topics || topics.length === 0) {
+        container.innerHTML = '<div class="discussion-empty">暂无讨论话题，请管理员设置</div>';
+        return;
+      }
+      container.innerHTML = topics.map(d => {
+        const expires = formatDateTimeLocal(d.expiresAt);
+        return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
+          <h4>${escHtml(d.title)}</h4>
+          <div class="discussion-topic-meta">💬 ${d.commentCount || 0} 条讨论 · 截止：${expires}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function showDiscussion(id) {
+      currentDiscussionId = id;
+      document.getElementById('discussionTopics').style.display = 'none';
+      document.getElementById('discussionComments').style.display = 'block';
+      const topics = await (await fetch('/api/discussions')).json();
+      const topic = (topics.data || []).find(t => t.id === id);
+      if (topic) {
+        document.getElementById('currentDiscussionTitle').textContent = topic.title;
+      }
+      await loadDiscussionComments(id);
+    }
+
+    function showDiscussionTopics() {
+      currentDiscussionId = null;
+      document.getElementById('discussionComments').style.display = 'none';
+      document.getElementById('discussionTopics').style.display = 'flex';
+    }
+
+    async function loadDiscussionComments(discussionId) {
+      try {
+        const res = await fetch('/api/discussions/' + discussionId + '/comments');
+        const json = await res.json();
+        if (json.ok) {
+          renderDiscussionComments(json.data || [], document.getElementById('discussionCommentsList'));
+        }
+      } catch (e) {
+        document.getElementById('discussionCommentsList').innerHTML = '<div class="discussion-empty">加载失败</div>';
+      }
+    }
+
+    function renderDiscussionComments(comments, container, level = 0) {
+      if (!comments || comments.length === 0) {
+        container.innerHTML = '<div class="discussion-empty">暂无讨论，来说两句吧</div>';
+        return;
+      }
+      container.innerHTML = comments.map(c => {
+        if (c.hidden) return '';
+        const timeStr = formatTime(c.createdAt);
+        const isOwner = currentUser && c.userId === currentUser.id;
+        const deleteBtn = isOwner ? `<button class="delete-btn" onclick="deleteDiscussionComment('${c.id}')">删除</button>` : '';
+        const replyBtn = currentUser ? `<button class="reply-btn" onclick="setReplyTo('${c.id}')">回复</button>` : '';
+        const reportBtn = currentUser ? `<button class="report-btn" onclick="reportDiscussionComment('${c.id}')">举报</button>` : '';
+        let html = `<div class="discussion-comment">
+          <div class="discussion-comment-header">
+            <span class="discussion-comment-avatar">${c.avatar || '🙈'}</span>
+            <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
+            <span class="discussion-comment-time">${timeStr}</span>
+          </div>
+          <div class="discussion-comment-content">${escHtml(c.content)}</div>
+          <div class="discussion-comment-actions">
+            ${replyBtn}${deleteBtn}${reportBtn}
+          </div>
+        </div>`;
+        if (c.replies && c.replies.length > 0) {
+          html += `<div class="discussion-replies">`;
+          html += `</div>`;
+          // 由于嵌套渲染复杂，这里只渲染一层回复
+        }
+        return html;
+      }).join('');
+      // 简单实现：递归渲染回复
+      comments.forEach(c => {
+        if (c.replies && c.replies.length > 0) {
+          const replyContainer = document.createElement('div');
+          replyContainer.className = 'discussion-replies';
+          renderDiscussionComments(c.replies, replyContainer, level + 1);
+          const commentDiv = container.querySelector(`[data-id="${c.id}"]`);
+          if (commentDiv) commentDiv.appendChild(replyContainer);
+        }
+      });
+    }
+
+    let replyToId = null;
+    function setReplyTo(commentId) {
+      replyToId = commentId;
+      const comment = document.querySelector(`[data-id="${commentId}"]`);
+      showToast('回复模式：点击发送将回复该评论');
+    }
+
+    async function submitDiscussionComment(parentId) {
+      if (!currentUser) { showToast('请先登录'); return; }
+      const input = document.getElementById('discussionCommentInput');
+      const content = input.value.trim();
+      if (!content) { showToast('内容不能为空'); return; }
+      if (hasSpecialChars(content)) { showToast('包含特殊字符'); return; }
+
+      try {
+        const res = await fetch('/api/discussions/' + currentDiscussionId + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ content, parentId: replyToId || null })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          input.value = '';
+          replyToId = null;
+          showToast('发送成功');
+          await loadDiscussionComments(currentDiscussionId);
+          // 刷新话题列表的评论数
+          await loadDiscussions();
+        } else {
+          showToast('发送失败：' + (json.msg || ''));
+        }
+      } catch (e) {
+        showToast('网络错误');
+      }
+    }
+
+    async function deleteDiscussionComment(commentId) {
+      if (!confirm('确定删除该评论吗？')) return;
+      try {
+        const res = await fetch('/api/discussions/comments/' + commentId, {
+          method: 'DELETE',
+          headers: authHeaders()
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('已删除');
+          await loadDiscussionComments(currentDiscussionId);
+        } else {
+          showToast('删除失败');
+        }
+      } catch (e) {
+        showToast('网络错误');
+      }
+    }
+
+    async function reportDiscussionComment(commentId) {
+      const reason = prompt('请输入举报原因：');
+      if (!reason) return;
+      try {
+        const res = await fetch('/api/discussions/comments/' + commentId + '/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ reason })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('举报已提交');
+        } else {
+          showToast('举报失败：' + (json.msg || ''));
+        }
+      } catch (e) {
+        showToast('网络错误');
+      }
+    }
+
+    // 为评论元素添加 data-id 属性（用于嵌套回复定位）
+    // 重写 renderDiscussionComments 以正确设置 data-id
+    function renderDiscussionComments(comments, container, level = 0) {
+      container.innerHTML = '';
+      if (!comments || comments.length === 0) {
+        container.innerHTML = '<div class="discussion-empty">暂无讨论，来说两句吧</div>';
+        return;
+      }
+      comments.forEach(c => {
+        if (c.hidden) return;
+        const timeStr = formatTime(c.createdAt);
+        const isOwner = currentUser && c.userId && currentUser.id === c.userId;
+        const deleteBtn = isOwner ? `<button class="delete-btn" onclick="deleteDiscussionComment('${c.id}')">删除</button>` : '';
+        const replyBtn = currentUser ? `<button class="reply-btn" onclick="replyToId='${c.id}';showToast('回复模式：再输入内容发送即可回复该评论')">回复</button>` : '';
+        const reportBtn = currentUser ? `<button class="report-btn" onclick="promptReportDiscussion('${c.id}')">举报</button>` : '';
+
+        const div = document.createElement('div');
+        div.className = 'discussion-comment';
+        div.dataset.id = c.id;
+        div.innerHTML = `
+          <div class="discussion-comment-header">
+            <span class="discussion-comment-avatar">${c.avatar || '🙈'}</span>
+            <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
+            <span class="discussion-comment-time">${timeStr}</span>
+          </div>
+          <div class="discussion-comment-content">${escHtml(c.content)}</div>
+          <div class="discussion-comment-actions">${replyBtn}${deleteBtn}${reportBtn}</div>
+        `;
+        container.appendChild(div);
+
+        if (c.replies && c.replies.length > 0) {
+          const replyContainer = document.createElement('div');
+          replyContainer.className = 'discussion-replies';
+          renderDiscussionComments(c.replies, replyContainer, level + 1);
+          container.appendChild(replyContainer);
+        }
+      });
+    }
+
+    async function promptReportDiscussion(commentId) {
+      const reason = prompt('请输入举报原因：');
+      if (!reason) return;
+      try {
+        const res = await fetch('/api/discussions/comments/' + commentId + '/report', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ reason })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('举报已提交，管理员会尽快处理');
+        } else {
+          showToast(json.msg || '举报失败');
+        }
+      } catch (e) {
+        showToast('网络错误');
+      }
+    }
+
+    // 重写 submitDiscussionComment 以支持 replyToId
+    async function submitDiscussionComment() {
+      if (!currentUser) { showToast('请先登录'); return; }
+      const input = document.getElementById('discussionCommentInput');
+      const content = input.value.trim();
+      if (!content) { showToast('内容不能为空'); return; }
+      if (hasSpecialChars(content)) { showToast('包含特殊字符'); return; }
+
+      try {
+        const res = await fetch('/api/discussions/' + currentDiscussionId + '/comments', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ content, parentId: replyToId || null })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          input.value = '';
+          replyToId = null; // 清除回复状态
+          showToast('发送成功');
+          await loadDiscussionComments(currentDiscussionId);
+          await loadDiscussions(); // 刷新话题评论数
+        } else {
+          showToast(json.msg || '发送失败');
+        }
+      } catch (e) {
+        showToast('网络错误');
+      }
+    }
+
   </script>
+
+  <!-- 讨论弹窗 -->
+  <div class="discussion-overlay" id="discussionOverlay" style="display:none;">
+    <div class="discussion-modal">
+      <div class="discussion-header">
+        <h3>💬 讨论区</h3>
+        <button class="discussion-close" onclick="closeDiscussionModal()">×</button>
+      </div>
+      <div class="discussion-body">
+        <div class="discussion-topics" id="discussionTopics"></div>
+        <div class="discussion-comments" id="discussionComments" style="display:none;">
+          <button class="discussion-back" onclick="showDiscussionTopics()">← 返回话题列表</button>
+          <h4 id="currentDiscussionTitle"></h4>
+          <div class="discussion-comment-input">
+            <textarea id="discussionCommentInput" placeholder="说点什么..." maxlength="500"></textarea>
+            <button onclick="submitDiscussionComment()">发送</button>
+          </div>
+          <div class="discussion-comments-list" id="discussionCommentsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 聚光灯引导遮罩 + 气泡 -->
   <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
