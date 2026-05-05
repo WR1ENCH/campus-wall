@@ -843,6 +843,19 @@
             <button type="button" id="annMdEditBtn" class="chip all active" onclick="switchAnnMdView('edit')" style="font-size:12px;padding:4px 10px;">✏️ 编辑</button>
             <button type="button" id="annMdPreviewBtn" class="chip all" onclick="switchAnnMdView('preview')" style="font-size:12px;padding:4px 10px;">👁️ 预览</button>
           </div>
+          <div id="annMdToolbar" style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">
+            <button type="button" class="chip all" onclick="annMdInsert('**','**')" title="粗体" style="font-size:12px;padding:3px 8px;font-weight:700;">B</button>
+            <button type="button" class="chip all" onclick="annMdInsert('*','*')" title="斜体" style="font-size:12px;padding:3px 8px;font-style:italic;">I</button>
+            <button type="button" class="chip all" onclick="annMdInsert('~~','~~')" title="删除线" style="font-size:12px;padding:3px 8px;">S</button>
+            <button type="button" class="chip all" onclick="annMdInsert('`','`')" title="行内代码" style="font-size:12px;padding:3px 8px;font-family:monospace;">&lt;/&gt;</button>
+            <button type="button" class="chip all" onclick="annMdInsert('\n```\n','\n```')" title="代码块" style="font-size:12px;padding:3px 8px;">```</button>
+            <button type="button" class="chip all" onclick="annMdInsert('> ','')" title="引用" style="font-size:12px;padding:3px 8px;">&gt;</button>
+            <button type="button" class="chip all" onclick="annMdInsert('\n- ','')" title="无序列表" style="font-size:12px;padding:3px 8px;">•—</button>
+            <button type="button" class="chip all" onclick="annMdInsert('\n1. ','')" title="有序列表" style="font-size:12px;padding:3px 8px;">1.</button>
+            <button type="button" class="chip all" onclick="annMdInsert('\n---\n','')" title="分隔线" style="font-size:12px;padding:3px 8px;">—</button>
+            <button type="button" class="chip all" onclick="annMdInsert('[','](url)')" title="链接" style="font-size:12px;padding:3px 8px;">🔗</button>
+            <button type="button" class="chip all" onclick="annMdInsert('\n> **信息**\n\n','\n\n')" title="提示框" style="font-size:12px;padding:3px 8px;">💡</button>
+          </div>
           <textarea id="announcementContentInput" class="form-input" style="height:240px;resize:vertical;font-family:inherit;line-height:1.7;" placeholder="支持 Markdown 语法，例如：&#10;&#10;# 标题&#10;**粗体** *斜体*&#10;- 列表项&#10;> 引用文字"></textarea>
           <div id="announcementPreviewBox" style="display:none;background:var(--note-yellow);border-radius:4px;padding:16px;line-height:1.7;font-size:14px;color:#5a4a00;box-shadow:2px 3px 8px rgba(0,0,0,0.15);min-height:240px;overflow-y:auto;"></div>
         </div>
@@ -1407,20 +1420,37 @@
   }
 
   let annMdView = 'edit';
+  function annMdInsert(before, after) {
+    const ta = document.getElementById('announcementContentInput');
+    if (!ta) return;
+    ta.focus();
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = ta.value.substring(start, end);
+    const insert = before + (selected || '') + after;
+    ta.value = ta.value.substring(0, start) + insert + ta.value.substring(end);
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = start + before.length + (selected || '').length;
+    ta.dispatchEvent(new Event('input'));
+  }
+
   function switchAnnMdView(view) {
     annMdView = view;
     const ta = document.getElementById('announcementContentInput');
     const previewBox = document.getElementById('announcementPreviewBox');
+    const toolbar = document.getElementById('annMdToolbar');
     const editBtn = document.getElementById('annMdEditBtn');
     const previewBtn = document.getElementById('annMdPreviewBtn');
     if (view === 'edit') {
       ta.style.display = 'block';
       previewBox.style.display = 'none';
+      toolbar.style.display = 'flex';
       editBtn.classList.add('active');
       previewBtn.classList.remove('active');
     } else {
       ta.style.display = 'none';
       previewBox.style.display = 'block';
+      toolbar.style.display = 'none';
       previewAnnouncement();
       previewBtn.classList.add('active');
       editBtn.classList.remove('active');
