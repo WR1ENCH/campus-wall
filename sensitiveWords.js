@@ -1,6 +1,9 @@
 // 敏感词过滤模块
+// 词库从加密文件 tencent_sensitive_words.enc 中加载，
+// 运行时通过环境变量 SENSITIVE_KEY 解密
 const fs = require('fs');
 const path = require('path');
+const { decryptFile } = require('./crypto_words');
 
 // ===== 内置核心敏感词 =====
 const CORE_WORDS = [
@@ -11,31 +14,36 @@ const CORE_WORDS = [
   '卖淫','嫖娼','色情','裸聊','援交','约炮',
 ];
 
-// ===== 从外部文件加载词库 =====
-// 支持格式：逗号、顿号、空格、换行分隔
-const EXTERNAL_FILE = 'tencent_sensitive_words.txt';
-// 最小词长：2个字符以下的词容易误报正常中文
-const MIN_WORD_LEN = 2;
+// ===== 从加密词库文件加载 =====
+const ENC_FILE = 'tencent_sensitive_words.enc';
 
-function loadExternalWords(filePath) {
+function loadExternalWords() {
+  const encPath = path.resolve(__dirname, ENC_FILE);
+  if (!fs.existsSync(encPath)) {
+    console.log(`[sensitiveWords] 加密词库 ${ENC_FILE} 不存在，仅使用内置词`);
+    return [];
+  }
+
+  const key = process.env.SENSITIVE_KEY;
+  if (!key) {
+    console.warn('[sensitiveWords] ⚠️ 未设置环境变量 SENSITIVE_KEY，无法解密词库，仅使用内置词');
+    return [];
+  }
+
   try {
-    const absPath = path.resolve(__dirname, filePath);
-    if (!fs.existsSync(absPath)) {
-      console.log(`[sensitiveWords] 外部词库 ${filePath} 不存在，仅使用内置词`);
-      return [];
-    }
-    const content = fs.readFileSync(absPath, 'utf-8');
-    const words = content.split(/[、,，\s\n\r]+/).filter(w => w.trim().length >= MIN_WORD_LEN);
-    console.log(`[sensitiveWords] 已加载外部词库，共 ${words.length} 个词（过滤掉单字词）`);
+    const content = decryptFile(encPath, key);
+    const words = content.split(/[、,，\s\n\r]+/).filter(w => w.trim().length >= 2);
+    console.log(`[sensitiveWords] 已加载加密词库，共 ${words.length} 个词`);
     return words;
   } catch (e) {
-    console.error(`[sensitiveWords] 加载外部词库失败:`, e.message);
+    console.error(`[sensitiveWords] 解密词库失败:`, e.message);
+    console.error('[sensitiveWords] 请检查 SENSITIVE_KEY 是否正确');
     return [];
   }
 }
 
 // ===== 构建去重词集 =====
-const externalWords = loadExternalWords(EXTERNAL_FILE);
+const externalWords = loadExternalWords();
 const ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords])];
 
 // ===== 检测函数 =====
@@ -44,7 +52,6 @@ function check(text) {
   const found = [];
   for (const word of ALL_WORDS) {
     if (text.includes(word)) found.push(word);
-    // 最多返回前20个命中词，避免消息过长
     if (found.length >= 20) break;
   }
   return found;

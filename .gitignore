@@ -28,3 +28,7 @@ desktop.ini
 
 # WorkBuddy 内部数据
 .workbuddy/
+
+# 敏感词库（明文版本不提交，仅提交加密版 .enc）
+tencent_sensitive_words.txt
+_decrypted.txt
