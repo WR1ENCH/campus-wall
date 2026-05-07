@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
+const { check: checkSensitive } = require('./sensitiveWords');
 
 // 智学网自动登录模块（需 Playwright / Chromium）
 let loginZhixue = null;
@@ -1008,7 +1009,7 @@ app.get('/api/posts/:id', (req, res) => {
   res.json({ ok: true, data: post });
 });
 
-// 发布新帖子
+  // 发布新帖子
 app.post('/api/posts', (req, res) => {
   const { type, content, avatar, author, userId } = req.body;
 
@@ -1018,6 +1019,10 @@ app.post('/api/posts', (req, res) => {
   if (!type) {
     return res.json({ ok: false, msg: '请选择类型' });
   }
+
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
+  const hasSensitive = sensitiveWords.length > 0;
 
   const posts = readPosts();
 
@@ -1054,12 +1059,34 @@ app.post('/api/posts', (req, res) => {
   posts.unshift(newPost);
   writePosts(posts);
 
+  // 敏感词命中：自动生成举报记录挂到后台
+  if (hasSensitive) {
+    const reports = readReports();
+    reports.push({
+      id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: 'sensitive_post',
+      targetId: newPost.id,
+      postId: newPost.id,
+      reason: '系统自动检测：内容包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reportedBy: userId || null,
+      reporterName: author || '匿名',
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    writeReports(reports);
+  }
+
   // 更新注册用户的发贴数
   if (userId && author) {
     incUserPostCount(author);
   }
 
-  res.json({ ok: true, data: newPost });
+  res.json({
+    ok: true,
+    data: newPost,
+    warning: hasSensitive,
+    warningMsg: hasSensitive ? '内容包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+  });
 });
 
 // 点赞 / 取消点赞
@@ -1097,6 +1124,9 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '评论内容不能为空' });
   }
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
+  const hasSensitive = sensitiveWords.length > 0;
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) {
@@ -1115,8 +1145,31 @@ app.post('/api/posts/:id/comments', (req, res) => {
   };
   post.comments.push(newComment);
   post.commentsCount = post.comments.length;
+
+  // 敏感词命中：自动生成举报记录
+  if (hasSensitive) {
+    const reports = readReports();
+    reports.push({
+      id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: 'sensitive_comment',
+      targetId: newComment.id,
+      postId: post.id,
+      reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reportedBy: userId || null,
+      reporterName: author || '匿名',
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    writeReports(reports);
+  }
+
   writePosts(posts);
-  res.json({ ok: true, data: newComment });
+  res.json({
+    ok: true,
+    data: newComment,
+    warning: hasSensitive,
+    warningMsg: hasSensitive ? '评论包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+  });
 });
 
 // 评论点赞
@@ -1548,6 +1601,9 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   if (hasSpecialChars(content)) {
     return res.json({ ok: false, msg: '评论包含特殊字符' });
   }
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
+  const hasSensitive = sensitiveWords.length > 0;
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
@@ -1577,11 +1633,33 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   comments.push(newComment);
   writeDiscussionComments(comments);
 
+  // 敏感词命中：自动生成举报记录
+  if (hasSensitive) {
+    const reports = readReports();
+    reports.push({
+      id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: 'sensitive_discussion_comment',
+      targetId: newComment.id,
+      discussionId: req.params.id,
+      reason: '系统自动检测：讨论评论包含敏感词【' + sensitiveWords.join('、') + '】',
+      reportedBy: session.id,
+      reporterName: session.nickname || '未知',
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    writeReports(reports);
+  }
+
   // 更新话题评论数
   discussion.commentCount = (discussion.commentCount || 0) + 1;
   writeDiscussions(discussions);
 
-  res.json({ ok: true, data: newComment });
+  res.json({
+    ok: true,
+    data: newComment,
+    warning: hasSensitive,
+    warningMsg: hasSensitive ? '评论包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+  });
 });
 
 // 删除讨论评论（发送者或管理员可删）

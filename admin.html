@@ -1285,12 +1285,23 @@
         const statusText = r.status === 'pending' ? '待处理' :
                              r.status === 'resolved' ? '已处理' : '已忽略';
         const timeStr = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-CN') : '-';
-        const isCommentReport = r.type === 'comment';
-        const isDiscussionCommentReport = r.type === 'discussion_comment';
-        const targetLabel = isCommentReport || isDiscussionCommentReport ? '被举报评论' : '被举报帖';
+        const isSensitiveReport = r.type && r.type.startsWith('sensitive_');
+        const isCommentReport = r.type === 'comment' || r.type === 'sensitive_comment';
+        const isDiscussionCommentReport = r.type === 'discussion_comment' || r.type === 'sensitive_discussion_comment';
+        let targetLabel = '被举报帖';
+        if (isSensitiveReport) {
+          if (r.type === 'sensitive_post') targetLabel = '⚠️ 系统检测：帖子含敏感词';
+          else if (r.type === 'sensitive_comment') targetLabel = '⚠️ 系统检测：评论含敏感词';
+          else if (r.type === 'sensitive_discussion_comment') targetLabel = '⚠️ 系统检测：讨论评论含敏感词';
+        } else if (isCommentReport || isDiscussionCommentReport) {
+          targetLabel = '被举报评论';
+        }
         const targetContent = isCommentReport || isDiscussionCommentReport ? (r.commentContent || '') : (r.postContent || '');
-        const deleteAction = isCommentReport ? 'delete_comment' : (isDiscussionCommentReport ? 'delete_discussion_comment' : 'delete_post');
-        const deleteLabel = isCommentReport || isDiscussionCommentReport ? '删除评论' : '删除帖子';
+        let deleteAction = 'delete_post';
+        let deleteLabel = '删除帖子';
+        if (r.type === 'comment' || r.type === 'sensitive_comment') { deleteAction = 'delete_comment'; deleteLabel = '删除评论'; }
+        if (r.type === 'discussion_comment' || r.type === 'sensitive_discussion_comment') { deleteAction = 'delete_discussion_comment'; deleteLabel = '删除讨论评论'; }
+        if (r.type && r.type.startsWith('sensitive_')) deleteLabel = '删除（系统检测）';
         const actionBtns = r.status === 'pending'
           ? '<button class="btn-view" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'resolved\', \'' + deleteAction + '\')">' + deleteLabel + '</button>' +
             '<button class="btn-del" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'ignored\', \'\')">忽略</button>'

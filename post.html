@@ -418,6 +418,28 @@
     setTimeout(() => { el.style.display = 'none'; }, duration);
   }
 
+  // 敏感词警告弹屏
+  function showSensitiveWarning(msg, onEdit) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+    overlay.innerHTML = `
+      <div style="background:white;border-radius:16px;padding:32px 28px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:reportIn 0.25s ease;">
+        <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;">⚠️ 内容审核提醒</h3>
+        <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.6;">${msg}</p>
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
+          <button id="btnWarnEdit" style="padding:12px 28px;background:#d32f2f;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(211,47,47,0.35);">返回编辑</button>
+          <button id="btnWarnContinue" style="padding:12px 28px;background:#e0e0e0;color:#666;border:none;border-radius:10px;font-size:15px;cursor:pointer;">继续发送</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#btnWarnEdit').onclick = () => {
+      overlay.remove();
+      if (typeof onEdit === 'function') onEdit();
+    };
+    overlay.querySelector('#btnWarnContinue').onclick = () => overlay.remove();
+  }
+
   // ===== 加载帖子数据 =====
   async function loadPost() {
     if (!POST_ID) {
@@ -585,6 +607,12 @@
         input.value = '';
         await loadComments();
         toast('评论发布成功');
+        if (json.warning) {
+          showSensitiveWarning(json.warningMsg, () => {
+            document.getElementById('commentInput').value = content;
+            document.getElementById('commentInput').focus();
+          });
+        }
       } else {
         toast(json.msg || '评论失败');
       }
