@@ -44,7 +44,7 @@ function verifyPassword(password, storedHash) {
 }
 
 const app = express();
-const PORT = 80;
+const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
