@@ -482,6 +482,35 @@
       text-align: center; min-height: 18px; margin-bottom: 4px;
     }
 
+    .user-agreement-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; margin-top: 12px; padding: 8px 12px;
+      font-size: 13px; color: rgba(90,74,0,0.75);
+      background: rgba(196,168,130,0.10);
+      border: 1px solid rgba(196,168,130,0.25);
+      border-radius: 8px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .user-agreement-row:hover {
+      background: rgba(196,168,130,0.16);
+      border-color: rgba(196,168,130,0.40);
+    }
+    .user-agreement-row.error {
+      border-color: #dc2626;
+      background: rgba(220,38,38,0.06);
+    }
+    .user-agreement-row input[type="checkbox"] {
+      width: 16px; height: 16px; cursor: pointer; accent-color: #8a7a6a;
+      flex-shrink: 0;
+    }
+    .user-agreement-row label {
+      cursor: pointer; user-select: none;
+    }
+    .user-agreement-row a {
+      color: #8a6a4a; text-decoration: underline; cursor: pointer;
+    }
+    .user-agreement-row a:hover { color: #5a3e2b; }
+
     .user-login-actions {
       display: flex; gap: 10px; margin-top: 12px;
     }
@@ -524,6 +553,10 @@
     .login-tab.active {
       color: #5a4a00; border-bottom-color: #5a4a00;
       font-weight: 700;
+    }
+    #tabZhixue.active {
+      border-bottom-color: #22c55e;
+      color: #1b8a3e;
     }
     .login-tab:hover:not(.active) { color: rgba(90,74,0,0.75); }
 
@@ -910,6 +943,7 @@
       <div class="tape" style="--tape-rotate: -3deg;"></div>
       <h3>📝 写便利贴</h3>
       <textarea id="noteInput" placeholder="在这里写点什么..."></textarea>
+      <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/200</div>
       <div class="modal-tags">
         <button class="modal-tag t-daily active" data-tag="日常" onclick="selectTag(this)">💬 日常</button>
         <button class="modal-tag t-love" data-tag="表白" onclick="selectTag(this)">💕 表白</button>
@@ -984,10 +1018,11 @@
   <div class="user-login-overlay" id="userLoginOverlay">
     <div class="user-login-box">
       <h3>👋 欢迎来到校园墙</h3>
-      <!-- 登录/注册切换 -->
-      <div class="login-tab-bar">
+      <!-- 登录/注册/智学登录切换 -->
+      <div class="login-tab-bar" style="display:flex;gap:0;">
         <button class="login-tab active" id="tabLogin" onclick="switchLoginTab('login')">登录</button>
         <button class="login-tab" id="tabRegister" onclick="switchLoginTab('register')">注册</button>
+        <button class="login-tab" id="tabZhixue" onclick="switchLoginTab('zhixue')">🎓 智学登录</button>
       </div>
 
       <!-- 注册表单 -->
@@ -1010,6 +1045,21 @@
                  placeholder="在墙上显示的名字，2-12字" maxlength="12"
                  onkeydown="if(event.key==='Enter') doUserRegister()">
         </div>
+        <!-- 验证码 -->
+        <div class="user-login-field">
+          <label class="user-login-label">验证码</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input class="user-login-input" id="regCaptchaInput"
+                   placeholder="输入验证码" maxlength="6"
+                   style="flex:1;"
+                   onkeydown="if(event.key==='Enter') doUserRegister()">
+            <div id="captchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
+                 onclick="refreshCaptcha()" title="点击刷新验证码">
+              <img id="captchaImg" src="" alt="验证码" style="height:44px;display:block;">
+            </div>
+          </div>
+          <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;">💡 点击验证码图片可刷新</div>
+        </div>
       </div>
 
       <!-- 登录表单 -->
@@ -1025,16 +1075,72 @@
           <input class="user-login-input" id="loginPasswordInput" type="password"
                  placeholder="输入密码" maxlength="20"
                  onkeydown="if(event.key==='Enter') doUserLogin()">
+          <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:3px;cursor:pointer;"
+               onclick="showForgotPwdModal()">🔑 忘记密码？</div>
+        </div>
+      </div>
+
+      <!-- 智学登录表单 -->
+      <div id="zhixueLoginForm" style="display:none;">
+        <div class="user-login-field">
+          <label class="user-login-label" for="zhixueLoginUsername">绑定的智学网</label>
+          <input class="user-login-input" id="zhixueLoginUsername"
+                 placeholder="输入已认证的智学网账号" maxlength="50"
+                 onkeydown="if(event.key==='Enter') doZhixueLogin()">
+        </div>
+        <div class="user-login-field">
+          <label class="user-login-label" for="zhixueLoginPassword">密码</label>
+          <input class="user-login-input" id="zhixueLoginPassword" type="password"
+                 placeholder="输入校园墙账号密码" maxlength="20"
+                 onkeydown="if(event.key==='Enter') doZhixueLogin()">
         </div>
       </div>
 
       <div class="user-login-error" id="userLoginError"></div>
+      <div class="user-agreement-row" id="agreeRow" onclick="toggleAgree(event)">
+        <input type="checkbox" id="agreeCheckbox">
+        <label for="agreeCheckbox">我已阅读并同意</label>
+        <a onclick="event.stopPropagation();window.open('/agreement.html','_blank')" style="cursor:pointer;">《用户协议》</a>
+      </div>
       <div class="user-login-actions">
         <button class="user-login-skip" onclick="doUserSkip()">先逛逛</button>
         <button class="user-login-confirm" id="loginConfirmBtn" onclick="doUserLogin()">登 录</button>
       </div>
       <div class="user-login-readonly-tip" id="loginReadonlyTip" style="display:none;">
         ⚠️ 只读模式——登录后才能发帖
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 找回密码弹窗 ===== -->
+  <div class="user-login-overlay" id="forgotPwdOverlay">
+    <div class="user-login-box">
+      <h3>🔐 找回密码</h3>
+      <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
+        通过已认证的智学网账号重置密码
+      </div>
+      <div class="user-login-field">
+        <label class="user-login-label">绑定的智学网</label>
+        <input class="user-login-input" id="forgotZhixueInput"
+               placeholder="输入绑定的智学网账号" maxlength="50"
+               onkeydown="if(event.key==='Enter') document.getElementById('forgotNewPwdInput').focus()">
+      </div>
+      <div class="user-login-field">
+        <label class="user-login-label">新密码</label>
+        <input class="user-login-input" id="forgotNewPwdInput" type="password"
+               placeholder="至少 6 位" maxlength="20"
+               onkeydown="if(event.key==='Enter') document.getElementById('forgotConfirmPwdInput').focus()">
+      </div>
+      <div class="user-login-field">
+        <label class="user-login-label">确认新密码</label>
+        <input class="user-login-input" id="forgotConfirmPwdInput" type="password"
+               placeholder="再次输入新密码" maxlength="20"
+               onkeydown="if(event.key==='Enter') doForgotPassword()">
+      </div>
+      <div class="user-login-error" id="forgotPwdError"></div>
+      <div class="user-login-actions">
+        <button class="user-login-skip" onclick="hideForgotPwdModal()">取消</button>
+        <button class="user-login-confirm" onclick="doForgotPassword()">提交重置</button>
       </div>
     </div>
   </div>
@@ -1064,15 +1170,97 @@
       userLoginTab = tab;
       document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
       document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+      document.getElementById('tabZhixue').classList.toggle('active', tab === 'zhixue');
       document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-      document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-      document.getElementById('loginConfirmBtn').textContent = tab === 'login' ? '登 录' : '注册账号';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('zhixueLoginForm').style.display = tab === 'zhixue' ? 'block' : 'none';
+      document.getElementById('loginConfirmBtn').textContent = tab === 'login' ? '登 录' : tab === 'zhixue' ? '智学登录' : '注册账号';
+      // 智学登录时也需要同意协议，不显示先逛逛
+      document.querySelector('.user-agreement-row').style.display = 'flex';
+      document.querySelector('.user-login-skip').style.display = tab === 'zhixue' ? 'none' : 'block';
       document.getElementById('userLoginError').textContent = '';
+      document.getElementById('agreeRow').classList.remove('error');
+      // 切换时关闭协议弹窗
+      const popup = document.getElementById('agreePopupOverlay');
+      if (popup) popup.remove();
       if (tab === 'login') {
         setTimeout(() => document.getElementById('loginUsernameInput').focus(), 50);
+      } else if (tab === 'register') {
+        // 切换到注册 → 先弹出协议确认窗口
+        showAgreementPopup();
       } else {
-        setTimeout(() => document.getElementById('regUsernameInput').focus(), 50);
+        setTimeout(() => document.getElementById('zhixueLoginUsername').focus(), 50);
       }
+    }
+
+    // 注册协议确认弹窗
+    function showAgreementPopup() {
+      // 移除旧弹窗
+      const old = document.getElementById('agreePopupOverlay');
+      if (old) old.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'agreePopupOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);';
+      overlay.innerHTML = `
+        <div style="background:#fef9e7;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35);color:#2c1810;">
+          <div style="font-size:36px;margin-bottom:8px;">📜</div>
+          <h3 style="margin:0 0 16px;font-size:18px;color:#3a2210;">注册前请阅读</h3>
+          <div style="text-align:left;font-size:14px;line-height:1.9;background:rgba(196,168,130,0.12);border-radius:10px;padding:14px 18px;margin-bottom:18px;">
+            <div>🏫 本平台是校园交流社区，协议修改公告后生效</div>
+            <div>🚫 禁止违法、敏感、侵权、广告、刷量等八大类行为</div>
+            <div>👶 14岁以下需监护人陪同，禁止发布未成年人敏感信息</div>
+            <div>⚠️ 内容由用户自行发布，平台对不可抗力等服务中断不担责</div>
+            <div>🔍 敏感词自动审核，举报/侵权投诉通道，违规可封号</div>
+          </div>
+          <p style="font-size:12px;color:#8a7a6a;margin:0 0 14px;" id="agreeCountdown">请认真阅读以上内容，<span id="agreeTimer">5</span> 秒后可确认</p>
+          <button id="agreeConfirmBtn" disabled
+            style="padding:12px 28px;background:#bfb09a;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:not-allowed;transition:all 0.3s;font-family:inherit;">
+            等待 5 秒...
+          </button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      // 倒计时
+      let sec = 5;
+      const timerEl = document.getElementById('agreeTimer');
+      const btn = document.getElementById('agreeConfirmBtn');
+      const cdText = document.getElementById('agreeCountdown');
+      const interval = setInterval(() => {
+        sec--;
+        timerEl.textContent = sec;
+        if (sec <= 0) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.textContent = '✓ 我已认真阅读并自觉遵守';
+          btn.style.background = '#5a3e2b';
+          btn.style.cursor = 'pointer';
+          btn.style.boxShadow = '0 4px 14px rgba(90,62,43,0.3)';
+          cdText.textContent = '已阅读完毕，点击上方按钮确认';
+        }
+      }, 1000);
+
+      btn.onclick = () => {
+        if (btn.disabled) return;
+        overlay.remove();
+        // 显示注册表单
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('loginConfirmBtn').textContent = '注册账号';
+        setTimeout(() => {
+          document.getElementById('regUsernameInput').focus();
+          document.getElementById('regCaptchaInput').value = '';
+          refreshCaptcha();
+        }, 50);
+      };
+    }
+
+    // 点击同意框整行切换 checkbox
+    function toggleAgree(event) {
+      if (event.target.tagName === 'A' || event.target.tagName === 'INPUT') return;
+      const cb = document.getElementById('agreeCheckbox');
+      cb.checked = !cb.checked;
+      document.getElementById('agreeRow').classList.remove('error');
     }
 
     function showLoginModal(fromCompose = false) {
@@ -1086,9 +1274,82 @@
       document.getElementById('userLoginOverlay').classList.remove('show');
     }
 
+    // ===== 找回密码弹窗控制 =====
+    function showForgotPwdModal() {
+      document.getElementById('forgotPwdOverlay').classList.add('show');
+      document.getElementById('forgotPwdError').textContent = '';
+      document.getElementById('forgotZhixueInput').value = '';
+      document.getElementById('forgotNewPwdInput').value = '';
+      document.getElementById('forgotConfirmPwdInput').value = '';
+      setTimeout(() => document.getElementById('forgotZhixueInput').focus(), 50);
+    }
+
+    function hideForgotPwdModal() {
+      document.getElementById('forgotPwdOverlay').classList.remove('show');
+    }
+
+    async function doForgotPassword() {
+      const zhixueUsername = document.getElementById('forgotZhixueInput').value.trim();
+      const newPassword = document.getElementById('forgotNewPwdInput').value;
+      const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
+      if (!zhixueUsername) {
+        document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网账号';
+        return;
+      }
+      if (!newPassword || newPassword.length < 6) {
+        document.getElementById('forgotPwdError').textContent = '新密码至少 6 位';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        document.getElementById('forgotPwdError').textContent = '两次输入的密码不一致';
+        return;
+      }
+      try {
+        const res = await fetch('/api/user/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ zhixueUsername, newPassword, confirmPassword })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          hideForgotPwdModal();
+          showToast('✅ ' + (json.msg || '密码重置成功'));
+        } else {
+          document.getElementById('forgotPwdError').textContent = json.msg || '操作失败';
+        }
+      } catch {
+        document.getElementById('forgotPwdError').textContent = '网络错误，请稍后重试';
+      }
+    }
+
+    let currentCaptchaId = null;
+
+    async function refreshCaptcha() {
+      try {
+        const resp = await fetch('/api/captcha');
+        const json = await resp.json();
+        if (json.ok) {
+          currentCaptchaId = json.data.id;
+          document.getElementById('captchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+        }
+      } catch {}
+    }
+
     async function doUserLogin() {
+      // 检查是否同意用户协议
+      const agreeRow = document.getElementById('agreeRow');
+      agreeRow.classList.remove('error');
+      if (!document.getElementById('agreeCheckbox').checked) {
+        document.getElementById('userLoginError').textContent = '请先阅读并同意《用户协议》';
+        agreeRow.classList.add('error');
+        return;
+      }
       if (userLoginTab === 'register') {
         await doUserRegister();
+        return;
+      }
+      if (userLoginTab === 'zhixue') {
+        await doZhixueLogin();
         return;
       }
       const username = document.getElementById('loginUsernameInput').value.trim();
@@ -1123,12 +1384,48 @@
       }
     }
 
+    async function doZhixueLogin() {
+      const zhixueUsername = document.getElementById('zhixueLoginUsername').value.trim();
+      const password = document.getElementById('zhixueLoginPassword').value;
+      if (!zhixueUsername || !password) {
+        document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
+        return;
+      }
+      try {
+        const res = await fetch('/api/user/zhixue-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ zhixueUsername, password })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          const { token, id, username: u, nickname, avatar } = json.data;
+          currentUser = { id, username: u, nickname, avatar, token };
+          localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+          localStorage.setItem('campus_user_token', token);
+          hideLoginModal();
+          updateUserBar();
+          showToast('🎉 智学账号登录成功，欢迎 ' + nickname + '！');
+          checkAnnouncement();
+        } else {
+          document.getElementById('userLoginError').textContent = json.msg || '登录失败';
+        }
+      } catch {
+        document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
+      }
+    }
+
     async function doUserRegister() {
       const username = document.getElementById('regUsernameInput').value.trim();
       const password = document.getElementById('regPasswordInput').value;
       const nickname = document.getElementById('regNicknameInput').value.trim();
+      const captchaText = document.getElementById('regCaptchaInput').value.trim();
       if (!username || !password || !nickname) {
         document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
+        return;
+      }
+      if (!currentCaptchaId || !captchaText) {
+        document.getElementById('userLoginError').textContent = '请输入验证码';
         return;
       }
       if (hasSpecialChars(username)) { showToast('⚠️ 账号包含特殊字符，请重新输入'); return; }
@@ -1137,7 +1434,7 @@
         const res = await fetch('/api/user/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, nickname })
+          body: JSON.stringify({ username, password, nickname, captchaId: currentCaptchaId, captchaText })
         });
         const json = await res.json();
         if (json.ok) {
@@ -1153,6 +1450,9 @@
           setTimeout(() => showNewbieGuide(), 800);
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '注册失败';
+          // 验证码错误时自动刷新
+          document.getElementById('regCaptchaInput').value = '';
+          refreshCaptcha();
         }
       } catch {
         document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
@@ -1325,7 +1625,7 @@
       return t ? { 'x-user-token': t } : {};
     }
 
-    async function createPost(type, content) {
+    async function createPost(type, content, sensitiveForce = false) {
       if (!currentUser) { showToast('⚠️ 请先登录才能发帖'); return null; }
       const avatar = currentUser.avatar || '🙈';
       const author = currentUser.nickname;
@@ -1334,17 +1634,31 @@
         const res = await fetch(API + '/api/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, content, avatar, author, userId })
+          body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce })
         });
         const json = await res.json();
         if (json.ok) {
-          if (json.warning) showSensitiveWarning(json.warningMsg, () => {
-            const inp = document.getElementById('noteInput');
-            inp.value = content;
-            inp.focus();
-            document.getElementById('modalOverlay').classList.add('show');
-          });
           return json.data;
+        }
+        if (json.warning) {
+          // 有敏感词 → 弹窗让用户选择
+          return new Promise((resolve) => {
+            showSensitiveWarning(
+              () => {
+                // 返回编辑：恢复内容到输入框
+                const inp = document.getElementById('noteInput');
+                inp.value = content;
+                inp.focus();
+                document.getElementById('modalOverlay').classList.add('show');
+                resolve(null);
+              },
+              async () => {
+                // 继续发送：重新提交（带敏感词强制标记）
+                const result = await createPost(type, content, true);
+                resolve(result);
+              }
+            );
+          });
         }
       } catch (e) {
         console.error('发帖失败:', e);
@@ -1454,7 +1768,7 @@
       document.body.appendChild(tempContainer);
 
       const notesData = filtered.map((post, idx) => {
-        const cfg = typeConfig[post.type];
+        const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '💬', pin: 'tape' };
         const sizeInfo = getNoteSize(post.content.length);
         const pinHtml = cfg.pin === 'pin'
           ? '<div class="pin"></div>'
@@ -1580,7 +1894,7 @@
       const post = posts.find(p => p.id === id);
       if (!post) return;
 
-      const cfg = typeConfig[post.type];
+      const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '💬', pin: 'tape' };
       const box = document.getElementById('noteDetailBox');
 
       // 用帖子本身的颜色作为弹窗背景
@@ -1875,10 +2189,19 @@
 
     var _justPostedId = null;  // 记录刚发的帖子ID，供引导使用
 
+    // 发帖字数实时统计
+    document.getElementById('noteInput').addEventListener('input', function() {
+      const count = this.value.length;
+      const el = document.getElementById('noteCount');
+      el.textContent = count;
+      el.style.color = count > 200 ? '#d32f2f' : 'inherit';
+    });
+
     async function submitNote() {
       const input = document.getElementById('noteInput');
       const content = input.value.trim();
       if (!content) { showToast('⚠️ 便利贴不能空白哦～'); return; }
+      if (content.length > 200) { showToast('⚠️ 内容超过 200 字限制，请精简后发送'); return; }
       if (hasSpecialChars(content)) { showToast('⚠️ 内容包含特殊字符，请移除后重试'); return; }
 
       const newPost = await createPost(currentTag, content);
@@ -1911,13 +2234,18 @@
     }
 
     // 敏感词警告弹屏
-    function showSensitiveWarning(msg, onEdit) {
+    function showSensitiveWarning(onEdit, onContinue) {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
       overlay.innerHTML = `
-        <div style="background:white;border-radius:16px;padding:32px 28px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
           <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;">⚠️ 内容审核提醒</h3>
-          <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.6;">${msg}</p>
+          <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
+            安全检测系统发现你编辑的内容包含违禁内容<br>
+            如果继续发送，本帖会被标记并等待审核<br>
+            守护校园墙环境是所有用户的责任<br>
+            对于确有违规行为将被处罚
+          </p>
           <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
             <button id="btnWarnEdit" style="padding:12px 28px;background:#d32f2f;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(211,47,47,0.35);">返回编辑</button>
             <button id="btnWarnContinue" style="padding:12px 28px;background:#e0e0e0;color:#666;border:none;border-radius:10px;font-size:15px;cursor:pointer;">继续发送</button>
@@ -1929,7 +2257,10 @@
         overlay.remove();
         if (typeof onEdit === 'function') onEdit();
       };
-      overlay.querySelector('#btnWarnContinue').onclick = () => overlay.remove();
+      overlay.querySelector('#btnWarnContinue').onclick = () => {
+        overlay.remove();
+        if (typeof onContinue === 'function') onContinue();
+      };
     }
 
     // 模拟在线人数
@@ -2424,30 +2755,40 @@
     }
 
     // 重写 submitDiscussionComment 以支持 replyToId
-    async function submitDiscussionComment() {
+    async function submitDiscussionComment(force = false) {
       if (!currentUser) { showToast('请先登录'); return; }
       const input = document.getElementById('discussionCommentInput');
       const content = input.value.trim();
       if (!content) { showToast('内容不能为空'); return; }
       if (hasSpecialChars(content)) { showToast('包含特殊字符'); return; }
+      if (content.length > 200) { showToast('⚠️ 评论超过 200 字限制，请精简后发送'); return; }
 
       try {
         const res = await fetch('/api/discussions/' + currentDiscussionId + '/comments', {
           method: 'POST',
           headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-          body: JSON.stringify({ content, parentId: replyToId || null })
+          body: JSON.stringify({ content, parentId: replyToId || null, sensitiveForce: force })
         });
         const json = await res.json();
         if (json.ok) {
           input.value = '';
-          replyToId = null; // 清除回复状态
-          if (json.warning) showSensitiveWarning(json.warningMsg, () => {
-            document.getElementById('discussionCommentInput').value = content;
-            document.getElementById('discussionCommentInput').focus();
-          });
+          replyToId = null;
           showToast('发送成功');
           await loadDiscussionComments(currentDiscussionId);
-          await loadDiscussions(); // 刷新话题评论数
+          await loadDiscussions();
+          return;
+        }
+        if (json.warning) {
+          // 有敏感词 → 弹窗让用户选择
+          showSensitiveWarning(
+            () => {
+              document.getElementById('discussionCommentInput').value = content;
+              document.getElementById('discussionCommentInput').focus();
+            },
+            async () => {
+              await submitDiscussionComment(true);
+            }
+          );
         } else {
           showToast(json.msg || '发送失败');
         }
@@ -2471,7 +2812,7 @@
           <button class="discussion-back" onclick="showDiscussionTopics()">← 返回话题列表</button>
           <h4 id="currentDiscussionTitle"></h4>
           <div class="discussion-comment-input">
-            <textarea id="discussionCommentInput" placeholder="说点什么..." maxlength="500"></textarea>
+            <textarea id="discussionCommentInput" placeholder="说点什么..."></textarea>
             <button onclick="submitDiscussionComment()">发送</button>
           </div>
           <div class="discussion-comments-list" id="discussionCommentsList"></div>

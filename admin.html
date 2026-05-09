@@ -286,8 +286,8 @@
     .admins-row { grid-template-columns: 60px 140px 1fr 100px 100px 80px 120px; }
 
     /* 用户管理表头 */
-    .users-header { grid-template-columns: 50px 1fr 150px 80px 80px 110px 100px 100px 80px 90px; }
-    .users-row { grid-template-columns: 50px 1fr 150px 80px 80px 110px 100px 100px 80px 90px; }
+    .users-header { grid-template-columns: 40px 50px 1fr 150px 80px 80px 110px 100px 100px 80px 90px 80px; }
+    .users-row { grid-template-columns: 40px 50px 1fr 150px 80px 80px 110px 100px 100px 80px 90px 80px; }
 
     .type-badge {
       display: inline-flex; align-items: center; gap: 4px;
@@ -519,9 +519,9 @@
       .posts-header > *:nth-child(6), .posts-row > *:nth-child(6) { display: none; }
       .admins-header > *:nth-child(5), .admins-row > *:nth-child(5),
       .admins-header > *:nth-child(6), .admins-row > *:nth-child(6) { display: none; }
-      .users-header > *:nth-child(6), .users-row > *:nth-child(6),
       .users-header > *:nth-child(7), .users-row > *:nth-child(7),
-      .users-header > *:nth-child(8), .users-row > *:nth-child(8) { display: none; }
+      .users-header > *:nth-child(8), .users-row > *:nth-child(8),
+      .users-header > *:nth-child(9), .users-row > *:nth-child(9) { display: none; }
       .form-row { grid-template-columns: 1fr; }
     }
   </style>
@@ -772,6 +772,10 @@
             共 <strong id="userTotalCount">0</strong> 位用户
             <span id="userBannedCount" style="color:var(--danger);margin-left:8px;"></span>
           </span>
+          <button class="btn-del" style="margin-left:12px;display:none;" id="batchDeleteBtn"
+                  onclick="batchDeleteUsers()">
+            🗑️ 批量删除
+          </button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="text" id="userSearchInput" class="toolbar-search"
@@ -780,6 +784,7 @@
       </div>
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header users-header">
+          <div><input type="checkbox" id="selectAllUsers" onchange="toggleSelectAll(this.checked)" style="width:14px;height:14px;cursor:pointer;accent-color:#8a7a6a;"></div>
           <div>#</div>
           <div>账号</div>
           <div>昵称</div>
@@ -790,6 +795,7 @@
           <div>重置密码</div>
           <div>封禁/解封</div>
           <div>删除</div>
+          <div>详情</div>
         </div>
         <div id="usersBody"><div class="loading"><div class="spinner"></div>加载中…</div></div>
       </div>
@@ -1027,6 +1033,20 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeDetail()">关闭</button>
       <button class="btn-delete-modal" onclick="deleteFromDetail()">🗑️ 删除该帖</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 用户详情弹窗 ===== -->
+<div class="modal-overlay" id="userDetailModal" onclick="if(event.target===this)closeUserDetail()">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <h3 id="userDetailTitle">用户详情</h3>
+      <button class="modal-close" onclick="closeUserDetail()">×</button>
+    </div>
+    <div class="modal-body" id="userDetailBody" style="max-height:70vh;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeUserDetail()">关闭</button>
     </div>
   </div>
 </div>
@@ -2227,13 +2247,17 @@
     const banned = allUsers.filter(u => u.status === 'banned').length;
     document.getElementById('userBannedCount').textContent =
       banned > 0 ? `（${banned} 位已封禁）` : '';
+    const batchBtn = document.getElementById('batchDeleteBtn');
+    batchBtn.style.display = allUsers.length > 0 ? 'inline-block' : 'none';
     if (users.length === 0) {
+      document.getElementById('selectAllUsers').checked = false;
       document.getElementById('usersBody').innerHTML =
         '<div style="text-align:center;padding:40px;color:var(--text-sub);font-size:14px;">暂无用户</div>';
       return;
     }
     document.getElementById('usersBody').innerHTML = users.map((u, i) => `
       <div class="table-row users-row">
+        <div><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateBatchBtn()" style="width:14px;height:14px;cursor:pointer;accent-color:#8a7a6a;"></div>
         <div>${i + 1}</div>
         <div class="admin-id-cell">@${escHtml(u.username)}</div>
         <div class="admin-name-cell">
@@ -2263,8 +2287,49 @@
             删除
           </button>
         </div>
+        <div>
+          <button class="action-btn" style="background:#e0d3c6;color:#5a4638;" onclick="showUserDetail('${u.id}')">
+            📋 详情
+          </button>
+        </div>
       </div>
     `).join('');
+    // 如果有全选状态，同步到当前行的 checkbox
+    if (document.getElementById('selectAllUsers').checked) {
+      document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = true);
+    }
+  }
+
+  function toggleSelectAll(checked) {
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = checked);
+    updateBatchBtn();
+  }
+
+  function updateBatchBtn() {
+    const count = document.querySelectorAll('.user-checkbox:checked').length;
+    const btn = document.getElementById('batchDeleteBtn');
+    btn.textContent = count > 0 ? `🗑️ 批量删除（${count}）` : '🗑️ 批量删除';
+  }
+
+  function batchDeleteUsers() {
+    const ids = [...document.querySelectorAll('.user-checkbox:checked')].map(cb => cb.value);
+    if (ids.length === 0) { showToast('⚠️ 请先勾选要删除的用户', 'error'); return; }
+    showConfirm('⚠️', '批量删除用户', `确定要删除选中的 <strong>${ids.length}</strong> 位用户吗？该操作不可撤销，用户和所有帖子都将被删除。`, async () => {
+      try {
+        const res = await fetch('/api/admin/users/batch-delete', {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast(`✅ 已删除 ${json.deleted} 位用户，同时删除了 ${json.deletedPosts} 条帖子`, 'success');
+          document.getElementById('selectAllUsers').checked = false;
+          loadUsers();
+          loadPosts();
+        } else showToast('❌ ' + (json.msg || '批量删除失败'), 'error');
+      } catch { showToast('❌ 网络错误', 'error'); }
+    });
   }
 
   async function toggleUserStatus(id, status) {
@@ -2323,6 +2388,159 @@
 
   function closeResetPwdModal() {
     document.getElementById('resetPwdModal').classList.remove('show');
+  }
+
+  // ===== 用户详情 =====
+  async function showUserDetail(userId) {
+    const modal = document.getElementById('userDetailModal');
+    const body = document.getElementById('userDetailBody');
+    body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    modal.classList.add('show');
+
+    try {
+      const res = await fetch('/api/admin/user/' + userId + '/detail', {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        body.innerHTML = '<div class="empty-tip">❌ ' + escHtml(json.msg || '加载失败') + '</div>';
+        return;
+      }
+
+      const u = json.data;
+
+      function statusText(s) { return s === 'banned' ? '封禁' : '正常'; }
+      function statusClass(s) { return s === 'banned' ? 'badge-danger' : 'badge-admin'; }
+
+      function certTypeText(t) {
+        if (t === 'zhixue') return '智学认证';
+        if (t === 'manual') return '手动认证';
+        return '-';
+      }
+      function certStatusText(s) {
+        if (s === 'pending') return '待审核';
+        if (s === 'approved') return '已认证';
+        if (s === 'rejected') return '已拒绝';
+        return '-';
+      }
+      function certStatusClass(s) {
+        if (s === 'approved') return 'badge-success';
+        if (s === 'rejected') return 'badge-danger';
+        if (s === 'pending') return 'badge-normal';
+        return 'badge-normal';
+      }
+
+      // 基本信息区域
+      let html = '<div style="margin-bottom:18px;">';
+      html += '<h4 style="margin:0 0 12px 0;color:#4a3728;font-size:15px;border-bottom:2px solid #d4c5b5;padding-bottom:6px;">📋 基本信息</h4>';
+      html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">';
+      html += '<div style="width:60px;height:60px;border-radius:50%;background:#f0e8dc;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid #d4c5b5;overflow:hidden;">';
+      if (u.avatar) {
+        html += '<img src="' + escHtml(u.avatar) + '" style="width:100%;height:100%;object-fit:cover;" alt="头像">';
+      } else {
+        html += '🙈';
+      }
+      html += '</div>';
+      html += '<div><div style="font-size:16px;font-weight:600;color:#3a2a1a;">@' + escHtml(u.username) + '</div>';
+      html += '<div style="font-size:13px;color:#7a6a5a;">' + escHtml(u.nickname) + '</div></div></div>';
+
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">';
+      html += '<div><span style="color:#8a7a6a;">状态：</span><span class="type-badge ' + statusClass(u.status) + '">' + statusText(u.status) + '</span></div>';
+      html += '<div><span style="color:#8a7a6a;">发帖数：</span><strong>' + (u.postCount || 0) + '</strong></div>';
+      html += '<div><span style="color:#8a7a6a;">注册 IP：</span>' + escHtml(u.regIp || '-') + '</div>';
+      html += '<div><span style="color:#8a7a6a;">注册时间：</span>' + (u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '-') + '</div>';
+      if (u.bindAdminId) {
+        html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">绑定管理员：</span>@' + escHtml(u.bindAdminId) + '（' + escHtml(u.bindAdminRole || '-') + '）</div>';
+      }
+      html += '</div></div>';
+
+      // 同学认证信息区域
+      html += '<div style="margin-bottom:18px;">';
+      html += '<h4 style="margin:0 0 12px 0;color:#4a3728;font-size:15px;border-bottom:2px solid #d4c5b5;padding-bottom:6px;">🎓 同学认证信息</h4>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">';
+      html += '<div><span style="color:#8a7a6a;">认证类型：</span>' + certTypeText(u.zhixueCertType) + '</div>';
+      html += '<div><span style="color:#8a7a6a;">认证状态：</span><span class="type-badge ' + certStatusClass(u.zhixueStatus) + '">' + certStatusText(u.zhixueStatus) + '</span></div>';
+      html += '<div><span style="color:#8a7a6a;">智学账号：</span>' + escHtml(u.zhixueUsername || '-') + '</div>';
+      if (u.zhixueManualName) {
+        html += '<div><span style="color:#8a7a6a;">手动认证姓名：</span>' + escHtml(u.zhixueManualName) + '</div>';
+      }
+      if (u.zhixueManualEmail) {
+        html += '<div><span style="color:#8a7a6a;">手动认证邮箱：</span>' + escHtml(u.zhixueManualEmail) + '</div>';
+      }
+      if (u.zhixueManualNote) {
+        html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">认证说明：</span>' + escHtml(u.zhixueManualNote) + '</div>';
+      }
+      if (u.zhixueManualImages && u.zhixueManualImages.length > 0) {
+        html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">认证图片：</span>';
+        u.zhixueManualImages.forEach(function(img, idx) {
+          html += '<a href="' + img + '" target="_blank" style="display:inline-block;margin-right:6px;"><img src="' + img + '" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #d4c5b5;" alt="认证图' + (idx + 1) + '"></a>';
+        });
+        html += '</div>';
+      }
+      html += '<div><span style="color:#8a7a6a;">提交时间：</span>' + (u.zhixueSubmittedAt ? new Date(u.zhixueSubmittedAt).toLocaleString('zh-CN') : '-') + '</div>';
+      html += '<div><span style="color:#8a7a6a;">审核时间：</span>' + (u.zhixueReviewedAt ? new Date(u.zhixueReviewedAt).toLocaleString('zh-CN') : '-') + '</div>';
+      if (u.zhixueReviewedBy) {
+        html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">审核人：</span>' + escHtml(u.zhixueReviewedBy) + '</div>';
+      }
+      html += '</div></div>';
+
+      // 历史帖子区域
+      html += '<div style="margin-bottom:18px;">';
+      html += '<h4 style="margin:0 0 12px 0;color:#4a3728;font-size:15px;border-bottom:2px solid #d4c5b5;padding-bottom:6px;">📝 历史发帖 <span style="font-size:12px;color:#8a7a6a;">（共 ' + (u.posts ? u.posts.length : 0) + ' 条）</span></h4>';
+      if (!u.posts || u.posts.length === 0) {
+        html += '<div style="color:#8a7a6a;font-size:13px;text-align:center;padding:16px;">暂无帖子</div>';
+      } else {
+        var displayPosts = u.posts.slice(0, 20);
+        html += '<div style="font-size:12px;">';
+        displayPosts.forEach(function(p) {
+          var summary = (p.content || '').substring(0, 50) + ((p.content || '').length > 50 ? '…' : '');
+          var sensitiveTag = p.sensitive ? '<span style="color:#dc2626;font-size:11px;margin-left:4px;">⚠️</span>' : '';
+          html += '<div style="display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid #ede4d6;gap:8px;">';
+          html += '<span style="color:#5a4638;font-weight:500;min-width:36px;text-align:center;">' + typeEmoji(p.type) + '</span>';
+          html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#3a2a1a;">' + escHtml(summary) + sensitiveTag + '</span>';
+          html += '<span style="color:#8a7a6a;min-width:24px;text-align:right;">❤️ ' + (p.likes || 0) + '</span>';
+          html += '<span style="color:#8a7a6a;min-width:24px;text-align:right;">💬 ' + (p.commentsCount || 0) + '</span>';
+          html += '<span style="color:#8a7a6a;min-width:100px;text-align:right;font-size:11px;">' + (p.time ? new Date(p.time).toLocaleDateString('zh-CN') : '-') + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // 举报记录区域
+      html += '<div style="margin-bottom:4px;">';
+      html += '<h4 style="margin:0 0 12px 0;color:#4a3728;font-size:15px;border-bottom:2px solid #d4c5b5;padding-bottom:6px;">🚩 举报记录 <span style="font-size:12px;color:#8a7a6a;">（共 ' + (u.reports ? u.reports.length : 0) + ' 条）</span></h4>';
+      if (!u.reports || u.reports.length === 0) {
+        html += '<div style="color:#8a7a6a;font-size:13px;text-align:center;padding:16px;">暂无举报记录</div>';
+      } else {
+        html += '<div style="font-size:12px;">';
+        u.reports.forEach(function(r) {
+          var reportStatusText = '待处理';
+          var reportStatusClass = 'badge-normal';
+          if (r.status === 'resolved') { reportStatusText = '已处理'; reportStatusClass = 'badge-success'; }
+          if (r.status === 'ignored') { reportStatusText = '已忽略'; reportStatusClass = 'badge-danger'; }
+          if (r.status === 'pending') { reportStatusText = '待处理'; reportStatusClass = 'badge-normal'; }
+
+          html += '<div style="display:flex;align-items:center;padding:6px 8px;border-bottom:1px solid #ede4d6;gap:6px;">';
+          html += '<span style="flex:1;color:#3a2a1a;">' + escHtml(r.reason) + '</span>';
+          html += '<span class="type-badge ' + reportStatusClass + '" style="font-size:11px;">' + reportStatusText + '</span>';
+          html += '<span style="color:#8a7a6a;font-size:11px;min-width:80px;text-align:right;">' + (r.createdAt ? new Date(r.createdAt).toLocaleDateString('zh-CN') : '-') + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+
+      body.innerHTML = html;
+
+    } catch (e) {
+      body.innerHTML = '<div class="empty-tip">❌ 网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  function closeUserDetail() {
+    document.getElementById('userDetailModal').classList.remove('show');
   }
 
   // ===== 修改密码 =====

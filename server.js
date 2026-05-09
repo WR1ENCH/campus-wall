@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
+const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive } = require('./sensitiveWords');
 
 // 智学网自动登录模块（需 Playwright / Chromium）
@@ -71,17 +72,20 @@ function sanitizeString(val) {
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64 的字段不过滤（data URL 包含 :, /, ; 等特殊字符）
-    const { avatar, manualImages, ...rest } = req.body;
+    const { avatar, manualImages, manualEmail, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
-      ...(manualImages !== undefined ? { manualImages } : {})
+      ...(manualImages !== undefined ? { manualImages } : {}),
+      ...(manualEmail !== undefined ? { manualEmail } : {})
     };
   }
   next();
 });
 
 app.use(express.static(__dirname)); // 静态文件服务
+
+const CONTENT_MAX_LENGTH = 200; // 帖子/评论字数上限
 
 // ===== 数据读写 =====
 function ensureDir() {
@@ -493,14 +497,38 @@ function verifyUserToken(token) {
   }
 }
 
+// ===== 人机验证（SVG 验证码）=====
+const captchaStore = new Map();
+// 每分钟清理过期验证码（5分钟超时）
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, entry] of captchaStore) {
+    if (now - entry.t > 300000) captchaStore.delete(id);
+  }
+}, 60000);
+
+// 生成验证码
+app.get('/api/captcha', (req, res) => {
+  const captcha = svgCaptcha.create({ fontSize: 50, width: 150, height: 50, noise: 2 });
+  const id = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  captchaStore.set(id, { text: captcha.text.toLowerCase(), t: Date.now() });
+  res.json({ ok: true, data: { id, svg: captcha.data } });
+});
+
 // ===== 用户 API =====
 
 // 注册
 app.post('/api/user/register', (req, res) => {
-  const { username, password, nickname } = req.body;
+  const { username, password, nickname, captchaId, captchaText } = req.body;
   if (!username || !password || !nickname) {
     return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
   }
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId); // 一次性使用
   if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
     return res.json({ ok: false, msg: '账号需 3-16 位字母、数字、下划线' });
   }
@@ -578,6 +606,71 @@ app.post('/api/user/login', (req, res) => {
       avatar: user.avatar
     }
   });
+});
+
+// 智学网账号登录（通过已认证的智学账号登录校园墙）
+app.post('/api/user/zhixue-login', (req, res) => {
+  const { zhixueUsername, password } = req.body;
+  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ua = req.headers['user-agent'] || '-';
+
+  if (!zhixueUsername || !password) {
+    addLoginLog('user', null, false, ip, ua);
+    return res.json({ ok: false, msg: '请输入绑定的智学网账号和密码' });
+  }
+
+  const users = readUsers();
+  const user = users.find(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+  if (!user) {
+    addLoginLog('user', zhixueUsername, false, ip, ua);
+    return res.json({ ok: false, msg: '当前账号可能错误或者未绑定校园墙账号' });
+  }
+  if (!verifyPassword(password, user.password)) {
+    addLoginLog('user', zhixueUsername, false, ip, ua);
+    return res.json({ ok: false, msg: '当前密码错误' });
+  }
+  if (user.status === 'banned') {
+    addLoginLog('user', zhixueUsername, false, ip, ua);
+    return res.json({ ok: false, msg: '该账号已被禁用' });
+  }
+
+  addLoginLog('user', user.nickname, true, ip, ua);
+  res.json({
+    ok: true,
+    data: {
+      token: makeUserToken(user),
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname,
+      avatar: user.avatar
+    }
+  });
+});
+
+// 找回密码（通过已认证的智学网账号）
+app.post('/api/user/forgot-password', (req, res) => {
+  const { zhixueUsername, newPassword, confirmPassword } = req.body;
+
+  if (!zhixueUsername) {
+    return res.json({ ok: false, msg: '请输入绑定的智学网账号' });
+  }
+  if (!newPassword || newPassword.length < 6) {
+    return res.json({ ok: false, msg: '新密码至少 6 位' });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.json({ ok: false, msg: '两次输入的新密码不一致' });
+  }
+
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+  if (userIndex === -1) {
+    return res.json({ ok: false, msg: '该智学网账号未认证或不存在' });
+  }
+
+  users[userIndex].password = hashPassword(newPassword);
+  writeUsers(users);
+
+  res.json({ ok: true, msg: '密码重置成功，请使用新密码登录' });
 });
 
 // 验证当前用户登录状态
@@ -731,8 +824,18 @@ app.post('/api/user/bind-zhixue', (req, res) => {
   if (type === 'zhixue') {
     // 智学认证：账号 + 密码
     const { zhixueUsername, zhixuePassword } = req.body;
-    if (!zhixueUsername) return res.json({ ok: false, msg: '请填写智学网账号' });
+    if (!zhixueUsername) return res.json({ ok: false, msg: '请填写绑定的智学网账号' });
     if (!zhixuePassword) return res.json({ ok: false, msg: '请填写智学网密码' });
+
+    // 唯一性检查：已认证（approved）的智学账号不允许被其他校园墙账号重复绑定
+    const existingUser = users.find(u =>
+      u.zhixueUsername === zhixueUsername &&
+      u.zhixueStatus === 'approved' &&
+      u.id !== users[userIndex].id
+    );
+    if (existingUser) {
+      return res.json({ ok: false, msg: '该智学网账号已被其他账号绑定' });
+    }
 
     users[userIndex].zhixueCertType = 'zhixue';
     users[userIndex].zhixueUsername = zhixueUsername;
@@ -741,8 +844,10 @@ app.post('/api/user/bind-zhixue', (req, res) => {
     users[userIndex].zhixueManualImages = null;
 
   } else if (type === 'manual') {
-    // 手动认证：说明 + 图片
-    const { manualNote, manualImages } = req.body;
+    // 手动认证：姓名 + 邮箱 + 说明 + 图片
+    const { manualName, manualEmail, manualNote, manualImages } = req.body;
+    if (!manualName || !manualName.trim()) return res.json({ ok: false, msg: '请填写姓名' });
+    if (!manualEmail || !manualEmail.trim()) return res.json({ ok: false, msg: '请填写邮箱' });
     if (!manualNote || !manualNote.trim()) return res.json({ ok: false, msg: '请填写认证说明' });
     if (!manualImages || !Array.isArray(manualImages) || manualImages.length === 0) {
       return res.json({ ok: false, msg: '请至少上传一张证明图片' });
@@ -772,6 +877,8 @@ app.post('/api/user/bind-zhixue', (req, res) => {
     users[userIndex].zhixueCertType = 'manual';
     users[userIndex].zhixueUsername = null;
     users[userIndex].zhixuePassword = null;
+    users[userIndex].zhixueManualName = manualName.trim();
+    users[userIndex].zhixueManualEmail = manualEmail.trim();
     users[userIndex].zhixueManualNote = manualNote.trim();
     users[userIndex].zhixueManualImages = manualImages;
 
@@ -801,6 +908,8 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   users[userIndex].zhixueCertType = null;
   users[userIndex].zhixueUsername = null;
   users[userIndex].zhixuePassword = null;
+  users[userIndex].zhixueManualName = null;
+  users[userIndex].zhixueManualEmail = null;
   users[userIndex].zhixueManualNote = null;
   users[userIndex].zhixueManualImages = null;
   users[userIndex].zhixueStatus = null;
@@ -889,6 +998,79 @@ app.get('/api/users/:id', (req, res) => {
   res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
 });
 
+// 获取用户完整详情（仅管理员）
+app.post('/api/admin/user/:id/detail', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  // 读取帖子
+  const posts = readPosts();
+  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname);
+
+  // 读取举报记录
+  const reports = readReports();
+  const userReports = reports.filter(r =>
+    r.reportedBy === user.id || r.reporterName === user.nickname ||
+    r.postAuthor === user.nickname
+  );
+
+  // 构建返回数据（排除 password）
+  const { password, ...safeUser } = user;
+  res.json({
+    ok: true,
+    data: {
+      ...safeUser,
+      postCount: userPosts.length,
+      posts: userPosts.map(p => ({
+        id: p.id,
+        content: p.content,
+        type: p.type || '日常',
+        time: p.time,
+        likes: (p.likes || []).length,
+        commentsCount: (p.comments || []).length,
+        sensitive: p.sensitive || false
+      })),
+      reports: userReports.map(r => ({
+        id: r.id,
+        reason: r.reason,
+        status: r.status,
+        createdAt: r.createdAt,
+        handledBy: r.handledBy || null,
+        handledAt: r.handledAt || null,
+        action: r.action || null
+      }))
+    }
+  });
+});
+
+// 批量删除用户（仅管理员）
+app.post('/api/admin/users/batch-delete', requireAdmin, (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.json({ ok: false, msg: '请指定要删除的用户' });
+  }
+  let users = readUsers();
+  let posts = readPosts();
+  let deletedCount = 0;
+  let deletedPostCount = 0;
+
+  users = users.filter(u => {
+    if (ids.includes(u.id)) {
+      deletedCount++;
+      const before = posts.length;
+      posts = posts.filter(p => p.userId !== u.id && p.author !== u.nickname);
+      deletedPostCount += before - posts.length;
+      return false;
+    }
+    return true;
+  });
+
+  writeUsers(users);
+  writePosts(posts);
+  res.json({ ok: true, deleted: deletedCount, deletedPosts: deletedPostCount });
+});
+
 // 获取指定用户发布的帖子
 app.get('/api/users/:id/posts', (req, res) => {
   const users = readUsers();
@@ -967,6 +1149,40 @@ app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
   res.json({ ok: true, data: { password: newPassword } });
 });
 
+// 获取用户完整详情（仅管理员）
+app.get('/api/admin/user/:id/detail', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  // 不返回密码
+  const { password, ...safeUser } = user;
+
+  // 帖子
+  const posts = readPosts();
+  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
+    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+    .slice(0, 20)
+    .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
+
+  // 举报记录
+  const reports = readReports();
+  const userReports = reports.filter(r => r.targetUserId === user.id || r.targetAuthor === user.nickname)
+    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+    .slice(0, 20)
+    .map(r => ({ id: r.id, time: r.time, reason: r.reason, type: r.type, status: r.status }));
+
+  res.json({
+    ok: true,
+    data: {
+      ...safeUser,
+      postCount: userPosts.length,
+      posts: userPosts,
+      reports: userReports
+    }
+  });
+});
+
 // 发帖时更新用户 postCount
 function incUserPostCount(nickname) {
   const users = readUsers();
@@ -1016,13 +1232,26 @@ app.post('/api/posts', (req, res) => {
   if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '内容不能为空' });
   }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    return res.json({ ok: false, msg: '内容不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
+  }
   if (!type) {
     return res.json({ ok: false, msg: '请选择类型' });
   }
 
-  // 敏感词检测
+  // 敏感词检测（sensitiveForce=true 时跳过检查，但后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
+
+  // 有敏感词且用户未确认 → 不保存，返回警告
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
 
   const posts = readPosts();
 
@@ -1084,8 +1313,8 @@ app.post('/api/posts', (req, res) => {
   res.json({
     ok: true,
     data: newPost,
-    warning: hasSensitive,
-    warningMsg: hasSensitive ? '内容包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+    warning: false,
+    warningMsg: undefined
   });
 });
 
@@ -1124,9 +1353,23 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '评论内容不能为空' });
   }
-  // 敏感词检测
+  if (content.length > CONTENT_MAX_LENGTH) {
+    return res.json({ ok: false, msg: '评论不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
+  }
+  // 敏感词检测（sensitiveForce=true 时跳过检查，后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
+
+  // 有敏感词且用户未确认 → 不保存，返回警告
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
+
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) {
@@ -1146,7 +1389,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   post.comments.push(newComment);
   post.commentsCount = post.comments.length;
 
-  // 敏感词命中：自动生成举报记录
+  // 敏感词命中：自动生成举报记录（仅在 sensitiveForce 时执行）
   if (hasSensitive) {
     const reports = readReports();
     reports.push({
@@ -1167,8 +1410,8 @@ app.post('/api/posts/:id/comments', (req, res) => {
   res.json({
     ok: true,
     data: newComment,
-    warning: hasSensitive,
-    warningMsg: hasSensitive ? '评论包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+    warning: false,
+    warningMsg: undefined
   });
 });
 
@@ -1598,12 +1841,25 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '评论内容不能为空' });
   }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    return res.json({ ok: false, msg: '评论不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
+  }
   if (hasSpecialChars(content)) {
     return res.json({ ok: false, msg: '评论包含特殊字符' });
   }
-  // 敏感词检测
+  // 敏感词检测（sensitiveForce=true 时跳过检查，后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
+
+  // 有敏感词且用户未确认 → 不保存，返回警告
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
@@ -1657,8 +1913,8 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   res.json({
     ok: true,
     data: newComment,
-    warning: hasSensitive,
-    warningMsg: hasSensitive ? '评论包含敏感词：' + sensitiveWords.join('、') + '，已自动提交后台审核，请规范发言。' : undefined
+    warning: false,
+    warningMsg: undefined
   });
 });
 
