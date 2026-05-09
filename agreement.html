@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📜 用户协议 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --note-yellow: #fff9b1;
+      --note-pink: #ffc9de;
+      --note-green: #b5f5c5;
+      --note-blue: #bde0fe;
+      --note-orange: #ffd6a5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* 砖墙背景 */
+    .wall {
+      min-height: 100vh;
+      background-color: #c4a882;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent, transparent 59px,
+          rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px,
+          transparent 61px, transparent 120px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent, transparent 119px,
+          rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px,
+          transparent 121px, transparent 240px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          rgba(180,140,100,0.3) 0px,
+          rgba(200,160,120,0.1) 30px,
+          rgba(170,130,90,0.2) 60px,
+          rgba(190,150,110,0.15) 90px,
+          rgba(175,135,95,0.25) 120px
+        );
+      padding: 30px 16px;
+    }
+
+    /* 顶部返回 */
+    .top-bar {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.88);
+      border: 2px solid rgba(0,0,0,0.15);
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5a3e2b;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    /* 协议纸张 */
+    .paper {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #fef9e7;
+      border-radius: 4px;
+      padding: 50px 44px;
+      box-shadow:
+        0 4px 20px rgba(0,0,0,0.2),
+        inset 0 0 0 1px rgba(255,255,255,0.6),
+        0 1px 4px rgba(0,0,0,0.1);
+      position: relative;
+      color: #2c1810;
+      line-height: 1.9;
+      font-size: 15px;
+    }
+
+    /* 图钉装饰 */
+    .paper::before,
+    .paper::after {
+      content: '';
+      position: absolute;
+      top: -9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 -1px 2px rgba(0,0,0,0.2);
+    }
+    .paper::before { left: 60px; }
+    .paper::after { right: 60px; }
+
+    /* 标题区域 */
+    .paper-header {
+      text-align: center;
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 2px dashed #d4c5a9;
+    }
+
+    .paper-header h1 {
+      font-family: 'Ma Shan Zheng', cursive;
+      font-size: 32px;
+      color: #2c1810;
+      margin-bottom: 8px;
+      letter-spacing: 2px;
+    }
+
+    .paper-header .version {
+      font-size: 13px;
+      color: #8a7a6a;
+    }
+
+    /* 正文样式 */
+    .paper h2 {
+      font-family: 'Ma Shan Zheng', cursive;
+      font-size: 22px;
+      color: #3a2210;
+      margin: 32px 0 14px;
+      padding-left: 12px;
+      border-left: 4px solid #c4a882;
+      letter-spacing: 1px;
+    }
+
+    .paper h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #3a2210;
+      margin: 18px 0 8px;
+    }
+
+    .paper p {
+      margin-bottom: 10px;
+      text-indent: 0;
+    }
+
+    .paper .clause {
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    .paper ul {
+      list-style: none;
+      padding-left: 16px;
+      margin-bottom: 10px;
+    }
+
+    .paper ul li {
+      position: relative;
+      padding-left: 16px;
+      margin-bottom: 4px;
+    }
+
+    .paper ul li::before {
+      content: '·';
+      position: absolute;
+      left: 0;
+      color: #8a7a6a;
+      font-weight: bold;
+    }
+
+    .paper .special-note {
+      background: rgba(196,168,130,0.15);
+      border-left: 3px solid #c4a882;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 14px;
+    }
+
+    .paper strong {
+      color: #1a0e06;
+    }
+
+    .paper .footer-note {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 2px dashed #d4c5a9;
+      text-align: center;
+      font-size: 14px;
+      color: #8a7a6a;
+    }
+
+    @media (max-width: 600px) {
+      .wall { padding: 16px 10px; }
+      .paper { padding: 36px 22px; }
+      .paper::before { left: 30px; }
+      .paper::after { right: 30px; }
+      .paper-header h1 { font-size: 26px; }
+      .paper h2 { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wall">
+  <div class="top-bar">
+    <a class="back-btn" href="javascript:history.back()">← 返回</a>
+    <a class="back-btn" href="/">🏠 首页</a>
+  </div>
+
+  <div class="paper">
+    <div class="paper-header">
+      <h1>校园墙用户协议</h1>
+      <div class="version">版本：v1.0 ｜ 生效日期：2026年5月9日</div>
+    </div>
+
+    <p>欢迎使用校园墙（以下简称"本平台"）。在注册、登录或使用本平台前，请仔细阅读本协议的全部内容。<strong>注册或使用即视为您已充分理解并同意接受本协议的全部条款。</strong>如您不同意本协议的任何条款，请立即停止使用本平台。</p>
+
+    <h2>一、总则</h2>
+    <p class="clause">1.1 本平台是一个面向校园用户的开放式留言交流社区，旨在为师生提供友善、真实、健康的交流环境。</p>
+    <p class="clause">1.2 本协议由平台运营方（以下简称"我们"）与所有用户共同订立，对双方具有法律约束力。</p>
+    <p class="clause">1.3 我们有权根据法律法规变化或运营需要修改本协议，修改后的协议将在平台以公告形式通知后生效。如您不同意修改，应停止使用本平台；继续使用即视为接受修改后的协议。</p>
+    <p class="clause">1.4 如本协议的任何条款被认定为无效或不可执行，不影响其他条款的效力。</p>
+
+    <h2>二、账号注册与管理</h2>
+    <p class="clause"><strong>2.1 账号所有权</strong>：用户在本平台注册的账号所有权归属本网站所有。用户仅获得账号的使用权，该使用权不得转让、出租、出借或赠与。</p>
+    <p class="clause"><strong>2.2 注册条件</strong>：用户须为在校师生或经认证的校园相关人员，注册时需提供真实、准确的账号信息。禁止使用虚假信息或冒用他人身份注册。</p>
+    <p class="clause"><strong>2.3 人机验证</strong>：注册时须通过人机验证（验证码），以确保注册行为由真实用户发起。</p>
+    <p class="clause"><strong>2.4 账号安全</strong>：用户应对自己的账号和密码安全负责，不得将账号出借、转让或交由他人使用。因账号被盗或密码泄露造成的损失，由用户自行承担。如发现账号异常，应立即通知平台管理员。</p>
+    <p class="clause"><strong>2.5 账号注销</strong>：用户可随时联系平台管理员申请注销账号。账号注销后，我们将按规定删除或匿名化处理相关数据，但法律法规要求保留的除外。</p>
+    <p class="clause"><strong>2.6 账号回收</strong>：连续超过 180 天未登录的账号，平台有权予以回收。账号被回收后，原用户将无法继续使用该账号，账号内的相关信息将被清空。</p>
+    <p class="clause"><strong>2.7 同学认证</strong>：平台提供同学认证功能（包括智学网自动认证和手动认证两种方式），认证信息仅用于核实校园身份，不影响发帖等基本功能的使用。</p>
+
+    <h2>三、用户行为规范</h2>
+    <p class="clause">3.1 用户承诺在使用本平台时遵守国家法律法规、社会公德和校园秩序，不得利用本平台从事以下行为：</p>
+
+    <p class="clause"><strong>3.1.1 违法内容</strong>：发布、传播违反宪法或法律法规的内容，包括但不限于：</p>
+    <ul>
+      <li>反对宪法所确定的基本原则的；</li>
+      <li>危害国家安全、泄露国家秘密、颠覆国家政权、破坏国家统一的；</li>
+      <li>损害国家荣誉和利益的；</li>
+      <li>煽动民族仇恨、民族歧视，破坏民族团结的；</li>
+      <li>破坏国家宗教政策，宣扬邪教和封建迷信的；</li>
+      <li>散布谣言，扰乱社会秩序，破坏社会稳定的；</li>
+      <li>散布淫秽、色情、赌博、暴力、凶杀、恐怖或者教唆犯罪的；</li>
+      <li>侮辱或者诽谤他人，侵害他人合法权益的。</li>
+    </ul>
+
+    <p class="clause"><strong>3.1.2 敏感违禁内容</strong>：发布、传播含有敏感违禁内容的信息（包括但不限于赌博、毒品、枪支、诈骗、色情、暴力恐怖等），此类内容系统会自动检测并提交后台审核。</p>
+
+    <p class="clause"><strong>3.1.3 侵权与骚扰</strong>：</p>
+    <ul>
+      <li>侵犯他人隐私权、肖像权、名誉权、知识产权等合法权益；</li>
+      <li>发布虚假、诽谤、侮辱、骚扰、威胁他人的信息；</li>
+      <li>对他人进行人身攻击、地域歧视、性别歧视、种族歧视。</li>
+    </ul>
+
+    <p class="clause"><strong>3.1.4 垃圾与广告</strong>：</p>
+    <ul>
+      <li>发布商业广告、垃圾信息或进行恶意营销；</li>
+      <li>发布涉及私下拉群、第三方平台导流等内容。</li>
+    </ul>
+
+    <p class="clause"><strong>3.1.5 破坏秩序</strong>：</p>
+    <ul>
+      <li>利用技术手段批量注册账号、刷赞、刷评论等破坏平台数据真实性的行为；</li>
+      <li>恶意举报、滥用举报功能；</li>
+      <li>利用系统漏洞或技术手段干扰平台正常运行；</li>
+      <li>其他法律法规禁止或平台认定不当的行为。</li>
+    </ul>
+
+    <p class="clause"><strong>3.2 内容规范</strong>：</p>
+    <ul>
+      <li>帖子及评论内容不得超过 <strong>200 字</strong>；</li>
+      <li>不得泄露他人个人隐私信息（真实姓名、电话、住址、学号等）；</li>
+      <li>不得发布涉及未成年人的敏感信息或隐私。</li>
+    </ul>
+
+    <p class="clause"><strong>3.3 讨论区规范</strong>：用户在讨论区发言应围绕话题理性讨论，不得恶意刷屏、引战或发布无关内容。</p>
+
+    <h2>四、内容管理</h2>
+    <p class="clause"><strong>4.1 敏感词过滤</strong>：平台内置敏感词检测系统，用户发布的内容若命中敏感词，系统将自动标记并提交后台审核。用户可选择继续发送（内容将被标记待审）或返回编辑。</p>
+    <p class="clause"><strong>4.2 举报机制</strong>：用户发现违规内容可通过帖子/评论的举报功能向管理员反馈，提交时需选择或填写举报原因。管理员将在合理时间内对举报进行处理。</p>
+    <p class="clause"><strong>4.3 侵权投诉</strong>：如您认为本平台上的内容侵犯了您的合法权益（包括但不限于著作权、肖像权、名誉权、隐私权等），请通过平台内举报功能或联系管理员提交侵权投诉。投诉应包含：</p>
+    <ul>
+      <li>权利人的身份证明（姓名、联系方式等）；</li>
+      <li>被侵权内容的准确定位（帖子ID、链接等）；</li>
+      <li>侵权事实的初步证明材料。</li>
+    </ul>
+    <p class="clause"><strong>4.4 处理措施</strong>：对于违反本协议的内容和行为，平台有权根据违规情节采取以下一项或多项措施：</p>
+    <ul>
+      <li>内容屏蔽或删除；</li>
+      <li>限制部分功能使用；</li>
+      <li>账号警告；</li>
+      <li>临时或永久封禁账号；</li>
+      <li>保存相关记录并向有关部门报告。</li>
+    </ul>
+    <p class="clause"><strong>4.5 申诉渠道</strong>：用户对处理结果有异议的，可通过平台内联系方式向管理员提交申诉，我们将及时复核并反馈结果。</p>
+
+    <h2>五、未成年人保护</h2>
+    <p class="clause">5.1 本平台重视未成年人保护。未满 14 周岁的用户应在监护人陪同和指导下阅读本协议并使用本平台。</p>
+    <p class="clause">5.2 未成年人用户不得发布含有个人真实姓名、学校班级、家庭住址、联系方式等个人敏感信息的内容。</p>
+    <p class="clause">5.3 如发现本平台存在涉及未成年人不当内容，请立即通过举报功能反馈，我们将优先处理。</p>
+    <p class="clause">5.4 我们不会主动收集未成年人的个人敏感信息。如监护人发现未成年人未经同意在本平台注册或发布信息，可联系管理员要求删除相关信息或注销账号。</p>
+
+    <h2>六、隐私保护</h2>
+    <p class="clause">6.1 我们重视用户隐私保护，承诺遵循合法、正当、必要原则收集和使用用户个人信息。</p>
+    <p class="clause">6.2 我们可能收集以下信息以提供服务：</p>
+    <ul>
+      <li>注册时提供的账号、昵称等信息；</li>
+      <li>用户公开发布的帖子、评论等内容；</li>
+      <li>同学认证时提交的认证信息（仅用于身份核验，不会对外公开）；</li>
+      <li>基本的访问日志（IP地址、浏览器类型、设备信息等，仅用于安全审计与系统优化）。</li>
+    </ul>
+    <p class="clause">6.3 我们不会将用户个人信息出售或提供给第三方，但以下情况除外：</p>
+    <ul>
+      <li>经用户明确同意；</li>
+      <li>法律法规、司法机关或行政机关要求；</li>
+      <li>为维护公共安全、校园安全或他人合法权益所必须。</li>
+    </ul>
+
+    <h2>七、知识产权</h2>
+    <p class="clause"><strong>7.1 用户内容授权</strong>：用户在本平台发布的帖子、评论及其他内容，一经发布即视为永久授权本网站拥有其全部知识产权及相关权益，包括但不限于复制权、修改权、改编权、信息网络传播权、汇编权等。本平台有权对发布内容进行展示、修改、删除或用于平台宣传用途。</p>
+    <p class="clause"><strong>7.2 平台知识产权</strong>：本网站的代码、设计、标识、界面等知识产权归平台运营方所有，未经许可不得复制、修改或用于商业用途。</p>
+    <p class="clause"><strong>7.3 禁止数据抓取</strong>：未经本平台书面许可，任何用户或第三方不得以任何方式（包括但不限于爬虫、自动化工具、脚本等）抓取、复制、存储或利用本平台上的内容数据。</p>
+    <p class="clause"><strong>7.4 侵权责任</strong>：用户应保证其发布的内容不侵犯任何第三方的知识产权。如因用户发布的内容导致第三方索赔，用户应承担全部法律责任。</p>
+
+    <h2>八、免责声明</h2>
+    <p class="clause">8.1 本平台上的内容由用户自行发布，不代表本平台立场。平台不对内容的真实性、准确性或合法性作出任何明示或暗示的保证。</p>
+    <p class="clause">8.2 因以下情况导致的服务中断、数据丢失或损失，平台不承担责任：</p>
+    <ul>
+      <li>不可抗力（自然灾害、战争、政府行为、疫情等）；</li>
+      <li>网络服务故障（包括但不限于电信部门技术调整、网络中断等）；</li>
+      <li>系统维护或升级（将尽量提前公告）；</li>
+      <li>第三方原因导致的服务异常；</li>
+      <li>用户自身操作不当或违反本协议导致的后果。</li>
+    </ul>
+    <p class="clause">8.3 用户因违反本协议导致的法律后果，由用户自行承担。如因此给平台造成损失的，用户应予以赔偿。</p>
+    <p class="clause">8.4 平台不对以下情况承担责任：</p>
+    <ul>
+      <li>用户之间因平台内容产生的纠纷；</li>
+      <li>用户因依赖平台内容而做出决策所产生的损失；</li>
+      <li>非平台原因导致的账号信息泄露。</li>
+    </ul>
+
+    <h2>九、服务终止</h2>
+    <p class="clause">9.1 用户违反本协议任何条款的，平台有权立即暂停或终止向该用户提供服务。</p>
+    <p class="clause">9.2 平台有权在提前公告的情况下，暂停或终止部分或全部服务。服务终止后，平台对用户或第三方不负任何义务或责任。</p>
+    <p class="clause">9.3 本协议终止后，您在本协议项下的权利立即终止，但已产生的权利义务仍对双方具有约束力。</p>
+
+    <h2>十、通知与送达</h2>
+    <p class="clause">10.1 平台通过站内公告、系统消息等方式向用户发送通知。通知一经发送即视为已送达。</p>
+    <p class="clause">10.2 用户应保持联系方式畅通。用户可通过平台内举报功能或后台管理页面联系平台管理员。</p>
+
+    <h2>十一、法律适用与争议解决</h2>
+    <p class="clause">11.1 本协议的订立、执行和解释适用中华人民共和国法律。</p>
+    <p class="clause">11.2 因本协议引起的或与本协议有关的任何争议，双方应首先友好协商解决；协商不成的，任何一方均可向平台运营方所在地有管辖权的人民法院提起诉讼。</p>
+
+    <h2>十二、其他</h2>
+    <p class="clause">12.1 本协议条款部分无效的，不影响其他条款的效力。</p>
+    <p class="clause">12.2 平台未行使或执行本协议任何权利或条款的，不构成对该权利的放弃。</p>
+    <p class="clause">12.3 本协议的最终解释权归平台运营方所有。</p>
+
+    <div class="footer-note">联系管理员：通过平台内举报功能或后台管理页面提交反馈。</div>
+  </div>
+</div>
+</body>
+</html>

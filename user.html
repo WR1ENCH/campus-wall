@@ -510,6 +510,17 @@
     .bind-zhixue-btn:hover {
       background: #16a34a;
     }
+    /* 流程导图样式 */
+    .flow-node {
+      background: #22c55e; color: white; padding: 10px 18px;
+      border-radius: 10px; font-size: 13px; font-weight: 600;
+      text-align: center; box-shadow: 0 3px 10px rgba(34,197,94,0.25);
+      min-width: 200px; line-height: 1.5;
+    }
+    .flow-arrow {
+      font-size: 20px; color: #22c55e; padding: 4px 0;
+      font-weight: bold; line-height: 1;
+    }
   </style>
 </head>
 <body>
@@ -554,14 +565,11 @@
             <button id="bindZhixueBtn" class="edit-btn bind-zhixue-btn" style="display:none;">🎓 同学认证</button>
           </div>
           <!-- 同学认证信息展示 -->
-          <div id="zhixueInfo" style="margin-top:16px; padding:12px 16px; background:var(--bg-main); border-radius:12px; font-size:13px; color:var(--text-sub); display:none;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div id="zhixueInfo" style="margin-top:16px; padding:10px 16px; background:var(--bg-main); border-radius:12px; font-size:13px; color:var(--text-sub); display:none;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
               <span style="font-weight:600; color:var(--text-main);">🎓 同学认证</span>
-              <span id="zhixueStatusBadge" style="padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;"></span>
+              <span id="zhixueStatusBadge" style="padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold;"></span>
             </div>
-            <div id="zhixueUsername" style="margin-bottom:4px;"></div>
-            <div id="zhixueSubmittedAt" style="margin-bottom:8px; font-size:11px; color:var(--text-sub);"></div>
-            <button id="unbindZhixueBtn" style="font-size:12px; color:var(--danger); background:none; border:none; cursor:pointer; padding:0;">解除绑定</button>
           </div>
         </div>
       </div>
@@ -810,7 +818,6 @@
     // ===== 智学网绑定功能 =====
     const bindZhixueBtn = document.getElementById('bindZhixueBtn');
     const zhixueInfo = document.getElementById('zhixueInfo');
-    const unbindZhixueBtn = document.getElementById('unbindZhixueBtn');
 
     // 状态标签样式
     const statusStyles = {
@@ -833,22 +840,12 @@
         const data = await resp.json();
         if (data.ok && data.data) {
           const info = data.data;
-          if (info.type === 'manual') {
-            document.getElementById('zhixueUsername').textContent = '📄 手动认证';
-          } else {
-            document.getElementById('zhixueUsername').textContent = '账号：' + (info.zhixueUsername || '待审核');
-          }
           // 状态标签
           const statusBadge = document.getElementById('zhixueStatusBadge');
           const style = statusStyles[info.status] || statusStyles.pending;
           statusBadge.textContent = style.text;
           statusBadge.style.background = style.bg;
           statusBadge.style.color = style.color;
-          // 提交时间
-          if (info.submittedAt) {
-            const date = new Date(info.submittedAt).toLocaleString('zh-CN');
-            document.getElementById('zhixueSubmittedAt').textContent = '提交时间：' + date;
-          }
           zhixueInfo.style.display = '';
           // 只有未认证且不是pending状态时才显示绑定按钮
           if (!info.status || info.status === 'rejected' || info.status === 'none') {
@@ -876,6 +873,10 @@
       modal.innerHTML = `
         <div class="modal" style="max-width:420px;">
           <div class="modal-header">🎓 同学认证</div>
+          <div style="padding:0 20px 4px;font-size:13px;color:var(--text-sub);line-height:1.7;text-align:center;">
+            我们正致力于维护校园墙真实性<br>
+            为维护本墙环境，建议您即可完成同学认证
+          </div>
           <div class="modal-body">
             <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-weight:bold; display:none;"></div>
             <!-- Tab 切换 -->
@@ -894,6 +895,13 @@
 
             <!-- 智学认证表单 -->
             <div id="certPanelZhixue">
+              <div style="font-size:12px;color:var(--text-sub);background:rgba(34,197,94,0.08);border-radius:10px;padding:12px 14px;margin-bottom:14px;line-height:1.7;text-align:center;">
+                为了维护您的隐私与合法权益，您有权利查看<strong
+                  style="color:#22c55e;cursor:pointer;text-decoration:underline;"
+                  onclick="showZhixueFlowPopup()">「智学验证」</strong>的运行流程
+                <br>
+                您填写的智学网账号还可用于登录校园墙与找回校园墙的密码
+              </div>
               <div class="form-group">
                 <label class="form-label">智学网账号</label>
                 <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
@@ -906,6 +914,15 @@
 
             <!-- 手动认证表单 -->
             <div id="certPanelManual" style="display:none;">
+              <div class="form-group">
+                <label class="form-label">姓名</label>
+                <input type="text" id="manualName" class="form-input" placeholder="填写你的真实姓名">
+              </div>
+              <div class="form-group">
+                <label class="form-label">邮箱</label>
+                <input type="email" id="manualEmail" class="form-input" placeholder="填写你的邮箱地址">
+                <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">填写的电子邮件用于向您质询您提交的证明文件，请确保它是可用的</div>
+              </div>
               <div class="form-group">
                 <label class="form-label">说明</label>
                 <textarea id="manualNote" class="form-input" rows="3"
@@ -922,6 +939,9 @@
                     style="display:none;" onchange="handleManualImages(event)">
                 </label>
                 <div id="manualImageError" style="font-size:12px; color:var(--danger); margin-top:4px; display:none;"></div>
+              </div>
+              <div style="font-size:12px;color:var(--text-sub);padding:10px;background:rgba(196,168,130,0.1);border-radius:10px;margin-top:6px;line-height:1.6;text-align:center;">
+                提交的信息仅用于一次性审核，校园墙承诺保护你的信息安全
               </div>
             </div>
 
@@ -1011,6 +1031,37 @@
       });
     }
 
+    // 智学验证运行流程弹窗
+    function showZhixueFlowPopup() {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);';
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      overlay.innerHTML = `
+        <div style="background:#fef9e7;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.35);color:#2c1810;">
+          <h3 style="margin:0 0 18px;font-size:17px;color:#3a2210;text-align:center;">🖥️ 智学验证运行流程</h3>
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+              <div class="flow-node">用户端填写账号信息</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">信息上传至服务器排队等待自动审核</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">服务器调用相关API自动登录</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">调用Playwright获取相关信息</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">完成审核</div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:18px;">
+            <button id="flowConfirmBtn"
+              style="padding:8px 32px;background:#5a3e2b;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">我知道了</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.getElementById('flowConfirmBtn').onclick = () => overlay.remove();
+    }
+
     function closeBindZhixueModal() {
       const modal = document.getElementById('bindZhixueModal');
       if (modal) modal.remove();
@@ -1038,10 +1089,14 @@
         body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
       } else {
         // 手动认证
+        const name = document.getElementById('manualName').value.trim();
+        const email = document.getElementById('manualEmail').value.trim();
         const note = document.getElementById('manualNote').value.trim();
+        if (!name) { showErr('❌ 请填写姓名'); return; }
+        if (!email) { showErr('❌ 请填写邮箱'); return; }
         if (!note) { showErr('❌ 请填写认证说明'); return; }
         if (manualImages.length === 0) { showErr('❌ 请至少上传一张证明图片'); return; }
-        body = { type: 'manual', manualNote: note, manualImages: [...manualImages] };
+        body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: [...manualImages] };
       }
 
       statusEl.textContent = '⏳ 正在提交...';
@@ -1075,27 +1130,7 @@
       }
     }
 
-    // 解绑
-    unbindZhixueBtn.addEventListener('click', async () => {
-      if (!confirm('确定解除智学网账号绑定吗？')) return;
-      try {
-        const token = localStorage.getItem('campus_user_token');
-        const resp = await fetch('/api/user/bind-zhixue', {
-          method: 'DELETE',
-          headers: { 'x-user-token': token }
-        });
-        const data = await resp.json();
-        if (data.ok) {
-          zhixueInfo.style.display = 'none';
-          if (bindZhixueBtn) bindZhixueBtn.style.display = '';
-          alert('已解除绑定');
-        } else {
-          alert('解绑失败：' + (data.msg || '未知错误'));
-        }
-      } catch (e) {
-        alert('解绑失败：' + e.message);
-      }
-    });
+
 
     // ===== 编辑资料功能 =====
     let currentLoggedInUser = null;
