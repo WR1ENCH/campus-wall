@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive } = require('./sensitiveWords');
 
@@ -52,9 +53,12 @@ const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
 const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
+const CREDIT_LOGS_FILE = path.join(DATA_DIR, 'credit_logs.json');
+const CREDIT_CARDS_FILE = path.join(DATA_DIR, 'credit_cards.json');
 
 // 中间件
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 
 // 全局输入过滤：禁止特殊字符（对 JSON body 和 URL query 生效）
@@ -71,19 +75,250 @@ function sanitizeString(val) {
 }
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    // 排除包含 base64 的字段不过滤（data URL 包含 :, /, ; 等特殊字符）
-    const { avatar, manualImages, manualEmail, ...rest } = req.body;
+    // 排除包含 base64 或特殊格式的字段不过滤
+    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
       ...(manualImages !== undefined ? { manualImages } : {}),
-      ...(manualEmail !== undefined ? { manualEmail } : {})
+      ...(manualEmail !== undefined ? { manualEmail } : {}),
+      ...(challenge !== undefined ? { challenge } : {}),
+      ...(prefix !== undefined ? { prefix } : {}),
+      ...(nonce !== undefined ? { nonce } : {})
     };
   }
   next();
 });
 
-app.use(express.static(__dirname)); // 静态文件服务
+// ===== PoW 工作量证明盾（参考 Anubis 设计）=====
+const POW_SECRET = crypto.randomBytes(32).toString('hex');
+const POW_TTL = 30 * 60 * 1000;
+const POW_ENABLED = true;
+const POW_DIFFICULTY = 20; // 难度：要求 SHA256 前 N 位为 0（20 ≈ 100万次 ≈ 5-10秒）
+
+// 统计前导零位数
+function countLeadingZeroBits(buf) {
+  let count = 0;
+  for (const byte of buf) {
+    if (byte === 0) { count += 8; continue; }
+    for (let b = 7; b >= 0; b--) {
+      if ((byte >> b) & 1) break;
+      count++;
+    }
+    break;
+  }
+  return count;
+}
+
+// PoW 验证
+function powVerify(prefix, nonce, difficulty) {
+  const hash = crypto.createHash('sha256').update(prefix + nonce).digest();
+  return countLeadingZeroBits(hash) >= difficulty;
+}
+
+// 生成 PoW cookie 令牌
+function powMakeToken() {
+  const ts = Date.now().toString(36);
+  const rand = crypto.randomBytes(4).toString('hex');
+  const sig = crypto.createHmac('sha256', POW_SECRET).update(ts + rand).digest('hex').slice(0, 12);
+  return ts + '.' + rand + '.' + sig;
+}
+function powVerifyToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  const [ts, rand, sig] = parts;
+  const expected = crypto.createHmac('sha256', POW_SECRET).update(ts + rand).digest('hex').slice(0, 12);
+  if (sig !== expected) return false;
+  if (Date.now() - parseInt(ts, 36) > 300000) return false; // 5分钟超时
+  return true;
+}
+
+// PoW 盾中间件
+app.use((req, res, next) => {
+  if (!POW_ENABLED) return next();
+  if (req.path === '/api/__pow_challenge') return next();
+  if (req.path === '/favicon.ico') return next();
+  if (req.cookies && req.cookies._pow_clearance && powVerifyToken(req.cookies._pow_clearance)) {
+    return next();
+  }
+
+  const challengePrefix = crypto.randomBytes(16).toString('hex');
+  const difficulty = POW_DIFFICULTY;
+  const rayId = crypto.randomBytes(4).toString('hex');
+
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>请稍候…</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:#f6f6f6;color:#555;
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    flex-direction:column;
+  }
+  .wrap{
+    background:#fff;border-radius:12px;
+    padding:48px 56px 40px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.07);
+    text-align:center;max-width:460px;
+  }
+  .shield svg{width:56px;height:56px;display:block;margin:0 auto 20px}
+  .title{font-size:16px;font-weight:500;color:#333;margin-bottom:6px;line-height:1.5}
+  .desc{font-size:13px;color:#888;line-height:1.6;margin-bottom:4px}
+  .pow-info{font-size:11px;color:#aaa;margin-bottom:2px;font-family:monospace}
+  .spinner-wrap{margin:24px auto 20px}
+  .spinner{width:42px;height:42px;border:4px solid #e8e8e8;border-top-color:#f5a623;border-radius:50%;animation:spin .75s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress-wrap{width:100%;height:6px;background:#eee;border-radius:3px;margin:16px 0 6px;overflow:hidden}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#f5a623,#f7c948);border-radius:3px;width:0%;transition:width .3s}
+  .status{font-size:13px;color:#888;margin-top:4px}
+  .success{color:#22c55e;font-weight:500}
+  .fail{color:#ef4444}
+  .footer{margin-top:32px;font-size:11px;color:#bbb;text-align:center}
+  .footer svg{vertical-align:middle;margin-right:4px}
+  .footer a{color:#bbb;text-decoration:none}
+  .ray{font-size:10px;color:#ccc;margin-top:4px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="shield">
+      <svg viewBox="0 0 56 56" fill="none">
+        <path d="M28 4L6 14v12c0 14.5 9.5 28 22 32 12.5-4 22-17.5 22-32V14L28 4z" fill="#e8f0fe" stroke="#4285f4" stroke-width="1.5"/>
+        <path d="M24 30l4 4 8-10" stroke="#34a853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <div class="title" id="statusText">正在验证您的浏览器…</div>
+    <div class="desc">此过程由浏览器自动完成。</div>
+    <div class="pow-info">复杂度: 2<sup>${difficulty}</sup> ≈ ${Math.round(Math.pow(2, difficulty)/10000)/100} 万次 SHA256</div>
+
+    <div class="spinner-wrap" id="spinnerWrap">
+      <div class="spinner"></div>
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="small" id="powStatus" style="font-size:11px;color:#aaa;">计算中…</div>
+    </div>
+
+    <div class="status" id="statusDetail"></div>
+  </div>
+
+  <div class="footer">
+    <svg width="12" height="12" viewBox="0 0 16 16"><path d="M8 1a7 7 0 100 14A7 7 0 008 1z" fill="#ccc"/><path d="M7 5h2v5H7V5zm0-2h2v1H7V3z" fill="#fff"/></svg>
+    PoW 防护 by <a href="#">wr1Ench</a>
+    <div class="ray">challenge: ${challengePrefix.slice(0,8)} | difficulty: ${difficulty} | ray: ${rayId}</div>
+  </div>
+
+<script>
+  var prefix = "${challengePrefix}";
+  var target = location.href;
+  var difficulty = ${difficulty};
+
+  // 使用 Web Crypto API（异步，不阻塞 UI）
+  async function sha256(msg) {
+    var enc = new TextEncoder().encode(msg);
+    var buf = await crypto.subtle.digest('SHA-256', enc);
+    return new Uint8Array(buf);
+  }
+
+  function countLeadingZeros(buf) {
+    var count = 0;
+    for (var i = 0; i < buf.length; i++) {
+      if (buf[i] === 0) { count += 8; continue; }
+      for (var b = 7; b >= 0; b--) {
+        if ((buf[i] >> b) & 1) break;
+        count++;
+      }
+      break;
+    }
+    return count;
+  }
+
+  function hex(buf) {
+    return Array.from(buf).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }
+
+  var bar = document.getElementById('progressBar');
+  var powEl = document.getElementById('powStatus');
+  var statusEl = document.getElementById('statusDetail');
+
+  // 批量计算，每批 4096 次，避免阻塞 UI 太久
+  var BATCH = 4096;
+  var nonce = 0;
+  var maxAttempts = Math.pow(2, difficulty) * 3; // 最多尝试 3倍期望值
+  var started = Date.now();
+
+  (async function solve() {
+    for (var attempt = 0; attempt < maxAttempts; attempt += BATCH) {
+      // 异步让出给 UI 线程
+      await new Promise(function(r){ setTimeout(r, 0); });
+
+      for (var j = 0; j < BATCH; j++) {
+        var test = prefix + (nonce + j);
+        var h = await sha256(test);
+        if (countLeadingZeros(h) >= difficulty) {
+          // 找到解
+          var elapsed = ((Date.now() - started) / 1000).toFixed(1);
+          powEl.textContent = '找到解，耗时 ' + elapsed + ' 秒（尝试 ' + (nonce + j + 1) + ' 次）';
+          bar.style.width = '100%';
+
+          // 保证最短 5 秒（PoW 算得快也得等够时间）
+          var remaining = Math.max(0, 5000 - (Date.now() - started));
+          if (remaining > 0) {
+            await new Promise(function(r){ setTimeout(r, remaining); });
+          }
+
+          fetch('/api/__pow_challenge', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({prefix:prefix, nonce:'' + (nonce + j)}),
+            credentials:'same-origin'
+          }).then(function(r){return r.json()}).then(function(jr){
+            if(jr.ok) {
+              statusEl.innerHTML = '<span class="success">✓ 验证通过，正在跳转…</span>';
+              setTimeout(function(){ location.href = target; }, 300);
+            } else {
+              statusEl.innerHTML = '<span class="fail">' + (jr.msg || '验证失败') + '</span>';
+            }
+          });
+          return;
+        }
+        // 每 256 次更新进度条
+        if ((nonce + j) % 256 === 0) {
+          var pct = Math.min(100, ((nonce + j) / maxAttempts) * 100);
+          bar.style.width = pct + '%';
+        }
+      }
+      nonce += BATCH;
+      var pct = Math.min(100, (nonce / maxAttempts) * 100);
+      bar.style.width = pct + '%';
+      powEl.textContent = '计算中… ' + nonce.toLocaleString() + ' 次 (' + Math.round(pct) + '%)';
+    }
+    statusEl.innerHTML = '<span class="fail">计算超时，请刷新重试</span>';
+  })();
+</script>
+</body>
+</html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// PoW 挑战验证 + 颁发 cookie
+app.post('/api/__pow_challenge', (req, res) => {
+  const { prefix, nonce } = req.body;
+  if (!prefix || nonce === undefined) return res.json({ ok: false, msg: '参数不完整' });
+  if (typeof prefix !== 'string' || prefix.length !== 32) return res.json({ ok: false, msg: '无效挑战' });
+  const n = parseInt(nonce);
+  if (isNaN(n) || n < 0 || n > 1000000000) return res.json({ ok: false, msg: 'nonce 超出范围' });
+  if (!powVerify(prefix, nonce, POW_DIFFICULTY)) return res.json({ ok: false, msg: 'PoW 验证失败' });
+
+  const token = powMakeToken();
+  res.cookie('_pow_clearance', token, { maxAge: POW_TTL, httpOnly: true, sameSite: 'lax', path: '/' });
+  res.json({ ok: true });
+});
+
+app.use(express.static(__dirname)); // 静态文件服务（放在盾后面）
 
 const CONTENT_MAX_LENGTH = 200; // 帖子/评论字数上限
 
@@ -683,7 +918,162 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0 } });
+});
+
+// ===== 签到 =====
+const CHECKIN_REWARD = 1; // 每日签到奖励 1 Credit
+
+// 获取签到状态
+app.get('/api/user/checkin-status', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  const today = new Date().toISOString().slice(0, 10);
+  res.json({
+    ok: true,
+    data: {
+      checkedIn: user.lastCheckinDate === today,
+      streak: user.checkinStreak || 0,
+      reward: CHECKIN_REWARD
+    }
+  });
+});
+
+// 签到
+app.post('/api/user/checkin', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === session.id);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  const user = users[idx];
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 今天已签到
+  if (user.lastCheckinDate === today) {
+    return res.json({ ok: false, msg: '今天已签到，明天再来吧' });
+  }
+
+  // 判断是否连续签到
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (user.lastCheckinDate === yesterday) {
+    user.checkinStreak = (user.checkinStreak || 0) + 1;
+  } else {
+    user.checkinStreak = 1; // 断签，重新开始
+  }
+
+  user.lastCheckinDate = today;
+  user.credit = (user.credit || 0) + CHECKIN_REWARD;
+  writeUsers(users);
+
+  // 记录流水
+  const logs = readCreditLogs();
+  logs.push({
+    id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: session.id,
+    amount: CHECKIN_REWARD,
+    reason: '每日签到（连续 ' + user.checkinStreak + ' 天）',
+    createdAt: new Date().toISOString()
+  });
+  writeCreditLogs(logs);
+
+  res.json({
+    ok: true,
+    data: {
+      reward: CHECKIN_REWARD,
+      streak: user.checkinStreak,
+      credit: user.credit
+    }
+  });
+});
+
+// 获取当前用户的 Credit 流水
+app.get('/api/user/credit-logs', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const logs = readCreditLogs();
+  const userLogs = logs.filter(l => l.userId === session.id).reverse();
+  res.json({ ok: true, data: userLogs });
+});
+
+// 兑换卡密（含频率限制）
+const redeemRateLimit = new Map();
+app.post('/api/user/redeem-credit', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  // 频率限制：每人每分钟最多 5 次
+  const now = Date.now();
+  const rlKey = session.id;
+  let rl = redeemRateLimit.get(rlKey);
+  if (!rl || now - rl.window > 60000) {
+    rl = { window: now, count: 0 };
+    redeemRateLimit.set(rlKey, rl);
+  }
+  rl.count++;
+  if (rl.count > 5) return res.json({ ok: false, msg: '操作太频繁，请稍后再试' });
+
+  const { code } = req.body;
+  if (!code || !code.trim()) return res.json({ ok: false, msg: '请输入卡密' });
+
+  const cleanCode = code.trim().toUpperCase();
+  // 格式验证：CW-XXXX-XXXX-X（12位字母数字+4个分隔符）
+  if (!/^CW-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(cleanCode)) {
+    return res.json({ ok: false, msg: '卡密格式不正确' });
+  }
+  // 校验码验证（Luhn mod N）
+  const codePart = cleanCode.replace(/-/g, '').slice(2); // 去掉 "CW-" 前缀
+  if (!luhnModN(codePart)) {
+    return res.json({ ok: false, msg: '卡密无效（校验码不匹配）' });
+  }
+
+  const cards = readCreditCards();
+  const card = cards.find(c => c.code === cleanCode);
+
+  if (!card) return res.json({ ok: false, msg: '卡密不存在' });
+  if (card.status !== 'unused') return res.json({ ok: false, msg: '该卡密已被使用' });
+
+  // 更新卡密状态
+  card.status = 'used';
+  card.usedBy = session.id;
+  card.usedAt = new Date().toISOString();
+  writeCreditCards(cards);
+
+  // 给用户加 credit
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  users[userIndex].credit = (users[userIndex].credit || 0) + card.value;
+  writeUsers(users);
+
+  // 记录流水
+  const logs = readCreditLogs();
+  logs.push({
+    id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: session.id,
+    amount: card.value,
+    reason: '卡密兑换：' + cleanCode,
+    createdAt: new Date().toISOString()
+  });
+  writeCreditLogs(logs);
+
+  res.json({ ok: true, data: { value: card.value, balance: users[userIndex].credit } });
 });
 
 // 更新当前用户资料（昵称、头像）
@@ -1071,7 +1461,180 @@ app.post('/api/admin/users/batch-delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deleted: deletedCount, deletedPosts: deletedPostCount });
 });
 
-// 获取指定用户发布的帖子
+// ===== 卡密管理（仅超级管理员）=====
+// 每日创建数量限制
+const cardCreateLimits = new Map();
+const CARD_DAILY_LIMIT = 100; // 每天最多创建 100 张
+
+// 创建卡密
+app.post('/api/admin/credit-cards/create', requireAdmin, requireSuper, (req, res) => {
+  const { count, value } = req.body;
+  const num = parseInt(count) || 1;
+  const val = parseInt(value) || 10;
+  if (num < 1 || num > 100) return res.json({ ok: false, msg: '数量范围 1~100' });
+  if (val < 1 || val > 500) return res.json({ ok: false, msg: '单张面值范围 1~500' });
+
+  // 每日限额检查
+  const today = new Date().toISOString().slice(0, 10);
+  const key = req.admin.id + '|' + today;
+  const used = cardCreateLimits.get(key) || 0;
+  if (used + num > CARD_DAILY_LIMIT) {
+    return res.json({ ok: false, msg: '今日创建已达上限（' + CARD_DAILY_LIMIT + ' 张），请明天再试' });
+  }
+  cardCreateLimits.set(key, used + num);
+
+  const cards = readCreditCards();
+  const now = new Date().toISOString();
+  const newCards = [];
+  for (let i = 0; i < num; i++) {
+    newCards.push({
+      code: generateCardCode(cards.concat(newCards)),
+      value: val,
+      status: 'unused',
+      createdBy: req.admin.id,
+      createdAt: now,
+      usedBy: null,
+      usedAt: null
+    });
+  }
+  const all = cards.concat(newCards);
+  writeCreditCards(all);
+
+  // 审计日志
+  console.warn('[AUDIT] 超级管理员 ' + req.admin.id + ' 创建了 ' + num + ' 张卡密，每张 ' + val + ' Credit');
+
+  res.json({ ok: true, data: { count: num, value: val, cards: newCards.map(c => c.code) } });
+});
+
+// 查询所有卡密
+app.get('/api/admin/credit-cards', requireAdmin, requireSuper, (req, res) => {
+  const cards = readCreditCards();
+  const users = readUsers();
+  const list = cards.reverse().map(c => ({
+    ...c,
+    usedByNickname: c.usedBy ? (users.find(u => u.id === c.usedBy)?.nickname || '未知') : null
+  }));
+  res.json({ ok: true, data: list });
+});
+
+// ===== Credit 管理（仅超级管理员）=====
+
+// 获取 Credit 总览数据
+app.get('/api/admin/credit/overview', requireAdmin, requireSuper, (req, res) => {
+  // 卡密统计
+  const cards = readCreditCards();
+  const totalRedeemed = cards.filter(c => c.status === 'used').reduce((s, c) => s + c.value, 0); // 已兑换
+  // 用户持有总量
+  const users = readUsers();
+  const inCirculation = users.reduce((s, u) => s + (u.credit || 0), 0);
+  // 管理员扣除总量
+  const logs = readCreditLogs();
+  const totalDeducted = logs.filter(l => l.amount < 0).reduce((s, l) => s + Math.abs(l.amount), 0);
+
+  // 近 7 天每日数据
+  const chart = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date();
+    day.setDate(day.getDate() - i);
+    const dayStr = day.toISOString().slice(0, 10);
+    const label = i === 0 ? '今天' : (day.getMonth() + 1) + '/' + day.getDate();
+    const dayLogs = logs.filter(l => l.createdAt && l.createdAt.startsWith(dayStr));
+    chart.push({
+      label,
+      issued: dayLogs.reduce((s, l) => s + (l.amount > 0 ? l.amount : 0), 0),
+      redeemed: dayLogs.reduce((s, l) => s + (l.amount < 0 ? Math.abs(l.amount) : 0), 0)
+    });
+  }
+
+  res.json({
+    ok: true,
+    data: { totalRedeemed, inCirculation, totalDeducted, chart }
+  });
+});
+
+// 搜索用户（按用户名或昵称）
+app.get('/api/admin/credit/search-user', requireAdmin, requireSuper, (req, res) => {
+  const q = (req.query.q || '').trim().toLowerCase();
+  if (!q) return res.json({ ok: true, data: [] });
+  const users = readUsers();
+  const matches = users.filter(u =>
+    (u.username && u.username.toLowerCase().includes(q)) ||
+    (u.nickname && u.nickname.toLowerCase().includes(q))
+  ).slice(0, 20).map(u => ({
+    id: u.id,
+    username: u.username,
+    nickname: u.nickname,
+    credit: u.credit || 0
+  }));
+  res.json({ ok: true, data: matches });
+});
+
+// 赠送 Credit 给指定用户
+app.post('/api/admin/credit/grant', requireAdmin, requireSuper, (req, res) => {
+  const { userId, amount, reason } = req.body;
+  const num = parseInt(amount);
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '赠送数量范围 1~10000' });
+
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  users[idx].credit = (users[idx].credit || 0) + num;
+  writeUsers(users);
+
+  // 记录流水
+  const logs = readCreditLogs();
+  logs.push({
+    id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId,
+    amount: num,
+    reason: '管理员赠送：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）',
+    createdAt: new Date().toISOString()
+  });
+  writeCreditLogs(logs);
+
+  // 审计日志
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 赠送 ' + num + ' Credit 给用户 ' + userId);
+
+  res.json({ ok: true, data: { credit: users[idx].credit } });
+});
+
+// 扣除用户 Credit
+app.post('/api/admin/credit/deduct', requireAdmin, requireSuper, (req, res) => {
+  const { userId, amount, reason } = req.body;
+  const num = parseInt(amount);
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '扣除数量范围 1~10000' });
+
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  const current = users[idx].credit || 0;
+  if (current < num) return res.json({ ok: false, msg: '用户 Credit 余额不足，当前仅 ' + current });
+
+  users[idx].credit = current - num;
+  writeUsers(users);
+
+  // 记录流水（负数表示扣除）
+  const logs = readCreditLogs();
+  logs.push({
+    id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId,
+    amount: -num,
+    reason: '管理员扣除：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）',
+    createdAt: new Date().toISOString()
+  });
+  writeCreditLogs(logs);
+
+  // 审计日志
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 扣除用户 ' + userId + ' 的 ' + num + ' Credit');
+
+  res.json({ ok: true, data: { credit: users[idx].credit } });
+});
+
+// 获取指定用户发布帖子
 app.get('/api/users/:id/posts', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
@@ -1633,6 +2196,102 @@ function writeReports(reports) {
   }
 }
 
+// ===== Credit 数据读写 =====
+function readCreditLogs() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(CREDIT_LOGS_FILE)) {
+      fs.writeFileSync(CREDIT_LOGS_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(CREDIT_LOGS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取 Credit 流水失败:', e);
+    return [];
+  }
+}
+
+function writeCreditLogs(logs) {
+  try {
+    ensureDir();
+    fs.writeFileSync(CREDIT_LOGS_FILE, JSON.stringify(logs, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入 Credit 流水失败:', e);
+  }
+}
+
+// ===== 卡密数据读写 =====
+function readCreditCards() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(CREDIT_CARDS_FILE)) {
+      fs.writeFileSync(CREDIT_CARDS_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(CREDIT_CARDS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取卡密失败:', e);
+    return [];
+  }
+}
+function writeCreditCards(cards) {
+  try {
+    ensureDir();
+    fs.writeFileSync(CREDIT_CARDS_FILE, JSON.stringify(cards, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入卡密失败:', e);
+  }
+}
+// 生成卡密：CW-XXXX-XXXX-X（含校验码防输错）
+// 字母表排除易混淆的 0/O/1/I
+const CARD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CARD_MOD = CARD_CHARS.length;
+
+// Luhn mod N 校验：最后一位是校验码
+function luhnModN(code) {
+  let factor = 2;
+  let sum = 0;
+  const n = CARD_MOD;
+  for (let i = code.length - 2; i >= 0; i--) { // 从倒数第二位开始算
+    let val = CARD_CHARS.indexOf(code[i]);
+    if (val === -1) return false;
+    let add = val * factor;
+    sum += Math.floor(add / n) + (add % n);
+    factor = factor === 2 ? 1 : 2;
+  }
+  const expected = (n - (sum % n)) % n;
+  const checkChar = code[code.length - 1];
+  return CARD_CHARS[expected] === checkChar;
+}
+
+function generateCardCode(existingCards) {
+  const codeSet = new Set((existingCards || []).map(c => c.code));
+  let code;
+  let attempts = 0;
+  do {
+    const raw = [];
+    for (let i = 0; i < 11; i++) {
+      raw.push(CARD_CHARS[crypto.randomInt(CARD_MOD)]);
+    }
+    // 算校验码
+    let factor = 2;
+    let sum = 0;
+    const n = CARD_MOD;
+    for (let i = raw.length - 1; i >= 0; i--) {
+      let val = CARD_CHARS.indexOf(raw[i]);
+      let add = val * factor;
+      sum += Math.floor(add / n) + (add % n);
+      factor = factor === 2 ? 1 : 2;
+    }
+    const check = CARD_CHARS[(n - (sum % n)) % n];
+    const rawCode = raw.join('') + check;
+    code = 'CW-' + rawCode.slice(0, 4) + '-' + rawCode.slice(4, 8) + '-' + rawCode.slice(8, 12);
+    attempts++;
+    if (attempts > 100) break; // 防死循环
+  } while (codeSet.has(code));
+  return code;
+}
+
 // ===== 讨论数据读写 =====
 const DISCUSSIONS_FILE = path.join(DATA_DIR, 'discussions.json');
 const DISCUSSION_COMMENTS_FILE = path.join(DATA_DIR, 'discussion_comments.json');
@@ -2146,6 +2805,42 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   writeReports(reports);
   res.json({ ok: true });
 });
+
+// ===== 在线用户统计 =====
+const onlineUsers = new Map(); // userId -> lastHeartbeat (timestamp)
+const ONLINE_TIMEOUT = 120000; // 2 分钟无心跳视为离线
+
+// 心跳接口（用户登录后定时调用）
+app.post('/api/user/heartbeat', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) { onlineUsers.set('anon_' + req.ip, Date.now()); return res.json({ ok: true }); }
+  const session = verifyUserToken(token);
+  if (!session || !session.id) { onlineUsers.set('anon_' + req.ip, Date.now()); return res.json({ ok: true }); }
+  onlineUsers.set(session.id, Date.now());
+  res.json({ ok: true });
+});
+
+// 统计接口（含今日帖数、在线人数）
+app.get('/api/stats', (req, res) => {
+  // 清理过期
+  const now = Date.now();
+  for (const [id, ts] of onlineUsers) {
+    if (now - ts > ONLINE_TIMEOUT) onlineUsers.delete(id);
+  }
+  // 今日帖数
+  const posts = readPosts();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayPosts = posts.filter(p => p.time && p.time.startsWith(today)).length;
+  res.json({ ok: true, data: { todayPosts, onlineCount: onlineUsers.size } });
+});
+
+// 每分钟清理一次过期心跳
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, ts] of onlineUsers) {
+    if (now - ts > ONLINE_TIMEOUT) onlineUsers.delete(id);
+  }
+}, 60000);
 
 // ===== 启动 =====
 app.listen(PORT, () => {

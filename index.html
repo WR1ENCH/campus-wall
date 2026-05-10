@@ -920,6 +920,8 @@
             <span class="user-name-sm" id="topUserName"></span>
           </a>
           <span id="topUserAccount" style="font-size:11px;color:rgba(255,255,255,0.6);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+          <button class="user-logout-sm" onclick="window.open('credit.html','_blank')" style="background:rgba(255,215,0,0.25);font-weight:500;">💰 <span id="topUserCredit">0</span></button>
+          <button class="user-logout-sm" id="checkinBtn" onclick="doCheckin()" style="background:rgba(72,187,120,0.25);font-weight:500;">✅ 签到</button>
           <button class="user-logout-sm" onclick="doUserLogout()">退出</button>
         </div>
       </div>
@@ -1368,7 +1370,7 @@
         const json = await res.json();
         if (json.ok) {
           const { token, id, username: u, nickname, avatar } = json.data;
-          currentUser = { id, username: u, nickname, avatar, token };
+          currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0 };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           // 更新 token
           localStorage.setItem('campus_user_token', token);
@@ -1400,7 +1402,7 @@
         const json = await res.json();
         if (json.ok) {
           const { token, id, username: u, nickname, avatar } = json.data;
-          currentUser = { id, username: u, nickname, avatar, token };
+          currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0 };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
           hideLoginModal();
@@ -1439,7 +1441,7 @@
         const json = await res.json();
         if (json.ok) {
           const { token, id, username: u, nickname: n, avatar } = json.data;
-          currentUser = { id, username: u, nickname: n, avatar, token };
+          currentUser = { id, username: u, nickname: n, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0 };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
           hideLoginModal();
@@ -1482,6 +1484,10 @@
         document.getElementById('topUserAvatar').textContent = currentUser.avatar || '🙈';
         document.getElementById('topUserName').textContent = currentUser.nickname;
         document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
+        // 更新 Credit 显示
+        document.getElementById('topUserCredit').textContent = currentUser.credit || 0;
+        // 更新签到状态
+        updateCheckinBtn(currentUser.checkinToday);
         // 设置用户主页链接
         const userProfileUrl = `user.html?id=${currentUser.id}`;
         document.getElementById('topUserNameLink').href = userProfileUrl;
@@ -1510,6 +1516,12 @@
             localStorage.removeItem(USER_KEY);
             localStorage.removeItem('campus_user_token');
             currentUser = null;
+          } else {
+            // 刷新用户数据（含 credit、签到状态）
+            currentUser.credit = json.data.credit || 0;
+            currentUser.checkinToday = json.data.checkinToday;
+            currentUser.checkinStreak = json.data.checkinStreak || 0;
+            localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           }
         } catch {
           currentUser = null;
@@ -2263,11 +2275,76 @@
       };
     }
 
-    // 模拟在线人数
-    setInterval(() => {
-      const el = document.getElementById('onlineCount');
-      el.textContent = Math.max(30, parseInt(el.textContent) + randInt(-2, 2));
-    }, 5000);
+    // 真实在线人数统计
+    async function refreshStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const json = await res.json();
+        if (json.ok) {
+          document.getElementById('onlineCount').textContent = json.data.onlineCount;
+        }
+      } catch {}
+    }
+
+    // 心跳（登录用户5秒发一次）
+    async function sendHeartbeat() {
+      const token = localStorage.getItem('campus_user_token');
+      if (!token) return;
+      try {
+        await fetch('/api/user/heartbeat', {
+          method: 'POST',
+          headers: { 'x-user-token': token }
+        });
+      } catch {}
+    }
+
+    // ===== 签到 =====
+    function updateCheckinBtn(checkedIn) {
+      const btn = document.getElementById('checkinBtn');
+      if (checkedIn) {
+        btn.textContent = '✅ 已签到';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'default';
+        btn.onclick = null;
+      } else {
+        btn.textContent = '📌 签到';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.onclick = doCheckin;
+      }
+    }
+
+    async function doCheckin() {
+      const token = localStorage.getItem('campus_user_token');
+      if (!token) { showToast('⚠️ 请先登录', 'error'); return; }
+      try {
+        const res = await fetch('/api/user/checkin', {
+          method: 'POST',
+          headers: { 'x-user-token': token }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          currentUser.credit = json.data.credit;
+          currentUser.checkinToday = true;
+          currentUser.checkinStreak = json.data.streak;
+          localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+          updateUserBar();
+          showToast('🎉 签到成功！获得 ' + json.data.reward + ' Credit（连续 ' + json.data.streak + ' 天）', 'success');
+        } else {
+          showToast('⚠️ ' + (json.msg || '签到失败'), 'error');
+        }
+      } catch {
+        showToast('⚠️ 网络错误', 'error');
+      }
+    }
+
+    // 心跳 + 在线统计（每 10 秒）
+    setInterval(async () => {
+      sendHeartbeat();
+      refreshStats();
+    }, 10000);
 
     // 定时刷新数据（每 30 秒拉一次最新帖子）
     setInterval(async () => {
@@ -2285,6 +2362,8 @@
     // ===== 启动：从后端加载数据 =====
     (async function init() {
       checkLogin();
+      sendHeartbeat();
+      refreshStats();
       await fetchPosts();
       renderNotes();
     })();
