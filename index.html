@@ -27,6 +27,11 @@
     /* ===== 砖墙背景 ===== */
     .wall {
       min-height: 100vh;
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      position: relative;
+      padding: 110px 0 80px;
       background-color: #c4a882;
       background-image:
         repeating-linear-gradient(
@@ -50,8 +55,10 @@
           rgba(175,135,95,0.25) 120px
         );
       background-size: 240px 120px;
-      position: relative;
-      padding-bottom: 80px;
+      background-position: 0 0;
+    }
+    .wall.is-dragging {
+      cursor: grabbing;
     }
 
     .wall::before {
@@ -77,7 +84,9 @@
 
     /* ===== 顶部栏 ===== */
     .top-bar {
-      position: sticky; top: 0; z-index: 100;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
       background: rgba(139,111,94,0.92);
       backdrop-filter: blur(12px);
       padding: 14px 24px;
@@ -105,10 +114,13 @@
 
     /* ===== 操作栏 ===== */
     .action-bar {
-      max-width: 1400px; margin: 0 auto;
-      padding: 20px 24px 10px;
-      position: relative; z-index: 1;
+      position: fixed;
+      top: 56px; left: 0; right: 0;
+      z-index: 99;
+      padding: 10px 24px;
       display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      background: linear-gradient(to bottom, rgba(196,168,130,0.92), rgba(196,168,130,0.4));
+      backdrop-filter: blur(6px);
     }
 
     .compose-btn {
@@ -156,6 +168,7 @@
     .notes-grid {
       position: relative;
       width: 100%;
+      will-change: transform;
     }
 
     /* ===== 便利贴卡片 ===== */
@@ -899,42 +912,45 @@
   </style>
 </head>
 <body>
-  <div class="wall">
-    <div class="top-bar">
-      <div class="wall-title">
-        <span>📌</span>
-        <span>校园墙</span>
-      </div>
-      <div class="top-stats">
-        <span>📝 今日 <strong id="todayCount">0</strong></span>
-        <span>🔥 热度 <strong id="hotCount">0</strong></span>
-        <span>👥 在线 <strong id="onlineCount">67</strong></span>
-      </div>
-      <!-- 用户信息区 -->
-      <div id="userInfoBar" style="display:none;">
-        <div class="user-info-bar">
-          <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
-            <span class="user-avatar-sm" id="topUserAvatar">🙈</span>
-          </a>
-          <a href="#" id="topUserNameLink" style="text-decoration:none; color:inherit;">
-            <span class="user-name-sm" id="topUserName"></span>
-          </a>
-          <span id="topUserAccount" style="font-size:11px;color:rgba(255,255,255,0.6);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-          <button class="user-logout-sm" onclick="window.open('credit.html','_blank')" style="background:rgba(255,215,0,0.25);font-weight:500;">💰 <span id="topUserCredit">0</span></button>
-          <button class="user-logout-sm" id="checkinBtn" onclick="doCheckin()" style="background:rgba(72,187,120,0.25);font-weight:500;">✅ 签到</button>
-          <button class="user-logout-sm" onclick="doUserLogout()">退出</button>
-        </div>
-      </div>
-      <div id="loginEntrance" style="display:none;">
-        <button class="user-logout-sm" onclick="showLoginModal()" style="padding:6px 12px;font-size:12px;">🔑 登录</button>
+  <!-- 固定层：顶栏 -->
+  <div class="top-bar" id="topBar">
+    <div class="wall-title">
+      <span>📌</span>
+      <span>校园墙</span>
+    </div>
+    <div class="top-stats">
+      <span>📝 今日 <strong id="todayCount">0</strong></span>
+      <span>🔥 热度 <strong id="hotCount">0</strong></span>
+      <span>👥 在线 <strong id="onlineCount">67</strong></span>
+    </div>
+    <!-- 用户信息区 -->
+    <div id="userInfoBar" style="display:none;">
+      <div class="user-info-bar">
+        <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
+          <span class="user-avatar-sm" id="topUserAvatar">🙈</span>
+        </a>
+        <a href="#" id="topUserNameLink" style="text-decoration:none; color:inherit;">
+          <span class="user-name-sm" id="topUserName"></span>
+        </a>
+        <span id="topUserAccount" style="font-size:11px;color:rgba(255,255,255,0.6);max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button class="user-logout-sm" onclick="window.open('credit.html','_blank')" style="background:rgba(255,215,0,0.25);font-weight:500;">💰 <span id="topUserCredit">0</span></button>
+        <button class="user-logout-sm" id="checkinBtn" onclick="doCheckin()" style="background:rgba(72,187,120,0.25);font-weight:500;">✅ 签到</button>
+        <button class="user-logout-sm" onclick="doUserLogout()">退出</button>
       </div>
     </div>
-
-    <div class="action-bar">
-      <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
-      <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
+    <div id="loginEntrance" style="display:none;">
+      <button class="user-logout-sm" onclick="showLoginModal()" style="padding:6px 12px;font-size:12px;">🔑 登录</button>
     </div>
+  </div>
 
+  <!-- 固定层：操作栏 -->
+  <div class="action-bar" id="actionBar">
+    <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
+    <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
+  </div>
+
+  <!-- 可拖拽墙 -->
+  <div class="wall" id="wallOuter">
     <div class="notes-area">
       <div class="notes-grid" id="notesGrid"></div>
     </div>
@@ -998,6 +1014,19 @@
           </button>
           <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
             🔍 查看详情
+          </button>
+        </div>
+        <!-- 帖子ID + 举报霸凌 -->
+        <div class="detail-post-id" id="detailPostId" style="width:100%;margin-top:8px;display:flex;align-items:center;gap:8px;font-size:11px;color:#9ca3af;flex-wrap:wrap;">
+          <span style="background:#f3f4f6;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;">
+            <span>ID:</span>
+            <span id="detailPostIdValue" style="font-family:monospace;user-select:all;"></span>
+            <button onclick="copyPostId()" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;color:#6b7280;" title="复制帖子ID">📋</button>
+          </span>
+          <button onclick="reportBullying()" title="举报该帖子相关的霸凌行为"
+                  style="background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s;"
+                  onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+            🛡️ 举报霸凌
           </button>
         </div>
       </div>
@@ -1148,7 +1177,7 @@
   </div>
 
   <div class="footer">
-    📌 校园墙 · Powered by DevLab
+    📌 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#ffd6d6;text-decoration:underline;font-weight:600;">🛡️ 报告霸凌事件</a>
   </div>
 
   <script>
@@ -1378,6 +1407,10 @@
           updateUserBar();
           showToast('🎉 欢迎回来，' + nickname + '！');
           checkAnnouncement();
+          // 被封禁：弹窗提示，关闭后自动退出登录
+          if (json.banned) {
+            showBannedPopup(json.banInfo || {});
+          }
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '登录失败';
         }
@@ -1409,6 +1442,10 @@
           updateUserBar();
           showToast('🎉 智学账号登录成功，欢迎 ' + nickname + '！');
           checkAnnouncement();
+          // 被封禁：弹窗提示，关闭后自动退出登录
+          if (json.banned) {
+            showBannedPopup(json.banInfo || {});
+          }
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '登录失败';
         }
@@ -1959,6 +1996,9 @@
         deleteBtn.style.display = 'none';
       }
 
+      // 设置帖子ID（显示在左下角）
+      document.getElementById('detailPostIdValue').textContent = post.id;
+
       currentDetailId = id;
       document.getElementById('noteDetailOverlay').classList.add('show');
     }
@@ -1972,6 +2012,29 @@
     function openDetailInNewWindow() {
       if (!currentDetailId) return;
       window.open('post.html?id=' + currentDetailId, '_blank');
+    }
+
+    function copyPostId() {
+      const idEl = document.getElementById('detailPostIdValue');
+      if (!idEl || !idEl.textContent) return;
+      navigator.clipboard.writeText(idEl.textContent).then(() => {
+        showToast('📋 帖子ID已复制！');
+      }).catch(() => {
+        // fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = idEl.textContent;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('📋 帖子ID已复制！');
+      });
+    }
+
+    function reportBullying() {
+      const idEl = document.getElementById('detailPostIdValue');
+      if (!idEl || !idEl.textContent) return;
+      window.open('bully.html?postId=' + encodeURIComponent(idEl.textContent), '_blank');
     }
 
     async function handleDetailLike() {
@@ -2243,6 +2306,33 @@
       toast.textContent = msg;
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
+    }
+
+    // 封禁弹窗
+    function showBannedPopup(banInfo) {
+      var info = banInfo || {};
+      var text = info.permanent ? '🔨 你的账号已被永久封禁' : '🔨 你的账号已被封禁';
+      var detail = '';
+      if (info.days && info.days > 0) {
+        detail = '封禁天数：' + info.days + ' 天\n';
+      }
+      if (info.until) {
+        var untilDate = new Date(info.until);
+        detail += '解封时间：' + untilDate.toLocaleString('zh-CN');
+      } else if (!info.permanent) {
+        detail = '封禁期间无法登录和使用校园墙。';
+      } else {
+        detail = '永久封禁，如有疑问请联系管理员。';
+      }
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);';
+      overlay.innerHTML = '<div style="background:white;border-radius:16px;padding:32px 28px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:noteAppear 0.3s ease;">' +
+        '<div style="font-size:48px;margin-bottom:8px;">🔨</div>' +
+        '<h3 style="margin:8px 0 16px;font-size:18px;color:#dc2626;">' + text + '</h3>' +
+        '<p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.8;white-space:pre-wrap;">' + detail + '</p>' +
+        '<button onclick="doUserLogout();this.parentElement.parentElement.remove();" style="padding:10px 32px;background:#dc2626;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(220,38,38,0.35);">我知道了</button>' +
+      '</div>';
+      document.body.appendChild(overlay);
     }
 
     // 敏感词警告弹屏
@@ -2875,6 +2965,83 @@
         showToast('网络错误');
       }
     }
+
+  // ===== 墙拖拽（无限背景 + 帖子跟随）=====
+  (function() {
+    var wall = document.getElementById('wallOuter');
+    var grid = document.getElementById('notesGrid');
+    if (!wall) return;
+
+    var speed = 0.4; // 移动速度系数（<1 慢于鼠标）
+    var isDown = false;
+    var startX, startY;
+    var bgX = 0, bgY = 0;
+    var noteX = 0, noteY = 0;
+
+    function isInteractive(el) {
+      var tag = el.tagName.toLowerCase();
+      if (tag === 'button' || tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'a' || tag === 'img') return true;
+      if (el.onclick || el.getAttribute('onclick')) return true;
+      if (el.closest('.sticky-note') || el.closest('.top-bar') || el.closest('.action-bar') || el.closest('.modal-overlay') || el.closest('.toast-container')) return true;
+      return false;
+    }
+
+    function updateAll() {
+      wall.style.backgroundPosition = bgX + 'px ' + bgY + 'px';
+      if (grid) grid.style.transform = 'translate(' + noteX + 'px, ' + noteY + 'px)';
+    }
+
+    wall.addEventListener('mousedown', function(e) {
+      if (isInteractive(e.target)) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      isDown = true;
+      wall.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mousemove', function(e) {
+      if (!isDown) return;
+      var dx = (e.clientX - startX) * speed;
+      var dy = (e.clientY - startY) * speed;
+      bgX += dx; bgY += dy;
+      noteX += dx; noteY += dy;
+      startX = e.clientX;
+      startY = e.clientY;
+      updateAll();
+    });
+
+    window.addEventListener('mouseup', function() {
+      if (!isDown) return;
+      isDown = false;
+      wall.classList.remove('is-dragging');
+    });
+
+    // Touch support
+    wall.addEventListener('touchstart', function(e) {
+      if (isInteractive(e.target)) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isDown = true;
+      wall.classList.add('is-dragging');
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function(e) {
+      if (!isDown) return;
+      var dx = (e.touches[0].clientX - startX) * speed;
+      var dy = (e.touches[0].clientY - startY) * speed;
+      bgX += dx; bgY += dy;
+      noteX += dx; noteY += dy;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      updateAll();
+    }, { passive: true });
+
+    window.addEventListener('touchend', function() {
+      isDown = false;
+      wall.classList.remove('is-dragging');
+    });
+  })();
 
   </script>
 

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💰 Credit · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --note-yellow: #fff9b1;
+      --note-pink: #ffc9de;
+      --note-green: #b5f5c5;
+      --note-blue: #bde0fe;
+      --note-orange: #ffd6a5;
+      --note-purple: #d5b8ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== 砖墙背景 ===== */
+    .wall {
+      min-height: 100vh;
+      background-color: #c4a882;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+        repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+      background-size: 240px 120px;
+      position: relative;
+      padding-bottom: 80px;
+    }
+
+    .wall::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.08) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wall::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 15% 30%, rgba(139,111,94,0.15) 0%, transparent 8%),
+        radial-gradient(circle at 75% 65%, rgba(139,111,94,0.1) 0%, transparent 6%),
+        radial-gradient(circle at 45% 15%, rgba(0,0,0,0.03) 0%, transparent 10%),
+        radial-gradient(circle at 85% 85%, rgba(139,111,94,0.12) 0%, transparent 7%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===== 顶部栏 ===== */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(139,111,94,0.92);
+      backdrop-filter: blur(12px);
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 3px solid rgba(0,0,0,0.15);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .wall-title {
+      display: flex; align-items: center; gap: 10px;
+      color: #fff;
+      font-family: 'ZCOOL KuaiLe', cursive;
+      font-size: 22px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .back-btn {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.15);
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* ===== 主内容区域 ===== */
+    .main {
+      max-width: 520px;
+      margin: 30px auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== Credit卡片 ===== */
+    .credit-card {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      margin-bottom: 20px;
+    }
+
+    .credit-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #ede4d6;
+      margin-bottom: 20px;
+    }
+
+    .credit-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .credit-balance {
+      font-size: 42px;
+      font-weight: 700;
+      color: #3a2a1a;
+    }
+
+    .credit-balance .unit {
+      font-size: 16px;
+      font-weight: 400;
+      color: #8a7a6a;
+      margin-left: 4px;
+    }
+
+    .credit-status {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #8a7a6a;
+    }
+
+    /* ===== 历史记录 ===== */
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #4a3728;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #ede4d6;
+      font-size: 13px;
+    }
+    .log-item:last-child { border-bottom: none; }
+
+    .log-desc {
+      flex: 1;
+      color: #3a2a1a;
+    }
+    .log-desc .log-time {
+      font-size: 11px;
+      color: #8a7a6a;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .log-amount {
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+    .log-amount.positive { color: #22c55e; }
+    .log-amount.negative { color: #dc2626; }
+
+    .empty-tip {
+      text-align: center;
+      padding: 30px;
+      color: #8a7a6a;
+      font-size: 13px;
+    }
+
+    /* ===== 兑换区 ===== */
+    .redeem-section {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .redeem-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #d4c5b5;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: monospace;
+      outline: none;
+      background: rgba(255,255,255,0.8);
+      transition: border-color 0.2s;
+    }
+    .redeem-input:focus {
+      border-color: #8b6f5e;
+    }
+    .redeem-btn {
+      padding: 10px 20px;
+      background: #8b6f5e;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .redeem-btn:hover { background: #7a5f4e; }
+    .redeem-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .redeem-result {
+      margin-top: 10px;
+      font-size: 13px;
+      min-height: 20px;
+    }
+    .redeem-result.success { color: #22c55e; }
+    .redeem-result.error { color: #dc2626; }
+
+    .loading {
+      display: flex;
+      align-items: center; gap: 8px;
+      color: #8a7a6a; font-size: 14px;
+      padding: 40px; justify-content: center;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid #ede4d6;
+      border-top-color: #8b6f5e;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 未登录提示 ===== */
+    .login-prompt {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8a7a6a;
+      font-size: 15px;
+    }
+    .login-prompt a {
+      color: #5a3e2b;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="wall">
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+      <div class="wall-title">
+        <span>💰</span>
+        <span>Credit</span>
+      </div>
+      <a href="index.html" class="back-btn">返回首页</a>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main">
+      <div id="creditContent">
+        <div class="loading"><div class="spinner"></div>加载中…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 工具函数 =====
+    function escHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function loadCredit() {
+      const content = document.getElementById('creditContent');
+      const token = localStorage.getItem('campus_user_token');
+
+      if (!token) {
+        content.innerHTML = `
+          <div class="credit-card">
+            <div class="login-prompt">
+              🔒 请先<a href="index.html" onclick="event.preventDefault();window.location.href='index.html'">登录</a>后查看
+            </div>
+          </div>`;
+        return;
+      }
+
+      try {
+        // 获取用户信息
+        const meRes = await fetch('/api/user/me', {
+          headers: { 'x-user-token': token }
+        });
+        const meJson = await meRes.json();
+        if (!meJson.ok) throw new Error(meJson.msg || '获取用户信息失败');
+
+        const user = meJson.data;
+        const balance = user.credit || 0;
+
+        // 获取流水记录
+        let logs = [];
+        try {
+          const logRes = await fetch('/api/user/credit-logs', {
+            headers: { 'x-user-token': token }
+          });
+          const logJson = await logRes.json();
+          if (logJson.ok) logs = logJson.data || [];
+        } catch {}
+
+        renderCredit(balance, logs);
+
+      } catch (e) {
+        content.innerHTML = `
+          <div class="credit-card">
+            <div class="login-prompt">
+              ❌ 加载失败：${escHtml(e.message)}
+            </div>
+          </div>`;
+      }
+    }
+
+    function renderCredit(balance, logs) {
+      const content = document.getElementById('creditContent');
+
+      let logsHtml = '';
+      if (logs.length === 0) {
+        logsHtml = '<div class="empty-tip">暂无流水记录</div>';
+      } else {
+        logsHtml = logs.slice(0, 50).map(log => {
+          const amount = log.amount || 0;
+          const isPositive = amount > 0;
+          return '<div class="log-item">'
+            + '<div class="log-desc">'
+            + escHtml(log.reason || (isPositive ? '收入' : '支出'))
+            + '<span class="log-time">' + (log.createdAt ? new Date(log.createdAt).toLocaleString('zh-CN') : '-') + '</span>'
+            + '</div>'
+            + '<div class="log-amount ' + (isPositive ? 'positive' : 'negative') + '">'
+            + (isPositive ? '+' : '') + amount + ' 💰'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      }
+
+      content.innerHTML = ''
+        + '<div class="credit-card">'
+        + '<div class="credit-header">'
+        + '<div class="credit-icon">💰</div>'
+        + '<div class="credit-balance">' + balance + '<span class="unit">Credit</span></div>'
+        + '<div class="credit-status">可用于兑换服务器其他服务</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="credit-card">'
+        + '<div class="section-title">🎫 兑换卡密</div>'
+        + '<div class="redeem-section">'
+        + '<input type="text" id="redeemInput" class="redeem-input" placeholder="输入卡密（如 CW-XXXX-XXXX-XXXX）" maxlength="30" onkeydown="if(event.key===\'Enter\')doRedeem()">'
+        + '<button class="redeem-btn" id="redeemBtn" onclick="doRedeem()">兑换</button>'
+        + '</div>'
+        + '<div class="redeem-result" id="redeemResult"></div>'
+        + '</div>'
+        + '<div class="credit-card">'
+        + '<div class="section-title">📋 流水记录</div>'
+        + logsHtml
+        + '</div>';
+    }
+
+    // ===== 前端卡密校验（Luhn mod N，与服务端算法一致）=====
+    var CARD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var CARD_MOD = CARD_CHARS.length;
+
+    function luhnModN(codeStr) {
+      var factor = 2, sum = 0, n = CARD_MOD;
+      for (var i = codeStr.length - 2; i >= 0; i--) {
+        var val = CARD_CHARS.indexOf(codeStr[i]);
+        if (val === -1) return false;
+        var add = val * factor;
+        sum += Math.floor(add / n) + (add % n);
+        factor = factor === 2 ? 1 : 2;
+      }
+      var expected = (n - (sum % n)) % n;
+      return CARD_CHARS[expected] === codeStr[codeStr.length - 1];
+    }
+
+    async function doRedeem() {
+      var code = document.getElementById('redeemInput').value.trim().toUpperCase();
+      var result = document.getElementById('redeemResult');
+      var btn = document.getElementById('redeemBtn');
+
+      if (!code) { result.textContent = '请输入卡密'; result.className = 'redeem-result error'; return; }
+
+      // 前端格式校验
+      if (!/^CW-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+        result.textContent = '❌ 卡密格式不正确'; result.className = 'redeem-result error'; return;
+      }
+      // 前端校验码验证（不匹配就不发请求）
+      var codePart = code.replace(/-/g, '').slice(2);
+      if (!luhnModN(codePart)) {
+        result.textContent = '❌ 卡密无效（校验码不匹配）'; result.className = 'redeem-result error'; return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '兑换中…';
+      result.textContent = '';
+      result.className = 'redeem-result';
+
+      try {
+        var res = await fetch('/api/user/redeem-credit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': localStorage.getItem('campus_user_token') || '' },
+          body: JSON.stringify({ code: code })
+        });
+        var json = await res.json();
+        if (json.ok) {
+          result.textContent = '✅ 兑换成功！获得 ' + json.data.value + ' Credit，当前余额 ' + json.data.balance + ' Credit';
+          result.className = 'redeem-result success';
+          document.getElementById('redeemInput').value = '';
+          loadCredit();
+        } else {
+          result.textContent = '❌ ' + (json.msg || '兑换失败');
+          result.className = 'redeem-result error';
+        }
+      } catch {
+        result.textContent = '❌ 网络错误，请稍后重试';
+        result.className = 'redeem-result error';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '兑换';
+      }
+    }
+
+    // ===== 启动 =====
+    loadCredit();
+  </script>
+</body>
+</html>

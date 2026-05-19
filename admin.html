@@ -9,6 +9,8 @@
   <style>
     :root {
       --bg: #f0f2f5;
+      --bg-main: #ffffff;
+      --bg-card: #ffffff;
       --sidebar-bg: #1a1f2e;
       --sidebar-hover: #252d42;
       --sidebar-active: #3d6ce8;
@@ -640,6 +642,22 @@
         <span class="nav-icon">🎓</span>
         <span>同学认证审核</span>
       </div>
+      <div class="nav-item" onclick="showPage('feedbacks', this)">
+        <span class="nav-icon">📬</span>
+        <span>反馈处理</span>
+      </div>
+      <div class="nav-item" onclick="showPage('bullying', this)">
+        <span class="nav-icon">🛡️</span>
+        <span>霸凌报告</span>
+      </div>
+      <div class="nav-item" onclick="showPage('sensitivewords', this)">
+        <span class="nav-icon">🚫</span>
+        <span>违禁词管理</span>
+      </div>
+      <div class="nav-item" onclick="showPage('bullyingnames', this)">
+        <span class="nav-icon">🔒</span>
+        <span>霸凌状态管理</span>
+      </div>
     </div>
 
     <!-- 用户管理（独立一级菜单） -->
@@ -913,6 +931,106 @@
       </div>
     </div>
 
+    <!-- 反馈处理页 -->
+    <div class="page" id="page-feedbacks" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            待处理 <strong id="feedbackPendingCount">0</strong> 条
+          </span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadFeedbacks()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header" id="feedbacksHeader">
+          <span>用户反馈列表</span>
+        </div>
+        <div id="feedbacksBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 霸凌报告页 -->
+    <div class="page" id="page-bullying" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;display:flex;gap:12px;align-items:center;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            状态筛选：
+            <select id="bullyingFilter" onchange="filterBullying()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">
+              <option value="all">全部</option>
+              <option value="pending">待处理</option>
+              <option value="processing">处理中</option>
+              <option value="resolved">已处理</option>
+            </select>
+          </span>
+          <span style="font-size:14px;color:var(--text-sub);">
+            共 <strong id="bullyingTotalCount">0</strong> 条
+          </span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadBullying()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header" id="bullyingHeader">
+          <span>平台霸凌举报列表</span>
+        </div>
+        <div id="bullyingBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 违禁词管理页 -->
+    <div class="page" id="page-sensitivewords" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            内置词 <strong id="swInternalCount">0</strong> ·
+            外部词 <strong id="swExternalCount">0</strong> ·
+            自定义 <strong id="swCustomCount">0</strong> ·
+            总计 <strong id="swTotalCount">0</strong>
+          </span>
+          <input type="text" id="swAddInput" placeholder="输入违禁词" maxlength="50"
+                 style="width:180px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;"
+                 onkeydown="if(event.key==='Enter') doAddSensitiveWord()">
+          <button class="btn-primary" onclick="doAddSensitiveWord()" style="padding:5px 14px;font-size:13px;">➕ 添加</button>
+          <div id="swAddError" style="color:var(--danger);font-size:12px;"></div>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadSensitiveWords()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header">
+          <span>自定义违禁词列表（共 <strong id="swListCount">0</strong>）</span>
+        </div>
+        <div id="sensitiveWordsBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 霸凌状态管理页 -->
+    <div class="page" id="page-bullyingnames" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:14px;color:var(--text-sub);">受保护姓名（共 <strong id="bnCount">0</strong> 个）</span>
+          <input type="text" id="bnAddInput" placeholder="输入姓名" maxlength="30"
+                 style="width:160px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;"
+                 onkeydown="if(event.key==='Enter') doAddBullyingName()">
+          <button class="btn-primary" onclick="doAddBullyingName()" style="padding:5px 14px;font-size:13px;">➕ 添加</button>
+          <div id="bnAddError" style="color:var(--danger);font-size:12px;"></div>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadBullyingNames()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header">
+          <span>保护姓名列表</span>
+        </div>
+        <div id="bullyingNamesBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 评论管理页 -->
     <div class="page" id="page-comments" style="display:none;">
       <div class="post-toolbar">
@@ -1159,6 +1277,41 @@
     <div class="modal-body" id="userDetailBody" style="max-height:70vh;overflow-y:auto;"></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeUserDetail()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 审核通过：填写姓名班级弹窗 ===== -->
+<div class="modal-overlay" id="approveCertModal" onclick="if(event.target===this)closeApproveCertModal()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>✅ 通过认证申请</h3>
+      <button class="modal-close" onclick="closeApproveCertModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#6b5a4e;margin:0 0 18px;line-height:1.6;">
+        通过后将与账号永久绑定，请核实后填写。
+      </p>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4a3728;margin-bottom:6px;">
+          学生姓名 <span style="color:#dc2626;">*</span>
+          <span id="approveCertNameHint" style="font-weight:400;color:#10b981;font-size:12px;margin-left:6px;"></span>
+        </label>
+        <input id="approveCertName" type="text" maxlength="20" placeholder="请填写真实姓名"
+          style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;outline:none;">
+      </div>
+      <div style="margin-bottom:4px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4a3728;margin-bottom:6px;">
+          班级 <span style="font-weight:400;color:#aaa;">（选填）</span>
+        </label>
+        <input id="approveCertClass" type="text" maxlength="30" placeholder="例如：高二3班"
+          style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;outline:none;">
+      </div>
+      <p style="font-size:11px;color:#aaa;margin:10px 0 0;">以上信息将以密文形式存储，仅管理员可查看。</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeApproveCertModal()">取消</button>
+      <button class="btn-primary" id="approveCertConfirmBtn" onclick="submitApproveCert()">✅ 确认通过</button>
     </div>
   </div>
 </div>
@@ -1467,9 +1620,10 @@
         if (r.type && r.type.startsWith('sensitive_')) deleteLabel = '删除（系统检测）';
         const actionBtns = r.status === 'pending'
           ? '<button class="btn-view" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'resolved\', \'' + deleteAction + '\')">' + deleteLabel + '</button>' +
-            '<button class="btn-del" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'ignored\', \'\')">忽略</button>'
+            '<button class="btn-del" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'ignored\', \'\')">忽略</button>' +
+            '<button class="btn-action" style="background:#dc2626;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-family:inherit;" onclick="banReportUser(\'' + r.id.replace(/'/g, "\\'") + '\')">🔨 封禁</button>'
           : '<span style="font-size:12px;color:var(--text-sub);">已处理</span>';
-        return '<div class="table-row" style="grid-template-columns:36px 1fr 100px 120px 100px 100px 80px;align-items:start;">' +
+        return '<div class="table-row" style="grid-template-columns:36px 1fr 100px 120px 100px 100px 120px;align-items:start;">' +
           '<div>' + (i + 1) + '</div>' +
           '<div style="min-width:0;">' +
             '<div style="font-size:12px;color:var(--accent);margin-bottom:4px;">' + (isCommentReport ? '💬 ' + targetLabel : '📌 ' + targetLabel) + '：' + escHtml(targetContent) + '</div>' +
@@ -1486,6 +1640,58 @@
       reportsBody.innerHTML = html;
       } catch(e) {
       document.getElementById('reportsBody').innerHTML = '<div class="empty-tip">⚠️ 渲染失败：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  function banReportUser(id) {
+    // 弹窗输入封禁天数
+    const overlay = document.createElement('div');
+    overlay.className = 'ban-report-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:380px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.25);">' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">🔨 封禁举报发送者</div>' +
+      '<div style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.6;">输入封禁天数（0 = 永久封禁），该用户将无法登录。</div>' +
+      '<div style="margin-bottom:16px;">' +
+        '<label style="display:block;font-size:12px;color:#6b7280;margin-bottom:6px;">封禁天数</label>' +
+        '<input type="number" id="banDaysInput" value="7" min="0" max="9999" ' +
+          'style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:15px;outline:none;font-family:inherit;" ' +
+          'onkeydown="if(event.key===\'Enter\') confirmBanReport(\'' + id.replace(/'/g, "\\'") + '\')">' +
+      '</div>' +
+      '<div id="banDaysError" style="color:#dc2626;font-size:12px;min-height:18px;margin-bottom:8px;"></div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+        '<button class="btn-cancel" onclick="document.querySelector(\'.ban-report-overlay\').remove()">取消</button>' +
+        '<button class="btn-primary" onclick="confirmBanReport(\'' + id.replace(/'/g, "\\'") + '\')">确认封禁</button>' +
+      '</div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+    setTimeout(function() { var inp = document.getElementById('banDaysInput'); if (inp) inp.focus(); }, 100);
+  }
+
+  async function confirmBanReport(id) {
+    var inp = document.getElementById('banDaysInput');
+    var errEl = document.getElementById('banDaysError');
+    if (!inp) return;
+    var days = parseInt(inp.value);
+    if (isNaN(days) || days < 0) { errEl.textContent = '请输入有效天数（0-9999）'; return; }
+    errEl.textContent = '';
+    try {
+      var res = await fetch('/api/admin/reports/' + id + '/ban-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ banDays: days })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadReports();
+        // 关闭弹窗
+        var overlay = document.querySelector('.ban-report-overlay');
+        if (overlay) overlay.remove();
+      } else {
+        errEl.textContent = json.msg || '封禁失败';
+      }
+    } catch (e) {
+      errEl.textContent = '网络错误';
     }
   }
 
@@ -1509,6 +1715,364 @@
         } else showToast('❌ ' + (json.msg || '操作失败'), 'error');
       } catch { showToast('❌ 网络错误', 'error'); }
     });
+  }
+
+  // ===== 反馈处理 =====
+  async function loadFeedbacks() {
+    try {
+      const res = await fetch('/api/admin/feedbacks', { headers: authHeaders() });
+      const json = await res.json();
+      const body = document.getElementById('feedbacksBody');
+      const pendingCount = document.getElementById('feedbackPendingCount');
+      if (!json.ok) { body.innerHTML = '<div class="empty-tip">加载失败：' + escHtml(json.msg || '') + '</div>'; return; }
+      const list = json.data || [];
+      const pending = list.filter(f => f.status === 'pending').length;
+      pendingCount.textContent = list.length;
+      if (list.length === 0) { body.innerHTML = '<div class="empty-tip">暂无反馈记录</div>'; return; }
+      body.innerHTML = list.map(f => {
+        const statusBadge = f.status === 'pending' ? 'badge-danger' : f.status === 'resolved' ? 'badge-admin' : 'badge-super';
+        const statusText = f.status === 'pending' ? '待处理' : f.status === 'resolved' ? '已处理' : '已驳回';
+        const date = f.time ? new Date(f.time).toLocaleString('zh-CN') : '-';
+        const hasImages = f.hasImages ? `<span style="color:var(--text-sub);font-size:11px;">📷 ${f.imageCount}张图</span>` : '';
+        return '<div style="background:var(--bg-card);border-radius:8px;padding:14px;margin-bottom:8px;border:1px solid var(--border);">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+            '<span style="font-size:13px;color:var(--text-sub);">' + date + '</span>' +
+            '<span class="type-badge ' + statusBadge + '">' + statusText + '</span>' +
+          '</div>' +
+          '<div style="margin-bottom:6px;"><span class="type-badge badge-normal" style="font-size:11px;">' + escHtml(f.type) + '</span></div>' +
+          '<div style="font-size:13px;color:var(--text-main);margin-bottom:8px;line-height:1.6;">' + escHtml(f.description.substring(0, 120)) + (f.description.length > 120 ? '…' : '') + '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sub);margin-bottom:10px;">' +
+            (f.contact ? '📞 ' + escHtml(f.contact) : '无联系方式') +
+            (hasImages ? ' &nbsp;' + hasImages : '') +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            (f.status === 'pending' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="handleFeedback(\'' + f.id + '\',\'resolved\')">✅ 已处理</button><button class="btn-cancel" style="font-size:12px;padding:5px 14px;" onclick="handleFeedback(\'' + f.id + '\',\'rejected\')">❌ 驳回</button>' : '') +
+            '<button class="action-btn" style="font-size:12px;padding:5px 12px;background:#e0d3c6;color:#5a4638;" onclick="showFeedbackDetail(\'' + f.id + '\')">📋 详情</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    } catch (e) {
+      document.getElementById('feedbacksBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  async function handleFeedback(id, status) {
+    if (!confirm('确定要将此反馈标记为' + (status === 'resolved' ? '已处理' : '已驳回') + '？')) return;
+    try {
+      const res = await fetch('/api/admin/feedback/' + id + '/handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ status: status })
+      });
+      const json = await res.json();
+      if (json.ok) { showToast('✅ 已更新状态', 'success'); loadFeedbacks(); }
+      else { showToast('❌ ' + (json.msg || '操作失败'), 'error'); }
+    } catch (e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  async function showFeedbackDetail(id) {
+    try {
+      const res = await fetch('/api/admin/feedback/' + id, { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) { alert('加载失败：' + (json.msg || '')); return; }
+      const f = json.data;
+      const overlay = document.createElement('div');
+      overlay.style = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+      let imgHtml = '';
+      if (f.images && f.images.length > 0) {
+        imgHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:8px;">截图附件：</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        f.images.forEach(function(img) { imgHtml += '<img src="' + img + '" style="max-width:120px;max-height:120px;border-radius:6px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(\'' + img + '\')">'; });
+        imgHtml += '</div></div>';
+      }
+      overlay.innerHTML = '<div style="background:var(--bg-main);border-radius:12px;padding:24px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+          '<h3 style="font-size:16px;color:var(--text-main);">📬 反馈详情</h3>' +
+          '<button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-sub);line-height:1;">×</button>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:1.8;color:var(--text-main);">' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">类型：</span>' + escHtml(f.type) + '</div>' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">提交时间：</span>' + (f.time ? new Date(f.time).toLocaleString('zh-CN') : '-') + '</div>' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">联系方式：</span>' + (f.contact ? escHtml(f.contact) : '无') + '</div>' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">当前状态：</span>' + (f.status === 'pending' ? '⏳ 待处理' : f.status === 'resolved' ? '✅ 已处理' : '❌ 已驳回') + '</div>' +
+          (f.handledBy ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">处理人：</span>' + escHtml(f.handledBy) + ' / ' + (f.handledAt ? new Date(f.handledAt).toLocaleString('zh-CN') : '') + '</div>' : '') +
+          '<div style="margin-top:12px;padding:12px;background:var(--bg-card);border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap;">' + escHtml(f.description) + '</div>' +
+          imgHtml +
+        '</div>' +
+      '</div>';
+      document.body.appendChild(overlay);
+    } catch (e) { alert('加载详情失败：' + e.message); }
+  }
+
+  // ===== 霸凌报告处理 =====
+  let allBullying = [];
+
+  async function loadBullying() {
+    try {
+      const res = await fetch('/api/admin/bullying', { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) {
+        document.getElementById('bullyingBody').innerHTML = '<div class="empty-tip">加载失败：' + escHtml(json.msg || '') + '</div>';
+        return;
+      }
+      allBullying = json.data || [];
+      document.getElementById('bullyingTotalCount').textContent = allBullying.length;
+      filterBullying();
+    } catch (e) {
+      document.getElementById('bullyingBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  function filterBullying() {
+    const status = document.getElementById('bullyingFilter').value;
+    let list = allBullying;
+    if (status !== 'all') {
+      list = allBullying.filter(r => (r.status || 'pending') === status);
+    }
+    const body = document.getElementById('bullyingBody');
+    if (list.length === 0) {
+      body.innerHTML = '<div class="empty-tip">暂无霸凌报告记录</div>';
+      return;
+    }
+    body.innerHTML = list.map(r => {
+      const st = r.status || 'pending';
+      const statusBadge = st === 'pending' ? 'badge-danger' : st === 'resolved' ? 'badge-admin' : 'badge-super';
+      const statusText = st === 'pending' ? '待处理' : st === 'resolved' ? '已处理' : '处理中';
+      const date = r.time ? new Date(r.time).toLocaleString('zh-CN') : '-';
+      const isAnonymous = r.anonymous ? '<span class="type-badge" style="background:#fef3c7;color:#92400e;font-size:11px;">匿名</span>' : '';
+      const roleBadge = r.reporterRole === 'self'
+        ? '<span class="type-badge" style="background:#fce7f3;color:#9d174d;font-size:11px;">🆘 当事人</span>'
+        : '<span class="type-badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;">👁️ 目击者</span>';
+      const hasImages = r.hasImages ? `<span style="color:var(--text-sub);font-size:11px;">📷 ${r.imageCount}张图</span>` : '';
+      return '<div style="background:var(--bg-card);border-radius:8px;padding:14px;margin-bottom:8px;border:1px solid var(--border);">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+          '<span style="font-size:13px;color:var(--text-sub);">' + date + '</span>' +
+          '<div style="display:flex;gap:6px;align-items:center;">' + roleBadge + isAnonymous + '<span class="type-badge ' + statusBadge + '">' + statusText + '</span></div>' +
+        '</div>' +
+        (r.victimName ? '<div style="font-size:12px;color:#9d174d;margin-bottom:4px;font-weight:600;">👤 受害者：' + escHtml(r.victimName) + '</div>' : '') +
+        '<div style="margin-bottom:6px;"><span class="type-badge badge-normal" style="font-size:11px;">🛡️ ' + escHtml(r.bullyType || '') + '</span></div>' +
+        (r.location ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">📍 ' + escHtml(r.location) + '</div>' : '') +
+        (r.involved ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">👤 涉事：' + escHtml(r.involved) + '</div>' : '') +
+        '<div style="font-size:13px;color:var(--text-main);margin-bottom:8px;line-height:1.6;">' + escHtml(r.description.substring(0, 120)) + (r.description.length > 120 ? '…' : '') + '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sub);margin-bottom:10px;">' +
+          (r.hasContact ? '📞 有联系方式' : '📞 无联系方式') +
+          (hasImages ? '  ' + hasImages : '') +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          (st === 'pending' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="handleBullying(\'' + r.id + '\',\'processing\')">🔄 开始处理</button>' : '') +
+          (st === 'processing' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="handleBullying(\'' + r.id + '\',\'resolved\')">✅ 已处理</button>' : '') +
+          '<button class="action-btn" style="font-size:12px;padding:5px 12px;background:#e0d3c6;color:#5a4638;" onclick="showBullyingDetail(\'' + r.id + '\')">📋 详情</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function handleBullying(id, status) {
+    const statusText = status === 'processing' ? '开始处理' : '标记为已处理';
+    if (!confirm('确定要' + statusText + '此霸凌报告？')) return;
+    try {
+      const res = await fetch('/api/admin/bullying/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ status: status })
+      });
+      const json = await res.json();
+      if (json.ok) { showToast('✅ 已更新状态', 'success'); loadBullying(); }
+      else { showToast('❌ ' + (json.msg || '操作失败'), 'error'); }
+    } catch (e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  async function showBullyingDetail(id) {
+    try {
+      const res = await fetch('/api/admin/bullying/' + id, { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) { alert('加载失败：' + (json.msg || '')); return; }
+      const r = json.data;
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+      let imgHtml = '';
+      if (r.images && r.images.length > 0) {
+        imgHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:8px;">图片证据：</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        r.images.forEach(function(img) { imgHtml += '<img src="' + img + '" style="max-width:120px;max-height:120px;border-radius:6px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(\'' + img + '\')">'; });
+        imgHtml += '</div></div>';
+      }
+      const st = r.status || 'pending';
+      overlay.innerHTML = '<div style="background:var(--bg-main);border-radius:12px;padding:24px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+          '<h3 style="font-size:16px;color:var(--text-main);">🛡️ 平台霸凌举报详情</h3>' +
+          '<button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-sub);line-height:1;">×</button>' +
+        '</div>' +
+        '<div style="font-size:13px;line-height:1.8;color:var(--text-main);">' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">举报者身份：</span>' + (r.reporterRole === 'self' ? '🆘 当事人（自我举报）' : '👁️ 目击者（代他人举报）') + '</div>' +
+          (r.victimName ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">受害者姓名：</span><strong>' + escHtml(r.victimName) + '</strong></div>' : '') +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">霸凌类型：</span>' + escHtml(r.bullyType || '') + '</div>' +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">提交时间：</span>' + (r.time ? new Date(r.time).toLocaleString('zh-CN') : '-') + '</div>' +
+          (r.anonymous ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">提交方式：</span>🔒 匿名提交</div>' : '') +
+          (r.contact ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">联系方式：</span>' + escHtml(r.contact) + '</div>' : '') +
+          (r.location ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">发生地点：</span>' + escHtml(r.location) + '</div>' : '') +
+          (r.incidentTime ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">发生时间：</span>' + escHtml(r.incidentTime) + '</div>' : '') +
+          (r.involved ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">涉事人员：</span>' + escHtml(r.involved) + '</div>' : '') +
+          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">当前状态：</span>' + (st === 'pending' ? '⏳ 待处理' : st === 'resolved' ? '✅ 已处理' : '🔄 处理中') + '</div>' +
+          (r.handledBy ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">处理人：</span>' + escHtml(r.handledBy) + ' / ' + (r.handledAt ? new Date(r.handledAt).toLocaleString('zh-CN') : '') + '</div>' : '') +
+          '<div style="margin-top:12px;padding:12px;background:var(--bg-card);border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap;">' + escHtml(r.description) + '</div>' +
+          imgHtml +
+        '</div>' +
+      '</div>';
+      document.body.appendChild(overlay);
+    } catch (e) { alert('加载详情失败：' + e.message); }
+  }
+
+  // ===== 违禁词管理 =====
+  async function loadSensitiveWords() {
+    try {
+      // 加载统计
+      const statsRes = await fetch('/api/admin/sensitive-stats', { headers: authHeaders() });
+      const statsJson = await statsRes.json();
+      if (statsJson.ok && statsJson.data) {
+        document.getElementById('swInternalCount').textContent = statsJson.data.internal || 0;
+        document.getElementById('swExternalCount').textContent = statsJson.data.external || 0;
+        document.getElementById('swCustomCount').textContent = statsJson.data.custom || 0;
+        document.getElementById('swTotalCount').textContent = statsJson.data.total || 0;
+      }
+      // 加载自定义词列表
+      const res = await fetch('/api/admin/sensitive-words', { headers: authHeaders() });
+      const json = await res.json();
+      const body = document.getElementById('sensitiveWordsBody');
+      if (!json.ok) { body.innerHTML = '<div class="empty-tip">加载失败：' + escHtml(json.msg || '') + '</div>'; return; }
+      const list = json.data || [];
+      document.getElementById('swListCount').textContent = list.length;
+      if (!list.length) {
+        body.innerHTML = '<div class="empty-tip" style="padding:40px;">暂无自定义违禁词，请在顶部添加</div>';
+        return;
+      }
+      body.innerHTML = list.map(function(w, i) {
+        return '<div class="admin-row" style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);gap:10px;">' +
+          '<span style="color:var(--text-sub);width:32px;text-align:center;font-size:12px;">' + (i + 1) + '</span>' +
+          '<span style="flex:1;font-size:14px;font-weight:500;">' + escHtml(w) + '</span>' +
+          '<button class="btn-del" style="padding:3px 10px;font-size:12px;" onclick="deleteSensitiveWord(\'' + escHtml(w).replace(/'/g, "\\'") + '\')">🗑️ 删除</button>' +
+          '</div>';
+      }).join('');
+    } catch (e) {
+      document.getElementById('sensitiveWordsBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  async function doAddSensitiveWord() {
+    const input = document.getElementById('swAddInput');
+    const errEl = document.getElementById('swAddError');
+    const word = input.value.trim();
+    if (!word) { errEl.textContent = '请输入违禁词'; return; }
+    errEl.textContent = '';
+    try {
+      const res = await fetch('/api/admin/sensitive-words', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ word: word })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        input.value = '';
+        showToast('✅ 已添加违禁词：' + word, 'success');
+        loadSensitiveWords();
+      } else {
+        errEl.textContent = json.msg || '添加失败';
+      }
+    } catch (e) {
+      errEl.textContent = '网络错误';
+    }
+  }
+
+  async function deleteSensitiveWord(word) {
+    if (!confirm('确定要删除违禁词「' + word + '」吗？')) return;
+    try {
+      const res = await fetch('/api/admin/sensitive-words/' + encodeURIComponent(word), {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 已删除：' + word, 'success');
+        loadSensitiveWords();
+      } else {
+        showToast('❌ ' + (json.msg || '删除失败'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ 网络错误', 'error');
+    }
+  }
+
+  // ===== 霸凌状态管理 =====
+  async function loadBullyingNames() {
+    try {
+      const res = await fetch('/api/admin/bullying-names', { headers: authHeaders() });
+      const json = await res.json();
+      const body = document.getElementById('bullyingNamesBody');
+      if (!json.ok) {
+        body.innerHTML = '<div class="empty-tip">加载失败：' + escHtml(json.msg || '') + '</div>';
+        return;
+      }
+      const names = json.data || [];
+      document.getElementById('bnCount').textContent = names.length;
+      if (names.length === 0) {
+        body.innerHTML = '<div class="empty-tip">暂无受保护姓名</div>';
+        return;
+      }
+      body.innerHTML = names.map(function(name, i) {
+        return '<div class="admin-row" style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);gap:10px;">' +
+          '<span style="color:var(--text-sub);width:32px;text-align:center;font-size:12px;">' + (i + 1) + '</span>' +
+          '<span style="flex:1;font-size:14px;font-weight:600;color:#9d174d;">' + escHtml(name) + '</span>' +
+          '<span style="font-size:11px;color:var(--text-sub);">🔒 已保护</span>' +
+          '<button class="btn-del" style="padding:3px 10px;font-size:12px;" onclick="deleteBullyingName(\'' + escHtml(name).replace(/'/g, "\\'") + '\')">🗑️ 移除</button>' +
+          '</div>';
+      }).join('');
+    } catch (e) {
+      document.getElementById('bullyingNamesBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  async function doAddBullyingName() {
+    const input = document.getElementById('bnAddInput');
+    const errEl = document.getElementById('bnAddError');
+    const name = input.value.trim();
+    if (!name) { errEl.textContent = '请输入姓名'; return; }
+    errEl.textContent = '';
+    try {
+      const res = await fetch('/api/admin/bullying-names', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ name: name })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        input.value = '';
+        showToast('✅ 已添加保护姓名：' + name, 'success');
+        loadBullyingNames();
+      } else {
+        errEl.textContent = json.msg || '添加失败';
+      }
+    } catch (e) {
+      errEl.textContent = '网络错误';
+    }
+  }
+
+  async function deleteBullyingName(name) {
+    if (!confirm('确定要移除保护姓名「' + name + '」吗？移除后该姓名可被正常提及。')) return;
+    try {
+      const res = await fetch('/api/admin/bullying-names/' + encodeURIComponent(name), {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 已移除：' + name, 'success');
+        loadBullyingNames();
+      } else {
+        showToast('❌ ' + (json.msg || '移除失败'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ 网络错误', 'error');
+    }
   }
 
   // ===== 公告管理 =====
@@ -1799,13 +2363,6 @@
       document.getElementById('statTotalRedeemed').textContent = d.totalRedeemed;
       document.getElementById('statInCirculation').textContent = d.inCirculation;
       document.getElementById('statTotalDeducted').textContent = d.totalDeducted;
-      renderCreditChart(d.chart || []);
-    } catch { showToast('❌ 网络错误', 'error'); }
-  }
-      document.getElementById('statTotalIssued').textContent = d.totalIssued;
-      document.getElementById('statTotalRedeemed').textContent = d.totalRedeemed;
-      document.getElementById('statInCirculation').textContent = d.inCirculation;
-      document.getElementById('statFrozenUsers').textContent = d.frozenUsers;
       renderCreditChart(d.chart || []);
     } catch { showToast('❌ 网络错误', 'error'); }
   }
@@ -2103,7 +2660,7 @@
             </div>
             ${certDetail}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}')">✅ 通过</button>
+              <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}', '${(u.zhixueManualName || '').replace(/'/g, "\\'")}')">✅ 通过</button>
               <button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="rejectZhixue('${u.id}')">❌ 拒绝</button>
             </div>
           </div>
@@ -2127,18 +2684,67 @@
       document.body.appendChild(overlay);
     }
 
-    async function approveZhixue(userId) {
-      if (!confirm(`确定通过此同学认证申请？`)) return;
+    // 当前待审核的 userId（用于 approveCertModal）
+    let _pendingApproveUserId = null;
+
+    function openApproveCertModal(userId, manualName) {
+      _pendingApproveUserId = userId;
+      // 若是手动认证，提示框预填 manualName 并在 label 旁显示提示
+      const nameInput = document.getElementById('approveCertName');
+      const nameHint  = document.getElementById('approveCertNameHint');
+      const classInput = document.getElementById('approveCertClass');
+      nameInput.value  = manualName || '';
+      classInput.value = '';
+      if (manualName) {
+        nameHint.textContent = '（用户自填：' + manualName + '，可修改）';
+      } else {
+        nameHint.textContent = '';
+      }
+      document.getElementById('approveCertModal').classList.add('show');
+      setTimeout(() => nameInput.focus(), 100);
+    }
+
+    function closeApproveCertModal() {
+      document.getElementById('approveCertModal').classList.remove('show');
+      _pendingApproveUserId = null;
+    }
+
+    async function submitApproveCert() {
+      const userId = _pendingApproveUserId;
+      if (!userId) return;
+      const realName  = document.getElementById('approveCertName').value.trim();
+      const className = document.getElementById('approveCertClass').value.trim();
+      if (!realName) {
+        document.getElementById('approveCertName').style.borderColor = '#dc2626';
+        document.getElementById('approveCertName').focus();
+        return;
+      }
+      document.getElementById('approveCertName').style.borderColor = '#d4c5a9';
+      const btn = document.getElementById('approveCertConfirmBtn');
+      btn.disabled = true; btn.textContent = '提交中…';
       try {
         const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
           method: 'PUT',
           headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'approve' })
+          body: JSON.stringify({ action: 'approve', realName, className })
         });
         const json = await res.json();
-        if (json.ok) { alert('已通过审核'); loadZhixuePending(); }
-        else alert(json.msg || '操作失败');
-      } catch (e) { alert('操作失败：' + e.message); }
+        if (json.ok) {
+          closeApproveCertModal();
+          showToast('✅ 已通过审核');
+          loadZhixuePending();
+        } else {
+          showToast('❌ ' + (json.msg || '操作失败'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ 操作失败：' + e.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = '✅ 确认通过';
+      }
+    }
+
+    async function approveZhixue(userId, manualName) {
+      openApproveCertModal(userId, manualName || '');
     }
 
   async function rejectZhixue(userId) {
@@ -2170,13 +2776,17 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理' };
+    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
     if (id === 'reports') { loadReports(); }
     if (id === 'comments') { loadComments(); }
     if (id === 'discussions') { loadDiscussionsAdmin(); }
+    if (id === 'feedbacks') { loadFeedbacks(); }
+    if (id === 'bullying') { loadBullying(); }
+    if (id === 'sensitivewords') { loadSensitiveWords(); }
+    if (id === 'bullyingnames') { loadBullyingNames(); }
     if (id === 'loginlogs') { loadLoginLogs(); }
     if (id === 'zhixue') { loadZhixuePending(); }
     if (id === 'announcement') { loadAnnouncement(); }
@@ -2192,6 +2802,8 @@
     else if (currentPageId === 'reports') loadReports();
     else if (currentPageId === 'comments') loadComments();
     else if (currentPageId === 'discussions') loadDiscussionsAdmin();
+    else if (currentPageId === 'feedbacks') loadFeedbacks();
+    else if (currentPageId === 'bullying') loadBullying();
     else if (currentPageId === 'loginlogs') loadLoginLogs();
     showToast('数据已刷新', 'success');
   }
@@ -2783,7 +3395,7 @@
 
     try {
       const res = await fetch('/api/admin/user/' + userId + '/detail', {
-        method: 'POST',
+        method: 'GET',
         headers: authHeaders()
       });
       const json = await res.json();
@@ -2846,6 +3458,13 @@
       html += '<div><span style="color:#8a7a6a;">认证类型：</span>' + certTypeText(u.zhixueCertType) + '</div>';
       html += '<div><span style="color:#8a7a6a;">认证状态：</span><span class="type-badge ' + certStatusClass(u.zhixueStatus) + '">' + certStatusText(u.zhixueStatus) + '</span></div>';
       html += '<div><span style="color:#8a7a6a;">智学账号：</span>' + escHtml(u.zhixueUsername || '-') + '</div>';
+      // 认证绑定姓名（解密后）
+      if (u.certRealNameDecrypted) {
+        html += '<div><span style="color:#8a7a6a;">认证姓名：</span><strong style="color:#065f46;">' + escHtml(u.certRealNameDecrypted) + '</strong></div>';
+      }
+      if (u.certClassNameDecrypted) {
+        html += '<div><span style="color:#8a7a6a;">认证班级：</span><strong style="color:#1d4ed8;">' + escHtml(u.certClassNameDecrypted) + '</strong></div>';
+      }
       if (u.zhixueManualName) {
         html += '<div><span style="color:#8a7a6a;">手动认证姓名：</span>' + escHtml(u.zhixueManualName) + '</div>';
       }

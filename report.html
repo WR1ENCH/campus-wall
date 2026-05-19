@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 问题报告 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brick-bg: #c4a882;
+      --brick-dark: #8b6f5e;
+      --brick-light: #d4c5a9;
+      --paper-bg: #fef9e7;
+      --text-main: #2c1810;
+      --text-sub: #6a4a3a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      background-color: var(--brick-bg);
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+        repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+      padding: 30px 16px;
+    }
+
+    /* 顶部返回 */
+    .top-bar {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.88);
+      border: 2px solid rgba(0,0,0,0.15);
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5a3e2b;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    /* 卡片容器 */
+    .card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--paper-bg);
+      border-radius: 4px;
+      padding: 40px 36px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.6), 0 1px 4px rgba(0,0,0,0.1);
+      position: relative;
+      color: var(--text-main);
+    }
+
+    /* 图钉装饰 */
+    .card::before, .card::after {
+      content: '';
+      position: absolute;
+      top: -9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 -1px 2px rgba(0,0,0,0.2);
+    }
+    .card::before { left: 50%; transform: translateX(-30px); }
+    .card::after { left: 50%; transform: translateX(12px); }
+
+    /* 标题 */
+    .card-title {
+      text-align: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 2px dashed var(--brick-light);
+    }
+
+    .card-title h1 {
+      font-family: 'Ma Shan Zheng', cursive;
+      font-size: 28px;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .card-title .subtitle {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    /* 表单 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .form-label .required {
+      color: #dc2626;
+      margin-left: 2px;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid var(--brick-light);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fffbf0;
+      color: var(--text-main);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: var(--brick-dark);
+      box-shadow: 0 0 0 3px rgba(139,111,94,0.15);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.7;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* 图片上传区 */
+    .img-upload-area {
+      border: 2px dashed var(--brick-light);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fffbf0;
+    }
+
+    .img-upload-area:hover {
+      border-color: var(--brick-dark);
+      background: #fff8e8;
+    }
+
+    .img-upload-area .upload-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .img-upload-area .upload-text {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    .img-upload-area .upload-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    #imgInput {
+      display: none;
+    }
+
+    /* 图片预览 */
+    .img-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .img-preview-item {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--brick-light);
+    }
+
+    .img-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .img-preview-item .remove-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* 提交按钮 */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--brick-dark);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      background: #6d4f3e;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+
+    .submit-btn:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 提示消息 */
+    .msg {
+      text-align: center;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .msg.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      display: block;
+    }
+
+    .msg.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    /* 匿名说明 */
+    .anonymous-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 16px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 16px 10px; }
+      .card { padding: 30px 20px; }
+      .card::before, .card::after { display: none; }
+      .card-title h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a class="back-btn" href="javascript:history.back()">← 返回</a>
+  <a class="back-btn" href="/">🏠 首页</a>
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <h1>📋 问题报告</h1>
+    <div class="subtitle">遇到问题或有建议？告诉我们，帮助我们做得更好</div>
+  </div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <form id="reportForm" onsubmit="return false;">
+    <!-- 联系方式 -->
+    <div class="form-group">
+      <label class="form-label">
+        联系方式 <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，方便我们联系您）</span>
+      </label>
+      <input type="text" class="form-input" id="contactInput"
+             placeholder="QQ号 / 邮箱 / 手机号（选填）" maxlength="50">
+    </div>
+
+    <!-- 问题类型 -->
+    <div class="form-group">
+      <label class="form-label">问题类型 <span class="required">*</span></label>
+      <select class="form-input" id="typeSelect" required>
+        <option value="">请选择问题类型</option>
+        <option value="功能异常">🔧 功能异常（页面打不开、功能失效等）</option>
+        <option value="内容问题">📝 内容问题（违规内容、敏感信息等）</option>
+        <option value="账号问题">🔐 账号问题（登录异常、账号被盗等）</option>
+        <option value="建议反馈">💡 功能建议（新功能需求、体验优化等）</option>
+        <option value="其他问题">❓ 其他问题</option>
+      </select>
+    </div>
+
+    <!-- 问题描述 -->
+    <div class="form-group">
+      <label class="form-label">问题描述 <span class="required">*</span></label>
+      <textarea class="form-textarea" id="descInput" required
+                placeholder="请详细描述您遇到的问题，我们会尽快处理…" maxlength="500"></textarea>
+      <div class="form-hint">至少10个字，最多500字（<span id="charCount">0</span>/500）</div>
+    </div>
+
+    <!-- 图片附件 -->
+    <div class="form-group">
+      <label class="form-label">截图附件 <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，最多3张，每张不超过2MB）</span></label>
+      <div class="img-upload-area" id="uploadArea" onclick="document.getElementById('imgInput').click()">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">点击上传截图 / 长按粘贴截图</div>
+        <div class="upload-hint">支持 JPG、PNG、GIF 格式</div>
+      </div>
+      <input type="file" id="imgInput" accept="image/jpeg,image/png,image/gif" multiple>
+      <div class="img-previews" id="imgPreviews"></div>
+    </div>
+
+    <!-- 匿名说明 -->
+    <div class="anonymous-note">
+      <span>🔒</span>
+      您的联系方式仅用于问题跟进，不会公开显示
+    </div>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn" id="submitBtn" onclick="doSubmit()">
+      🚀 提交报告
+    </button>
+  </form>
+</div>
+
+<script>
+  var attachedImages = [];
+  var MAX_IMAGES = 3;
+  var MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+  // 字符计数
+  var descInput = document.getElementById('descInput');
+  var charCount = document.getElementById('charCount');
+  descInput.addEventListener('input', function() {
+    charCount.textContent = this.value.length;
+    if (this.value.length >= 10) {
+      charCount.style.color = '#065f46';
+    } else {
+      charCount.style.color = '#dc2626';
+    }
+  });
+
+  // 图片上传
+  var imgInput = document.getElementById('imgInput');
+  var uploadArea = document.getElementById('uploadArea');
+  var imgPreviews = document.getElementById('imgPreviews');
+
+  // 拖拽上传
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#8b6f5e';
+    this.style.background = '#fff8e8';
+  });
+  uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#d4c5a9';
+    this.style.background = '#fffbf0';
+  });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#d4c5a9';
+    this.style.background = '#fffbf0';
+    handleFiles(e.dataTransfer.files);
+  });
+
+  imgInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    this.value = ''; // 清空，允许重复选择同一文件
+  });
+
+  function handleFiles(files) {
+    for (var i = 0; i < files.length; i++) {
+      if (attachedImages.length >= MAX_IMAGES) {
+        showMsg('最多只能上传 ' + MAX_IMAGES + ' 张图片', 'error');
+        return;
+      }
+      var file = files[i];
+      if (!file.type.startsWith('image/')) {
+        showMsg('只能上传图片文件', 'error');
+        continue;
+      }
+      if (file.size > MAX_SIZE) {
+        showMsg('图片 "' + file.name + '" 超过 2MB 限制', 'error');
+        continue;
+      }
+      (function(f) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          attachedImages.push(e.target.result);
+          renderPreviews();
+        };
+        reader.readAsDataURL(f);
+      })(file);
+    }
+  }
+
+  function renderPreviews() {
+    imgPreviews.innerHTML = '';
+    for (var i = 0; i < attachedImages.length; i++) {
+      var div = document.createElement('div');
+      div.className = 'img-preview-item';
+      div.innerHTML = '<img src="' + attachedImages[i] + '" alt="附件' + (i+1) + '">' +
+        '<button class="remove-btn" onclick="removeImage(' + i + ')">×</button>';
+      imgPreviews.appendChild(div);
+    }
+    if (attachedImages.length === 0) {
+      uploadArea.style.display = '';
+    } else if (attachedImages.length >= MAX_IMAGES) {
+      uploadArea.style.display = 'none';
+    }
+  }
+
+  function removeImage(index) {
+    attachedImages.splice(index, 1);
+    renderPreviews();
+  }
+
+  function showMsg(text, type) {
+    var box = document.getElementById('msgBox');
+    box.textContent = text;
+    box.className = 'msg ' + type;
+    if (type === 'success') {
+      setTimeout(function() { box.style.display = 'none'; }, 4000);
+    }
+  }
+
+  function doSubmit() {
+    var type = document.getElementById('typeSelect').value;
+    var desc = document.getElementById('descInput').value.trim();
+    var contact = document.getElementById('contactInput').value.trim();
+
+    if (!type) { showMsg('请选择问题类型', 'error'); return; }
+    if (desc.length < 10) { showMsg('问题描述至少10个字', 'error'); return; }
+    if (desc.length > 500) { showMsg('问题描述最多500字', 'error'); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+
+    var body = {
+      type: type,
+      description: desc,
+      contact: contact,
+      images: attachedImages.slice() // 复制
+    };
+
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    , body: JSON.stringify(body) }).then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.ok) {
+          showMsg('✅ 报告已提交，感谢您的反馈！', 'success');
+          // 清空表单
+          document.getElementById('typeSelect').value = '';
+          document.getElementById('descInput').value = '';
+          document.getElementById('contactInput').value = '';
+          charCount.textContent = '0';
+          charCount.style.color = '#dc2626';
+          attachedImages = [];
+          renderPreviews();
+          setTimeout(function() { document.getElementById('msgBox').style.display = 'none'; }, 5000);
+        } else {
+          showMsg('提交失败：' + (json.msg || '未知错误'), 'error');
+          btn.disabled = false;
+          btn.textContent = '🚀 提交报告';
+        }
+      })
+      .catch(function(e) {
+        showMsg('网络错误：' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '🚀 提交报告';
+      });
+  }
+</script>
+</body>
+</html>

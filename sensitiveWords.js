@@ -14,6 +14,9 @@ const CORE_WORDS = [
   '卖淫','嫖娼','色情','裸聊','援交','约炮',
 ];
 
+const DATA_DIR = path.resolve(__dirname, 'data');
+const CUSTOM_FILE = path.join(DATA_DIR, 'sensitive_custom.json');
+
 // ===== 从加密词库文件加载 =====
 const ENC_FILE = 'tencent_sensitive_words.enc';
 
@@ -42,9 +45,31 @@ function loadExternalWords() {
   }
 }
 
+// ===== 从自定义词库文件加载（后台手动添加的违禁词）=====
+function loadCustomWords() {
+  try {
+    if (!fs.existsSync(CUSTOM_FILE)) return [];
+    const raw = fs.readFileSync(CUSTOM_FILE, 'utf-8');
+    const words = JSON.parse(raw);
+    if (!Array.isArray(words)) return [];
+    return words.filter(w => typeof w === 'string' && w.trim().length >= 1);
+  } catch (e) {
+    console.error('[sensitiveWords] 加载自定义违禁词失败:', e.message);
+    return [];
+  }
+}
+
 // ===== 构建去重词集 =====
 const externalWords = loadExternalWords();
-const ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords])];
+let customWords = loadCustomWords();
+let ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords, ...customWords])];
+
+// ===== 重新加载词库（添加/删除自定义词后调用）=====
+function reload() {
+  customWords = loadCustomWords();
+  ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords, ...customWords])];
+  console.log(`[sensitiveWords] 已重新加载词库，总计 ${ALL_WORDS.length} 个词`);
+}
 
 // ===== 检测函数 =====
 function check(text) {
@@ -62,8 +87,10 @@ function getStats() {
   return {
     internal: CORE_WORDS.length,
     external: externalWords.length,
+    custom: customWords.length,
     total: ALL_WORDS.length,
+    words: ALL_WORDS,
   };
 }
 
-module.exports = { check, getStats };
+module.exports = { check, getStats, reload, CUSTOM_FILE };

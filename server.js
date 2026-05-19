@@ -5,7 +5,8 @@ const cors = require('cors');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const svgCaptcha = require('svg-captcha');
-const { check: checkSensitive } = require('./sensitiveWords');
+const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats } = require('./sensitiveWords');
+const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
 
 // 智学网自动登录模块（需 Playwright / Chromium）
 let loginZhixue = null;
@@ -45,6 +46,43 @@ function verifyPassword(password, storedHash) {
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(inputHash, 'hex'));
 }
 
+// ===== 实名信息对称加密（AES-256-CBC）=====
+// 密钥从环境变量读取，不存在则每次启动随机生成（重启后密文失效，可接受）
+const CERT_ENC_KEY = crypto.createHash('sha256')
+  .update(process.env.CERT_ENC_SECRET || 'campus-wall-cert-secret-2024')
+  .digest(); // 32字节 key
+
+/**
+ * 加密实名信息
+ * @param {string} plainText 明文（姓名/班级）
+ * @returns {string} iv:ciphertext (hex)
+ */
+function encryptCert(plainText) {
+  if (!plainText) return null;
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-cbc', CERT_ENC_KEY, iv);
+  const enc = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+  return iv.toString('hex') + ':' + enc.toString('hex');
+}
+
+/**
+ * 解密实名信息
+ * @param {string} cipherText iv:ciphertext (hex)
+ * @returns {string|null}
+ */
+function decryptCert(cipherText) {
+  if (!cipherText || !cipherText.includes(':')) return null;
+  try {
+    const [ivHex, encHex] = cipherText.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const enc = Buffer.from(encHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', CERT_ENC_KEY, iv);
+    return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
+  } catch (e) {
+    return null;
+  }
+}
+
 const app = express();
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -52,6 +90,8 @@ const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
 const ADMINS_FILE = path.join(DATA_DIR, 'admins.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
+const FEEDBACK_FILE = path.join(DATA_DIR, 'feedbacks.json');
+const BULLYING_FILE = path.join(DATA_DIR, 'bullying.json');
 const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
 const CREDIT_LOGS_FILE = path.join(DATA_DIR, 'credit_logs.json');
 const CREDIT_CARDS_FILE = path.join(DATA_DIR, 'credit_cards.json');
@@ -76,7 +116,7 @@ function sanitizeString(val) {
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64 或特殊格式的字段不过滤
-    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, ...rest } = req.body;
+    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, images, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
@@ -84,7 +124,8 @@ app.use((req, res, next) => {
       ...(manualEmail !== undefined ? { manualEmail } : {}),
       ...(challenge !== undefined ? { challenge } : {}),
       ...(prefix !== undefined ? { prefix } : {}),
-      ...(nonce !== undefined ? { nonce } : {})
+      ...(nonce !== undefined ? { nonce } : {}),
+      ...(images !== undefined ? { images } : {})
     };
   }
   next();
@@ -94,7 +135,7 @@ app.use((req, res, next) => {
 const POW_SECRET = crypto.randomBytes(32).toString('hex');
 const POW_TTL = 30 * 60 * 1000;
 const POW_ENABLED = true;
-const POW_DIFFICULTY = 20; // 难度：要求 SHA256 前 N 位为 0（20 ≈ 100万次 ≈ 5-10秒）
+const POW_DIFFICULTY = 16; // 难度：要求 SHA256 前 N 位为 0（16 ≈ 6万次 ≈ 1-2秒）
 
 // 统计前导零位数
 function countLeadingZeroBits(buf) {
@@ -191,8 +232,8 @@ app.use((req, res, next) => {
       </svg>
     </div>
 
-    <div class="title" id="statusText">正在验证您的浏览器…</div>
-    <div class="desc">此过程由浏览器自动完成。</div>
+    <div class="title" id="statusText">让我们确保此连接安全</div>
+    <div class="desc">正在验证中，请稍候…</div>
     <div class="pow-info">复杂度: 2<sup>${difficulty}</sup> ≈ ${Math.round(Math.pow(2, difficulty)/10000)/100} 万次 SHA256</div>
 
     <div class="spinner-wrap" id="spinnerWrap">
@@ -215,8 +256,14 @@ app.use((req, res, next) => {
   var target = location.href;
   var difficulty = ${difficulty};
 
-  // 使用纯 JS SHA256（兼容 HTTP/HTTPS）
-  function sha256(msg) { return sha256Pure(msg); }
+  // 使用浏览器原生 Web Crypto API，与 Node.js crypto 完全一致
+  var enc = new TextEncoder();
+
+  async function sha256bytes(msg) {
+    var buf = enc.encode(msg);
+    var hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    return new Uint8Array(hashBuf);
+  }
 
   function countLeadingZeros(buf) {
     var count = 0;
@@ -231,124 +278,55 @@ app.use((req, res, next) => {
     return count;
   }
 
-  // 纯 JS SHA256（兼容 HTTP）
-  function sha256Pure(msg) {
-    function rotr(n, x) { return (x >>> n) | (x << (32 - n)); }
-    function ch(x, y, z) { return (x & y) ^ (~x & z); }
-    function maj(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); }
-    function ep0(x) { return rotr(2, x) ^ rotr(13, x) ^ rotr(22, x); }
-    function ep1(x) { return rotr(6, x) ^ rotr(11, x) ^ rotr(25, x); }
-    function sig0(x) { return rotr(7, x) ^ rotr(18, x) ^ (x >>> 3); }
-    function sig1(x) { return rotr(17, x) ^ rotr(19, x) ^ (x >>> 10); }
-    function bytesToWords(bytes) {
-      var words = [], i = 0;
-      while (i < bytes.length) {
-        words[i >>> 2] |= bytes[i] << (24 - (i % 4) * 8);
-        i++;
-      }
-      return words;
-    }
-    function wordsToBytes(words) {
-      var bytes = [], i = 0;
-      while (i < words.length * 4) {
-        bytes.push((words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff);
-        i++;
-      }
-      return bytes;
-    }
-    function strToBytes(str) {
-      var bytes = [], i = 0;
-      while (i < str.length) {
-        var c = str.charCodeAt(i++);
-        if (c < 0x80) { bytes.push(c); }
-        else if (c < 0x800) { bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f)); }
-        else if (c < 0xd800 || c >= 0xe000) { bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f)); }
-        else { c = 0x10000 + (((c & 0x3ff) << 10) | (str.charCodeAt(i++) & 0x3ff)); bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f)); }
-      }
-      return bytes;
-    }
-    var K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
-    var bytes = strToBytes(msg);
-    var ml = bytes.length * 8;
-    bytes.push(0x80);
-    while ((bytes.length % 64) !== 56) { bytes.push(0); }
-    for (var i = 56; i >= 0; i -= 8) { bytes.push((ml >>> (i * 8)) & 0xff); }
-    var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
-    var w = [], a, b, c, d, e, f, g, h, i, j, t1, t2;
-    for (i = 0; i < bytes.length; i += 64) {
-      for (j = 0; j < 16; j++) { w[j] = (bytes[i + j * 4] << 24) | (bytes[i + j * 4 + 1] << 16) | (bytes[i + j * 4 + 2] << 8) | bytes[i + j * 4 + 3]; }
-      for (j = 16; j < 64; j++) { w[j] = (sig1(w[j - 2]) + w[j - 7] + sig0(w[j - 15]) + w[j - 16]) | 0; }
-      a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
-      for (j = 0; j < 64; j++) {
-        t1 = (h + ep1(e) + ch(e, f, g) + K[j] + w[j]) | 0;
-        t2 = (ep0(a) + maj(a, b, c)) | 0;
-        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
-      }
-      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
-      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
-    }
-    return new Uint8Array(wordsToBytes(H));
-  }
-
-  function hex(buf) {
-    return Array.from(buf).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-  }
-
   var bar = document.getElementById('progressBar');
   var powEl = document.getElementById('powStatus');
   var statusEl = document.getElementById('statusDetail');
 
-  // 批量计算，每批 4096 次，避免阻塞 UI 太久
-  var BATCH = 4096;
   var nonce = 0;
-  var maxAttempts = Math.pow(2, difficulty) * 3; // 最多尝试 3倍期望值
+  var maxAttempts = Math.pow(2, difficulty) * 4; // 最多尝试 4 倍期望值
   var started = Date.now();
 
   (async function solve() {
-    for (var attempt = 0; attempt < maxAttempts; attempt += BATCH) {
-      // 异步让出给 UI 线程
-      await new Promise(function(r){ setTimeout(r, 0); });
-
-      for (var j = 0; j < BATCH; j++) {
-        var test = prefix + (nonce + j);
-        var h = sha256(test);
-        if (countLeadingZeros(h) >= difficulty) {
-          // 找到解
-          var elapsed = ((Date.now() - started) / 1000).toFixed(1);
-          powEl.textContent = '找到解，耗时 ' + elapsed + ' 秒（尝试 ' + (nonce + j + 1) + ' 次）';
-          bar.style.width = '100%';
-
-          // 保证最短 5 秒（PoW 算得快也得等够时间）
-          var remaining = Math.max(0, 5000 - (Date.now() - started));
-          if (remaining > 0) {
-            await new Promise(function(r){ setTimeout(r, remaining); });
-          }
-
-          fetch('/api/__pow_challenge', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({prefix:prefix, nonce:'' + (nonce + j)}),
-            credentials:'same-origin'
-          }).then(function(r){return r.json()}).then(function(jr){
-            if(jr.ok) {
-              statusEl.innerHTML = '<span class="success">✓ 验证通过，正在跳转…</span>';
-              setTimeout(function(){ location.href = target; }, 300);
-            } else {
-              statusEl.innerHTML = '<span class="fail">' + (jr.msg || '验证失败') + '</span>';
-            }
-          });
-          return;
-        }
-        // 每 256 次更新进度条
-        if ((nonce + j) % 256 === 0) {
-          var pct = Math.min(100, ((nonce + j) / maxAttempts) * 100);
-          bar.style.width = pct + '%';
-        }
+    while (nonce < maxAttempts) {
+      if (nonce % 512 === 0) {
+        await new Promise(function(r){ setTimeout(r, 0); });
+        var pct = Math.min(100, (nonce / maxAttempts) * 100);
+        bar.style.width = pct + '%';
+        powEl.textContent = '计算中… ' + nonce.toLocaleString() + ' 次 (' + Math.round(pct) + '%)';
       }
-      nonce += BATCH;
-      var pct = Math.min(100, (nonce / maxAttempts) * 100);
-      bar.style.width = pct + '%';
-      powEl.textContent = '计算中… ' + nonce.toLocaleString() + ' 次 (' + Math.round(pct) + '%)';
+
+      var test = prefix + nonce;
+      var h = await sha256bytes(test);
+      if (countLeadingZeros(h) >= difficulty) {
+        var elapsed = ((Date.now() - started) / 1000).toFixed(1);
+        powEl.textContent = '找到解，耗时 ' + elapsed + ' 秒（尝试 ' + (nonce + 1) + ' 次）';
+        bar.style.width = '100%';
+
+        var remaining = Math.max(0, 5000 - (Date.now() - started));
+        if (remaining > 0) {
+          await new Promise(function(r){ setTimeout(r, remaining); });
+        }
+
+        try {
+          var resp = await fetch('/api/__pow_challenge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefix: prefix, nonce: '' + nonce }),
+            credentials: 'same-origin'
+          });
+          var jr = await resp.json();
+          if (jr.ok) {
+            statusEl.innerHTML = '<span class="success">✓ 验证通过，正在跳转…</span>';
+            setTimeout(function(){ location.href = target; }, 300);
+          } else {
+            statusEl.innerHTML = '<span class="fail">PoW 验证失败：' + (jr.msg || '未知错误') + '</span>';
+          }
+        } catch(e) {
+          statusEl.innerHTML = '<span class="fail">网络错误，请刷新重试</span>';
+        }
+        return;
+      }
+      nonce++;
     }
     statusEl.innerHTML = '<span class="fail">计算超时，请刷新重试</span>';
   })();
@@ -880,14 +858,26 @@ app.post('/api/user/login', (req, res) => {
     addLoginLog('user', username, false, ip, ua);
     return res.json({ ok: false, msg: '账号或密码错误' });
   }
-  if (user.status === 'banned') {
-    addLoginLog('user', username, false, ip, ua);
-    return res.json({ ok: false, msg: '该账号已被禁用' });
+  // 自动解封：如果 banUntil 已过期
+  if (user.status === 'banned' && user.banUntil) {
+    if (new Date(user.banUntil) <= new Date()) {
+      user.status = 'active';
+      user.banUntil = null;
+      user.banDays = null;
+      writeUsers(users);
+    }
   }
-
-  addLoginLog('user', user.nickname, true, ip, ua);
+  const isBanned = user.status === 'banned';
+  addLoginLog('user', user.nickname, !isBanned, ip, ua);
   res.json({
     ok: true,
+    banned: isBanned,
+    banInfo: isBanned ? {
+      banned: true,
+      permanent: !user.banUntil,
+      days: user.banDays || null,
+      until: user.banUntil || null
+    } : null,
     data: {
       token: makeUserToken(user),
       id: user.id,
@@ -919,14 +909,26 @@ app.post('/api/user/zhixue-login', (req, res) => {
     addLoginLog('user', zhixueUsername, false, ip, ua);
     return res.json({ ok: false, msg: '当前密码错误' });
   }
-  if (user.status === 'banned') {
-    addLoginLog('user', zhixueUsername, false, ip, ua);
-    return res.json({ ok: false, msg: '该账号已被禁用' });
+  // 自动解封
+  if (user.status === 'banned' && user.banUntil) {
+    if (new Date(user.banUntil) <= new Date()) {
+      user.status = 'active';
+      user.banUntil = null;
+      user.banDays = null;
+      writeUsers(users);
+    }
   }
-
-  addLoginLog('user', user.nickname, true, ip, ua);
+  const isBanned = user.status === 'banned';
+  addLoginLog('user', user.nickname, !isBanned, ip, ua);
   res.json({
     ok: true,
+    banned: isBanned,
+    banInfo: isBanned ? {
+      banned: true,
+      permanent: !user.banUntil,
+      days: user.banDays || null,
+      until: user.banUntil || null
+    } : null,
     data: {
       token: makeUserToken(user),
       id: user.id,
@@ -934,8 +936,7 @@ app.post('/api/user/zhixue-login', (req, res) => {
       nickname: user.nickname,
       avatar: user.avatar
     }
-  });
-});
+  });});
 
 // 找回密码（通过已认证的智学网账号）
 app.post('/api/user/forgot-password', (req, res) => {
@@ -1375,18 +1376,21 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
   if (!user.zhixueUsername && !user.zhixueManualNote) {
     return res.json({ ok: true, data: null });
   }
 
+  const realName = decryptCert ? decryptCert(user.certRealName) : null;
   res.json({
     ok: true,
     data: {
       type: user.zhixueCertType || 'zhixue',
       zhixueUsername: user.zhixueUsername,
       status: user.zhixueStatus || 'pending',
-      submittedAt: user.zhixueSubmittedAt || null
+      submittedAt: user.zhixueSubmittedAt || null,
+      realName: (user.zhixueStatus === 'approved' && realName) ? realName : null
     }
   });
 });
@@ -1413,9 +1417,18 @@ app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
 
 // 审核同学认证（通过/拒绝）
 app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
-  const { action } = req.body; // action: approve | reject
+  const { action, realName, className } = req.body; // action: approve | reject
   if (!['approve', 'reject'].includes(action)) {
     return res.json({ ok: false, msg: '无效的操作' });
+  }
+  // 通过时：智学认证必须填写姓名；手动认证有 manualName 兜底，管理员可不填
+  if (action === 'approve') {
+    const u = (readUsers()).find(u => u.id === req.params.userId);
+    const isManual = u && u.zhixueCertType === 'manual';
+    const hasManualName = u && u.zhixueManualName;
+    if (!isManual && !hasManualName && (!realName || !realName.trim())) {
+      return res.json({ ok: false, msg: '请填写学生姓名' });
+    }
   }
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === req.params.userId);
@@ -1424,9 +1437,18 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   users[userIndex].zhixueStatus = action === 'approve' ? 'approved' : 'rejected';
   users[userIndex].zhixueReviewedAt = new Date().toISOString();
   users[userIndex].zhixueReviewedBy = req.admin.id;
-  // 通过后隐藏密码
+
+  // 通过后：加密存储姓名班级，隐藏密码
   if (action === 'approve') {
     users[userIndex].zhixuePassword = null;
+    // 智学验证：管理员填写的姓名；手动认证：若管理员填了就用管理员的，否则用用户提交的 manualName
+    const nameToStore = (realName && realName.trim())
+      ? realName.trim()
+      : (users[userIndex].zhixueManualName || null);
+    if (nameToStore) {
+      users[userIndex].certRealName = encryptCert(nameToStore);
+    }
+    users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
   }
   writeUsers(users);
 
@@ -1717,9 +1739,9 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
   res.json({ ok: true, data: list });
 });
 
-// 封禁/解封用户（仅管理员）
+// 封禁/解封用户（仅管理员，支持 banDays: 0=永久, >0=天数）
 app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
-  const { status } = req.body;
+  const { status, banDays } = req.body;
   if (!['active', 'banned'].includes(status)) {
     return res.json({ ok: false, msg: '状态无效' });
   }
@@ -1727,6 +1749,25 @@ app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
   const user = users.find(u => u.id === req.params.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   user.status = status;
+  if (status === 'banned') {
+    if (banDays !== undefined && banDays !== null) {
+      const days = parseInt(banDays);
+      if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
+      if (days === 0) {
+        user.banUntil = null; // 永久
+        user.banDays = null;
+      } else {
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        user.banUntil = until.toISOString();
+        user.banDays = days;
+      }
+    }
+  } else {
+    // 解封时清除封禁信息
+    user.banUntil = null;
+    user.banDays = null;
+  }
   writeUsers(users);
   res.json({ ok: true });
 });
@@ -1773,8 +1814,10 @@ app.get('/api/admin/user/:id/detail', requireAdmin, (req, res) => {
   const user = users.find(u => u.id === req.params.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 不返回密码
-  const { password, ...safeUser } = user;
+  // 不返回密码；解密实名信息
+  const { password, certRealName, certClassName, ...safeUser } = user;
+  safeUser.certRealNameDecrypted  = decryptCert(certRealName)  || null;
+  safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
 
   // 帖子
   const posts = readPosts();
@@ -1868,6 +1911,16 @@ app.post('/api/posts', (req, res) => {
       ok: false,
       warning: true,
       warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
+
+  // 霸凌保护姓名检测（始终阻止，不支持 force 绕过）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
 
@@ -1985,6 +2038,16 @@ app.post('/api/posts/:id/comments', (req, res) => {
       ok: false,
       warning: true,
       warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
+
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
 
@@ -2251,6 +2314,55 @@ function writeReports(reports) {
   }
 }
 
+
+
+// ===== 用户反馈读写 =====
+function readFeedbacks() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(FEEDBACK_FILE)) {
+      fs.writeFileSync(FEEDBACK_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取反馈数据失败:', e);
+    return [];
+  }
+}
+
+function writeFeedbacks(feedbacks) {
+  try {
+    ensureDir();
+    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(feedbacks, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入反馈数据失败:', e);
+  }
+}
+
+// ===== 霸凌报告读写 =====
+function readBullying() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(BULLYING_FILE)) {
+      fs.writeFileSync(BULLYING_FILE, '[]', 'utf-8');
+      return [];
+    }
+    return JSON.parse(fs.readFileSync(BULLYING_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取霸凌报告失败:', e);
+    return [];
+  }
+}
+
+function writeBullying(data) {
+  try {
+    ensureDir();
+    fs.writeFileSync(BULLYING_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入霸凌报告失败:', e);
+  }
+}
 // ===== Credit 数据读写 =====
 function readCreditLogs() {
   try {
@@ -2575,6 +2687,16 @@ app.post('/api/discussions/:id/comments', (req, res) => {
     });
   }
 
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
+    });
+  }
+
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
   if (!user || user.status === 'banned') {
@@ -2861,6 +2983,48 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// ===== 封禁举报发送者（管理员）=====
+app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
+  const { banDays } = req.body;
+  const days = banDays !== undefined ? parseInt(banDays) : 0;
+  if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
+
+  const reports = readReports();
+  const report = reports.find(r => r.id === req.params.id);
+  if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
+
+  const targetUserId = report.reportedBy;
+  if (!targetUserId) return res.json({ ok: false, msg: '该举报没有关联用户（匿名举报）' });
+
+  const users = readUsers();
+  const user = users.find(u => u.id === targetUserId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  user.status = 'banned';
+  if (days === 0) {
+    user.banUntil = null;
+    user.banDays = null;
+  } else {
+    const until = new Date();
+    until.setDate(until.getDate() + days);
+    user.banUntil = until.toISOString();
+    user.banDays = days;
+  }
+  writeUsers(users);
+
+  // 同时标记举报为已处理
+  report.status = 'resolved';
+  report.handledBy = req.admin.id;
+  report.handledAt = new Date().toISOString();
+  report.action = 'ban_user';
+  writeReports(reports);
+
+  res.json({ ok: true,
+    msg: days === 0 ? '已永久封禁该用户' : '已封禁该用户 ' + days + ' 天',
+    user: { id: user.id, username: user.username, nickname: user.nickname }
+  });
+});
+
 // ===== 在线用户统计 =====
 const onlineUsers = new Map(); // userId -> lastHeartbeat (timestamp)
 const ONLINE_TIMEOUT = 120000; // 2 分钟无心跳视为离线
@@ -2898,6 +3062,287 @@ setInterval(() => {
 }, 60000);
 
 // ===== 启动 =====
+
+// ===== 用户反馈提交 =====
+app.post('/api/feedback', (req, res) => {
+  const { type, description, contact, images } = req.body;
+  if (!type || !description) return res.json({ ok: false, msg: '类型和描述不能为空' });
+  if (description.length < 10) return res.json({ ok: false, msg: '描述至少10个字' });
+  if (description.length > 500) return res.json({ ok: false, msg: '描述最多500字' });
+
+  const feedbacks = readFeedbacks();
+  const newFeedback = {
+    id: 'fb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    type: type,
+    description: description,
+    contact: contact || '',
+    images: images || [],
+    time: new Date().toISOString(),
+    status: 'pending',
+    handledBy: null,
+    handledAt: null,
+    handleNote: null
+  };
+  feedbacks.unshift(newFeedback);
+  writeFeedbacks(feedbacks);
+  res.json({ ok: true });
+});
+
+// ===== 霸凌事件报告提交 =====
+app.post('/api/bullying-report', (req, res) => {
+  const { reporterRole, victimName, bullyType, description, involved, location, time, contact, anonymous, images } = req.body;
+  if (!reporterRole || !['self', 'witness'].includes(reporterRole)) return res.json({ ok: false, msg: '请选择您的身份' });
+  if (!bullyType || !description) return res.json({ ok: false, msg: '霸凌类型和描述不能为空' });
+  if (description.length < 20) return res.json({ ok: false, msg: '描述至少20个字' });
+  if (description.length > 1000) return res.json({ ok: false, msg: '描述最多1000字' });
+  if (!anonymous && !contact) return res.json({ ok: false, msg: '实名提交必须填写联系方式' });
+
+  const reports = readBullying();
+
+  // 自我举报 → 自动将受害者姓名加入保护名单
+  if (reporterRole === 'self' && victimName) {
+    addBullyingName(victimName);
+  }
+
+  const newReport = {
+    id: 'bl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    reporterRole: reporterRole,
+    victimName: (reporterRole === 'self' && victimName) ? victimName : null,
+    bullyType: bullyType,
+    description: description,
+    involved: involved || '',
+    location: location || '',
+    incidentTime: time || '',
+    contact: anonymous ? '' : (contact || ''),
+    anonymous: !!anonymous,
+    images: (images || []).slice(0, 3),
+    time: new Date().toISOString(),
+    status: 'pending',
+    handledBy: null,
+    handledAt: null,
+    handleNote: null
+  };
+  reports.unshift(newReport);
+  writeBullying(reports);
+  res.json({ ok: true, data: { id: newReport.id } });
+});
+
+// ===== 获取霸凌报告列表（管理员）=====
+app.get('/api/admin/bullying', requireAdmin, (req, res) => {
+  const reports = readBullying();
+  const { status } = req.query;
+  let filtered = reports;
+  if (status && status !== 'all') {
+    filtered = reports.filter(r => r.status === status);
+  }
+  const result = filtered.map(r => ({
+    id: r.id,
+    bullyType: r.bullyType,
+    description: r.description,
+    involved: r.involved,
+    location: r.location,
+    incidentTime: r.incidentTime,
+    anonymous: !!r.anonymous,
+    hasContact: !!(r.contact && r.contact.trim()),
+    hasImages: r.images && r.images.length > 0,
+    imageCount: r.images ? r.images.length : 0,
+    time: r.time,
+    status: r.status || 'pending',
+    handledBy: r.handledBy,
+    handledAt: r.handledAt
+  }));
+  res.json({ ok: true, data: result });
+});
+
+// ===== 处理霸凌报告（管理员）=====
+app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
+  const { status, handleNote } = req.body;
+  if (!status || !['pending','processing','resolved'].includes(status)) {
+    return res.json({ ok: false, msg: '无效的状态' });
+  }
+  const reports = readBullying();
+  const idx = reports.findIndex(r => r.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
+  reports[idx].status = status;
+  reports[idx].handleNote = handleNote || '';
+  reports[idx].handledBy = req.session.admin.nickname || req.session.admin.username;
+  reports[idx].handledAt = new Date().toISOString();
+  writeBullying(reports);
+  res.json({ ok: true });
+});
+
+// ===== 获取单条霸凌报告详情（管理员）=====
+app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
+  const reports = readBullying();
+  const report = reports.find(r => r.id === req.params.id);
+  if (!report) return res.json({ ok: false, msg: '报告不存在' });
+  res.json({ ok: true, data: report });
+});
+
+// ===== 获取反馈列表（管理员）=====
+app.get('/api/admin/feedbacks', requireAdmin, (req, res) => {
+  const feedbacks = readFeedbacks();
+  const result = feedbacks.map(f => ({
+    id: f.id,
+    type: f.type,
+    description: f.description,
+    contact: f.contact,
+    hasImages: f.images && f.images.length > 0,
+    imageCount: f.images ? f.images.length : 0,
+    time: f.time,
+    status: f.status,
+    handledBy: f.handledBy,
+    handledAt: f.handledAt
+  }));
+  res.json({ ok: true, data: result });
+});
+
+// ===== 获取单条反馈详情（管理员）=====
+app.get('/api/admin/feedback/:id', requireAdmin, (req, res) => {
+  const feedbacks = readFeedbacks();
+  const f = feedbacks.find(x => x.id === req.params.id);
+  if (!f) return res.json({ ok: false, msg: '反馈不存在' });
+  res.json({ ok: true, data: f });
+});
+
+// ===== 处理反馈（管理员）=====
+app.post('/api/admin/feedback/:id/handle', requireAdmin, (req, res) => {
+  const { status, note } = req.body;
+  if (!status || !['pending', 'resolved', 'rejected'].includes(status)) {
+    return res.json({ ok: false, msg: '状态无效' });
+  }
+  const feedbacks = readFeedbacks();
+  const idx = feedbacks.findIndex(f => f.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '反馈不存在' });
+  feedbacks[idx].status = status;
+  feedbacks[idx].handledBy = req.admin.id;
+  feedbacks[idx].handledAt = new Date().toISOString();
+  feedbacks[idx].handleNote = note || '';
+  writeFeedbacks(feedbacks);
+  res.json({ ok: true });
+});
+
+// ===== 违禁词管理（管理员）=====
+const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
+
+// 获取违禁词列表
+app.get('/api/admin/sensitive-words', requireAdmin, (req, res) => {
+  try {
+    if (!fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
+      return res.json({ ok: true, data: [] });
+    }
+    const words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
+    res.json({ ok: true, data: Array.isArray(words) ? words : [] });
+  } catch (e) {
+    res.json({ ok: false, msg: '读取失败: ' + e.message });
+  }
+});
+
+// 添加违禁词
+app.post('/api/admin/sensitive-words', requireAdmin, (req, res) => {
+  try {
+    const { word } = req.body;
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
+    const trimmed = word.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
+
+    let words = [];
+    if (fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
+      words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
+    }
+    if (!Array.isArray(words)) words = [];
+
+    if (words.includes(trimmed)) return res.json({ ok: false, msg: '该违禁词已存在' });
+
+    words.push(trimmed);
+    fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
+    reloadSensitive(); // 重新加载词库
+
+    res.json({ ok: true, data: words });
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+// 删除违禁词
+app.delete('/api/admin/sensitive-words/:word', requireAdmin, (req, res) => {
+  try {
+    const word = decodeURIComponent(req.params.word);
+    if (!fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
+      return res.json({ ok: false, msg: '没有自定义违禁词' });
+    }
+    let words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
+    if (!Array.isArray(words)) words = [];
+
+    const idx = words.indexOf(word);
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该违禁词' });
+
+    words.splice(idx, 1);
+    fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
+    reloadSensitive();
+
+    res.json({ ok: true, data: words });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
+  }
+});
+
+// 获取违禁词统计
+app.get('/api/admin/sensitive-stats', requireAdmin, (req, res) => {
+  try {
+    const stats = getSensitiveStats();
+    res.json({ ok: true, data: stats });
+  } catch (e) {
+    res.json({ ok: false, msg: '获取统计失败: ' + e.message });
+  }
+});
+
+// ===== 霸凌状态管理（管理员）=====
+
+// 获取保护姓名列表
+app.get('/api/admin/bullying-names', requireAdmin, (req, res) => {
+  try {
+    const names = getAllBullyingNames();
+    res.json({ ok: true, data: names });
+  } catch (e) {
+    res.json({ ok: false, msg: '读取失败: ' + e.message });
+  }
+});
+
+// 手动添加保护姓名
+app.post('/api/admin/bullying-names', requireAdmin, (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== 'string') return res.json({ ok: false, msg: '请输入有效姓名' });
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '姓名不能为空' });
+    if (trimmed.length > 30) return res.json({ ok: false, msg: '姓名太长，最多30字' });
+
+    if (addBullyingName(trimmed)) {
+      res.json({ ok: true, msg: '添加成功' });
+    } else {
+      res.json({ ok: false, msg: '该姓名已在保护名单中' });
+    }
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+// 删除保护姓名
+app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
+  try {
+    const name = decodeURIComponent(req.params.name);
+    if (removeBullyingName(name)) {
+      res.json({ ok: true, msg: '删除成功' });
+    } else {
+      res.json({ ok: false, msg: '未找到该姓名' });
+    }
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);

@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛡️ 平台霸凌举报 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brick-bg: #c4a882;
+      --brick-dark: #8b6f5e;
+      --brick-light: #d4c5a9;
+      --paper-bg: #fef9e7;
+      --text-main: #2c1810;
+      --text-sub: #6a4a3a;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      background-color: var(--brick-bg);
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+        repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+      padding: 30px 16px;
+    }
+
+    /* 顶部返回 */
+    .top-bar {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.88);
+      border: 2px solid rgba(0,0,0,0.15);
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5a3e2b;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      background: #fff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    /* 卡片容器 */
+    .card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--paper-bg);
+      border-radius: 4px;
+      padding: 40px 36px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.6), 0 1px 4px rgba(0,0,0,0.1);
+      position: relative;
+      color: var(--text-main);
+    }
+
+    /* 图钉装饰 */
+    .card::before, .card::after {
+      content: '';
+      position: absolute;
+      top: -9px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 -1px 2px rgba(0,0,0,0.2);
+    }
+    .card::before { left: 50%; transform: translateX(-30px); }
+    .card::after { left: 50%; transform: translateX(12px); }
+
+    /* 警告横幅 */
+    .alert-banner {
+      background: var(--danger-bg);
+      border: 2px solid #fca5a5;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-banner .alert-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .alert-banner .alert-text { font-size: 13px; color: #991b1b; line-height: 1.7; }
+
+    /* 标题 */
+    .card-title {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px dashed var(--brick-light);
+    }
+
+    .card-title h1 {
+      font-family: 'Ma Shan Zheng', cursive;
+      font-size: 28px;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    .card-title .subtitle {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    /* 表单 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .form-label .required {
+      color: var(--danger);
+      margin-left: 2px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid var(--brick-light);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fffbf0;
+      color: var(--text-main);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-select { cursor: pointer; }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--brick-dark);
+      box-shadow: 0 0 0 3px rgba(139,111,94,0.15);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.7;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* 霸凌类型选择 */
+    .bully-types {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .bully-type-option {
+      position: relative;
+    }
+
+    .bully-type-option input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .bully-type-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 2px solid var(--brick-light);
+      border-radius: 8px;
+      background: #fffbf0;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .bully-type-option input:checked + .bully-type-label {
+      border-color: var(--danger);
+      background: var(--danger-bg);
+      font-weight: 600;
+    }
+
+    .bully-type-label .type-emoji { font-size: 18px; flex-shrink: 0; }
+
+    /* 匿名开关 */
+    .anonymous-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #fffbf0;
+      border: 2px solid var(--brick-light);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .anonymous-toggle:hover {
+      border-color: var(--brick-dark);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #d1d5db;
+      border-radius: 12px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+
+    .anonymous-toggle.active .toggle-switch {
+      background: var(--danger);
+    }
+
+    .anonymous-toggle.active .toggle-switch::after {
+      transform: translateX(20px);
+    }
+
+    .toggle-text {
+      font-size: 14px;
+      color: var(--text-main);
+    }
+
+    /* 图片上传区 */
+    .img-upload-area {
+      border: 2px dashed var(--brick-light);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fffbf0;
+    }
+
+    .img-upload-area:hover {
+      border-color: var(--brick-dark);
+      background: #fff8e8;
+    }
+
+    .img-upload-area .upload-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .img-upload-area .upload-text {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    .img-upload-area .upload-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    #imgInput {
+      display: none;
+    }
+
+    /* 图片预览 */
+    .img-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .img-preview-item {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid var(--brick-light);
+    }
+
+    .img-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .img-preview-item .remove-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* 提交按钮 */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      background: #b91c1c;
+      box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+
+    .submit-btn:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 提示消息 */
+    .msg {
+      text-align: center;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .msg.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      display: block;
+    }
+
+    .msg.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    .msg.info {
+      background: #fef9c3;
+      color: #713f12;
+      border: 1px solid #fde047;
+      display: block;
+    }
+
+    /* 紧急联系 */
+    .emergency-box {
+      margin-top: 20px;
+      padding: 14px 16px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #0369a1;
+      line-height: 1.7;
+    }
+    .emergency-box strong { color: #b91c1c; }
+
+    /* 帖子ID确认弹窗 */
+    .postid-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(3px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .postid-confirm-box {
+      background: var(--paper-bg);
+      border-radius: 14px;
+      padding: 28px 28px 24px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.28);
+      text-align: center;
+    }
+
+    .postid-confirm-box .confirm-icon { font-size: 36px; margin-bottom: 10px; }
+    .postid-confirm-box h3 { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
+    .postid-confirm-box .confirm-id {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 13px;
+      background: #f3f4f6;
+      color: #111827;
+      padding: 6px 16px;
+      border-radius: 8px;
+      word-break: break-all;
+      margin: 6px 0 16px;
+      border: 1.5px solid #e5e7eb;
+    }
+    .postid-confirm-box .confirm-note {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .postid-confirm-box .confirm-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .postid-confirm-box .confirm-btns button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+    }
+    .postid-confirm-box .btn-cancel-id {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .postid-confirm-box .btn-cancel-id:hover { background: #e5e7eb; }
+    .postid-confirm-box .btn-confirm-id {
+      background: var(--danger);
+      color: #fff;
+    }
+    .postid-confirm-box .btn-confirm-id:hover { background: #b91c1c; }
+
+    /* 加载骨架 */
+    .confirm-loading { padding: 4px 0; }
+    .loading-bar {
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 帖子预览卡片 */
+    .post-preview-card {
+      background: #fff;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 10px 0 14px;
+      text-align: left;
+    }
+    .post-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .post-preview-type {
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .post-preview-author {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .post-preview-content {
+      font-size: 13px;
+      color: #111827;
+      line-height: 1.65;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .post-preview-id {
+      margin-top: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #9ca3af;
+    }
+
+    /* 已确认帖子ID标签列表 */
+    .confirmed-ids {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .confirmed-id-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      color: #1d4ed8;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 4px 10px 4px 12px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+    .confirmed-id-tag .remove-tag {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #93c5fd;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .confirmed-id-tag .remove-tag:hover { color: #1d4ed8; }
+
+    /* 角色选择卡片 */
+    .role-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .role-card {
+      background: #fffbf0;
+      border: 2.5px solid var(--brick-light);
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .role-card:hover {
+      border-color: var(--brick-dark);
+      background: #fff8e8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+
+    .role-card:active {
+      transform: scale(0.97);
+    }
+
+    .role-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+      line-height: 1;
+    }
+
+    .role-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .role-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 16px 10px; }
+      .card { padding: 30px 20px; }
+      .card::before, .card::after { display: none; }
+      .card-title h1 { font-size: 24px; }
+      .bully-types { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a class="back-btn" href="javascript:history.back()">← 返回</a>
+  <a class="back-btn" href="/">🏠 首页</a>
+</div>
+
+  <div class="card">
+  <!-- 说明横幅 -->
+  <div class="alert-banner">
+    <span class="alert-icon">📢</span>
+    <div class="alert-text">
+      <strong>本举报仅适用于平台内发生的网络霸凌行为。</strong><br>
+      如遭受现实世界的人身威胁，请直接拨打 110 报警，本平台无法处理线下事务。
+    </div>
+  </div>
+
+  <div class="card-title">
+    <h1>🛡️ 平台霸凌举报</h1>
+    <div class="subtitle">举报本平台内发生的网络霸凌行为，可选择匿名提交</div>
+  </div>
+
+  <div class="msg" id="msgBox"></div>
+
+  <!-- ===== 角色选择 ===== -->
+  <div id="roleSelect">
+    <p style="text-align:center;font-size:15px;color:#6a4a3a;margin-bottom:20px;font-weight:600;">请选择您的身份</p>
+    <div class="role-cards">
+      <div class="role-card" onclick="selectReporterRole('self')">
+        <div class="role-icon">🆘</div>
+        <div class="role-title">我自己正遭受霸凌</div>
+        <div class="role-desc">我在平台上被他人霸凌，需要帮助</div>
+      </div>
+      <div class="role-card" onclick="selectReporterRole('witness')">
+        <div class="role-icon">👁️</div>
+        <div class="role-title">我发现他人正遭受霸凌</div>
+        <div class="role-desc">我看到有人在平台上被霸凌</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 表单主体（初始隐藏） ===== -->
+  <div id="formContent" style="display:none;">
+  <form id="bullyForm" onsubmit="return false;">
+    <!-- 霸凌类型 -->
+    <div class="form-group">
+      <label class="form-label">平台霸凌类型 <span class="required">*</span></label>
+      <div class="bully-types">
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type1" value="言语辱骂" required>
+          <label class="bully-type-label" for="type1">
+            <span class="type-emoji">🤬</span> 言语辱骂
+          </label>
+        </div>
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type2" value="骚扰攻击">
+          <label class="bully-type-label" for="type2">
+            <span class="type-emoji">📩</span> 骚扰攻击
+          </label>
+        </div>
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type3" value="散布谣言/诽谤">
+          <label class="bully-type-label" for="type3">
+            <span class="type-emoji">🗞️</span> 散布谣言/诽谤
+          </label>
+        </div>
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type4" value="恶意刷屏/举报">
+          <label class="bully-type-label" for="type4">
+            <span class="type-emoji">🔁</span> 恶意刷屏/举报
+          </label>
+        </div>
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type5" value="群体排挤">
+          <label class="bully-type-label" for="type5">
+            <span class="type-emoji">🚫</span> 群体排挤
+          </label>
+        </div>
+        <div class="bully-type-option">
+          <input type="radio" name="bullyType" id="type6" value="其他平台行为">
+          <label class="bully-type-label" for="type6">
+            <span class="type-emoji">❓</span> 其他平台行为
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 受害者姓名（仅自我举报时显示，自动填充，不可修改） -->
+    <div class="form-group" id="victimNameRow" style="display:none;">
+      <label class="form-label">您的姓名 <span class="required">*</span></label>
+      <div style="position:relative;">
+        <input type="text" class="form-input" id="victimNameInput" readonly
+               style="background:#f5f0e8;color:#6a4a3a;cursor:default;padding-right:36px;">
+        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;" title="根据同学认证自动填充，不可修改">🔒</span>
+      </div>
+      <div class="form-hint">已根据您的同学认证自动填充，不可修改</div>
+    </div>
+
+    <!-- 事件描述 -->
+    <div class="form-group">
+      <label class="form-label">事件描述 <span class="required">*</span></label>
+      <textarea class="form-textarea" id="descInput" required
+                placeholder="请描述在本平台（帖子/评论/私信等）中遭受霸凌的经过…" maxlength="1000"></textarea>
+      <div class="form-hint">至少20个字，最多1000字（<span id="charCount">0</span>/1000）</div>
+    </div>
+
+    <!-- 涉事用户 -->
+    <div class="form-group">
+      <label class="form-label">涉事用户</label>
+      <input type="text" class="form-input" id="involvedInput"
+             placeholder="霸凌者的平台昵称或用户ID（选填，便于核查）" maxlength="100">
+      <div class="form-hint">如有多个，请用逗号分隔</div>
+    </div>
+
+    <!-- 相关帖子ID -->
+    <div class="form-group">
+      <label class="form-label">相关帖子ID
+        <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，可添加多个）</span>
+      </label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="postIdInput"
+               placeholder="输入帖子ID后按 Enter 或点击添加" maxlength="100"
+               style="font-family:monospace;flex:1;"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();triggerPostIdConfirm();}">
+        <button type="button" onclick="triggerPostIdConfirm()"
+                style="padding:10px 16px;background:var(--brick-dark);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+                onmouseover="this.style.background='#6b4c3b'" onmouseout="this.style.background='var(--brick-dark)'">
+          ＋ 添加
+        </button>
+      </div>
+      <div class="form-hint">从帖子详情左下角点击 📋 复制ID后粘贴，每次添加一个，需确认后计入证据</div>
+      <!-- 已确认帖子ID标签 -->
+      <div class="confirmed-ids" id="confirmedIdsList"></div>
+    </div>
+
+    <!-- 发生时间 -->
+    <div class="form-group">
+      <label class="form-label">发生时间</label>
+      <input type="text" class="form-input" id="timeInput"
+             placeholder="例如：5月13日下午、上周三…（选填）" maxlength="100">
+    </div>
+
+    <!-- 您的联系方式 -->
+    <div class="form-group">
+      <label class="form-label">
+        您的联系方式
+        <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，方便我们跟进处理）</span>
+      </label>
+      <input type="text" class="form-input" id="contactInput"
+             placeholder="QQ号 / 邮箱 / 手机号（选填）" maxlength="50">
+    </div>
+
+    <!-- 截图证据 -->
+    <div class="form-group">
+      <label class="form-label">截图证据 <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，最多3张，每张不超过2MB）</span></label>
+      <div class="img-upload-area" id="uploadArea" onclick="document.getElementById('imgInput').click()">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">点击上传截图 / 拖拽上传</div>
+        <div class="upload-hint">请提供相关帖子、评论或私信的截图，支持 JPG、PNG、GIF</div>
+      </div>
+      <input type="file" id="imgInput" accept="image/jpeg,image/png,image/gif" multiple>
+      <div class="img-previews" id="imgPreviews"></div>
+    </div>
+
+    <!-- 匿名提交 -->
+    <div class="form-group">
+      <label class="form-label">提交方式</label>
+      <div class="anonymous-toggle" id="anonymousToggle" onclick="toggleAnonymous()">
+        <div class="toggle-switch"></div>
+        <span class="toggle-text" id="anonymousText">匿名提交（推荐，保护您的隐私）</span>
+      </div>
+    </div>
+
+    <!-- 提交按钮 -->
+    <button class="submit-btn" id="submitBtn" onclick="doSubmit()">
+      🛡️ 提交报告
+    </button>
+  </form>
+  </div><!-- end #formContent -->
+
+  <!-- 说明提示 -->
+  <div class="emergency-box" id="emergencyBox">
+    💡 <strong>处理说明：</strong>平台管理员将在收到举报后尽快审核。<br>
+    • 情节严重者将被禁言或封号处理<br>
+    • 如遭受现实威胁，请直接拨打 <strong>110</strong> 报警<br>
+    • 恶意举报他人同样属于违规行为，请如实填写
+  </div>
+</div>
+
+<script>
+  var attachedImages = [];
+  var confirmedPostIds = [];   // 已确认的帖子ID数组
+  var MAX_IMAGES = 3;
+  var MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  var isAnonymous = true;
+  var _formSubmitted = false; // 提交成功后标记
+  var reporterRole = null;     // 'self' | 'witness'
+  var TOKEN_KEY = 'campus_user_token';
+  var victimRealName = null;   // 认证通过后存入的真实姓名（仅 self 角色使用）
+
+  // ── 角色选择（先验证同学认证）────────────────────
+  function selectReporterRole(role) {
+    var token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      showCertAlert('not_login');
+      return;
+    }
+
+    // 异步检查同学认证状态
+    fetch('/api/user/me/zhixue-info', {
+      headers: { 'x-user-token': token }
+    }).then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (!json.ok || !json.data || json.data.status !== 'approved') {
+          showCertAlert('not_approved');
+          return;
+        }
+        // 认证通过，保存姓名
+        victimRealName = (json.data && json.data.realName) ? json.data.realName : null;
+        reporterRole = role;
+        // 根据角色决定是否显示姓名栏
+        applyVictimNameField();
+        document.getElementById('roleSelect').style.display = 'none';
+        document.getElementById('formContent').style.display = 'block';
+        saveDraft();
+      })
+      .catch(function() {
+        showCertAlert('not_approved');
+      });
+  }
+
+  // ── 显示/隐藏姓名栏（self 角色才显示）──────────
+  function applyVictimNameField() {
+    var row = document.getElementById('victimNameRow');
+    var input = document.getElementById('victimNameInput');
+    if (!row || !input) return;
+    if (reporterRole === 'self' && victimRealName) {
+      input.value = victimRealName;
+      row.style.display = 'block';
+    } else {
+      input.value = '';
+      row.style.display = 'none';
+    }
+  }
+
+  // ── 同学认证提示弹窗 ─────────────────────────────
+  function showCertAlert(type) {
+    // 移除旧的
+    var old = document.querySelector('.cert-alert-overlay');
+    if (old) old.remove();
+
+    var icon, title, msg, btnText;
+    if (type === 'not_login') {
+      icon = '🔐';
+      title = '请先登录';
+      msg = '霸凌举报功能需要登录后方可使用。';
+      btnText = '去登录';
+    } else {
+      icon = '🎓';
+      title = '尚未通过同学认证';
+      msg = '霸凌举报功能需要先完成同学认证，请前往认证后再继续。';
+      btnText = '去认证';
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'cert-alert-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML =
+      '<div style="background:var(--paper-bg);border-radius:16px;padding:32px 28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.28);">' +
+        '<div style="font-size:48px;margin-bottom:14px;">' + icon + '</div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:10px;">' + title + '</div>' +
+        '<div style="font-size:14px;color:var(--text-sub);line-height:1.7;margin-bottom:24px;">' + msg + '</div>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="closeCertAlert()" style="flex:1;padding:11px;border-radius:10px;border:2px solid var(--brick-light);background:#fff;font-size:14px;font-weight:600;color:var(--text-main);cursor:pointer;font-family:inherit;">取消</button>' +
+          '<button onclick="goCertPage()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">' + btnText + '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
+  function closeCertAlert() {
+    var o = document.querySelector('.cert-alert-overlay');
+    if (o) o.remove();
+  }
+
+  function goCertPage() {
+    closeCertAlert();
+    // 有 token → 主页（主页有同学认证入口）；无 token → 主页（主页有登录入口）
+    window.location.href = '/';
+  }
+
+  function showRoleSelect() {
+    reporterRole = null;
+    document.getElementById('roleSelect').style.display = 'block';
+    document.getElementById('formContent').style.display = 'none';
+  }
+
+  // ── 草稿自动保存 ───────────────────────────────────
+  var DRAFT_KEY = 'bullyReportDraft';
+
+  function saveDraft() {
+    if (_formSubmitted) return;
+    var bullyType = document.querySelector('input[name="bullyType"]:checked');
+    var draft = {
+      reporterRole: reporterRole,
+      victimRealName: victimRealName,
+      bullyType:  bullyType ? bullyType.value : '',
+      desc:       document.getElementById('descInput').value,
+      involved:   document.getElementById('involvedInput').value,
+      time:       document.getElementById('timeInput').value,
+      contact:    document.getElementById('contactInput').value,
+      isAnonymous: isAnonymous,
+      confirmedPostIds: confirmedPostIds.slice(),
+      attachedImages:   attachedImages.slice()
+    };
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  }
+
+  function restoreDraft() {
+    var raw;
+    try { raw = localStorage.getItem(DRAFT_KEY); } catch(e) { return; }
+    if (!raw) return;
+    var draft;
+    try { draft = JSON.parse(raw); } catch(e) { return; }
+
+    // 恢复霸凌类型
+    if (draft.bullyType) {
+      var radio = document.querySelector('input[name="bullyType"][value="' + draft.bullyType + '"]');
+      if (radio) radio.checked = true;
+    }
+    // 恢复文本字段
+    if (draft.desc)     document.getElementById('descInput').value     = draft.desc;
+    if (draft.involved) document.getElementById('involvedInput').value = draft.involved;
+    if (draft.time)     document.getElementById('timeInput').value     = draft.time;
+    if (draft.contact)  document.getElementById('contactInput').value  = draft.contact;
+    // 恢复字符计数
+    var dc = document.getElementById('charCount');
+    if (dc) {
+      var len = (draft.desc || '').length;
+      dc.textContent = len;
+      dc.style.color = len > 900 ? '#dc2626' : len > 700 ? '#f59e0b' : '#999';
+    }
+    // 恢复匿名状态
+    if (typeof draft.isAnonymous === 'boolean') {
+      isAnonymous = draft.isAnonymous;
+      var toggle = document.getElementById('anonymousToggle');
+      var text   = document.getElementById('anonymousText');
+      if (isAnonymous) {
+        toggle.classList.add('active');
+        if (text) text.textContent = '匿名提交（推荐，保护您的隐私）';
+      } else {
+        toggle.classList.remove('active');
+        if (text) text.textContent = '实名提交（联系方式仅管理员可见）';
+      }
+    }
+    // 恢复已确认帖子ID
+    if (Array.isArray(draft.confirmedPostIds) && draft.confirmedPostIds.length) {
+      confirmedPostIds = draft.confirmedPostIds.slice();
+      renderConfirmedIds();
+    }
+    // 恢复截图
+    if (Array.isArray(draft.attachedImages) && draft.attachedImages.length) {
+      attachedImages = draft.attachedImages.slice();
+      renderPreviews();
+    }
+    // 恢复角色选择 → 自动显示表单（self 角色必须有 victimRealName 才合法）
+    if (draft.reporterRole) {
+      reporterRole = draft.reporterRole;
+      victimRealName = draft.victimRealName || null;
+      // self 角色但没有真实姓名，说明草稿过期/不完整 → 强制重选
+      if (reporterRole === 'self' && !victimRealName) {
+        reporterRole = null;
+        victimRealName = null;
+        return;
+      }
+      applyVictimNameField();
+      document.getElementById('roleSelect').style.display = 'none';
+      document.getElementById('formContent').style.display = 'block';
+    }
+
+    // 顶部显示恢复提示
+    var msgBox = document.getElementById('msgBox');
+    msgBox.textContent = '📝 已自动恢复上次未完成的举报草稿';
+    msgBox.className = 'msg info';
+    setTimeout(function() { if (msgBox.className.indexOf('info') >= 0) msgBox.style.display = 'none'; }, 4000);
+  }
+
+  // 监听所有字段变化，自动保存草稿
+  ['descInput','involvedInput','timeInput','contactInput'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', saveDraft);
+  });
+  document.querySelectorAll('input[name="bullyType"]').forEach(function(r) {
+    r.addEventListener('change', saveDraft);
+  });
+
+  // 页面加载时恢复草稿
+  restoreDraft();
+
+  // 兜底：没有任何角色时强制隐藏表单，确保一定经过角色选择
+  if (!reporterRole) {
+    document.getElementById('roleSelect').style.display = '';
+    document.getElementById('formContent').style.display = 'none';
+  }
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var pid = params.get('postId');
+    if (pid) {
+      var input = document.getElementById('postIdInput');
+      if (input) {
+        input.value = pid;
+        // 页面加载完成后自动弹出确认框
+        window.addEventListener('load', function() {
+          setTimeout(function() { triggerPostIdConfirm(); }, 300);
+        });
+      }
+    }
+  })();
+
+  // ── 字符计数 ──────────────────────────────────────
+  var descInput = document.getElementById('descInput');
+  var charCount = document.getElementById('charCount');
+  descInput.addEventListener('input', function() {
+    charCount.textContent = this.value.length;
+    charCount.style.color = this.value.length >= 20 ? '#065f46' : '#dc2626';
+  });
+
+  // ── 匿名切换 ──────────────────────────────────────
+  function toggleAnonymous() {
+    isAnonymous = !isAnonymous;
+    var toggle = document.getElementById('anonymousToggle');
+    var text = document.getElementById('anonymousText');
+    if (isAnonymous) {
+      toggle.classList.add('active');
+      text.textContent = '匿名提交（推荐，保护您的隐私）';
+    } else {
+      toggle.classList.remove('active');
+      text.textContent = '实名提交（需填写联系方式）';
+    }
+    saveDraft();
+  }
+  document.getElementById('anonymousToggle').classList.add('active');
+
+  // ── 帖子ID确认弹窗 ────────────────────────────────
+  function triggerPostIdConfirm() {
+    var input = document.getElementById('postIdInput');
+    var val = input.value.trim();
+    if (!val) { input.focus(); return; }
+
+    // 检查重复
+    if (confirmedPostIds.indexOf(val) !== -1) {
+      showMsg('该帖子ID已在证据列表中', 'error');
+      input.value = '';
+      return;
+    }
+
+    // 先渲染加载中骨架
+    var overlay = document.createElement('div');
+    overlay.className = 'postid-confirm-overlay';
+    overlay.innerHTML =
+      '<div class="postid-confirm-box">' +
+        '<div class="confirm-icon">🔍</div>' +
+        '<h3>正在获取帖子内容…</h3>' +
+        '<div class="confirm-loading">' +
+          '<div class="loading-bar"></div>' +
+          '<div class="loading-bar" style="width:70%;margin-top:8px;"></div>' +
+          '<div class="loading-bar" style="width:85%;margin-top:8px;"></div>' +
+        '</div>' +
+        '<div class="confirm-btns" style="margin-top:20px;">' +
+          '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    // 异步拉取帖子内容
+    fetch('/api/posts/' + encodeURIComponent(val))
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        var box = document.querySelector('.postid-confirm-box');
+        if (!box) return;
+        if (!json.ok || !json.data) {
+          // 帖子不存在
+          box.innerHTML =
+            '<div class="confirm-icon">❌</div>' +
+            '<h3>找不到该帖子</h3>' +
+            '<div class="confirm-id">' + escapeHtml(val) + '</div>' +
+            '<p class="confirm-note" style="color:#dc2626;">该帖子ID不存在或已被删除，请核实后重试。</p>' +
+            '<div class="confirm-btns">' +
+              '<button class="btn-confirm-id" onclick="closePostIdConfirm()" style="background:#6b7280;">知道了</button>' +
+            '</div>';
+          return;
+        }
+        var post = json.data;
+        var typeColors = { '吐槽': '#f59e0b', '求助': '#3b82f6', '分享': '#10b981', '表白': '#ec4899', '失物': '#8b5cf6' };
+        var typeColor = typeColors[post.type] || '#6b7280';
+        var contentPreview = (post.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        if (contentPreview.length > 120) contentPreview = contentPreview.slice(0, 120) + '…';
+        box.innerHTML =
+          '<div class="confirm-icon">📌</div>' +
+          '<h3>确认将此帖子加入举报证据？</h3>' +
+          // 帖子预览卡片
+          '<div class="post-preview-card">' +
+            '<div class="post-preview-header">' +
+              '<span class="post-preview-type" style="background:' + typeColor + ';">' + escapeHtml(post.type || '帖子') + '</span>' +
+              '<span class="post-preview-author">' + escapeHtml(post.author || '匿名') + '</span>' +
+            '</div>' +
+            '<div class="post-preview-content">' + contentPreview + '</div>' +
+            '<div class="post-preview-id">ID：' + escapeHtml(val) + '</div>' +
+          '</div>' +
+          '<p class="confirm-note">确认后该帖子将作为证据附加到本次举报中。</p>' +
+          '<div class="confirm-btns">' +
+            '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
+            '<button class="btn-confirm-id" onclick="confirmPostId()">✓ 确认添加</button>' +
+          '</div>';
+      })
+      .catch(function() {
+        var box = document.querySelector('.postid-confirm-box');
+        if (!box) return;
+        box.innerHTML =
+          '<div class="confirm-icon">⚠️</div>' +
+          '<h3>网络错误，无法获取帖子</h3>' +
+          '<div class="confirm-id">' + escapeHtml(val) + '</div>' +
+          '<p class="confirm-note">无法连接到服务器，是否仍要将此ID加入证据？</p>' +
+          '<div class="confirm-btns">' +
+            '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
+            '<button class="btn-confirm-id" onclick="confirmPostId()">仍然添加</button>' +
+          '</div>';
+      });
+  }
+
+  function closePostIdConfirm() {
+    var o = document.querySelector('.postid-confirm-overlay');
+    if (o) o.remove();
+    document.getElementById('postIdInput').value = '';
+  }
+
+  function confirmPostId() {
+    var input = document.getElementById('postIdInput');
+    var val = input.value.trim();
+    if (val) {
+      confirmedPostIds.push(val);
+      renderConfirmedIds();
+      saveDraft();
+    }
+    var o = document.querySelector('.postid-confirm-overlay');
+    if (o) o.remove();
+    input.value = '';
+  }
+
+  function renderConfirmedIds() {
+    var list = document.getElementById('confirmedIdsList');
+    list.innerHTML = '';
+    confirmedPostIds.forEach(function(id, i) {
+      var tag = document.createElement('span');
+      tag.className = 'confirmed-id-tag';
+      tag.innerHTML =
+        '📌 ' + escapeHtml(id) +
+        '<button class="remove-tag" onclick="removeConfirmedId(' + i + ')" title="移除">×</button>';
+      list.appendChild(tag);
+    });
+  }
+
+  function removeConfirmedId(index) {
+    confirmedPostIds.splice(index, 1);
+    renderConfirmedIds();
+    saveDraft();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── 图片上传 ──────────────────────────────────────
+  var imgInput = document.getElementById('imgInput');
+  var uploadArea = document.getElementById('uploadArea');
+  var imgPreviews = document.getElementById('imgPreviews');
+
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#8b6f5e';
+    this.style.background = '#fff8e8';
+  });
+  uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#d4c5a9';
+    this.style.background = '#fffbf0';
+  });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = '#d4c5a9';
+    this.style.background = '#fffbf0';
+    handleFiles(e.dataTransfer.files);
+  });
+  imgInput.addEventListener('change', function() {
+    handleFiles(this.files);
+    this.value = '';
+  });
+
+  function handleFiles(files) {
+    for (var i = 0; i < files.length; i++) {
+      if (attachedImages.length >= MAX_IMAGES) {
+        showMsg('最多只能上传 ' + MAX_IMAGES + ' 张图片', 'error'); return;
+      }
+      var file = files[i];
+      if (!file.type.startsWith('image/')) { showMsg('只能上传图片文件', 'error'); continue; }
+      if (file.size > MAX_SIZE) { showMsg('图片 "' + file.name + '" 超过 2MB 限制', 'error'); continue; }
+      (function(f) {
+        var reader = new FileReader();
+        reader.onload = function(e) { attachedImages.push(e.target.result); renderPreviews(); saveDraft(); };
+        reader.readAsDataURL(f);
+      })(file);
+    }
+  }
+
+  function renderPreviews() {
+    imgPreviews.innerHTML = '';
+    for (var i = 0; i < attachedImages.length; i++) {
+      var div = document.createElement('div');
+      div.className = 'img-preview-item';
+      div.innerHTML = '<img src="' + attachedImages[i] + '" alt="证据' + (i+1) + '">' +
+        '<button class="remove-btn" onclick="removeImage(' + i + ')">×</button>';
+      imgPreviews.appendChild(div);
+    }
+    uploadArea.style.display = (attachedImages.length >= MAX_IMAGES) ? 'none' : '';
+  }
+
+  function removeImage(index) {
+    attachedImages.splice(index, 1);
+    renderPreviews();
+    saveDraft();
+  }
+
+  function showMsg(text, type) {
+    var box = document.getElementById('msgBox');
+    box.textContent = text;
+    box.className = 'msg ' + type;
+    if (type === 'success') setTimeout(function() { box.style.display = 'none'; }, 5000);
+  }
+
+  // ── 提交 ──────────────────────────────────────────
+  function doSubmit() {
+    if (!reporterRole) { showMsg('请先选择您的身份', 'error'); return; }
+    var bullyType = document.querySelector('input[name="bullyType"]:checked');
+    if (!bullyType) { showMsg('请选择霸凌类型', 'error'); return; }
+
+    var desc = document.getElementById('descInput').value.trim();
+    if (desc.length < 20) { showMsg('事件描述至少20个字', 'error'); return; }
+    if (desc.length > 1000) { showMsg('事件描述最多1000字', 'error'); return; }
+
+    var contact = document.getElementById('contactInput').value.trim();
+    if (!isAnonymous && !contact) { showMsg('实名提交时请填写联系方式', 'error'); return; }
+
+    // 若输入框还有未确认的ID，给出提示
+    var pendingId = document.getElementById('postIdInput').value.trim();
+    if (pendingId) {
+      showMsg('检测到未确认的帖子ID，请点击「＋ 添加」确认后再提交', 'error');
+      document.getElementById('postIdInput').focus();
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+
+    var body = {
+      reporterRole: reporterRole,
+      victimName: (reporterRole === 'self' && victimRealName) ? victimRealName : null,
+      bullyType: bullyType.value,
+      description: desc,
+      involved: document.getElementById('involvedInput').value.trim(),
+      postIds: confirmedPostIds.slice(),          // 已确认帖子ID列表
+      location: confirmedPostIds.length > 0
+                  ? confirmedPostIds.join(', ')   // 兼容旧location字段
+                  : '',
+      time: document.getElementById('timeInput').value.trim(),
+      contact: isAnonymous ? '' : contact,
+      anonymous: isAnonymous,
+      images: attachedImages.slice()
+    };
+
+    fetch('/api/bullying-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.ok) {
+          _formSubmitted = true;  // 提交成功，解除离开拦截
+          clearDraft();           // 清除草稿
+          showMsg('✅ 举报已提交，管理员将尽快处理！', 'success');
+          // 清空表单
+          document.querySelectorAll('input[name="bullyType"]').forEach(function(r) { r.checked = false; });
+          document.getElementById('descInput').value = '';
+          document.getElementById('involvedInput').value = '';
+          document.getElementById('postIdInput').value = '';
+          document.getElementById('timeInput').value = '';
+          document.getElementById('contactInput').value = '';
+          charCount.textContent = '0';
+          charCount.style.color = '#dc2626';
+          confirmedPostIds = [];
+          renderConfirmedIds();
+          attachedImages = [];
+          renderPreviews();
+          isAnonymous = true;
+          document.getElementById('anonymousToggle').classList.add('active');
+          document.getElementById('anonymousText').textContent = '匿名提交（推荐，保护您的隐私）';
+          // 重置角色选择
+          reporterRole = null;
+          document.getElementById('formContent').style.display = 'none';
+          document.getElementById('roleSelect').style.display = 'block';
+          setTimeout(function() { document.getElementById('msgBox').style.display = 'none'; }, 6000);
+        } else {
+          showMsg('提交失败：' + (json.msg || '未知错误'), 'error');
+          btn.disabled = false;
+          btn.textContent = '🛡️ 提交报告';
+        }
+      })
+      .catch(function(e) {
+        showMsg('网络错误：' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '🛡️ 提交报告';
+      });
+  }
+</script>
+</body>
+</html>
