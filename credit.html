@@ -137,6 +137,34 @@
       color: #8a7a6a;
     }
 
+    /* ===== 底部说明 ===== */
+    .credit-disclaimer {
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 30px auto 20px;
+      max-width: 600px;
+      font-size: 13px;
+      color: #5a4a3a;
+      line-height: 2;
+    }
+    .credit-disclaimer .disclaimer-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #4a3a2a;
+    }
+    .credit-disclaimer .disclaimer-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .credit-disclaimer .disclaimer-item:last-child {
+      margin-bottom: 0;
+    }
+
     /* ===== 历史记录 ===== */
     .section-title {
       font-size: 16px;
@@ -272,6 +300,16 @@
       <div id="creditContent">
         <div class="loading"><div class="spinner"></div>加载中…</div>
       </div>
+    </div>
+
+    <!-- 底部说明 -->
+    <div class="credit-disclaimer">
+      <div class="disclaimer-title">📌 关于 Credit</div>
+      <div class="disclaimer-item">💬 Credit 在司法实践中拥有商品属性，不具备与法律货币等同的法律效力。</div>
+      <div class="disclaimer-item">💱 汇率参考：1 CNY = 100 Credit</div>
+      <div class="disclaimer-item">🎁 Credit 可通过每日签到、卡密兑换等方式获取。</div>
+      <div class="disclaimer-item">⚠️ Credit 仅限本平台使用，不可转让、提现或进行任何形式的现金交易。</div>
+      <div class="disclaimer-item">🔒 请妥善保管您的账号信息，因个人泄露导致的 Credit 损失由用户自行承担。</div>
     </div>
   </div>
 

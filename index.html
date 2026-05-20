@@ -1689,6 +1689,18 @@
         if (json.ok) {
           return json.data;
         }
+        if (json.bullying) {
+          // 触发反霸凌机制 → 仅允许返回编辑
+          return new Promise((resolve) => {
+            showBullyingWarning(() => {
+              const inp = document.getElementById('noteInput');
+              inp.value = content;
+              inp.focus();
+              document.getElementById('modalOverlay').classList.add('show');
+              resolve(null);
+            });
+          });
+        }
         if (json.warning) {
           // 有敏感词 → 弹窗让用户选择
           return new Promise((resolve) => {
@@ -2365,6 +2377,30 @@
       };
     }
 
+    // 反霸凌警告弹屏（仅返回编辑，不可强制发送）
+    function showBullyingWarning(onEdit) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+      overlay.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+          <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;">🛡️ 反欺凌机制已触发</h3>
+          <p style="margin:16px 0;color:#b71c1c;font-size:15px;line-height:1.8;">
+            你已触发反欺凌机制，本贴中似乎存在被霸凌者信息。<br>
+            校园墙对于一切霸凌行为零容忍！<br>
+            请你删除相关内容，再发送本贴！
+          </p>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
+            <button id="btnBullyingEdit" style="padding:12px 36px;background:#c62828;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(198,40,40,0.35);">返回编辑</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#btnBullyingEdit').onclick = () => {
+        overlay.remove();
+        if (typeof onEdit === 'function') onEdit();
+      };
+    }
+
     // 真实在线人数统计
     async function refreshStats() {
       try {
@@ -2945,6 +2981,14 @@
           showToast('发送成功');
           await loadDiscussionComments(currentDiscussionId);
           await loadDiscussions();
+          return;
+        }
+        if (json.bullying) {
+          // 触发反霸凌机制 → 仅允许返回编辑
+          showBullyingWarning(() => {
+            document.getElementById('discussionCommentInput').value = content;
+            document.getElementById('discussionCommentInput').focus();
+          });
           return;
         }
         if (json.warning) {

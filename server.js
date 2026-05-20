@@ -978,7 +978,7 @@ app.get('/api/user/me', (req, res) => {
 });
 
 // ===== 签到 =====
-const CHECKIN_REWARD = 1; // 每日签到奖励 1 Credit
+const CHECKIN_REWARD = 100; // 每日签到奖励 100 Credit
 
 // 获取签到状态
 app.get('/api/user/checkin-status', (req, res) => {
@@ -1919,7 +1919,7 @@ app.post('/api/posts', (req, res) => {
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
-      warning: true,
+      bullying: true,
       warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
@@ -2046,7 +2046,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
-      warning: true,
+      bullying: true,
       warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
@@ -2692,7 +2692,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
-      warning: true,
+      bullying: true,
       warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
