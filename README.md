@@ -9,6 +9,14 @@
 
 ---
 
+## 📷 预览
+
+| 前台主页 | 帖子详情 | 用户主页 | 管理后台 |
+|:---:|:---:|:---:|:---:|
+| ![index](assets/screenshot_index.png) | ![post](assets/screenshot_post.png) | ![user](assets/screenshot_user.png) | ![admin](assets/screenshot_admin.png) |
+
+---
+
 ## ✨ 功能特色
 
 ### 前台功能
