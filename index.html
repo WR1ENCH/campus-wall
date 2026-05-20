@@ -1140,6 +1140,21 @@
                  placeholder="输入校园墙账号密码" maxlength="20"
                  onkeydown="if(event.key==='Enter') doZhixueLogin()">
         </div>
+        <!-- 智学登录验证码 -->
+        <div class="user-login-field" id="zhixueCaptchaField">
+          <label class="user-login-label" for="zhixueCaptchaInput">人机验证</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="user-login-input" id="zhixueCaptchaInput"
+                   placeholder="输入验证码" maxlength="6"
+                   style="flex:1;"
+                   onkeydown="if(event.key==='Enter') doZhixueLogin()">
+            <div id="zhixueCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
+                 onclick="refreshZhixueCaptcha()" title="点击刷新验证码">
+              <img id="zhixueCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+            </div>
+          </div>
+          <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;">💡 点击验证码图片可刷新</div>
+        </div>
       </div>
 
       <div class="user-login-error" id="userLoginError"></div>
@@ -1191,6 +1206,34 @@
     </div>
   </div>
 
+  <!-- ===== 发帖验证码弹窗 ===== -->
+  <div class="user-login-overlay" id="postCaptchaOverlay">
+    <div class="user-login-box">
+      <h3>🤖 人机验证</h3>
+      <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
+        发帖频率过高，请先完成验证
+      </div>
+      <div class="user-login-field">
+        <label class="user-login-label" for="postCaptchaInput">验证码</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="user-login-input" id="postCaptchaInput"
+                 placeholder="输入验证码" maxlength="6"
+                 style="flex:1;"
+                 onkeydown="if(event.key==='Enter') doSubmitPostCaptcha()">
+          <div id="postCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
+               onclick="refreshPostCaptcha()" title="点击刷新验证码">
+            <img id="postCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+          </div>
+        </div>
+        <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;">💡 点击验证码图片可刷新</div>
+      </div>
+      <div class="user-login-actions">
+        <button class="user-login-skip" onclick="hidePostCaptchaModal()">取消</button>
+        <button class="user-login-confirm" onclick="doSubmitPostCaptcha()">确认</button>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">
     📌 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#ffd6d6;text-decoration:underline;font-weight:600;">🛡️ 报告霸凌事件</a>
   </div>
@@ -1208,6 +1251,7 @@
 
     // ===== 用户状态 =====
     let currentUser = null;  // { nickname, avatar } 或 null（只读游客）
+    let pendingPostData = null; // 发帖频率过高时，保存待提交的帖子数据
 
     // ===== 用户登录弹窗控制 =====
     let userLoginTab = 'login'; // 当前 Tab
@@ -1237,6 +1281,7 @@
         showAgreementPopup();
       } else {
         setTimeout(() => document.getElementById('zhixueLoginUsername').focus(), 50);
+        refreshZhixueCaptcha();
       }
     }
 
@@ -1326,6 +1371,18 @@
         if (json.ok) {
           localStorage.setItem('login_captcha_id', json.data.id);
           document.getElementById('loginCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+        }
+      } catch {}
+    }
+
+    // 智学登录验证码刷新
+    async function refreshZhixueCaptcha() {
+      try {
+        const resp = await fetch('/api/captcha');
+        const json = await resp.json();
+        if (json.ok) {
+          localStorage.setItem('zhixue_captcha_id', json.data.id);
+          document.getElementById('zhixueCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
         }
       } catch {}
     }
@@ -1454,15 +1511,21 @@
     async function doZhixueLogin() {
       const zhixueUsername = document.getElementById('zhixueLoginUsername').value.trim();
       const password = document.getElementById('zhixueLoginPassword').value;
+      const captchaId = localStorage.getItem('zhixue_captcha_id');
+      const captchaText = document.getElementById('zhixueCaptchaInput').value.trim();
       if (!zhixueUsername || !password) {
         document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
+        return;
+      }
+      if (!captchaText) {
+        document.getElementById('userLoginError').textContent = '请输入验证码';
         return;
       }
       try {
         const res = await fetch('/api/user/zhixue-login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ zhixueUsername, password })
+          body: JSON.stringify({ zhixueUsername, password, captchaId, captchaText })
         });
         const json = await res.json();
         if (json.ok) {
@@ -1480,9 +1543,12 @@
           }
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '登录失败';
+          refreshZhixueCaptcha();
+          document.getElementById('zhixueCaptchaInput').value = '';
         }
       } catch {
         document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
+        refreshZhixueCaptcha();
       }
     }
 
@@ -1721,6 +1787,12 @@
         if (json.ok) {
           return json.data;
         }
+        if (json.needCaptcha) {
+          // 发帖频率过高 → 弹出验证码弹窗
+          pendingPostData = { type, content, sensitiveForce };
+          showPostCaptchaModal();
+          return null;
+        }
         if (json.bullying) {
           // 触发反霸凌机制 → 仅允许返回编辑
           return new Promise((resolve) => {
@@ -1757,6 +1829,73 @@
         console.error('发帖失败:', e);
       }
       return null;
+    }
+
+    // ===== 发帖验证码弹窗 =====
+    async function refreshPostCaptcha() {
+      try {
+        const resp = await fetch('/api/captcha');
+        const json = await resp.json();
+        if (json.ok) {
+          localStorage.setItem('post_captcha_id', json.data.id);
+          document.getElementById('postCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+        }
+      } catch {}
+    }
+
+    async function showPostCaptchaModal() {
+      document.getElementById('postCaptchaOverlay').classList.add('show');
+      document.getElementById('postCaptchaInput').value = '';
+      await refreshPostCaptcha();
+    }
+
+    function hidePostCaptchaModal() {
+      document.getElementById('postCaptchaOverlay').classList.remove('show');
+      pendingPostData = null;
+    }
+
+    async function doSubmitPostCaptcha() {
+      const captchaText = document.getElementById('postCaptchaInput').value.trim();
+      if (!captchaText) {
+        showToast('⚠️ 请输入验证码');
+        return;
+      }
+      if (!pendingPostData) {
+        hidePostCaptchaModal();
+        return;
+      }
+      const { type, content, sensitiveForce } = pendingPostData;
+      const captchaId = localStorage.getItem('post_captcha_id');
+      try {
+        const res = await fetch(API + '/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type, content,
+            avatar: currentUser.avatar || '🙈',
+            author: currentUser.nickname,
+            userId: currentUser.id,
+            sensitiveForce,
+            captchaId,
+            captchaText
+          })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          hidePostCaptchaModal();
+          showToast('✅ 发帖成功！');
+          loadPosts();
+        } else if (json.needCaptcha) {
+          showToast('⚠️ 验证码错误');
+          refreshPostCaptcha();
+          document.getElementById('postCaptchaInput').value = '';
+        } else {
+          showToast('⚠️ ' + (json.msg || '发帖失败'));
+          hidePostCaptchaModal();
+        }
+      } catch {
+        showToast('⚠️ 网络错误');
+      }
     }
 
     async function likePost(id) {

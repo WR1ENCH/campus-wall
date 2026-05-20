@@ -767,6 +767,20 @@ function verifyUserToken(token) {
 
 // ===== 人机验证（SVG 验证码）=====
 const captchaStore = new Map();
+// 发帖频率限制（5分钟内最多发3篇，超出需验证码）
+const postRateLimit = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, timestamps] of postRateLimit) {
+    const filtered = timestamps.filter(ts => now - ts < 600000);
+    if (filtered.length === 0) {
+      postRateLimit.delete(userId);
+    } else {
+      postRateLimit.set(userId, filtered);
+    }
+  }
+}, 60000);
+
 // 每分钟清理过期验证码（5分钟超时）
 setInterval(() => {
   const now = Date.now();
@@ -896,9 +910,16 @@ app.post('/api/user/login', (req, res) => {
 
 // 智学网账号登录（通过已认证的智学账号登录校园墙）
 app.post('/api/user/zhixue-login', (req, res) => {
-  const { zhixueUsername, password } = req.body;
+  const { zhixueUsername, password, captchaId, captchaText } = req.body;
   const ip = req.ip || req.headers['x-forwarded-for'] || '-';
   const ua = req.headers['user-agent'] || '-';
+
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId); // 一次性使用
 
   if (!zhixueUsername || !password) {
     addLoginLog('user', null, false, ip, ua);
@@ -942,7 +963,9 @@ app.post('/api/user/zhixue-login', (req, res) => {
       nickname: user.nickname,
       avatar: user.avatar
     }
-  });});
+  });
+});
+;
 
 // 找回密码（通过已认证的智学网账号）
 app.post('/api/user/forgot-password', (req, res) => {
@@ -1894,9 +1917,27 @@ app.get('/api/posts/:id', (req, res) => {
 
   // 发布新帖子
 app.post('/api/posts', (req, res) => {
-  const { type, content, avatar, author, userId } = req.body;
+  const { type, content, avatar, author, userId, captchaId, captchaText, sensitiveForce } = req.body;
 
-  if (!content || !content.trim()) {
+  
+// 发帖频率检测（5分钟内最多3篇，超出需验证码）
+if (userId) {
+  const now = Date.now();
+  const timestamps = postRateLimit.get(userId) || [];
+  const recentPosts = timestamps.filter(ts => now - ts < 300000);
+  if (recentPosts.length >= 3) {
+    const entry = captchaStore.get(captchaId);
+    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+      return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
+    }
+    // 验证码通过，清除限制，重新计时
+    postRateLimit.delete(userId);
+    captchaStore.delete(captchaId);
+  }
+  // 记录本次发帖
+  postRateLimit.set(userId, [...recentPosts.slice(-19), now]); // 保留最近20条
+}
+if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '内容不能为空' });
   }
   if (content.length > CONTENT_MAX_LENGTH) {

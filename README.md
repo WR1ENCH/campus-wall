@@ -19,22 +19,28 @@
 - 👤 **用户主页** — 每个用户拥有独立主页，展示个人资料和发布的帖子
 - 📝 **资料编辑** — 支持修改昵称、上传头像（JPG/PNG 等格式，500KB 以内）
 - 🎓 **同学认证** — 支持智学网账号认证或手动提交证明材料，管理员后台审核
+- 💬 **讨论区** — 支持创建话题、嵌套评论、举报管理（最多3个活跃话题）
+- 🔒 **智学登录** — 已认证智学账号可通过账号密码快速登录校园墙
 - 📱 **响应式设计** — 完美适配手机和电脑端
 
 ### 后台管理
 - 📊 **数据看板** — 实时统计帖子总数、今日/本周发帖、累计点赞
 - 📈 **可视化图表** — 近7天趋势柱状图、板块分布条形图
-- 👥 **用户管理** — 用户列表、封禁/解封、密码重置
+- 👥 **用户管理** — 用户列表、封禁/解封、密码重置、用户详情查看
 - 🔐 **管理员系统** — 首次访问时设置管理员、支持修改管理员密码（需验证旧密码）
 - 🚩 **举报处理** — 举报列表、帖子/评论删除、用户警告
 - 🎓 **同学认证审核** — 查看用户提交的认证信息（智学网账号或证明材料），支持通过/拒绝
 - 🗑️ **批量操作** — 批量选择、批量删除帖子
+- 💬 **讨论区管理** — 管理讨论话题、查看/删除评论
+- 🚫 **敏感词管理** — 支持手动添加/删除违禁词，自动过滤并记录举报
 
 ### 安全特性
 - 🔑 **PBKDF2 密码哈希** — 100,000次迭代，防暴力破解
 - 🎫 **Token 认证** — 24小时自动过期，安全可靠
 - 🛡️ **XSS 防护** — 内容自动转义，防止脚本注入
 - 🚫 **特殊字符过滤** — 全局禁用特殊符号输入
+- 🤖 **人机验证** — 注册、智学登录、短时间频繁发帖自动触发图形验证码
+- ⏱️ **发帖频率限制** — 5分钟内最多发布3帖，超出需完成验证码
 
 ---
 
@@ -117,10 +123,18 @@ campus-wall/
 | GET | `/api/admin/users` | 用户列表 |
 | PUT | `/api/admin/users/:id/ban` | 封禁/解封用户 |
 | POST | `/api/admin/users/:id/reset-pwd` | 重置用户密码 |
+| GET | `/api/admin/user/:id/detail` | 用户详情（基本信息、认证、历史发帖、举报记录） |
 | GET | `/api/admin/reports` | 举报列表 |
 | PUT | `/api/admin/reports/:id` | 处理举报 |
 | GET | `/api/admin/zhixue-pending` | 同学认证待审核列表 |
 | POST | `/api/admin/zhixue-review` | 审核同学认证（通过/拒绝） |
+| GET | `/api/admin/sensitive-words` | 获取违禁词列表 |
+| POST | `/api/admin/sensitive-words` | 添加违禁词 |
+| DELETE | `/api/admin/sensitive-words` | 删除违禁词 |
+| GET | `/api/admin/discussions` | 讨论区列表 |
+| DELETE | `/api/admin/discussions/:id` | 删除讨论话题 |
+| GET | `/api/admin/discussion-comments` | 评论列表 |
+| DELETE | `/api/admin/discussion-comments/:id` | 删除评论 |
 
 ### 用户接口（需登录）
 | 方法 | 路径 | 说明 |
@@ -129,6 +143,24 @@ campus-wall/
 | PATCH | `/api/user/me` | 更新个人资料（昵称、头像） |
 | POST | `/api/user/bind-zhixue` | 提交同学认证（智学网/手动认证） |
 | DELETE | `/api/user/bind-zhixue` | 解除同学认证 |
+| POST | `/api/user/zhixue-login` | 智学账号登录（需验证码） |
+| POST | `/api/user/forgot-password` | 通过智学认证重置密码 |
+
+### 公开接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/captcha` | 获取图形验证码 |
+| GET | `/api/posts` | 获取帖子列表 |
+| POST | `/api/posts` | 发布新帖子 |
+| POST | `/api/posts/:id/like` | 点赞帖子 |
+| POST | `/api/posts/:id/comments` | 评论帖子 |
+| GET | `/api/users/:id` | 获取用户信息 |
+| GET | `/api/users/:id/posts` | 获取用户发布的帖子 |
+| POST | `/api/report` | 提交举报 |
+| GET | `/api/discussions` | 获取讨论列表 |
+| POST | `/api/discussions` | 创建讨论话题 |
+| GET | `/api/discussions/:id/comments` | 获取讨论评论 |
+| POST | `/api/discussions/:id/comments` | 发布讨论评论 |
 
 ---
 
