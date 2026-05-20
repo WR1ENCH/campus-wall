@@ -1109,6 +1109,21 @@
           <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:3px;cursor:pointer;"
                onclick="showForgotPwdModal()">🔑 忘记密码？</div>
         </div>
+        <!-- 验证码 -->
+        <div class="user-login-field">
+          <label class="user-login-label">验证码</label>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input class="user-login-input" id="loginCaptchaInput"
+                   placeholder="输入验证码" maxlength="6"
+                   style="flex:1;"
+                   onkeydown="if(event.key==='Enter') doUserLogin()">
+            <div id="loginCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
+                 onclick="refreshLoginCaptcha()" title="点击刷新验证码">
+              <img id="loginCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+            </div>
+          </div>
+          <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;">💡 点击验证码图片可刷新</div>
+        </div>
       </div>
 
       <!-- 智学登录表单 -->
@@ -1215,6 +1230,7 @@
       const popup = document.getElementById('agreePopupOverlay');
       if (popup) popup.remove();
       if (tab === 'login') {
+        refreshLoginCaptcha();
         setTimeout(() => document.getElementById('loginUsernameInput').focus(), 50);
       } else if (tab === 'register') {
         // 切换到注册 → 先弹出协议确认窗口
@@ -1299,6 +1315,19 @@
       document.getElementById('userLoginError').textContent = '';
       switchLoginTab('login');
       document.getElementById('loginReadonlyTip').style.display = fromCompose ? 'block' : 'none';
+      refreshLoginCaptcha();
+    }
+
+    // 登录验证码刷新
+    async function refreshLoginCaptcha() {
+      try {
+        const resp = await fetch('/api/captcha');
+        const json = await resp.json();
+        if (json.ok) {
+          localStorage.setItem('login_captcha_id', json.data.id);
+          document.getElementById('loginCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+        }
+      } catch {}
     }
 
     function hideLoginModal() {
@@ -1391,10 +1420,12 @@
       }
       if (hasSpecialChars(username)) { showToast('⚠️ 账号包含特殊字符，请重新输入'); return; }
       try {
+        const captchaId = localStorage.getItem('login_captcha_id');
+        const captchaText = document.getElementById('loginCaptchaInput').value.trim();
         const res = await fetch('/api/user/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password, captchaId, captchaText })
         });
         const json = await res.json();
         if (json.ok) {
@@ -1413,6 +1444,7 @@
           }
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '登录失败';
+          refreshLoginCaptcha();
         }
       } catch {
         document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';

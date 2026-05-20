@@ -843,7 +843,7 @@ app.post('/api/user/register', (req, res) => {
 
 // 登录
 app.post('/api/user/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, captchaId, captchaText } = req.body;
   const ip = req.ip || req.headers['x-forwarded-for'] || '-';
   const ua = req.headers['user-agent'] || '-';
 
@@ -851,6 +851,12 @@ app.post('/api/user/login', (req, res) => {
     addLoginLog('user', null, false, ip, ua);
     return res.json({ ok: false, msg: '请输入账号和密码' });
   }
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId); // 一次性使用
 
   const users = readUsers();
   const user = users.find(u => u.username === username);
