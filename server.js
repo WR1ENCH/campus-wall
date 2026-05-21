@@ -3514,7 +3514,7 @@ app.get('/api/qa/questions/:id', (req, res) => {
 // 发布问题
 app.post('/api/qa/questions', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
-  const { title, content, bounty = 0, deadline, images = [] } = req.body;
+  const { title, content, bounty = 0, images = [], sensitiveForce = false } = req.body;
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
   if ((content || '').length > 2000) return res.json({ ok: false, msg: '内容最多2000个字' });
@@ -3522,6 +3522,18 @@ app.post('/api/qa/questions', (req, res) => {
   if (b < 0) return res.json({ ok: false, msg: '悬赏不能为负数' });
   if (!Number.isInteger(b)) return res.json({ ok: false, msg: '悬赏必须为整数' });
   if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+
+  // 敏感词检测
+  const checkText = (title.trim() + ' ' + (content || '')).trim();
+  const sensitiveWords = checkSensitive(checkText);
+  if (sensitiveWords.length > 0 && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
+  }
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(checkText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+  }
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
@@ -3553,7 +3565,7 @@ app.post('/api/qa/questions', (req, res) => {
     content: (content || '').trim(),
     images,
     bounty: b,
-    deadline: deadline || null,
+    deadline: null,
     status: 'open', // open | accepted | expired
     acceptedAnswerId: null,
     createdAt: new Date().toISOString(),
@@ -3567,10 +3579,21 @@ app.post('/api/qa/questions', (req, res) => {
 // 回答问题
 app.post('/api/qa/questions/:id/answers', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
-  const { content, images = [] } = req.body;
+  const { content, images = [], sensitiveForce = false } = req.body;
   if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '回答至少2个字' });
   if (content.length > 2000) return res.json({ ok: false, msg: '回答最多2000字' });
   if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
+  if (sensitiveWords.length > 0 && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
+  }
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+  }
 
   const questions = readQAQuestions();
   const q = questions.find(x => x.id === req.params.id && !x.deleted);

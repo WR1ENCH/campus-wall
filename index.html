@@ -1297,11 +1297,6 @@
                    style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;">
             <div id="qaAskBountyHint" style="font-size:11px;color:#aaa;margin-top:2px;">当前余额：加载中...</div>
           </div>
-          <div style="flex:1;min-width:160px;">
-            <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:4px;">⏰ 截止时间（选填）</label>
-            <input id="qaAskDeadline" type="datetime-local"
-                   style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;">
-          </div>
         </div>
         <div style="margin-bottom:14px;">
           <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:6px;">🖼 附图（最多3张，每张≤2MB）</label>
@@ -3013,9 +3008,6 @@
         tabEl && tabEl.classList.add('active');
         // 显示当前余额
         if (currentUser) document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
-        // 设置截止时间最小值为现在
-        const minDt = new Date(Date.now() + 60 * 60 * 1000);
-        document.getElementById('qaAskDeadline').min = minDt.toISOString().slice(0, 16);
       } else if (tab === 'list') {
         document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
         qaCurrentPage = 1;
@@ -3242,11 +3234,10 @@
     }
 
     // 发布问题
-    async function submitQAQuestion() {
+    async function submitQAQuestion(sensitiveForce = false) {
       const title = document.getElementById('qaAskTitle').value.trim();
       const content = document.getElementById('qaAskContent').value.trim();
       const bounty = parseInt(document.getElementById('qaAskBounty').value) || 0;
-      const deadline = document.getElementById('qaAskDeadline').value;
       const errEl = document.getElementById('qaAskError');
       errEl.style.display = 'none';
 
@@ -3254,13 +3245,12 @@
       if (!title || title.length < 2) return showErr('标题至少2个字');
       if (bounty < 0) return showErr('悬赏不能为负数');
       if (bounty > 0 && bounty > (currentUser.credit || 0)) return showErr('Credits不足，当前余额：' + (currentUser.credit || 0));
-      if (deadline && new Date(deadline) <= new Date()) return showErr('截止时间必须在未来');
 
       try {
         const res = await fetch('/api/qa/questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': currentUser.token },
-          body: JSON.stringify({ title, content, bounty, deadline: deadline || null, images: qaImages_ask })
+          body: JSON.stringify({ title, content, bounty, images: qaImages_ask, sensitiveForce })
         });
         const json = await res.json();
         if (json.ok) {
@@ -3271,12 +3261,18 @@
           document.getElementById('qaAskTitle').value = '';
           document.getElementById('qaAskContent').value = '';
           document.getElementById('qaAskBounty').value = '0';
-          document.getElementById('qaAskDeadline').value = '';
           qaImages_ask = [];
           renderQAImgList('qaAskImgList', 'qaAskImgInput', qaImages_ask, 'ask');
           document.getElementById('qaAskTitleCount').textContent = '0';
           document.getElementById('qaAskContentCount').textContent = '0';
           switchQATab('list');
+        } else if (json.warning) {
+          showSensitiveWarning(
+            () => { /* 返回编辑：表单内容保持不变，用户自行修改 */ },
+            () => { submitQAQuestion(true); }
+          );
+        } else if (json.bullying) {
+          showBullyingWarning(() => {});
         } else {
           showErr(json.msg || '发布失败');
         }
@@ -3284,20 +3280,27 @@
     }
 
     // 提交回答
-    async function submitQAAnswer(qid) {
+    async function submitQAAnswer(qid, sensitiveForce = false) {
       const content = document.getElementById('qaAnswerInput').value.trim();
       if (!content || content.length < 2) { showToast('⚠️ 回答至少2个字'); return; }
       try {
         const res = await fetch('/api/qa/questions/' + qid + '/answers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': currentUser.token },
-          body: JSON.stringify({ content, images: qaImages_answer })
+          body: JSON.stringify({ content, images: qaImages_answer, sensitiveForce })
         });
         const json = await res.json();
         if (json.ok) {
           showToast('✅ 回答已提交！');
           qaImages_answer = [];
           loadQADetail(qid);
+        } else if (json.warning) {
+          showSensitiveWarning(
+            () => { document.getElementById('qaAnswerInput').focus(); },
+            () => { submitQAAnswer(qid, true); }
+          );
+        } else if (json.bullying) {
+          showBullyingWarning(() => { document.getElementById('qaAnswerInput').focus(); });
         } else {
           showToast('⚠️ ' + (json.msg || '提交失败'));
         }
