@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
@@ -1950,7 +1950,6 @@ if (!content || !content.trim()) {
   }
 
   // 敏感词检测（sensitiveForce=true 时跳过检查，但后续仍会生成举报）
-  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
 
@@ -3513,8 +3512,8 @@ app.get('/api/qa/questions/:id', (req, res) => {
 });
 
 // 发布问题
-app.post('/api/qa/questions', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.post('/api/qa/questions', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const { title, content, bounty = 0, deadline, images = [] } = req.body;
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
@@ -3566,8 +3565,8 @@ app.post('/api/qa/questions', requireUserToken, (req, res) => {
 });
 
 // 回答问题
-app.post('/api/qa/questions/:id/answers', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.post('/api/qa/questions/:id/answers', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const { content, images = [] } = req.body;
   if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '回答至少2个字' });
   if (content.length > 2000) return res.json({ ok: false, msg: '回答最多2000字' });
@@ -3610,8 +3609,8 @@ app.post('/api/qa/questions/:id/answers', requireUserToken, (req, res) => {
 });
 
 // 点赞回答
-app.post('/api/qa/answers/:id/like', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.post('/api/qa/answers/:id/like', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const answers = readQAAnswers();
   const idx = answers.findIndex(a => a.id === req.params.id && !a.deleted);
   if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
@@ -3632,8 +3631,8 @@ app.post('/api/qa/answers/:id/like', requireUserToken, (req, res) => {
 });
 
 // 采纳回答（提问者专用）
-app.post('/api/qa/questions/:qid/accept/:aid', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const questions = readQAQuestions();
   const qIdx = questions.findIndex(x => x.id === req.params.qid && !x.deleted);
   if (qIdx === -1) return res.json({ ok: false, msg: '问题不存在' });
@@ -3662,8 +3661,8 @@ app.post('/api/qa/questions/:qid/accept/:aid', requireUserToken, (req, res) => {
 });
 
 // 删除问题（本人或管理员）
-app.delete('/api/qa/questions/:id', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.delete('/api/qa/questions/:id', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const questions = readQAQuestions();
   const idx = questions.findIndex(x => x.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
@@ -3678,8 +3677,8 @@ app.delete('/api/qa/questions/:id', requireUserToken, (req, res) => {
 });
 
 // 删除回答（本人）
-app.delete('/api/qa/answers/:id', requireUserToken, (req, res) => {
-  const session = req.userSession;
+app.delete('/api/qa/answers/:id', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const answers = readQAAnswers();
   const idx = answers.findIndex(a => a.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
@@ -3726,3 +3725,5 @@ app.listen(PORT, () => {
   console.log(`  → http://localhost:${PORT}/admin.html`);
   console.log(`\n  🔐 超级管理员账号: wr1Ench / cai091226\n`);
 });
+
+

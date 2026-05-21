@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -3259,7 +3259,7 @@
       try {
         const res = await fetch('/api/qa/questions', {
           method: 'POST',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'Authorization': 'Bearer ' + currentUser.token }),
+          headers: { 'Content-Type': 'application/json', 'x-user-token': currentUser.token },
           body: JSON.stringify({ title, content, bounty, deadline: deadline || null, images: qaImages_ask })
         });
         const json = await res.json();
@@ -3290,7 +3290,7 @@
       try {
         const res = await fetch('/api/qa/questions/' + qid + '/answers', {
           method: 'POST',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'Authorization': 'Bearer ' + currentUser.token }),
+          headers: { 'Content-Type': 'application/json', 'x-user-token': currentUser.token },
           body: JSON.stringify({ content, images: qaImages_answer })
         });
         const json = await res.json();
@@ -3310,7 +3310,7 @@
       try {
         const res = await fetch('/api/qa/answers/' + aid + '/like', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+          headers: { 'x-user-token': currentUser.token }
         });
         const json = await res.json();
         if (json.ok) {
@@ -3328,7 +3328,7 @@
       try {
         const res = await fetch('/api/qa/questions/' + qid + '/accept/' + aid, {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+          headers: { 'x-user-token': currentUser.token }
         });
         const json = await res.json();
         if (json.ok) {
@@ -3346,7 +3346,7 @@
       try {
         const res = await fetch('/api/qa/questions/' + qid, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+          headers: { 'x-user-token': currentUser.token }
         });
         const json = await res.json();
         if (json.ok) {
@@ -3364,7 +3364,7 @@
       try {
         const res = await fetch('/api/qa/answers/' + aid, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+          headers: { 'x-user-token': currentUser.token }
         });
         const json = await res.json();
         if (json.ok) {
