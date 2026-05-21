@@ -3496,6 +3496,29 @@ app.get('/api/qa/questions', (req, res) => {
   res.json({ ok: true, data: result, total, page: Number(page), limit: Number(limit) });
 });
 
+// 获取我的提问
+app.get('/api/qa/my-questions', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  const questions = readQAQuestions().filter(q => q.userId === session.id && !q.deleted);
+  const answers = readQAAnswers();
+  const result = questions.map(q => {
+    const qaList = answers.filter(a => a.questionId === q.id && !a.deleted);
+    const remainingBounty = Math.max(0, (q.bounty || 0) - (q.distributedCredits || 0));
+    return {
+      ...q,
+      answerCount: qaList.length,
+      remainingBounty,
+      answers: qaList.map(a => ({ id: a.id, author: a.author, avatar: a.avatar, content: a.content, likes: a.likes, reward: a.reward || 0, createdAt: a.createdAt }))
+    };
+  });
+  result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: result });
+});
+
 // 获取单个问题详情（含回答）
 app.get('/api/qa/questions/:id', (req, res) => {
   settleExpiredQuestions();
@@ -3504,11 +3527,14 @@ app.get('/api/qa/questions/:id', (req, res) => {
   if (!q) return res.json({ ok: false, msg: '问题不存在' });
   const answers = readQAAnswers().filter(a => a.questionId === q.id && !a.deleted);
   answers.sort((a, b) => {
+    if (a.reward && !b.reward) return -1;
+    if (!a.reward && b.reward) return 1;
     if (a.accepted) return -1;
     if (b.accepted) return 1;
     return (b.likes || 0) - (a.likes || 0);
   });
-  res.json({ ok: true, data: { ...q, answers } });
+  const remainingBounty = Math.max(0, (q.bounty || 0) - (q.distributedCredits || 0));
+  res.json({ ok: true, data: { ...q, answers, remainingBounty } });
 });
 
 // 发布问题
@@ -3566,8 +3592,9 @@ app.post('/api/qa/questions', (req, res) => {
     images,
     bounty: b,
     deadline: null,
-    status: 'open', // open | accepted | expired
+    status: 'open', // open | accepted | expired | closed
     acceptedAnswerId: null,
+    distributedCredits: 0,  // 已发放的悬赏总额
     createdAt: new Date().toISOString(),
     deleted: false
   };
@@ -3623,6 +3650,7 @@ app.post('/api/qa/questions/:id/answers', (req, res) => {
     likes: 0,
     likedBy: [],
     accepted: false,
+    reward: 0,  // 获得的悬赏Credits
     createdAt: new Date().toISOString(),
     deleted: false
   };
@@ -3672,15 +3700,55 @@ app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
   answers[aIdx].accepted = true;
   q.status = 'accepted';
   q.acceptedAnswerId = req.params.aid;
-  writeQAQuestions(questions);
-  writeQAAnswers(answers);
-
   // 奖励悬赏 credits
   if (q.bounty > 0) {
-    changeCredit(answers[aIdx].userId, q.bounty, '问题「' + q.title.slice(0, 20) + '」被采纳奖励');
+    const remaining = q.bounty - (q.distributedCredits || 0);
+    if (remaining > 0) {
+      changeCredit(answers[aIdx].userId, remaining, '问题「' + q.title.slice(0, 20) + '」被采纳奖励');
+      answers[aIdx].reward = (answers[aIdx].reward || 0) + remaining;
+      q.distributedCredits = (q.distributedCredits || 0) + remaining;
+    }
   }
-
+  writeQAQuestions(questions);
+  writeQAAnswers(answers);
   res.json({ ok: true });
+});
+
+// 发放悬赏（提问者向多个回答分配 Credits）
+app.post('/api/qa/questions/:id/reward', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  const { rewards } = req.body; // [{ answerId, amount }]
+  if (!Array.isArray(rewards) || rewards.length === 0) return res.json({ ok: false, msg: '请至少选择一个回答' });
+
+  const questions = readQAQuestions();
+  const qIdx = questions.findIndex(x => x.id === req.params.id && !x.deleted);
+  if (qIdx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  const q = questions[qIdx];
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '只有提问者可以发放奖励' });
+  if (!q.bounty || q.bounty <= 0) return res.json({ ok: false, msg: '该问题未悬赏Credits' });
+  if (q.status === 'expired') return res.json({ ok: false, msg: '该问题已到期' });
+
+  const remaining = q.bounty - (q.distributedCredits || 0);
+  if (remaining <= 0) return res.json({ ok: false, msg: '悬赏已全部发放完毕' });
+
+  // 校验总和
+  const total = rewards.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  if (total <= 0) return res.json({ ok: false, msg: '发放金额不能为0' });
+  if (total > remaining) return res.json({ ok: false, msg: '发放总额超出剩余悬赏（剩余 ' + remaining + ' Credits）' });
+
+  const answers = readQAAnswers();
+  for (const r of rewards) {
+    const amount = Math.floor(Number(r.amount) || 0);
+    if (amount <= 0) continue;
+    const aIdx = answers.findIndex(a => a.id === r.answerId && a.questionId === q.id && !a.deleted);
+    if (aIdx === -1) continue;
+    changeCredit(answers[aIdx].userId, amount, '问题「' + q.title.slice(0, 20) + '」悬赏发放');
+    answers[aIdx].reward = (answers[aIdx].reward || 0) + amount;
+  }
+  q.distributedCredits = (q.distributedCredits || 0) + total;
+  writeQAQuestions(questions);
+  writeQAAnswers(answers);
+  res.json({ ok: true, distributed: total, remaining: q.bounty - q.distributedCredits });
 });
 
 // 删除问题（本人或管理员）
@@ -3690,9 +3758,10 @@ app.delete('/api/qa/questions/:id', (req, res) => {
   const idx = questions.findIndex(x => x.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
   if (questions[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
-  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
-    // 退还悬赏
-    changeCredit(session.id, questions[idx].bounty, '删除问题退还悬赏');
+  if (questions[idx].status !== 'closed' && questions[idx].bounty > 0) {
+    // 退还未发放的悬赏
+    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
+    if (remain > 0) changeCredit(session.id, remain, '删除问题退还剩余悬赏');
   }
   questions[idx].deleted = true;
   writeQAQuestions(questions);

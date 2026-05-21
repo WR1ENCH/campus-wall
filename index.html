@@ -1256,6 +1256,7 @@
           <span style="font-size:20px;font-weight:700;color:#7a5700;">🙋 你问我答</span>
           <div style="display:flex;gap:6px;" id="qaTabBar">
             <button onclick="switchQATab('list')" class="qa-tab active" id="qaTabList">全部问题</button>
+            <button onclick="switchQATab('my')" class="qa-tab" id="qaTabMy">我的提问</button>
             <button onclick="switchQATab('ask')" class="qa-tab" id="qaTabAsk">提问</button>
           </div>
         </div>
@@ -1274,6 +1275,11 @@
         <div id="qaLoadMore" style="text-align:center;padding:10px;display:none;">
           <button onclick="loadMoreQA()" class="qa-filter-btn">加载更多</button>
         </div>
+      </div>
+
+      <!-- 我的提问页 -->
+      <div id="qaPageMy" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div id="qaMyList"></div>
       </div>
 
       <!-- 提问页 -->
@@ -1315,6 +1321,25 @@
       <!-- 问题详情页 -->
       <div id="qaPageDetail" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
         <div id="qaDetailContent"></div>
+      </div>
+
+      <!-- 发放奖励弹窗 -->
+      <div class="modal-overlay" id="qaRewardOverlay" onclick="closeQAReward(event)" style="display:none;align-items:center;justify-content:center;">
+        <div onclick="event.stopPropagation()" style="background:#fffef5;border-radius:16px;width:min(90vw,520px);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #e8c84a;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+            <span style="font-size:16px;font-weight:700;color:#7a5700;">💰 发放悬赏</span>
+            <button onclick="closeQAReward()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+          </div>
+          <div style="padding:14px 18px;background:#fff8e1;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+            <span style="font-size:13px;color:#856404;">悬赏总额：<b id="qaRewardTotal">0</b> Credits</span>
+            <span style="margin-left:14px;font-size:13px;color:#856404;">剩余可发放：<b id="qaRewardRemain" style="color:#2a6846;">0</b> Credits</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:10px 18px;" id="qaRewardAnswers"></div>
+          <div style="padding:12px 18px;border-top:1.5px solid #f0e8a0;text-align:right;flex-shrink:0;" id="qaRewardActions">
+            <button onclick="closeQAReward()" style="padding:9px 18px;border-radius:10px;border:1.5px solid #e8c84a;background:#fff;cursor:pointer;font-size:13px;margin-right:8px;">取消</button>
+            <button onclick="submitQAReward()" style="padding:9px 20px;border-radius:10px;border:none;background:#f5c518;color:#7a5700;font-weight:700;cursor:pointer;font-size:13px;">✅ 发放</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3000,13 +3025,15 @@
 
     function switchQATab(tab) {
       document.getElementById('qaPageList').style.display = tab === 'list' ? 'block' : 'none';
+      document.getElementById('qaPageMy').style.display = tab === 'my' ? 'block' : 'none';
       document.getElementById('qaPageAsk').style.display = tab === 'ask' ? 'block' : 'none';
       document.getElementById('qaPageDetail').style.display = tab === 'detail' ? 'block' : 'none';
       document.querySelectorAll('.qa-tab').forEach(b => b.classList.remove('active'));
-      const tabEl = document.getElementById('qaTabAsk');
-      if (tab === 'ask') {
-        tabEl && tabEl.classList.add('active');
-        // 显示当前余额
+      if (tab === 'my') {
+        document.getElementById('qaTabMy') && document.getElementById('qaTabMy').classList.add('active');
+        loadMyQuestions();
+      } else if (tab === 'ask') {
+        document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
         if (currentUser) document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
       } else if (tab === 'list') {
         document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
@@ -3156,6 +3183,7 @@
       const liked = currentUser && a.likedBy && a.likedBy.includes(currentUser.id);
       let html = '<div class="qa-answer-card' + (a.accepted ? ' accepted' : '') + '" id="qa-ans-' + a.id + '">';
       if (a.accepted) html += '<div style="color:#388e3c;font-size:12px;font-weight:700;margin-bottom:6px;">✅ 已采纳</div>';
+      if (!a.accepted && (a.reward || 0) > 0) html += '<div style="color:#2a6846;font-size:12px;font-weight:700;margin-bottom:6px;">💰 已获得 ' + a.reward + ' Credits 悬赏</div>';
       html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">';
       html += '<span style="font-size:20px;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '🙈') + '</span>';
       html += '<div style="flex:1;">';
@@ -3327,7 +3355,7 @@
 
     // 采纳回答
     async function acceptQAAnswer(qid, aid) {
-      if (!confirm('确定采纳这条回答？采纳后将奖励对方悬赏Credits，操作不可撤销。')) return;
+      if (!confirm('确定采纳这条回答？剩余未发放的悬赏将全部奖励给对方，操作不可撤销。')) return;
       try {
         const res = await fetch('/api/qa/questions/' + qid + '/accept/' + aid, {
           method: 'POST',
@@ -3377,6 +3405,141 @@
           showToast('⚠️ ' + (json.msg || '删除失败'));
         }
       } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    // ===== 我的提问 =====
+    let qaRewardQuestionId = null;
+    let qaRewardAnswerIds = [];
+
+    async function loadMyQuestions() {
+      document.getElementById('qaMyList').innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">加载中...</div>';
+      try {
+        const res = await fetch('/api/qa/my-questions', {
+          headers: { 'x-user-token': currentUser.token }
+        });
+        const json = await res.json();
+        if (!json.ok) { document.getElementById('qaMyList').innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">加载失败</div>'; return; }
+        if (!json.data || !json.data.length) {
+          document.getElementById('qaMyList').innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">你还没有提问过，去「提问」发一个吧 👋</div>';
+          return;
+        }
+        document.getElementById('qaMyList').innerHTML = json.data.map(renderMyQuestionCard).join('');
+      } catch { document.getElementById('qaMyList').innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">网络错误</div>'; }
+    }
+
+    function renderMyQuestionCard(q) {
+      const statusEmoji = { open: '🟢', accepted: '✅', expired: '⏰', closed: '🔒' };
+      const statusText = { open: '进行中', accepted: '已采纳', expired: '已到期', closed: '已关闭' };
+      const canReward = q.bounty > 0 && q.remainingBounty > 0 && q.status === 'open' && q.answerCount > 0;
+      const distributed = (q.bounty - q.remainingBounty);
+      return '<div class="qa-question-card" style="cursor:default;">' +
+        '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">' +
+        '<span style="font-size:22px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '🙈') + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:600;font-size:14px;color:#333;word-break:break-word;" onclick="loadQADetail(\'' + q.id + '\')" title="点击查看详情">' + escHtml(q.title) + '</div>' +
+        '<div style="font-size:12px;color:#999;margin-top:2px;">' + formatQATime(q.createdAt) + ' · 💬 ' + q.answerCount + ' 条回答</div>' +
+        '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+        '<span style="font-size:12px;">' + (statusEmoji[q.status] || '❓') + ' ' + (statusText[q.status] || q.status) + '</span>' +
+        (q.bounty > 0 ? '<span style="background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">💰 ' + q.bounty + ' Credits' + (distributed > 0 ? '（已发 ' + distributed + '）' : '') + '</span>' : '<span style="color:#aaa;font-size:11px;">未悬赏</span>') +
+        (q.remainingBounty > 0 ? '<span style="color:#2a6846;font-size:11px;">剩余 ' + q.remainingBounty + '</span>' : (q.bounty > 0 ? '<span style="color:#aaa;font-size:11px;">已全部发放</span>' : '')) +
+        (canReward ? '<button onclick="showQARewardModal(\'' + q.id + '\',' + q.bounty + ',' + q.remainingBounty + ')" style="margin-left:auto;padding:5px 12px;border-radius:20px;border:none;background:#f5c518;color:#7a5700;font-weight:700;cursor:pointer;font-size:11px;">💰 发放奖励</button>' : '') +
+        '<button onclick="loadQADetail(\'' + q.id + '\')" style="margin-left:auto;padding:5px 10px;border-radius:20px;border:1.5px solid #ddd;background:#fff;color:#555;cursor:pointer;font-size:11px;">查看</button>' +
+        '</div>' +
+        '</div>';
+    }
+
+    async function showQARewardModal(qid, bounty, remaining) {
+      qaRewardQuestionId = qid;
+      document.getElementById('qaRewardTotal').textContent = bounty;
+      document.getElementById('qaRewardRemain').textContent = remaining;
+      document.getElementById('qaRewardAnswers').innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;">加载中...</div>';
+      document.getElementById('qaRewardOverlay').style.display = 'flex';
+      try {
+        const res = await fetch('/api/qa/questions/' + qid);
+        const json = await res.json();
+        if (!json.ok) { document.getElementById('qaRewardAnswers').innerHTML = '<div style="color:#e04;text-align:center;padding:10px;">加载失败</div>'; return; }
+        const q = json.data;
+        const answers = q.answers || [];
+        if (!answers.length) {
+          document.getElementById('qaRewardAnswers').innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;">暂无回答</div>';
+          document.getElementById('qaRewardActions').style.display = 'none';
+          return;
+        }
+        document.getElementById('qaRewardActions').style.display = 'block';
+        qaRewardAnswerIds = answers.map(a => a.id);
+        let html = '';
+        answers.forEach((a, i) => {
+          const got = a.reward || 0;
+          const maxInput = Math.min(remaining, remaining); // individual max = remaining
+          html += '<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5;">' +
+            '<span style="font-size:20px;flex-shrink:0;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '🙈') + '</span>' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:12px;font-weight:600;color:#555;">' + escHtml(a.author) + (got > 0 ? ' <span style="color:#2a6846;font-size:11px;">(已获 ' + got + ' Credits)</span>' : '') + '</div>' +
+            '<div style="font-size:12px;color:#666;word-break:break-word;white-space:pre-wrap;max-height:36px;overflow:hidden;">' + escHtml(a.content.slice(0, 60)) + '</div>' +
+            '</div>' +
+            '<input id="qaRewardInput' + i + '" type="number" min="0" max="' + remaining + '" value="0" step="1" oninput="updateRewardTotal(' + remaining + ')" style="width:70px;padding:6px 8px;border-radius:8px;border:1.5px solid #e0d8a0;font-size:13px;text-align:center;outline:none;flex-shrink:0;">' +
+            '</div>';
+        });
+        document.getElementById('qaRewardAnswers').innerHTML = html;
+        document.getElementById('qaRewardRemain').textContent = remaining;
+      } catch { document.getElementById('qaRewardAnswers').innerHTML = '<div style="color:#e04;text-align:center;padding:10px;">网络错误</div>'; }
+    }
+
+    function updateRewardTotal(maxRemain) {
+      let total = 0;
+      document.querySelectorAll('[id^="qaRewardInput"]').forEach(inp => {
+        const v = parseInt(inp.value) || 0;
+        if (v < 0) { inp.value = 0; return; }
+        if (v > maxRemain) { inp.value = maxRemain; }
+        total += parseInt(inp.value) || 0;
+      });
+      document.getElementById('qaRewardRemain').textContent = Math.max(0, maxRemain - total);
+      document.getElementById('qaRewardRemain').style.color = total > maxRemain ? '#e04' : '#2a6846';
+    }
+
+    async function submitQAReward() {
+      const inputs = document.querySelectorAll('[id^="qaRewardInput"]');
+      const rewards = [];
+      inputs.forEach(inp => {
+        const amount = parseInt(inp.value) || 0;
+        if (amount > 0) {
+          const idx = parseInt(inp.id.replace('qaRewardInput', ''));
+          if (idx >= 0 && idx < qaRewardAnswerIds.length) {
+            rewards.push({ answerId: qaRewardAnswerIds[idx], amount });
+          }
+        }
+      });
+      if (rewards.length === 0) { showToast('⚠️ 请至少输入一个发放金额'); return; }
+
+      const total = rewards.reduce((s, r) => s + r.amount, 0);
+      const remainEl = document.getElementById('qaRewardRemain');
+      const remainVal = parseInt(remainEl.textContent) || 0;
+      if (total > remainVal + total) { showToast('⚠️ 发放总额超出剩余悬赏'); return; }
+
+      try {
+        const res = await fetch('/api/qa/questions/' + qaRewardQuestionId + '/reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': currentUser.token },
+          body: JSON.stringify({ rewards })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 已发放 ' + json.distributed + ' Credits！');
+          closeQAReward();
+          loadMyQuestions();
+        } else {
+          showToast('⚠️ ' + (json.msg || '发放失败'));
+        }
+      } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    function closeQAReward(e) {
+      if (e && e.target !== document.getElementById('qaRewardOverlay')) return;
+      document.getElementById('qaRewardOverlay').style.display = 'none';
+      qaRewardQuestionId = null;
+      qaRewardAnswerIds = [];
     }
 
     // 图片预览
