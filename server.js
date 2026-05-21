@@ -95,6 +95,8 @@ const BULLYING_FILE = path.join(DATA_DIR, 'bullying.json');
 const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
 const CREDIT_LOGS_FILE = path.join(DATA_DIR, 'credit_logs.json');
 const CREDIT_CARDS_FILE = path.join(DATA_DIR, 'credit_cards.json');
+const QA_FILE = path.join(DATA_DIR, 'qa_questions.json');
+const QA_ANSWERS_FILE = path.join(DATA_DIR, 'qa_answers.json');
 
 // 中间件
 app.use(cors());
@@ -3388,6 +3390,334 @@ app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
   } catch (e) {
     res.json({ ok: false, msg: '删除失败: ' + e.message });
   }
+});
+
+// ===== Q&A 问答系统 =====
+function readQAQuestions() {
+  try {
+    if (!fs.existsSync(QA_FILE)) fs.writeFileSync(QA_FILE, '[]', 'utf-8');
+    return JSON.parse(fs.readFileSync(QA_FILE, 'utf-8'));
+  } catch { return []; }
+}
+function writeQAQuestions(data) {
+  try { fs.writeFileSync(QA_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
+}
+function readQAAnswers() {
+  try {
+    if (!fs.existsSync(QA_ANSWERS_FILE)) fs.writeFileSync(QA_ANSWERS_FILE, '[]', 'utf-8');
+    return JSON.parse(fs.readFileSync(QA_ANSWERS_FILE, 'utf-8'));
+  } catch { return []; }
+}
+function writeQAAnswers(data) {
+  try { fs.writeFileSync(QA_ANSWERS_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
+}
+
+// 给用户变更 credit 并记录流水
+function changeCredit(userId, amount, reason) {
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return false;
+  users[idx].credit = (users[idx].credit || 0) + amount;
+  if (users[idx].credit < 0) users[idx].credit = 0;
+  writeUsers(users);
+  const logs = readCreditLogs();
+  logs.push({
+    id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId,
+    amount,
+    reason,
+    createdAt: new Date().toISOString()
+  });
+  writeCreditLogs(logs);
+  return true;
+}
+
+// 结算到期问题
+function settleExpiredQuestions() {
+  const questions = readQAQuestions();
+  const answers = readQAAnswers();
+  const now = new Date();
+  let changed = false;
+  for (const q of questions) {
+    if (q.status !== 'open') continue;
+    if (!q.deadline) continue;
+    if (new Date(q.deadline) > now) continue;
+    // 到期，找此问题的所有回答，按赞数分配
+    q.status = 'expired';
+    changed = true;
+    const qAnswers = answers.filter(a => a.questionId === q.id && !a.deleted);
+    const totalLikes = qAnswers.reduce((s, a) => s + (a.likes || 0), 0);
+    const bounty = q.bounty || 0;
+    if (bounty > 0 && qAnswers.length > 0) {
+      if (totalLikes === 0) {
+        // 无人点赞则平分
+        const share = Math.floor(bounty / qAnswers.length);
+        for (const a of qAnswers) {
+          if (share > 0) changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数均分悬赏');
+        }
+      } else {
+        let distributed = 0;
+        for (const a of qAnswers) {
+          const share = Math.floor(bounty * (a.likes || 0) / totalLikes);
+          if (share > 0) {
+            changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数分配悬赏');
+            distributed += share;
+          }
+        }
+        // 余数给赞最多的
+        const remainder = bounty - distributed;
+        if (remainder > 0) {
+          const top = qAnswers.sort((a, b) => (b.likes || 0) - (a.likes || 0))[0];
+          changeCredit(top.userId, remainder, '问题悬赏余数奖励');
+        }
+      }
+    }
+  }
+  if (changed) writeQAQuestions(questions);
+}
+
+// 定时每分钟检查到期问题
+setInterval(settleExpiredQuestions, 60 * 1000);
+
+// 获取问题列表
+app.get('/api/qa/questions', (req, res) => {
+  settleExpiredQuestions();
+  const questions = readQAQuestions().filter(q => !q.deleted);
+  const answers = readQAAnswers();
+  const { status, page = 1, limit = 10 } = req.query;
+  let list = questions;
+  if (status) list = list.filter(q => q.status === status);
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const total = list.length;
+  const paged = list.slice((page - 1) * limit, page * limit);
+  const result = paged.map(q => ({
+    ...q,
+    answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length
+  }));
+  res.json({ ok: true, data: result, total, page: Number(page), limit: Number(limit) });
+});
+
+// 获取单个问题详情（含回答）
+app.get('/api/qa/questions/:id', (req, res) => {
+  settleExpiredQuestions();
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id && !x.deleted);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  const answers = readQAAnswers().filter(a => a.questionId === q.id && !a.deleted);
+  answers.sort((a, b) => {
+    if (a.accepted) return -1;
+    if (b.accepted) return 1;
+    return (b.likes || 0) - (a.likes || 0);
+  });
+  res.json({ ok: true, data: { ...q, answers } });
+});
+
+// 发布问题
+app.post('/api/qa/questions', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const { title, content, bounty = 0, deadline, images = [] } = req.body;
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if ((content || '').length > 2000) return res.json({ ok: false, msg: '内容最多2000个字' });
+  const b = Math.floor(Number(bounty) || 0);
+  if (b < 0) return res.json({ ok: false, msg: '悬赏不能为负数' });
+  if (!Number.isInteger(b)) return res.json({ ok: false, msg: '悬赏必须为整数' });
+  if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if ((user.credit || 0) < b) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });
+
+  // 扣除悬赏 credits
+  if (b > 0) {
+    user.credit = (user.credit || 0) - b;
+    writeUsers(users);
+    const logs = readCreditLogs();
+    logs.push({
+      id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      userId: session.id,
+      amount: -b,
+      reason: '发布问题悬赏：' + title.slice(0, 20),
+      createdAt: new Date().toISOString()
+    });
+    writeCreditLogs(logs);
+  }
+
+  const questions = readQAQuestions();
+  const q = {
+    id: 'qa_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: session.id,
+    author: user.nickname,
+    avatar: user.avatar || '',
+    title: title.trim(),
+    content: (content || '').trim(),
+    images,
+    bounty: b,
+    deadline: deadline || null,
+    status: 'open', // open | accepted | expired
+    acceptedAnswerId: null,
+    createdAt: new Date().toISOString(),
+    deleted: false
+  };
+  questions.push(q);
+  writeQAQuestions(questions);
+  res.json({ ok: true, data: q });
+});
+
+// 回答问题
+app.post('/api/qa/questions/:id/answers', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const { content, images = [] } = req.body;
+  if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '回答至少2个字' });
+  if (content.length > 2000) return res.json({ ok: false, msg: '回答最多2000字' });
+  if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id && !x.deleted);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  if (q.status !== 'open') return res.json({ ok: false, msg: '该问题已关闭' });
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  // 不允许自答
+  if (q.userId === session.id) return res.json({ ok: false, msg: '不能回答自己的问题' });
+
+  const answers = readQAAnswers();
+  // 每人只能回答一次
+  if (answers.find(a => a.questionId === q.id && a.userId === session.id && !a.deleted)) {
+    return res.json({ ok: false, msg: '你已回答过此问题' });
+  }
+  const a = {
+    id: 'qa_ans_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    questionId: q.id,
+    userId: session.id,
+    author: user.nickname,
+    avatar: user.avatar || '',
+    content: content.trim(),
+    images,
+    likes: 0,
+    likedBy: [],
+    accepted: false,
+    createdAt: new Date().toISOString(),
+    deleted: false
+  };
+  answers.push(a);
+  writeQAAnswers(answers);
+  res.json({ ok: true, data: a });
+});
+
+// 点赞回答
+app.post('/api/qa/answers/:id/like', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const answers = readQAAnswers();
+  const idx = answers.findIndex(a => a.id === req.params.id && !a.deleted);
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  const a = answers[idx];
+  if (a.userId === session.id) return res.json({ ok: false, msg: '不能给自己的回答点赞' });
+  const likedBy = a.likedBy || [];
+  if (likedBy.includes(session.id)) {
+    // 取消点赞
+    a.likedBy = likedBy.filter(id => id !== session.id);
+    a.likes = Math.max(0, (a.likes || 0) - 1);
+    writeQAAnswers(answers);
+    return res.json({ ok: true, liked: false, likes: a.likes });
+  }
+  a.likedBy.push(session.id);
+  a.likes = (a.likes || 0) + 1;
+  writeQAAnswers(answers);
+  res.json({ ok: true, liked: true, likes: a.likes });
+});
+
+// 采纳回答（提问者专用）
+app.post('/api/qa/questions/:qid/accept/:aid', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const questions = readQAQuestions();
+  const qIdx = questions.findIndex(x => x.id === req.params.qid && !x.deleted);
+  if (qIdx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  const q = questions[qIdx];
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '只有提问者可以采纳答案' });
+  if (q.status !== 'open') return res.json({ ok: false, msg: '该问题已关闭' });
+
+  const answers = readQAAnswers();
+  const aIdx = answers.findIndex(a => a.id === req.params.aid && a.questionId === q.id && !a.deleted);
+  if (aIdx === -1) return res.json({ ok: false, msg: '回答不存在' });
+
+  // 清除旧采纳
+  answers.forEach(a => { if (a.questionId === q.id) a.accepted = false; });
+  answers[aIdx].accepted = true;
+  q.status = 'accepted';
+  q.acceptedAnswerId = req.params.aid;
+  writeQAQuestions(questions);
+  writeQAAnswers(answers);
+
+  // 奖励悬赏 credits
+  if (q.bounty > 0) {
+    changeCredit(answers[aIdx].userId, q.bounty, '问题「' + q.title.slice(0, 20) + '」被采纳奖励');
+  }
+
+  res.json({ ok: true });
+});
+
+// 删除问题（本人或管理员）
+app.delete('/api/qa/questions/:id', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const questions = readQAQuestions();
+  const idx = questions.findIndex(x => x.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  if (questions[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
+  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
+    // 退还悬赏
+    changeCredit(session.id, questions[idx].bounty, '删除问题退还悬赏');
+  }
+  questions[idx].deleted = true;
+  writeQAQuestions(questions);
+  res.json({ ok: true });
+});
+
+// 删除回答（本人）
+app.delete('/api/qa/answers/:id', requireUserToken, (req, res) => {
+  const session = req.userSession;
+  const answers = readQAAnswers();
+  const idx = answers.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  if (answers[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
+  answers[idx].deleted = true;
+  writeQAAnswers(answers);
+  res.json({ ok: true });
+});
+
+// 管理员获取问题列表
+app.get('/api/admin/qa/questions', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const answers = readQAAnswers();
+  const list = questions.filter(q => !q.deleted).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: list.map(q => ({ ...q, answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length })) });
+});
+
+// 管理员删除问题
+app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const idx = questions.findIndex(q => q.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
+    changeCredit(questions[idx].userId, questions[idx].bounty, '管理员删除问题退还悬赏');
+  }
+  questions[idx].deleted = true;
+  writeQAQuestions(questions);
+  res.json({ ok: true });
+});
+
+// 管理员删除回答
+app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
+  const answers = readQAAnswers();
+  const idx = answers.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  answers[idx].deleted = true;
+  writeQAAnswers(answers);
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {

@@ -291,6 +291,46 @@
     .size-tiny   .note-type { font-size: 10px; }
     .size-small  .note-type { font-size: 10px; }
 
+    /* ===== 问答系统 ===== */
+    .qa-tab {
+      padding: 5px 14px; border-radius: 20px; border: 1.5px solid #e8c84a;
+      background: transparent; color: #7a5700; font-size: 13px; cursor: pointer; transition: .15s;
+    }
+    .qa-tab.active { background: #f5c518; font-weight: 700; }
+    .qa-filter-btn {
+      padding: 5px 12px; border-radius: 20px; border: 1.5px solid #e0d080;
+      background: #fffef5; color: #7a5700; font-size: 12px; cursor: pointer; transition: .15s;
+    }
+    .qa-filter-btn.active { background: #f5c518; border-color: #f5c518; font-weight: 700; }
+    .qa-question-card {
+      background: #fffef5; border: 1.5px solid #f0e8a0; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .15s, transform .1s;
+    }
+    .qa-question-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .qa-answer-card {
+      background: #f8fffe; border: 1.5px solid #d0ede8; border-radius: 12px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .qa-answer-card.accepted { background: #f0fdf4; border-color: #4caf50; }
+    .qa-img-add {
+      display: flex; align-items: center; justify-content: center;
+      width: 60px; height: 60px; border-radius: 10px; border: 2px dashed #e8c84a;
+      font-size: 24px; color: #e8c84a; cursor: pointer; background: #fffef5;
+    }
+    .qa-img-thumb {
+      position: relative; width: 60px; height: 60px; border-radius: 10px;
+      overflow: hidden; border: 1.5px solid #e8c84a;
+    }
+    .qa-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .qa-img-thumb .qa-img-del {
+      position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,.55);
+      color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px;
+      font-size: 11px; cursor: pointer; line-height: 18px; text-align: center; padding: 0;
+    }
+    .qa-badge-open { background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .qa-badge-accepted { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .qa-badge-expired { background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
     /* ===== 发帖弹窗 ===== */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
@@ -947,6 +987,7 @@
   <div class="action-bar" id="actionBar">
     <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
     <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
+    <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 你问我答</button>
   </div>
 
   <!-- 可拖拽墙 -->
@@ -1202,6 +1243,83 @@
       <div class="user-login-actions">
         <button class="user-login-skip" onclick="hideForgotPwdModal()">取消</button>
         <button class="user-login-confirm" onclick="doForgotPassword()">提交重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 你问我答 主弹窗 ===== -->
+  <div class="modal-overlay" id="qaOverlay" onclick="closeQAOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
+    <div onclick="event.stopPropagation()" style="background:#fffdf5;border-radius:18px;width:min(94vw,820px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #e8c84a;">
+      <!-- 头部 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span style="font-size:20px;font-weight:700;color:#7a5700;">🙋 你问我答</span>
+          <div style="display:flex;gap:6px;" id="qaTabBar">
+            <button onclick="switchQATab('list')" class="qa-tab active" id="qaTabList">全部问题</button>
+            <button onclick="switchQATab('ask')" class="qa-tab" id="qaTabAsk">提问</button>
+          </div>
+        </div>
+        <button onclick="closeQAModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+      </div>
+
+      <!-- 列表页 -->
+      <div id="qaPageList" style="flex:1;overflow-y:auto;padding:16px 20px;">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button onclick="loadQAList('open')" class="qa-filter-btn active" id="qaFilterOpen">🟢 进行中</button>
+          <button onclick="loadQAList('accepted')" class="qa-filter-btn" id="qaFilterAccepted">✅ 已采纳</button>
+          <button onclick="loadQAList('expired')" class="qa-filter-btn" id="qaFilterExpired">⏰ 已到期</button>
+          <button onclick="loadQAList('')" class="qa-filter-btn" id="qaFilterAll">📋 全部</button>
+        </div>
+        <div id="qaList"><div style="text-align:center;padding:40px;color:#aaa;">加载中...</div></div>
+        <div id="qaLoadMore" style="text-align:center;padding:10px;display:none;">
+          <button onclick="loadMoreQA()" class="qa-filter-btn">加载更多</button>
+        </div>
+      </div>
+
+      <!-- 提问页 -->
+      <div id="qaPageAsk" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:4px;">问题标题 <span style="color:#e04;">*</span></label>
+          <input id="qaAskTitle" maxlength="100" placeholder="请输入问题标题（2-100字）"
+                 style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;">
+          <div style="text-align:right;font-size:11px;color:#aaa;margin-top:2px;"><span id="qaAskTitleCount">0</span>/100</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:4px;">详细描述</label>
+          <textarea id="qaAskContent" rows="4" maxlength="2000" placeholder="详细描述你的问题（选填）"
+                    style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;resize:vertical;"></textarea>
+          <div style="text-align:right;font-size:11px;color:#aaa;margin-top:2px;"><span id="qaAskContentCount">0</span>/2000</div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:140px;">
+            <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:4px;">💰 悬赏 Credits</label>
+            <input id="qaAskBounty" type="number" min="0" step="10" value="0" placeholder="0"
+                   style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;">
+            <div id="qaAskBountyHint" style="font-size:11px;color:#aaa;margin-top:2px;">当前余额：加载中...</div>
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:4px;">⏰ 截止时间（选填）</label>
+            <input id="qaAskDeadline" type="datetime-local"
+                   style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1.5px solid #e8c84a;font-size:14px;background:#fffef5;outline:none;">
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:6px;">🖼 附图（最多3张，每张≤2MB）</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="qaAskImgList">
+            <label class="qa-img-add" for="qaAskImgInput" title="添加图片">+</label>
+            <input id="qaAskImgInput" type="file" accept="image/*" style="display:none;" onchange="addQAImage(this,'ask')">
+          </div>
+        </div>
+        <div id="qaAskError" style="color:#e04;font-size:13px;margin-bottom:8px;display:none;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="switchQATab('list')" style="padding:10px 22px;border-radius:10px;border:1.5px solid #e8c84a;background:#fffef5;cursor:pointer;font-size:14px;">取消</button>
+          <button onclick="submitQAQuestion()" style="padding:10px 22px;border-radius:10px;border:none;background:#f5c518;color:#7a5700;font-weight:700;cursor:pointer;font-size:14px;">🙋 发布问题</button>
+        </div>
+      </div>
+
+      <!-- 问题详情页 -->
+      <div id="qaPageDetail" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div id="qaDetailContent"></div>
       </div>
     </div>
   </div>
@@ -2866,6 +2984,414 @@
       _spotlight.container.style.display = 'none';
       _spotlight.tooltip.style.display  = 'none';
     }
+
+    // ===== 问答系统 =====
+    let qaImages_ask = [];
+    let qaImages_answer = [];
+    let qaCurrentFilter = 'open';
+    let qaCurrentPage = 1;
+    let qaCurrentQuestionId = null;
+    let qaTotalLoaded = 0;
+    let qaHasMore = false;
+
+    function openQAModal() {
+      if (!currentUser) { showToast('⚠️ 请先登录才能使用问答区'); return; }
+      const overlay = document.getElementById('qaOverlay');
+      overlay.style.display = 'flex';
+      switchQATab('list');
+    }
+    function closeQAModal() { document.getElementById('qaOverlay').style.display = 'none'; }
+    function closeQAOverlay(e) { if (e.target === document.getElementById('qaOverlay')) closeQAModal(); }
+
+    function switchQATab(tab) {
+      document.getElementById('qaPageList').style.display = tab === 'list' ? 'block' : 'none';
+      document.getElementById('qaPageAsk').style.display = tab === 'ask' ? 'block' : 'none';
+      document.getElementById('qaPageDetail').style.display = tab === 'detail' ? 'block' : 'none';
+      document.querySelectorAll('.qa-tab').forEach(b => b.classList.remove('active'));
+      const tabEl = document.getElementById('qaTabAsk');
+      if (tab === 'ask') {
+        tabEl && tabEl.classList.add('active');
+        // 显示当前余额
+        if (currentUser) document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
+        // 设置截止时间最小值为现在
+        const minDt = new Date(Date.now() + 60 * 60 * 1000);
+        document.getElementById('qaAskDeadline').min = minDt.toISOString().slice(0, 16);
+      } else if (tab === 'list') {
+        document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
+        qaCurrentPage = 1;
+        loadQAList(qaCurrentFilter);
+      }
+    }
+
+    async function loadQAList(filter) {
+      qaCurrentFilter = filter || '';
+      qaCurrentPage = 1;
+      qaTotalLoaded = 0;
+      // 高亮按钮
+      ['Open','Accepted','Expired','All'].forEach(f => {
+        const btn = document.getElementById('qaFilter' + f);
+        if (btn) btn.classList.remove('active');
+      });
+      const idMap = { open: 'qaFilterOpen', accepted: 'qaFilterAccepted', expired: 'qaFilterExpired', '': 'qaFilterAll' };
+      const activeId = idMap[filter];
+      if (activeId) document.getElementById(activeId) && document.getElementById(activeId).classList.add('active');
+      document.getElementById('qaList').innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">加载中...</div>';
+      document.getElementById('qaLoadMore').style.display = 'none';
+      await fetchQAList(false);
+    }
+
+    async function loadMoreQA() { await fetchQAList(true); }
+
+    async function fetchQAList(append) {
+      try {
+        const params = new URLSearchParams({ page: qaCurrentPage, limit: 8 });
+        if (qaCurrentFilter) params.set('status', qaCurrentFilter);
+        const res = await fetch('/api/qa/questions?' + params);
+        const json = await res.json();
+        if (!json.ok) { document.getElementById('qaList').innerHTML = '<div style="text-align:center;padding:30px;color:#e04;">加载失败</div>'; return; }
+        const items = json.data;
+        qaTotalLoaded = append ? qaTotalLoaded + items.length : items.length;
+        qaHasMore = json.total > qaTotalLoaded;
+        const html = items.length === 0 && !append
+          ? '<div style="text-align:center;padding:40px;color:#aaa;">暂无问题～ 快来提第一个吧！</div>'
+          : items.map(q => renderQACard(q)).join('');
+        if (append) {
+          document.getElementById('qaList').insertAdjacentHTML('beforeend', html);
+        } else {
+          document.getElementById('qaList').innerHTML = html;
+        }
+        document.getElementById('qaLoadMore').style.display = qaHasMore ? 'block' : 'none';
+        qaCurrentPage++;
+      } catch (e) {
+        document.getElementById('qaList').innerHTML = '<div style="text-align:center;padding:30px;color:#e04;">网络错误</div>';
+      }
+    }
+
+    function renderQACard(q) {
+      const statusMap = { open: '<span class="qa-badge-open">🟢 进行中</span>', accepted: '<span class="qa-badge-accepted">✅ 已采纳</span>', expired: '<span class="qa-badge-expired">⏰ 已到期</span>' };
+      const badge = statusMap[q.status] || '';
+      const bountyHtml = q.bounty > 0 ? '<span style="background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">💰 ' + q.bounty + ' Credits</span>' : '';
+      const deadline = q.deadline ? '<span style="color:#888;font-size:11px;">⏰ 截止 ' + formatQATime(q.deadline) + '</span>' : '';
+      return '<div class="qa-question-card" onclick="loadQADetail(\'' + q.id + '\')">' +
+        '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">' +
+        '<span style="font-size:22px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '🙈') + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:600;font-size:14px;color:#333;word-break:break-word;">' + escHtml(q.title) + '</div>' +
+        '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+        badge + bountyHtml + deadline +
+        '<span style="color:#888;font-size:11px;margin-left:auto;">💬 ' + (q.answerCount || 0) + ' 条回答</span>' +
+        '</div>' +
+        '</div>';
+    }
+
+    async function loadQADetail(qid) {
+      qaCurrentQuestionId = qid;
+      switchQATab('detail');
+      document.getElementById('qaDetailContent').innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;">加载中...</div>';
+      try {
+        const res = await fetch('/api/qa/questions/' + qid);
+        const json = await res.json();
+        if (!json.ok) { document.getElementById('qaDetailContent').innerHTML = '<div style="color:#e04;">加载失败</div>'; return; }
+        renderQADetail(json.data);
+      } catch { document.getElementById('qaDetailContent').innerHTML = '<div style="color:#e04;">网络错误</div>'; }
+    }
+
+    function renderQADetail(q) {
+      const isOwner = currentUser && currentUser.id === q.userId;
+      const statusMap = { open: '<span class="qa-badge-open">🟢 进行中</span>', accepted: '<span class="qa-badge-accepted">✅ 已采纳</span>', expired: '<span class="qa-badge-expired">⏰ 已到期</span>' };
+      let html = '<div style="margin-bottom:6px;">' +
+        '<button onclick="switchQATab(\'list\')" style="background:none;border:none;color:#888;cursor:pointer;font-size:13px;padding:0;">← 返回列表</button>' +
+        '</div>';
+      html += '<div style="background:#fffef5;border:1.5px solid #f0e8a0;border-radius:14px;padding:16px;margin-bottom:14px;">';
+      html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">';
+      html += '<span style="font-size:28px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '🙈') + '</span>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:16px;font-weight:700;color:#333;word-break:break-word;">' + escHtml(q.title) + '</div>';
+      html += '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + '</div>';
+      html += '</div></div>';
+      if (q.content) html += '<div style="font-size:14px;color:#555;word-break:break-word;white-space:pre-wrap;margin-bottom:10px;">' + escHtml(q.content) + '</div>';
+      if (q.images && q.images.length) {
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' + q.images.map(img => '<img src="' + img + '" style="height:80px;border-radius:8px;cursor:pointer;object-fit:cover;" onclick="showQAImgPreview(\'' + img + '\')">').join('') + '</div>';
+      }
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' + (statusMap[q.status] || '') +
+        (q.bounty > 0 ? '<span style="background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">💰 悬赏 ' + q.bounty + ' Credits</span>' : '') +
+        (q.deadline ? '<span style="color:#888;font-size:12px;">⏰ 截止 ' + formatQATime(q.deadline) + '</span>' : '') +
+        (isOwner && q.status === 'open' ? '<button onclick="deleteQAQuestion(\'' + q.id + '\')" style="margin-left:auto;background:none;border:none;color:#e04;cursor:pointer;font-size:12px;">🗑 删除</button>' : '') +
+        '</div>';
+      html += '</div>';
+
+      // 回答列表
+      html += '<div style="font-size:14px;font-weight:600;color:#555;margin-bottom:10px;">💬 ' + (q.answers ? q.answers.length : 0) + ' 条回答</div>';
+      if (q.answers && q.answers.length) {
+        html += q.answers.map(a => renderQAAnswer(a, q)).join('');
+      } else {
+        html += '<div style="text-align:center;padding:20px;color:#aaa;font-size:13px;">暂无回答，快来抢答吧！</div>';
+      }
+
+      // 回答框（未关闭 + 非自己 + 未已回答）
+      const alreadyAnswered = currentUser && q.answers && q.answers.find(a => a.userId === currentUser.id);
+      if (currentUser && q.status === 'open' && !isOwner && !alreadyAnswered) {
+        html += '<div style="margin-top:16px;background:#f0fff8;border:1.5px solid #d0ede8;border-radius:14px;padding:14px;">';
+        html += '<div style="font-size:14px;font-weight:600;color:#2a6846;margin-bottom:8px;">✍️ 写下你的回答</div>';
+        html += '<textarea id="qaAnswerInput" rows="4" maxlength="2000" placeholder="你的回答..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1.5px solid #d0ede8;font-size:14px;background:#fffef5;outline:none;resize:vertical;"></textarea>';
+        html += '<div style="text-align:right;font-size:11px;color:#aaa;margin:2px 0 6px;"><span id="qaAnswerCount">0</span>/2000</div>';
+        html += '<div style="margin-bottom:8px;">';
+        html += '<label style="font-size:12px;font-weight:600;color:#2a6846;display:block;margin-bottom:4px;">🖼 附图（最多3张）</label>';
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;" id="qaAnswerImgList">';
+        html += '<label class="qa-img-add" for="qaAnswerImgInput" style="width:50px;height:50px;">+</label>';
+        html += '<input id="qaAnswerImgInput" type="file" accept="image/*" style="display:none;" onchange="addQAImage(this,\'answer\')">';
+        html += '</div></div>';
+        html += '<div style="text-align:right;"><button onclick="submitQAAnswer(\'' + q.id + '\')" style="padding:9px 20px;border-radius:10px;border:none;background:#4caf50;color:#fff;font-weight:700;cursor:pointer;font-size:14px;">提交回答</button></div>';
+        html += '</div>';
+      }
+      document.getElementById('qaDetailContent').innerHTML = html;
+
+      // 绑定计数器
+      const ansInput = document.getElementById('qaAnswerInput');
+      if (ansInput) {
+        ansInput.addEventListener('input', () => {
+          document.getElementById('qaAnswerCount').textContent = ansInput.value.length;
+        });
+      }
+    }
+
+    function renderQAAnswer(a, q) {
+      const isOwner = currentUser && currentUser.id === q.userId;
+      const isMe = currentUser && currentUser.id === a.userId;
+      const liked = currentUser && a.likedBy && a.likedBy.includes(currentUser.id);
+      let html = '<div class="qa-answer-card' + (a.accepted ? ' accepted' : '') + '" id="qa-ans-' + a.id + '">';
+      if (a.accepted) html += '<div style="color:#388e3c;font-size:12px;font-weight:700;margin-bottom:6px;">✅ 已采纳</div>';
+      html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">';
+      html += '<span style="font-size:20px;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '🙈') + '</span>';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:12px;color:#555;font-weight:600;">' + escHtml(a.author) + ' · <span style="color:#aaa;font-weight:400;">' + formatQATime(a.createdAt) + '</span></div>';
+      html += '<div style="font-size:14px;color:#333;word-break:break-word;white-space:pre-wrap;margin-top:4px;">' + escHtml(a.content) + '</div>';
+      if (a.images && a.images.length) {
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + a.images.map(img => '<img src="' + img + '" style="height:70px;border-radius:8px;cursor:pointer;object-fit:cover;" onclick="showQAImgPreview(\'' + img + '\')">').join('') + '</div>';
+      }
+      html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">';
+      if (currentUser && !isMe) {
+        html += '<button onclick="likeQAAnswer(\'' + a.id + '\')" style="background:' + (liked ? '#ffe0b2' : '#f5f5f5') + ';border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:12px;" id="qa-like-' + a.id + '">' + (liked ? '❤️' : '🤍') + ' <span id="qa-like-count-' + a.id + '">' + (a.likes || 0) + '</span></button>';
+      } else {
+        html += '<span style="font-size:12px;color:#aaa;">🤍 ' + (a.likes || 0) + '</span>';
+      }
+      if (isOwner && q.status === 'open' && !a.accepted) {
+        html += '<button onclick="acceptQAAnswer(\'' + q.id + '\',\'' + a.id + '\')" style="background:#e3f2fd;color:#1565c0;border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:600;">✅ 采纳此答案</button>';
+      }
+      if (isMe) {
+        html += '<button onclick="deleteQAAnswer(\'' + a.id + '\')" style="background:none;border:none;color:#e04;cursor:pointer;font-size:12px;margin-left:auto;">🗑</button>';
+      }
+      html += '</div></div></div></div>';
+      return html;
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    function formatQATime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = (now - d) / 1000;
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // 图片上传
+    function addQAImage(input, target) {
+      const imgs = target === 'ask' ? qaImages_ask : qaImages_answer;
+      const listId = target === 'ask' ? 'qaAskImgList' : 'qaAnswerImgList';
+      const inputId = target === 'ask' ? 'qaAskImgInput' : 'qaAnswerImgInput';
+      if (imgs.length >= 3) { showToast('⚠️ 最多3张图片'); input.value = ''; return; }
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { showToast('⚠️ 图片不超过2MB'); input.value = ''; return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const src = e.target.result;
+        imgs.push(src);
+        renderQAImgList(listId, inputId, imgs, target);
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
+    function removeQAImage(index, target) {
+      const imgs = target === 'ask' ? qaImages_ask : qaImages_answer;
+      const listId = target === 'ask' ? 'qaAskImgList' : 'qaAnswerImgList';
+      const inputId = target === 'ask' ? 'qaAskImgInput' : 'qaAnswerImgInput';
+      imgs.splice(index, 1);
+      renderQAImgList(listId, inputId, imgs, target);
+    }
+
+    function renderQAImgList(listId, inputId, imgs, target) {
+      const el = document.getElementById(listId);
+      if (!el) return;
+      let html = imgs.map((src, i) =>
+        '<div class="qa-img-thumb"><img src="' + src + '"><button class="qa-img-del" onclick="removeQAImage(' + i + ',\'' + target + '\')">×</button></div>'
+      ).join('');
+      if (imgs.length < 3) html += '<label class="qa-img-add" for="' + inputId + '">+</label>';
+      el.innerHTML = html;
+    }
+
+    // 发布问题
+    async function submitQAQuestion() {
+      const title = document.getElementById('qaAskTitle').value.trim();
+      const content = document.getElementById('qaAskContent').value.trim();
+      const bounty = parseInt(document.getElementById('qaAskBounty').value) || 0;
+      const deadline = document.getElementById('qaAskDeadline').value;
+      const errEl = document.getElementById('qaAskError');
+      errEl.style.display = 'none';
+
+      const showErr = (msg) => { errEl.textContent = msg; errEl.style.display = 'block'; };
+      if (!title || title.length < 2) return showErr('标题至少2个字');
+      if (bounty < 0) return showErr('悬赏不能为负数');
+      if (bounty > 0 && bounty > (currentUser.credit || 0)) return showErr('Credits不足，当前余额：' + (currentUser.credit || 0));
+      if (deadline && new Date(deadline) <= new Date()) return showErr('截止时间必须在未来');
+
+      try {
+        const res = await fetch('/api/qa/questions', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'Authorization': 'Bearer ' + currentUser.token }),
+          body: JSON.stringify({ title, content, bounty, deadline: deadline || null, images: qaImages_ask })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 问题已发布！');
+          // 扣除 credits
+          if (currentUser) { currentUser.credit = (currentUser.credit || 0) - bounty; localStorage.setItem(USER_KEY, JSON.stringify(currentUser)); updateUserBar(); }
+          // 重置表单
+          document.getElementById('qaAskTitle').value = '';
+          document.getElementById('qaAskContent').value = '';
+          document.getElementById('qaAskBounty').value = '0';
+          document.getElementById('qaAskDeadline').value = '';
+          qaImages_ask = [];
+          renderQAImgList('qaAskImgList', 'qaAskImgInput', qaImages_ask, 'ask');
+          document.getElementById('qaAskTitleCount').textContent = '0';
+          document.getElementById('qaAskContentCount').textContent = '0';
+          switchQATab('list');
+        } else {
+          showErr(json.msg || '发布失败');
+        }
+      } catch { showErr('网络错误，请稍后重试'); }
+    }
+
+    // 提交回答
+    async function submitQAAnswer(qid) {
+      const content = document.getElementById('qaAnswerInput').value.trim();
+      if (!content || content.length < 2) { showToast('⚠️ 回答至少2个字'); return; }
+      try {
+        const res = await fetch('/api/qa/questions/' + qid + '/answers', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'Authorization': 'Bearer ' + currentUser.token }),
+          body: JSON.stringify({ content, images: qaImages_answer })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 回答已提交！');
+          qaImages_answer = [];
+          loadQADetail(qid);
+        } else {
+          showToast('⚠️ ' + (json.msg || '提交失败'));
+        }
+      } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    // 点赞回答
+    async function likeQAAnswer(aid) {
+      if (!currentUser) { showToast('⚠️ 请先登录'); return; }
+      try {
+        const res = await fetch('/api/qa/answers/' + aid + '/like', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          const btn = document.getElementById('qa-like-' + aid);
+          const cnt = document.getElementById('qa-like-count-' + aid);
+          if (btn) btn.style.background = json.liked ? '#ffe0b2' : '#f5f5f5';
+          if (btn) btn.innerHTML = (json.liked ? '❤️' : '🤍') + ' <span id="qa-like-count-' + aid + '">' + json.likes + '</span>';
+        }
+      } catch {}
+    }
+
+    // 采纳回答
+    async function acceptQAAnswer(qid, aid) {
+      if (!confirm('确定采纳这条回答？采纳后将奖励对方悬赏Credits，操作不可撤销。')) return;
+      try {
+        const res = await fetch('/api/qa/questions/' + qid + '/accept/' + aid, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 已采纳，悬赏已发放！');
+          loadQADetail(qid);
+        } else {
+          showToast('⚠️ ' + (json.msg || '操作失败'));
+        }
+      } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    // 删除问题
+    async function deleteQAQuestion(qid) {
+      if (!confirm('确定删除此问题？如有悬赏，Credits将退还。')) return;
+      try {
+        const res = await fetch('/api/qa/questions/' + qid, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 已删除');
+          switchQATab('list');
+        } else {
+          showToast('⚠️ ' + (json.msg || '删除失败'));
+        }
+      } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    // 删除回答
+    async function deleteQAAnswer(aid) {
+      if (!confirm('确定删除此回答？')) return;
+      try {
+        const res = await fetch('/api/qa/answers/' + aid, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + currentUser.token }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ 已删除');
+          if (qaCurrentQuestionId) loadQADetail(qaCurrentQuestionId);
+        } else {
+          showToast('⚠️ ' + (json.msg || '删除失败'));
+        }
+      } catch { showToast('⚠️ 网络错误'); }
+    }
+
+    // 图片预览
+    function showQAImgPreview(src) {
+      const div = document.createElement('div');
+      div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
+      div.innerHTML = '<img src="' + src + '" style="max-width:90vw;max-height:90vh;border-radius:12px;">';
+      div.onclick = () => div.remove();
+      document.body.appendChild(div);
+    }
+
+    // 绑定字数统计
+    document.addEventListener('DOMContentLoaded', function() {
+      const titleInput = document.getElementById('qaAskTitle');
+      if (titleInput) titleInput.addEventListener('input', () => { document.getElementById('qaAskTitleCount').textContent = titleInput.value.length; });
+      const contentInput = document.getElementById('qaAskContent');
+      if (contentInput) contentInput.addEventListener('input', () => { document.getElementById('qaAskContentCount').textContent = contentInput.value.length; });
+    });
 
     // ===== 讨论功能 =====
     let currentDiscussionId = null;
