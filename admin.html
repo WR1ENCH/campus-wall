@@ -662,6 +662,14 @@
         <span class="nav-icon">🔒</span>
         <span>霸凌状态管理</span>
       </div>
+      <div class="nav-item" onclick="showPage('pickup', this)">
+        <span class="nav-icon">🏆</span>
+        <span>拍卖审核</span>
+      </div>
+      <div class="nav-item" onclick="showPage('pickup-reports', this)">
+        <span class="nav-icon">🚩</span>
+        <span>拍卖举报处理</span>
+      </div>
     </div>
 
     <!-- 用户管理（独立一级菜单） -->
@@ -1035,6 +1043,44 @@
       </div>
     </div>
 
+    <!-- 拍卖审核页 -->
+    <div class="page" id="page-pickup" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:14px;color:var(--text-sub);">校园墙精选拍卖审核（共 <strong id="pickupReviewCount">0</strong> 条待审核）</span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPickupBids()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header">
+          <span>出价记录</span>
+        </div>
+        <div id="pickupReviewBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 拍卖内容举报处理页 -->
+    <div class="page" id="page-pickup-reports" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            拍卖内容举报（共 <strong id="pickupReportCount">0</strong> 条待处理）
+          </span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPickupReports()">🔄 刷新</button>
+      </div>
+      <div class="admin-table" style="margin-top:4px;">
+        <div class="table-header">
+          <span>举报列表</span>
+        </div>
+        <div id="pickupReportBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 评论管理页 -->
     <div class="page" id="page-comments" style="display:none;">
       <div class="post-toolbar">
@@ -1184,10 +1230,12 @@
             共 <strong id="cardTotalCount">0</strong> 张卡密
           </span>
         </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;margin-right:6px;" onclick="batchCopyCards()">📋 批量复制</button>
         <button class="add-admin-btn" onclick="openCreateCardModal()">＋ 创建卡密</button>
       </div>
       <div class="admins-table" style="margin-top:4px;">
-        <div class="table-header" style="grid-template-columns:1fr 80px 90px 100px 140px 100px 60px;">
+        <div class="table-header" style="grid-template-columns:40px 1fr 80px 90px 100px 140px 100px 60px;">
+          <div><input type="checkbox" id="cardSelectAll" onclick="toggleSelectAllCards(this)" title="全选/取消全选" style="cursor:pointer;width:16px;height:16px;"></div>
           <div>卡密</div>
           <div>面值</div>
           <div>状态</div>
@@ -2021,6 +2069,135 @@
     }
   }
 
+  // ===== 拍卖审核 =====
+  let allPickupBids = [];
+
+  async function loadPickupBids() {
+    try {
+      const res = await fetch('/api/admin/pickup/bids', { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) return;
+      allPickupBids = json.data || [];
+      renderPickupBids();
+    } catch { alert('加载拍卖出价失败'); }
+  }
+
+  function renderPickupBids() {
+    const pending = allPickupBids.filter(b => b.reviewStatus === 'pending_review');
+    document.getElementById('pickupReviewCount').textContent = pending.length;
+    const body = document.getElementById('pickupReviewBody');
+    if (allPickupBids.length === 0) {
+      body.innerHTML = '<div class="empty-tip">暂无出价记录</div>';
+      return;
+    }
+    body.innerHTML = allPickupBids.map(b => {
+      const statusMap = { pending_review: '⏳ 待审核', approved: '✅ 已通过', rejected: '❌ 已拒绝' };
+      const statusBadge = statusMap[b.reviewStatus] || b.reviewStatus;
+      const isPending = b.reviewStatus === 'pending_review';
+      return '<div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;align-items:center;gap:10px;' +
+        (isPending ? 'background:#fffde7;' : '') + '">' +
+        '<div style="flex:1;min-width:180px;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text-main);">' + escHtml(b.content) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-sub);margin-top:2px;">' +
+            escHtml(b.username) + ' · ' + b.slotLabel + ' · ' + new Date(b.time).toLocaleString('zh-CN') + ' · 💰 ' + b.amount + ' Credits' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-sub);">状态：' + statusBadge + '</div>' +
+        '</div>' +
+        (isPending ? '<div style="display:flex;gap:6px;flex-shrink:0;">' +
+          '<button class="btn-primary" style="padding:5px 14px;font-size:12px;background:#4caf50;" onclick="reviewPickupBid(\'' + b.bidId + '\',\'approve\')">✅ 通过</button>' +
+          '<button class="btn-danger" style="padding:5px 14px;font-size:12px;" onclick="reviewPickupBid(\'' + b.bidId + '\',\'reject\')">❌ 拒绝</button>' +
+        '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  async function reviewPickupBid(bidId, action) {
+    const actionText = action === 'approve' ? '通过审核' : '拒绝并退还Credit';
+    if (!confirm('确定要' + actionText + '此出价？')) return;
+    try {
+      const res = await fetch('/api/admin/pickup/review/' + bidId, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ action })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        alert('✅ ' + json.msg);
+        loadPickupBids();
+      } else {
+        alert('操作失败：' + json.msg);
+      }
+      } catch { alert('网络错误'); }
+  }
+
+  // ===== 拍卖内容举报处理 =====
+  let allPickupReports = [];
+
+  async function loadPickupReports() {
+    try {
+      const res = await fetch('/api/admin/pickup/reports', { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) return;
+      allPickupReports = json.data || [];
+      renderPickupReports();
+    } catch { alert('加载拍卖内容举报失败'); }
+  }
+
+  function renderPickupReports() {
+    const pending = allPickupReports.filter(r => r.status === 'pending');
+    document.getElementById('pickupReportCount').textContent = pending.length;
+    const body = document.getElementById('pickupReportBody');
+    if (allPickupReports.length === 0) {
+      body.innerHTML = '<div class="empty-tip">暂无举报记录</div>';
+      return;
+    }
+    const statusMap = { pending: '⏳ 待处理', resolved_violation: '✅ 已确认违规', resolved_dismissed: '❌ 已驳回' };
+    body.innerHTML = allPickupReports.map(r => {
+      const isPending = r.status === 'pending';
+      const statusBadge = statusMap[r.status] || r.status;
+      return '<div style="padding:14px 16px;border-bottom:1px solid var(--border);' +
+        (isPending ? 'background:#fffde7;' : '') + '">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">' +
+          '<span style="font-size:13px;font-weight:600;color:var(--text-main);">' + escHtml(r.content) + '</span>' +
+          '<span style="font-size:11px;padding:2px 8px;border-radius:8px;' +
+            (r.status === 'pending' ? 'background:#fff3cd;color:#856404;' :
+             r.status === 'resolved_violation' ? 'background:#d4edda;color:#155724;' :
+             'background:#f8d7da;color:#721c24;') + '">' + statusBadge + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;">' +
+          '时段：' + escHtml(r.slotLabel) + ' · 出价用户：' + escHtml(r.username) + ' · 💰 ' + r.amount + ' Credits' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-sub);margin-bottom:6px;">' +
+          '举报原因：' + escHtml(r.reason) + ' · 举报人：' + escHtml(r.reporterName) + ' · ' + new Date(r.time).toLocaleString('zh-CN') +
+        '</div>' +
+        (isPending ? '<div style="display:flex;gap:8px;">' +
+          '<button class="btn-primary" style="padding:5px 14px;font-size:12px;background:#c0392b;" onclick="handlePickupReport(\'' + r.id + '\',\'confirm\')">⚠️ 确认违规</button>' +
+          '<button class="btn-cancel" style="padding:5px 14px;font-size:12px;" onclick="handlePickupReport(\'' + r.id + '\',\'dismiss\')">驳回举报</button>' +
+        '</div>' : '') +
+        (r.resolvedBy ? '<div style="font-size:11px;color:var(--text-sub);margin-top:6px;">处理人：' + escHtml(r.resolvedBy) + ' · ' + new Date(r.resolvedAt).toLocaleString('zh-CN') + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }
+
+  async function handlePickupReport(reportId, action) {
+    const actionText = action === 'confirm' ? '确认内容违规（将下架内容、封禁用户、不退还Credits）' : '驳回该举报';
+    if (!confirm('确定要' + actionText + '？')) return;
+    try {
+      const res = await fetch('/api/admin/pickup/report-action/' + reportId, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ action })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        alert('✅ ' + json.msg);
+        loadPickupReports();
+      } else {
+        alert('操作失败：' + json.msg);
+      }
+    } catch { alert('网络错误'); }
+  }
+
   // ===== 霸凌状态管理 =====
   async function loadBullyingNames() {
     try {
@@ -2177,14 +2354,41 @@
   }
 
   // ===== 卡密管理 =====
+  let allCards = [];
+  let selectedCardIds = new Set();
+
+  function toggleSelectAllCards(checkbox) {
+    if (checkbox.checked) {
+      allCards.forEach(c => selectedCardIds.add(c.code));
+    } else {
+      selectedCardIds.clear();
+    }
+    renderCards(allCards);
+  }
+
+  function onCardCheckClick(cb) {
+    const code = cb.getAttribute('data-card-code');
+    if (cb.checked) {
+      selectedCardIds.add(code);
+    } else {
+      selectedCardIds.delete(code);
+    }
+    // 同步全选框状态
+    const selectAll = document.querySelector('#cardSelectAll');
+    if (selectAll) {
+      selectAll.checked = selectedCardIds.size === allCards.length && allCards.length > 0;
+    }
+  }
+
   async function loadCards() {
     try {
       const res = await fetch('/api/admin/credit-cards', { headers: authHeaders() });
       const json = await res.json();
       if (!json.ok) { showToast('❌ 加载卡密失败', 'error'); return; }
-      const cards = json.data || [];
-      document.getElementById('cardTotalCount').textContent = cards.length;
-      renderCards(cards);
+      allCards = json.data || [];
+      selectedCardIds.clear();
+      document.getElementById('cardTotalCount').textContent = allCards.length;
+      renderCards(allCards);
     } catch { showToast('❌ 网络错误', 'error'); }
   }
 
@@ -2197,7 +2401,9 @@
     body.innerHTML = cards.map(c => {
       const statusText = c.status === 'unused' ? '未使用' : '已使用';
       const statusClass = c.status === 'unused' ? 'badge-success' : 'badge-normal';
-      return '<div class="table-row" style="display:grid;grid-template-columns:1fr 80px 90px 100px 140px 100px 60px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;">'
+      const checked = selectedCardIds.has(c.code) ? ' checked' : '';
+      return '<div class="table-row" style="display:grid;grid-template-columns:40px 1fr 80px 90px 100px 140px 100px 60px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;">'
+        + '<div><input type="checkbox" class="card-checkbox"' + checked + ' data-card-code="' + escHtml(c.code) + '" onclick="onCardCheckClick(this)" style="cursor:pointer;width:15px;height:15px;"></div>'
         + '<div style="font-family:monospace;color:#3a2a1a;">' + escHtml(c.code) + '</div>'
         + '<div style="font-weight:600;color:#3a2a1a;">' + c.value + ' 💰</div>'
         + '<div><span class="type-badge ' + statusClass + '">' + statusText + '</span></div>'
@@ -2207,6 +2413,28 @@
         + '<div style="text-align:center;"><button class="mini-btn" onclick="copyCardCode(\'' + escHtml(c.code) + '\',event)">📋</button></div>'
         + '</div>';
     }).join('');
+  }
+
+  function batchCopyCards() {
+    if (selectedCardIds.size === 0) {
+      showToast('⚠️ 请先勾选要复制的卡密');
+      return;
+    }
+    const selected = allCards.filter(c => selectedCardIds.has(c.code));
+    const text = selected.map(c => c.code).join('\n');
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('✅ 已复制 ' + selected.length + ' 张卡密', 'success');
+    }).catch(function() {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✅ 已复制 ' + selected.length + ' 张卡密', 'success');
+    });
   }
 
   function copyCardCode(code, event) {
@@ -2795,7 +3023,7 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理' };
+    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
@@ -2805,6 +3033,8 @@
     if (id === 'qa') { loadAdminQA(); }
     if (id === 'feedbacks') { loadFeedbacks(); }
     if (id === 'bullying') { loadBullying(); }
+    if (id === 'pickup') { loadPickupBids(); }
+    if (id === 'pickup-reports') { loadPickupReports(); }
     if (id === 'sensitivewords') { loadSensitiveWords(); }
     if (id === 'bullyingnames') { loadBullyingNames(); }
     if (id === 'loginlogs') { loadLoginLogs(); }
@@ -2824,6 +3054,8 @@
     else if (currentPageId === 'discussions') loadDiscussionsAdmin();
     else if (currentPageId === 'feedbacks') loadFeedbacks();
     else if (currentPageId === 'bullying') loadBullying();
+    else if (currentPageId === 'pickup-reports') loadPickupReports();
+    else if (currentPageId === 'pickup-reports') loadPickupReports();
     else if (currentPageId === 'loginlogs') loadLoginLogs();
     showToast('数据已刷新', 'success');
   }
@@ -4013,5 +4245,6 @@
   // ===== 启动 =====
   checkSession();
 </script>
+<script src="pow-interceptor.js"></script>
 </body>
 </html>
