@@ -211,6 +211,16 @@
       flex-shrink: 0; text-align: center;
     }
 
+    /* 规则说明 */
+    .pickup-rule-item {
+      display: flex; gap: 10px; padding: 10px 12px;
+      background: #fefcf0; border-radius: 10px;
+      border: 1px solid #f0e8c0; align-items: flex-start;
+    }
+    .pickup-rule-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+    .pickup-rule-title { font-size: 13px; font-weight: 700; color: #5a3d00; margin-bottom: 2px; }
+    .pickup-rule-desc { font-size: 12px; color: #777; line-height: 1.5; }
+
     /* 左侧时间槽 */
     .pickup-slots {
       width: 185px; flex-shrink: 0;
@@ -1055,7 +1065,7 @@
       padding: 18px 20px 14px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1);
       border: 2px solid rgba(240,165,0,0.35);
-      max-width: 240px; min-width: 200px;
+      max-width: 280px; min-width: 220px;
       animation: tooltipIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes tooltipIn {
@@ -1587,6 +1597,7 @@
           <span style="font-size:20px;font-weight:700;color:#5a3d00;">🏆 校园墙精选拍卖</span>
           <span id="pickupTabBid" class="pickup-tab active" onclick="switchPickupTab('bid')">竞价</span>
           <span id="pickupTabMy" class="pickup-tab" onclick="switchPickupTab('my')">📋 我的拍卖</span>
+          <span id="pickupTabRules" class="pickup-tab" onclick="togglePickupRules()" style="margin-left:auto;">📜 规则</span>
         </div>
         <button onclick="closePickupModal()" class="pickup-modal-close">✕</button>
       </div>
@@ -1657,6 +1668,62 @@
             <div style="font-size:13px;font-weight:600;color:#5a3d00;margin-bottom:10px;">📋 我的出价记录</div>
             <div id="pickupMyBidsList" style="max-height:360px;overflow-y:auto;"></div>
           </div>
+        </div>
+
+        <!-- 规则说明（独立于右侧面板） -->
+        <div id="pickupRulesView" style="display:none;padding:16px 20px;flex:1;overflow-y:auto;">
+          <div style="font-size:15px;font-weight:700;color:#5a3d00;margin-bottom:14px;">📜 拍卖规则说明</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">🕐</span>
+                <div>
+                  <div class="pickup-rule-title">拍卖时段</div>
+                  <div class="pickup-rule-desc">每天 6 个时段（每时段 4 小时），拍卖次日对应时段的展示位。今天拍，明天展示。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">💰</span>
+                <div>
+                  <div class="pickup-rule-title">底价与加价</div>
+                  <div class="pickup-rule-desc">每个时段底价 <b>300 Credits</b>，每次加价不得低于 <b>50 Credits</b>。出价不能撤回。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">⏰</span>
+                <div>
+                  <div class="pickup-rule-title">竞价截止</div>
+                  <div class="pickup-rule-desc">时段开始前竞价自动结束，截止时最高出价者获得该时段的展示权。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">📝</span>
+                <div>
+                  <div class="pickup-rule-title">展示内容</div>
+                  <div class="pickup-rule-desc">获胜后需提交展示内容（100 字以内），将在校园墙精选滚动栏中循环展示。内容需经后台审核。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">🔙</span>
+                <div>
+                  <div class="pickup-rule-title">退款规则</div>
+                  <div class="pickup-rule-desc">竞拍失败或被拒拍时，出价的 Credits <b>自动退还</b>。中标后已展示的不予退还。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">👀</span>
+                <div>
+                  <div class="pickup-rule-title">匿名展示</div>
+                  <div class="pickup-rule-desc">出价时可勾选"匿名展示"，展示时将隐藏你的用户名，只显示内容。</div>
+                </div>
+              </div>
+              <div class="pickup-rule-item">
+                <span class="pickup-rule-icon">⚠️</span>
+                <div>
+                  <div class="pickup-rule-title">违规处理</div>
+                  <div class="pickup-rule-desc">发布违规内容（广告、辱骂、敏感信息等）将不退还 Credits，并可能面临<b>封号</b>处理。</div>
+                </div>
+              </div>
+            </div>
         </div>
       </div>
       <div class="pickup-modal-footer">
@@ -3279,42 +3346,86 @@
     var _spotlight = {
       step: 0,
       steps: [
+        // Step 0：发帖
         {
           selector: '.compose-btn',
-          title: '发帖子 ✏️',
-          desc: '点击「✏️ 贴一张」按钮<br>写下你想分享的内容',
+          title: '✏️ 发帖 · 贴一张便利贴',
+          desc: '点击「✏️ 贴一张」按钮，写下你想分享的内容，支持匿名发布哦~',
           openModal: true,
-          btnText: '知道了',
+          btnText: '知道了，去写',
           position: 'bottom'
         },
+        // Step 1：刚发的帖子（动态）
         {
-          // 第2步：高亮刚发的帖子（通过 _getGuideSelector 动态获取）
           selector: '',
-          title: '你的帖子已发布 📝',
-          desc: '点击这张便利贴<br>查看帖子详情',
+          title: '📝 帖子已发布！',
+          desc: '你的便利贴已贴到墙上～<br>点击它查看帖子详情与评论',
           btnText: '点击查看',
           position: 'top',
-          dynamicSelector: true  // 标记为动态选择器
+          dynamicSelector: true
         },
+        // Step 2：查看评论按钮（帖子弹窗内）
         {
           selector: '#detailLinkBtn',
-          title: '查看详情 🔍',
-          desc: '点击「查看详情」<br>在新窗口打开完整内容',
+          title: '💬 查看评论',
+          desc: '点击「💬 查看评论」在完整页面查看帖子评论，也可以在这里与大家互动',
           btnText: '下一步',
           position: 'top'
         },
+        // Step 3：点赞按钮
         {
           selector: '#detailLikeBtn',
-          title: '给帖子点赞 ❤️',
-          desc: '在帖子详情页底部<br>点击❤️按钮为喜欢的帖子点赞',
+          title: '❤️ 点赞',
+          desc: '喜欢一条帖子？点下方的❤️送出你的赞，被点赞的人会收到通知',
           btnText: '下一步',
           position: 'top'
         },
+        // Step 4（关闭弹窗后）：签到按钮
+        {
+          selector: '#checkinBtn',
+          title: '✅ 每日签到',
+          desc: '每天签到可获得 <b>100 Credits</b>！<br>坚持连续签到还有连击奖励，Credits 可用于拍卖精选展示位',
+          btnText: '下一步',
+          position: 'bottom'
+        },
+        // Step 5：Credits 余额
+        {
+          selector: '.user-logout-sm[onclick*="credit.html"]',
+          title: '💰 Credits 余额',
+          desc: '这里显示你的 Credits 余额。<br>点击可进入明细页面查看收支记录与充值入口',
+          btnText: '下一步',
+          position: 'bottom'
+        },
+        // Step 6：精选拍卖滚动栏
+        {
+          selector: '.pickup-label',
+          title: '🏆 校园墙精选拍卖',
+          desc: '通过 Credits 竞价，赢得滚动栏展示位！<br>内容将在当前时段内循环展示给所有人看',
+          btnText: '下一步',
+          position: 'bottom'
+        },
+        // Step 7：讨论区
+        {
+          selector: 'button[onclick="openDiscussionModal()"]',
+          title: '💬 讨论区',
+          desc: '发起或参与话题讨论，支持嵌套回复。<br>每次最多同时开 3 个活跃话题，到期自动关闭',
+          btnText: '下一步',
+          position: 'bottom'
+        },
+        // Step 8：你问我答
+        {
+          selector: 'button[onclick="openQAModal()"]',
+          title: '🙋 你问我答',
+          desc: '提出问题并设置 Credits 悬赏，回答者竞争奖励。<br>采纳最佳答案后自动发放悬赏金',
+          btnText: '下一步',
+          position: 'bottom'
+        },
+        // Step 9：个人主页 / 同学认证入口
         {
           selector: '#topUserAvatar',
-          title: '个人主页 👤',
-          desc: '点击顶部头像<br>进入个人主页，编辑资料和头像',
-          btnText: '完成！',
+          title: '👤 个人主页 & 同学认证',
+          desc: '点击头像进入个人主页，可编辑资料和上传头像。<br>完成同学认证后可使用<b>智学快捷登录</b>和<b>找回密码</b>',
+          btnText: '🎉 完成引导！',
           position: 'bottom'
         }
       ],
@@ -3334,7 +3445,7 @@
 
     function _getTooltipPos(r, position) {
       var vw = window.innerWidth, vh = window.innerHeight;
-      var tw = 240, th = 160;
+      var tw = 280, th = 170;
       var gap = 14, ringPad = 8;
       var x, y;
       if (position === 'bottom') {
@@ -3395,15 +3506,18 @@
       var vw = window.innerWidth, vh = window.innerHeight;
       var tp = _getTooltipPos(r, info.position || 'bottom');
       var isLast = s.step === s.steps.length - 1;
+      var pct = Math.round(((s.step + 1) / s.steps.length) * 100);
       s.container.innerHTML = _buildSVG(vw, vh, r.left, r.top, r.width, r.height);
       s.tooltip.style.cssText =
         'left:' + tp.x + 'px;top:' + tp.y + 'px;width:' + tp.w + 'px;';
       s.tooltip.innerHTML =
-        '<div class="spotlight-step-num">第 ' + (s.step + 1) + ' / ' + s.steps.length + ' 步</div>' +
+        '<div class="spotlight-step-num" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+        '<span style="flex:1;height:4px;background:#f0e8c8;border-radius:2px;overflow:hidden;">' +
+        '<span style="display:block;height:100%;width:' + pct + '%;background:linear-gradient(90deg,#f0a500,#f08000);border-radius:2px;transition:width .3s;"></span></span>' +
+        '<span>' + (s.step + 1) + '&thinsp;/&thinsp;' + s.steps.length + '</span></div>' +
         '<div class="spotlight-title">' + info.title + '</div>' +
         '<div class="spotlight-desc">' + info.desc + '</div>' +
         '<div class="spotlight-btns">' +
-        '<button class="spotlight-skip" onclick="hideNewbieGuide()">跳过引导</button>' +
         (isLast
           ? '<button class="spotlight-done" onclick="hideNewbieGuide()">' + info.btnText + '</button>'
           : '<button class="spotlight-next" onclick="_nextSpotlight()">' + info.btnText + '</button>') +
@@ -3425,14 +3539,15 @@
         var card = document.querySelector(selector);
         if (card) { card.click(); }
       }
-      // step 3（点赞按钮）完成后：关闭详情页，回到首页再引导头像
+      // step 3（点赞按钮）完成后：关闭帖子详情弹窗 + 发帖弹窗，回首页引导签到等
       if (step === 3) {
         closeNoteDetail();
-        s.step = step + 1; // 先更新 step 到 4
+        closeModal();
+        s.step = step + 1;
         s.container.style.display = 'block';
         s.tooltip.style.display = 'block';
-        setTimeout(_renderSpotlightStep, 600);
-        return; // 跳过下面的统一 step++ 逻辑
+        setTimeout(_renderSpotlightStep, 700);
+        return;
       }
 
       s.step = step + 1;
@@ -3445,7 +3560,6 @@
       if (localStorage.getItem('newbieGuideForceOff') === '1') return;
       var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
       if (!curUser) return;
-      if (localStorage.getItem('newbieGuideShown') === curUser.username) return;
       // 同一用户只触发一次；不同用户或首次注册重新触发
       if (localStorage.getItem('newbieGuideShown') === curUser.username) return;
       if (!_spotlight.container) {
@@ -3464,10 +3578,6 @@
       if (!_spotlight.container) {
         _spotlight.container = document.getElementById('spotlightOverlay');
         _spotlight.tooltip  = document.getElementById('spotlightTooltip');
-      }
-      var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
-      if (curUser && curUser.username) {
-        localStorage.setItem('newbieGuideShown', curUser.username);
       }
       var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
       if (curUser && curUser.username) {
@@ -3899,10 +4009,31 @@
     // ===== 我的拍卖 =====
     let pickupCurrentTab = 'bid';
 
+    function togglePickupRules() {
+      var rulesView = document.getElementById('pickupRulesView');
+      var tabRules = document.getElementById('pickupTabRules');
+      var isShowing = (rulesView.style.display === 'block');
+      if (isShowing) {
+        rulesView.style.display = 'none';
+        tabRules.classList.remove('active');
+        document.getElementById('pickupRight').style.display = 'flex';
+        document.getElementById('pickupSlots').style.display = 'flex';
+        switchPickupTab(pickupCurrentTab || 'bid');
+      } else {
+        document.getElementById('pickupTabBid').classList.remove('active');
+        document.getElementById('pickupTabMy').classList.remove('active');
+        tabRules.classList.add('active');
+        document.getElementById('pickupSlots').style.display = 'none';
+        document.getElementById('pickupRight').style.display = 'none';
+        rulesView.style.display = 'block';
+      }
+    }
+
     function switchPickupTab(tab) {
       pickupCurrentTab = tab;
       document.getElementById('pickupTabBid').classList.toggle('active', tab === 'bid');
       document.getElementById('pickupTabMy').classList.toggle('active', tab === 'my');
+      document.getElementById('pickupTabRules').classList.remove('active');
 
       const slots = document.getElementById('pickupSlots');
       const contentSection = document.getElementById('pickupContentSection');
@@ -3912,6 +4043,8 @@
       const placeholder = document.getElementById('pickupPlaceholder');
       const slotTitle = document.getElementById('pickupSlotTitle');
       const myBidsView = document.getElementById('pickupMyBidsView');
+      const rulesView = document.getElementById('pickupRulesView');
+      rulesView.style.display = 'none';
 
       if (tab === 'my') {
         // 隐藏竞价视图
