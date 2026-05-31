@@ -294,7 +294,10 @@ app.use((req, res, next) => {
     for(var i=0;i<l;i++){var c=input.charCodeAt(i);if(c<128)msg.push(c);else if(c<2048)msg.push(192|c>>6,128|c&63);else if(c<65536)msg.push(224|c>>12,128|(c>>6)&63,128|c&63);else msg.push(240|c>>18,128|(c>>12)&63,128|(c>>6)&63,128|c&63)}
     var blen=msg.length*8;msg.push(128);
     while((msg.length*8)%512!==448)msg.push(0);
-    for(i=7;i>=0;i--)msg.push((blen>>>i*8)&255);
+    // 64-bit big-endian 长度编码：JS 的 >>> 移位位数只取低5位(mod 32)，
+    // blen>>>32 会变成 blen>>>0，导致高32位和低32位相同。
+    // 在 PoW 场景下消息远小于 2^32 位（~512MB），高32位恒为0。
+    msg.push(0,0,0,0,(blen>>>24)&255,(blen>>>16)&255,(blen>>>8)&255,(blen>>>0)&255);
 
     var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
     for(var b=0;b<msg.length;b+=64){
