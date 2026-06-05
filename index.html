@@ -761,10 +761,12 @@
 
       /* 移动端 footer 底部栏滚动隐藏/显示 */
       .footer {
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, opacity 0.3s ease;
       }
       .footer.hidden {
         transform: translateY(100%);
+        opacity: 0;
+        pointer-events: none;
       }
 
       .wall { padding-bottom: 60px; }
@@ -5125,19 +5127,21 @@
   <!-- 移动端底部栏滚动隐藏/显示 -->
   <script>
     (function() {
-      if (window.innerWidth > 768) return;
       var bar = document.querySelector('.footer');
+      if (!bar) return;
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+
       var lastY = window.scrollY;
       var ticking = false;
       window.addEventListener('scroll', function() {
         if (!ticking) {
           requestAnimationFrame(function() {
             var y = window.scrollY;
-            if (y <= 0) {
+            if (y <= 10) {
               bar.classList.remove('hidden');
-            } else if (y > lastY && y > 80) {
+            } else if (y > lastY && y > 60) {
               bar.classList.add('hidden');
-            } else if (y < lastY) {
+            } else if (y < lastY - 5) {
               bar.classList.remove('hidden');
             }
             lastY = y;
