@@ -759,6 +759,15 @@
       .top-stats { display: none; }
       .wall-title { font-size: 20px; }
 
+      /* 登录后隐藏logo，用户信息替代左位 */
+      .top-bar.logged-in { justify-content: flex-start; padding: 10px 16px; }
+      .top-bar.logged-in .wall-title { display: none; }
+      .top-bar.logged-in .user-info-bar { gap: 5px; }
+      .top-bar.logged-in #topUserAccount { display: none; }
+      .top-bar.logged-in #topUserNameLink { font-size: 14px; max-width: 60px; }
+      .top-bar.logged-in .user-avatar-sm { font-size: 22px; }
+      .top-bar.logged-in .user-logout-sm { font-size: 10px; padding: 3px 7px; }
+
       /* 移动端 footer 底部栏滚动隐藏/显示 */
       .footer {
         transition: transform 0.3s ease, opacity 0.3s ease;
@@ -2274,23 +2283,23 @@
     function updateUserBar() {
       const barEl = document.getElementById('userInfoBar');
       const entranceEl = document.getElementById('loginEntrance');
+      const topBar = document.getElementById('topBar');
       if (currentUser) {
         document.getElementById('topUserAvatar').textContent = currentUser.avatar || '🙈';
         document.getElementById('topUserName').textContent = currentUser.nickname;
         document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
-        // 更新 Credit 显示
         document.getElementById('topUserCredit').textContent = currentUser.credit || 0;
-        // 更新签到状态
         updateCheckinBtn(currentUser.checkinToday);
-        // 设置用户主页链接
         const userProfileUrl = `user.html?id=${currentUser.id}`;
         document.getElementById('topUserNameLink').href = userProfileUrl;
         document.getElementById('topUserAvatarLink').href = userProfileUrl;
         barEl.style.display = 'block';
         entranceEl.style.display = 'none';
+        topBar.classList.add('logged-in');
       } else {
         barEl.style.display = 'none';
         entranceEl.style.display = 'block';
+        topBar.classList.remove('logged-in');
       }
     }
 
