@@ -5131,57 +5131,46 @@
       if (!bar) return;
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
-      var hideTimer = null;
-      var pinned = false;  // 用户点击底栏后常驻
+      var pinned = false;
+      var lastInteract = 0;  // 最后交互时间戳
 
       // 默认隐藏
       bar.classList.add('hidden');
 
-      function getY() {
-        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      }
-
-      function showBar() {
-        if (pinned) return;  // 常驻模式下不操作
-        bar.classList.remove('hidden');
-        clearTimeout(hideTimer);
-        startHideTimer();
-      }
-
-      function hideBar() {
-        if (pinned) return;  // 常驻模式下不隐藏
-        bar.classList.add('hidden');
-        clearTimeout(hideTimer);
-      }
-
-      function startHideTimer() {
-        if (pinned) return;  // 常驻模式下不启动定时器
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(function() {
-          if (!pinned) {
+      // 帧循环：检测是否超过 2.5s 无交互，是则隐藏
+      function frameLoop() {
+        if (!pinned && bar.classList.contains('hidden') === false) {
+          if (Date.now() - lastInteract > 2500) {
             bar.classList.add('hidden');
           }
-        }, 2500);
+        }
+        requestAnimationFrame(frameLoop);
       }
 
-      // 触摸滑动时显示，停止触摸 2.5s 后自动隐藏
-      document.addEventListener('touchstart', function() { showBar(); }, { passive: true });
-      document.addEventListener('touchmove', function() { showBar(); }, { passive: true });
-      document.addEventListener('touchend', function() { startHideTimer(); }, { passive: true });
+      function onInteract() {
+        lastInteract = Date.now();
+        if (!pinned) bar.classList.remove('hidden');
+      }
+
+      document.addEventListener('touchstart', onInteract, { passive: true });
+      document.addEventListener('touchmove', onInteract, { passive: true });
+      window.addEventListener('scroll', onInteract, { passive: true });
+
+      // 启动帧循环
+      requestAnimationFrame(frameLoop);
 
       // 点击底栏 → 常驻
       bar.addEventListener('click', function(e) {
         e.stopPropagation();
         pinned = true;
         bar.classList.remove('hidden');
-        clearTimeout(hideTimer);
       });
 
-      // 点击底栏外的任何区域 → 取消常驻，恢复自动隐藏
+      // 点击底栏外 → 取消常驻
       document.addEventListener('click', function(e) {
         if (pinned && !bar.contains(e.target)) {
           pinned = false;
-          startHideTimer();
+          lastInteract = Date.now();
         }
       });
     })();
