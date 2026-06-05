@@ -5158,27 +5158,16 @@
         if (pinned) return;  // 常驻模式下不启动定时器
         clearTimeout(hideTimer);
         hideTimer = setTimeout(function() {
-          if (!pinned && getY() > 100) {
+          if (!pinned) {
             bar.classList.add('hidden');
           }
         }, 2500);
       }
 
-      // 滑动/触摸时显示
+      // 触摸滑动时显示，停止触摸 2.5s 后自动隐藏
       document.addEventListener('touchstart', function() { showBar(); }, { passive: true });
       document.addEventListener('touchmove', function() { showBar(); }, { passive: true });
-
-      // 滚动时也显示
-      var ticking = false;
-      window.addEventListener('scroll', function() {
-        if (!ticking) {
-          requestAnimationFrame(function() {
-            showBar();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      }, { passive: true });
+      document.addEventListener('touchend', function() { startHideTimer(); }, { passive: true });
 
       // 点击底栏 → 常驻
       bar.addEventListener('click', function(e) {
