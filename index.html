@@ -758,6 +758,18 @@
     @media (max-width: 768px) {
       .top-stats { display: none; }
       .wall-title { font-size: 20px; }
+
+      /* 移动端 action-bar 固定在底部，滚动隐藏/显示 */
+      .action-bar {
+        top: auto;
+        bottom: 0;
+        transition: transform 0.3s ease;
+      }
+      .action-bar.hidden {
+        transform: translateY(100%);
+      }
+
+      .wall { padding-bottom: 100px; }
     }
 
     /* ===== 用户登录弹窗 ===== */
@@ -5111,6 +5123,33 @@
   <!-- 聚光灯引导遮罩 + 气泡 -->
   <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
   <div id="spotlightTooltip" class="spotlight-tooltip" style="display:none;"></div>
+
+  <!-- 移动端底部栏滚动隐藏/显示 -->
+  <script>
+    (function() {
+      if (window.innerWidth > 768) return;
+      var bar = document.getElementById('actionBar');
+      var lastY = window.scrollY;
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          requestAnimationFrame(function() {
+            var y = window.scrollY;
+            if (y <= 0) {
+              bar.classList.remove('hidden');
+            } else if (y > lastY && y > 80) {
+              bar.classList.add('hidden');
+            } else if (y < lastY) {
+              bar.classList.remove('hidden');
+            }
+            lastY = y;
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+    })();
+  </script>
 
 </body>
 </html>
