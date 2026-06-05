@@ -1261,9 +1261,10 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   users[userIndex].zhixueReviewedAt = new Date().toISOString();
   users[userIndex].zhixueReviewedBy = req.admin.id;
 
-  // 通过后：加密存储姓名班级，隐藏密码
+  // 通过后：加密存储姓名班级，隐藏密码，奖励 300 Credits
   if (action === 'approve') {
     users[userIndex].zhixuePassword = null;
+    users[userIndex].credit = (users[userIndex].credit || 0) + 300;
     // 智学验证：管理员填写的姓名；手动认证：若管理员填了就用管理员的，否则用用户提交的 manualName
     const nameToStore = (realName && realName.trim())
       ? realName.trim()

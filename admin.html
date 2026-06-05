@@ -2978,7 +2978,7 @@
         const json = await res.json();
         if (json.ok) {
           closeApproveCertModal();
-          showToast('✅ 已通过审核');
+          showToast('✅ 已通过审核，奖励 300 Credits');
           loadZhixuePending();
         } else {
           showToast('❌ ' + (json.msg || '操作失败'), 'error');
