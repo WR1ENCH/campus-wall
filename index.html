@@ -138,6 +138,12 @@
       box-shadow: 3px 5px 12px rgba(0,0,0,0.25);
     }
 
+    .action-btns {
+      display: flex; gap: 10px; flex-wrap: nowrap;
+      width: 100%;
+    }
+    .action-btns .compose-btn { flex: 1; white-space: nowrap; }
+
     /* ===== 校园墙精选滚动栏 ===== */
     .pickup-bar {
       display: inline-flex; align-items: center;
@@ -146,7 +152,6 @@
       height: 40px; padding: 0 4px 0 0;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
       flex: 1; min-width: 200px; max-width: 100%;
-      flex-basis: 100%;
       overflow: hidden; position: relative;
     }
     .pickup-label {
@@ -1275,9 +1280,11 @@
 
   <!-- 固定层：操作栏 -->
   <div class="action-bar" id="actionBar">
-    <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
-    <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
-    <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 你问我答</button>
+    <div class="action-btns">
+      <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
+      <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
+      <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 你问我答</button>
+    </div>
     <!-- 校园墙精选滚动栏 -->
     <div class="pickup-bar">
       <span class="pickup-label" onclick="openPickupLabelClick(event)">🏆 校园墙精选</span>
