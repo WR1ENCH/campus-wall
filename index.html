@@ -5124,53 +5124,42 @@
   <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
   <div id="spotlightTooltip" class="spotlight-tooltip" style="display:none;"></div>
 
-  <!-- 移动端底部栏：默认隐藏，滑动显示，点击底栏常驻，点击其他区域恢复自动隐藏 -->
+  <!-- 移动端底部栏：默认隐藏，滑动显示，5s自动隐藏，点击常驻 -->
   <script>
     (function() {
       var bar = document.querySelector('.footer');
       if (!bar) return;
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
+      var timer = null;
       var pinned = false;
-      var lastInteract = 0;  // 最后交互时间戳
 
-      // 默认隐藏
       bar.classList.add('hidden');
 
-      // 帧循环：检测是否超过 2.5s 无交互，是则隐藏
-      function frameLoop() {
-        if (!pinned && bar.classList.contains('hidden') === false) {
-          if (Date.now() - lastInteract > 2500) {
-            bar.classList.add('hidden');
-          }
-        }
-        requestAnimationFrame(frameLoop);
+      function show() {
+        if (pinned) return;
+        bar.classList.remove('hidden');
+        clearTimeout(timer);
+        timer = setTimeout(function() {
+          if (!pinned) bar.classList.add('hidden');
+        }, 5000);
       }
 
-      function onInteract() {
-        lastInteract = Date.now();
-        if (!pinned) bar.classList.remove('hidden');
-      }
+      document.addEventListener('touchstart', show, { passive: true });
+      document.addEventListener('touchmove', show, { passive: true });
+      window.addEventListener('scroll', show, { passive: true });
 
-      document.addEventListener('touchstart', onInteract, { passive: true });
-      document.addEventListener('touchmove', onInteract, { passive: true });
-      window.addEventListener('scroll', onInteract, { passive: true });
-
-      // 启动帧循环
-      requestAnimationFrame(frameLoop);
-
-      // 点击底栏 → 常驻
       bar.addEventListener('click', function(e) {
         e.stopPropagation();
         pinned = true;
         bar.classList.remove('hidden');
+        clearTimeout(timer);
       });
 
-      // 点击底栏外 → 取消常驻
       document.addEventListener('click', function(e) {
         if (pinned && !bar.contains(e.target)) {
           pinned = false;
-          lastInteract = Date.now();
+          show();
         }
       });
     })();
