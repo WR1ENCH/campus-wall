@@ -759,17 +759,15 @@
       .top-stats { display: none; }
       .wall-title { font-size: 20px; }
 
-      /* 移动端 action-bar 固定在底部，滚动隐藏/显示 */
-      .action-bar {
-        top: auto;
-        bottom: 0;
+      /* 移动端 footer 底部栏滚动隐藏/显示 */
+      .footer {
         transition: transform 0.3s ease;
       }
-      .action-bar.hidden {
+      .footer.hidden {
         transform: translateY(100%);
       }
 
-      .wall { padding-bottom: 100px; }
+      .wall { padding-bottom: 60px; }
     }
 
     /* ===== 用户登录弹窗 ===== */
@@ -5128,7 +5126,7 @@
   <script>
     (function() {
       if (window.innerWidth > 768) return;
-      var bar = document.getElementById('actionBar');
+      var bar = document.querySelector('.footer');
       var lastY = window.scrollY;
       var ticking = false;
       window.addEventListener('scroll', function() {
