@@ -5131,25 +5131,60 @@
       if (!bar) return;
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
-      var lastY = window.scrollY;
+      var hideTimer = null;
+      var lastY = window.scrollY || document.documentElement.scrollTop || 0;
+
+      function getY() {
+        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      }
+
+      function show() {
+        bar.classList.remove('hidden');
+        clearTimeout(hideTimer);
+        startHideTimer();
+      }
+
+      function startHideTimer() {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(function() {
+          var y = getY();
+          if (y > 100) bar.classList.add('hidden');
+        }, 2500);
+      }
+
+      function onScroll() {
+        var y = getY();
+        if (y <= 10) {
+          bar.classList.remove('hidden');
+          clearTimeout(hideTimer);
+          return;
+        }
+        if (y < lastY - 5) {
+          show();
+        } else if (y > lastY && y > 60) {
+          bar.classList.add('hidden');
+          clearTimeout(hideTimer);
+        }
+        lastY = y;
+        startHideTimer();
+      }
+
       var ticking = false;
-      window.addEventListener('scroll', function() {
+      function rafScroll() {
         if (!ticking) {
           requestAnimationFrame(function() {
-            var y = window.scrollY;
-            if (y <= 10) {
-              bar.classList.remove('hidden');
-            } else if (y > lastY && y > 60) {
-              bar.classList.add('hidden');
-            } else if (y < lastY - 5) {
-              bar.classList.remove('hidden');
-            }
-            lastY = y;
+            onScroll();
             ticking = false;
           });
           ticking = true;
         }
-      }, { passive: true });
+      }
+
+      window.addEventListener('scroll', rafScroll, { passive: true });
+      document.addEventListener('touchstart', function() { show(); }, { passive: true });
+      document.addEventListener('touchmove', rafScroll, { passive: true });
+
+      startHideTimer();
     })();
   </script>
 
