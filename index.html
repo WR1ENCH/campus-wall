@@ -5124,7 +5124,7 @@
   <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
   <div id="spotlightTooltip" class="spotlight-tooltip" style="display:none;"></div>
 
-  <!-- 移动端底部栏滚动隐藏/显示 -->
+  <!-- 移动端底部栏：默认隐藏，滑动显示，点击底栏常驻，点击其他区域恢复自动隐藏 -->
   <script>
     (function() {
       var bar = document.querySelector('.footer');
@@ -5132,59 +5132,69 @@
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
       var hideTimer = null;
-      var lastY = window.scrollY || document.documentElement.scrollTop || 0;
+      var pinned = false;  // 用户点击底栏后常驻
+
+      // 默认隐藏
+      bar.classList.add('hidden');
 
       function getY() {
         return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
       }
 
-      function show() {
+      function showBar() {
+        if (pinned) return;  // 常驻模式下不操作
         bar.classList.remove('hidden');
         clearTimeout(hideTimer);
         startHideTimer();
       }
 
+      function hideBar() {
+        if (pinned) return;  // 常驻模式下不隐藏
+        bar.classList.add('hidden');
+        clearTimeout(hideTimer);
+      }
+
       function startHideTimer() {
+        if (pinned) return;  // 常驻模式下不启动定时器
         clearTimeout(hideTimer);
         hideTimer = setTimeout(function() {
-          var y = getY();
-          if (y > 100) bar.classList.add('hidden');
+          if (!pinned && getY() > 100) {
+            bar.classList.add('hidden');
+          }
         }, 2500);
       }
 
-      function onScroll() {
-        var y = getY();
-        if (y <= 10) {
-          bar.classList.remove('hidden');
-          clearTimeout(hideTimer);
-          return;
-        }
-        if (y < lastY - 5) {
-          show();
-        } else if (y > lastY && y > 60) {
-          bar.classList.add('hidden');
-          clearTimeout(hideTimer);
-        }
-        lastY = y;
-        startHideTimer();
-      }
+      // 滑动/触摸时显示
+      document.addEventListener('touchstart', function() { showBar(); }, { passive: true });
+      document.addEventListener('touchmove', function() { showBar(); }, { passive: true });
 
+      // 滚动时也显示
       var ticking = false;
-      function rafScroll() {
+      window.addEventListener('scroll', function() {
         if (!ticking) {
           requestAnimationFrame(function() {
-            onScroll();
+            showBar();
             ticking = false;
           });
           ticking = true;
         }
-      }
+      }, { passive: true });
 
-      window.addEventListener('scroll', rafScroll, { passive: true });
-      document.addEventListener('touchstart', function() { show(); }, { passive: true });
-      document.addEventListener('touchmove', rafScroll, { passive: true });
+      // 点击底栏 → 常驻
+      bar.addEventListener('click', function(e) {
+        e.stopPropagation();
+        pinned = true;
+        bar.classList.remove('hidden');
+        clearTimeout(hideTimer);
+      });
 
-      startHideTimer();
+      // 点击底栏外的任何区域 → 取消常驻，恢复自动隐藏
+      document.addEventListener('click', function(e) {
+        if (pinned && !bar.contains(e.target)) {
+          pinned = false;
+          startHideTimer();
+        }
+      });
     })();
   </script>
 
