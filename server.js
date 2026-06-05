@@ -498,6 +498,32 @@ function writeUsers(users) {
   }
 }
 
+// ===== 浏览器信任令牌 =====
+const TRUST_TOKENS_FILE = path.join(DATA_DIR, 'trust_tokens.json');
+
+function readTrustTokens() {
+  try {
+    ensureDir();
+    if (!fs.existsSync(TRUST_TOKENS_FILE)) {
+      fs.writeFileSync(TRUST_TOKENS_FILE, '{}', 'utf-8');
+      return {};
+    }
+    return JSON.parse(fs.readFileSync(TRUST_TOKENS_FILE, 'utf-8'));
+  } catch (e) {
+    console.error('读取信任令牌失败:', e);
+    return {};
+  }
+}
+
+function writeTrustTokens(tokens) {
+  try {
+    ensureDir();
+    fs.writeFileSync(TRUST_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('写入信任令牌失败:', e);
+  }
+}
+
 function readLogs() {
   try {
     ensureDir();
@@ -760,6 +786,50 @@ app.post('/api/user/zhixue-login', (req, res) => {
   });
 });
 ;
+
+// ===== 浏览器信任自动登录 =====
+// 信任此浏览器：登录成功后客户端生成 trustToken，调用此接口登记
+app.post('/api/user/trust-browser', (req, res) => {
+  const auth = verifyUserToken(req.headers['x-user-token']);
+  if (!auth) return res.json({ ok: false, msg: '未登录' });
+  const { trustToken } = req.body;
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
+  const users = readUsers();
+  const user = users.find(u => u.id === auth.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  const tokens = readTrustTokens();
+  tokens[trustToken] = { userId: user.id, createdAt: Date.now(), lastUsedAt: Date.now() };
+  writeTrustTokens(tokens);
+  res.json({ ok: true });
+});
+
+// 自动登录：页面加载时检查 trustToken 是否有效
+app.post('/api/user/auto-login', (req, res) => {
+  const { trustToken } = req.body;
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
+  const tokens = readTrustTokens();
+  const entry = tokens[trustToken];
+  if (!entry) return res.json({ ok: false, msg: '令牌无效或已撤销' });
+  const users = readUsers();
+  const user = users.find(u => u.id === entry.userId);
+  if (!user) { delete tokens[trustToken]; writeTrustTokens(tokens); return res.json({ ok: false, msg: '用户不存在' }); }
+  if (user.status === 'banned') {
+    return res.json({ ok: false, msg: '该账号已被封禁', banned: true });
+  }
+  entry.lastUsedAt = Date.now();
+  writeTrustTokens(tokens);
+  res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: user.zhixueStatus || null } });
+});
+
+// 撤销信任（用户退出时清除）
+app.post('/api/user/revoke-trust', (req, res) => {
+  const { trustToken } = req.body;
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
+  const tokens = readTrustTokens();
+  delete tokens[trustToken];
+  writeTrustTokens(tokens);
+  res.json({ ok: true });
+});
 
 // 找回密码（通过已认证的智学网账号）
 app.post('/api/user/forgot-password', (req, res) => {

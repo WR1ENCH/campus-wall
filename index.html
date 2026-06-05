@@ -1621,6 +1621,21 @@
     </div>
   </div>
 
+  <!-- ===== 信任此浏览器弹窗 ===== -->
+  <div class="user-login-overlay" id="trustBrowserOverlay" style="display:none;">
+    <div class="user-login-box" style="max-width:340px;text-align:center;">
+      <div style="font-size:28px;margin-bottom:8px;">🛡️</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">信任此浏览器？</div>
+      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;">
+        信任后，下次打开此浏览器将<b>自动登录</b>，无需重复输入账号密码。
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="trustBrowser(true)" style="padding:8px 22px;border-radius:8px;border:none;background:#22c55e;color:#fff;font-size:14px;cursor:pointer;">信任</button>
+        <button onclick="trustBrowser(false)" style="padding:8px 22px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;font-size:14px;cursor:pointer;">跳过</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 找回密码弹窗 ===== -->
   <div class="user-login-overlay" id="forgotPwdOverlay">
     <div class="user-login-box">
@@ -2133,6 +2148,68 @@
       document.getElementById('userLoginOverlay').classList.remove('show');
     }
 
+    // ===== 信任此浏览器 =====
+    let _pendingTrustUser = null;  // 登录成功后暂存用户信息
+
+    function showTrustBrowserModal() {
+      document.getElementById('trustBrowserOverlay').style.display = 'flex';
+    }
+    function hideTrustBrowserModal() {
+      document.getElementById('trustBrowserOverlay').style.display = 'none';
+    }
+
+    async function trustBrowser(agree) {
+      hideTrustBrowserModal();
+      if (!agree || !_pendingTrustUser) {
+        _pendingTrustUser = null;
+        return;
+      }
+      // 生成信任令牌（随机字符串）
+      const trustToken = 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('campus_trust_token', trustToken);
+      try {
+        await fetch('/api/user/trust-browser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': _pendingTrustUser.token },
+          body: JSON.stringify({ trustToken })
+        });
+      } catch {}
+      _pendingTrustUser = null;
+    }
+
+    // 自动登录：页面加载时检查信任令牌
+    async function tryAutoLogin() {
+      const trustToken = localStorage.getItem('campus_trust_token');
+      if (!trustToken) return false;
+      try {
+        const res = await fetch('/api/user/auto-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trustToken })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          const { token, id, username, nickname, avatar, credit, zhixueStatus } = json.data;
+          currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null };
+          localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+          localStorage.setItem('campus_user_token', token);
+          updateUserBar();
+          checkAnnouncement();
+          if (currentUser.zhixueStatus !== 'approved') showCertGuide();
+          return true;
+        } else {
+          // 令牌失效，清除
+          localStorage.removeItem('campus_trust_token');
+          if (json.banned) {
+            showBannedPopup(json.banInfo || {});
+          }
+          return false;
+        }
+      } catch {
+        return false;
+      }
+    }
+
     // ===== 找回密码弹窗控制 =====
     function showForgotPwdModal() {
       document.getElementById('forgotPwdOverlay').classList.add('show');
@@ -2231,11 +2308,15 @@
           const { token, id, username: u, nickname, avatar } = json.data;
           currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: json.data.zhixueStatus || null };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-          // 更新 token
           localStorage.setItem('campus_user_token', token);
           hideLoginModal();
           updateUserBar();
           showToast('🎉 欢迎回来，' + nickname + '！');
+          // 信任此浏览器？
+          if (!localStorage.getItem('campus_trust_token')) {
+            _pendingTrustUser = { token };
+            showTrustBrowserModal();
+          }
           checkAnnouncement();
           showCertGuide();
           // 被封禁：弹窗提示，关闭后自动退出登录
@@ -2279,6 +2360,11 @@
           hideLoginModal();
           updateUserBar();
           showToast('🎉 智学账号登录成功，欢迎 ' + nickname + '！');
+          // 信任此浏览器？
+          if (!localStorage.getItem('campus_trust_token')) {
+            _pendingTrustUser = { token };
+            showTrustBrowserModal();
+          }
           checkAnnouncement();
           showCertGuide();
           // 被封禁：弹窗提示，关闭后自动退出登录
@@ -2326,6 +2412,11 @@
           hideLoginModal();
           updateUserBar();
           showToast('🎉 注册成功，欢迎 ' + n + '！');
+          // 信任此浏览器？
+          if (!localStorage.getItem('campus_trust_token')) {
+            _pendingTrustUser = { token };
+            showTrustBrowserModal();
+          }
           showCertGuide();
           _spotlight.step = 0;
           localStorage.removeItem('newbieGuideShown');
@@ -2350,6 +2441,16 @@
 
     function doUserLogout() {
       if (!confirm('确定要退出登录吗？')) return;
+      // 撤销信任
+      const trustToken = localStorage.getItem('campus_trust_token');
+      if (trustToken) {
+        fetch('/api/user/revoke-trust', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trustToken })
+        }).catch(() => {});
+        localStorage.removeItem('campus_trust_token');
+      }
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem('campus_user_token');
       currentUser = null;
@@ -2381,6 +2482,10 @@
     }
 
     async function checkLogin() {
+      // 优先尝试信任浏览器自动登录
+      const autoOk = await tryAutoLogin();
+      if (autoOk) return;
+      // 自动登录失败，走常规流程
       const saved = localStorage.getItem(USER_KEY);
       const token = localStorage.getItem('campus_user_token');
       if (saved && token) {
