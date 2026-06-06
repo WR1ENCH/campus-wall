@@ -1207,13 +1207,13 @@
         const data = await resp.json();
         if (data.ok) {
           currentLoggedInUser = data.data;
-          // 如果当前登录用户正在查看自己的主页，显示编辑按钮和绑定按钮
+          // 如果当前登录用户正在查看自己的主页，显示编辑按钮和认证信息
           if (currentLoggedInUser.id === userId) {
             document.getElementById('editProfileBtn').style.display = 'inline-block';
             if (bindZhixueBtn) bindZhixueBtn.style.display = 'inline-block';
+            // 仅在自己的主页加载认证信息
+            loadZhixueInfo();
           }
-          // 加载智学网绑定信息（无论是否自己都尝试加载）
-          loadZhixueInfo();
         }
       } catch (err) {
         console.error('获取当前用户失败', err);
