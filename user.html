@@ -706,7 +706,7 @@
         if (user.avatar.startsWith('data:image')) {
           avatarEl.innerHTML = `<img src="${user.avatar}" alt="头像">`;
         } else {
-          avatarEl.textContent = user.avatar;
+          avatarEl.textContent = (user.avatar && user.avatar.length <= 4) ? user.avatar : user.nickname.charAt(0) || '👤';
         }
       } else {
         avatarEl.textContent = user.nickname.charAt(0) || '👤';
@@ -802,7 +802,7 @@
           <div class="note-content">${content}</div>
           <div class="note-meta">
             <div class="note-author">
-              <div class="note-avatar">${post.avatar || '🙈'}</div>
+              <div class="note-avatar">${post.avatar && post.avatar.startsWith('data:') ? `<img src="${post.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')}</div>
               <span>${post.author || '匿名'}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}</span>
             </div>
             <div class="note-stats">

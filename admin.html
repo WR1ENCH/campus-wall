@@ -2988,7 +2988,7 @@
           html += `
           <div class="user-card" style="padding:16px; border-bottom:1px solid var(--border);">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-              <div class="user-avatar" style="width:40px;height:40px;font-size:18px;">${u.avatar || u.nickname?.charAt(0) || '👤'}</div>
+              <div class="user-avatar" style="width:40px;height:40px;font-size:18px;overflow:hidden;">${u.avatar && u.avatar.startsWith('data:') ? `<img src="${escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">` : (u.avatar && u.avatar.length <= 4 ? u.avatar : (u.nickname?.charAt(0) || '👤'))}</div>
               <div style="flex:1;">
                 <div style="font-weight:600; display:flex; align-items:center; gap:8px;">
                   ${u.nickname || '匿名'} ${typeBadge}
@@ -3266,7 +3266,7 @@
           <div><input type="checkbox" ${isSelected?'checked':''} onchange="toggleSelect('${post.id}', this)"></div>
           <div><span class="type-badge badge-${post.type}">${typeEmoji(post.type)} ${post.type}</span></div>
           <div class="post-content-cell" title="${escHtml(post.content||'')}">${escHtml(post.content||'')}</div>
-          <div class="post-author-cell">${post.avatar||''} ${escHtml(post.author||'匿名')}</div>
+          <div class="post-author-cell">${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'"> ` : (post.avatar && post.avatar.length <= 4 ? post.avatar + ' : '')}${escHtml(post.author||'匿名')}</div>
           <div class="post-likes-cell">❤️ ${post.likes||0}</div>
           <div class="post-time-cell">${timeStr}</div>
           <div class="post-time-cell" style="font-family:monospace;font-size:11px;">${shortId}</div>
@@ -3391,7 +3391,7 @@
       <div class="detail-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <div class="detail-label">作者</div>
-          <div class="detail-value">${post.avatar||''} ${escHtml(post.author||'匿名')}</div>
+          <div class="detail-value">${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'"> ` : (post.avatar && post.avatar.length <= 4 ? post.avatar + ' : '')}${escHtml(post.author||'匿名')}</div>
         </div>
         <div>
           <div class="detail-label">点赞数</div>
@@ -3600,7 +3600,7 @@
         <div>${i + 1}</div>
         <div class="admin-id-cell">@${escHtml(u.username)}</div>
         <div class="admin-name-cell">
-          <span>${u.avatar || '🙈'}</span> ${escHtml(u.nickname)}
+          <span>${u.avatar && u.avatar.startsWith('data:') ? `<img src="${escHtml(u.avatar)}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : (u.avatar && u.avatar.length <= 4 ? u.avatar : '🙈')}</span> ${escHtml(u.nickname)}
         </div>
         <div>
           <span class="type-badge ${u.status === 'banned' ? 'badge-danger' : 'badge-admin'}">

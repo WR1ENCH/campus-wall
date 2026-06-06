@@ -535,7 +535,7 @@
         <div class="note-content">${escHtml(post.content)}</div>
         <div class="note-footer">
           <div class="note-author">
-            <span>${escHtml(post.avatar || '🙈')}</span>
+            ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${escHtml(post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')}</span>`}
             <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}${post.authorZhixueStatus === 'approved' ? (post.authorZhixueCertType === 'manual' ? ' 📄已认证' : ' 🎓已认证') : ''}</span>
             <span style="opacity:0.5">· ${formatTime(post.time)}</span>
           </div>
@@ -590,7 +590,7 @@
       const canDelete = isCommentAuthor || isPostAuthor;
       return `
         <div class="comment-item" id="comment-${c.id}">
-          <span class="comment-avatar">${escHtml(c.avatar || '🙈')}</span>
+          <span class="comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '🙈')}</span>
           <div class="comment-body">
             <div class="comment-author">${escHtml(c.author || '匿名')}</div>
             <div class="comment-text">${escHtml(c.content)}</div>
