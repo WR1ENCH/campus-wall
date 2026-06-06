@@ -2134,8 +2134,7 @@
       document.getElementById('swListCount').textContent = list.length;
       if (!list.length) {
         body.innerHTML = '<div class="empty-tip" style="padding:40px;">暂无自定义违禁词，请在顶部添加</div>';
-        return;
-      }
+      } else {
       body.innerHTML = list.map(function(w, i) {
         return '<div class="admin-row" style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);gap:10px;">' +
           '<span style="color:var(--text-sub);width:32px;text-align:center;font-size:12px;">' + (i + 1) + '</span>' +
@@ -2143,6 +2142,7 @@
           '<button class="btn-del" style="padding:3px 10px;font-size:12px;" onclick="deleteSensitiveWord(\'' + escHtml(w).replace(/'/g, "\\'") + '\')">🗑️ 删除</button>' +
           '</div>';
       }).join('');
+      } // else: list has items
     } catch (e) {
       document.getElementById('sensitiveWordsBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
     }
