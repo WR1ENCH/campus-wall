@@ -3985,7 +3985,8 @@
         if (!json.ok) return;
         pickupSlotsData = json.data;
         renderPickupSlots();
-        if (pickupSlotsData.length > 0) {
+        // 仅首次加载时自动选中第一个时段，后续刷新不切换用户已选的时段
+        if (pickupSlotsData.length > 0 && !pickupSelectedSlot) {
           selectPickupSlot(pickupSlotsData[0].slot);
         }
       } catch { showToast('⚠️ 加载拍卖信息失败'); }
