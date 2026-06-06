@@ -154,7 +154,7 @@
     }
     .action-btns .compose-btn { flex: 1; white-space: nowrap; }
 
-    /* ===== 校园墙精选滚动栏 ===== */
+    /* ===== 校园墙拍卖滚动栏 ===== */
     .pickup-bar {
       display: inline-flex; align-items: center;
       background: linear-gradient(135deg, #fff7e0, #fffdf5);
@@ -1393,9 +1393,9 @@
       <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
       <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 你问我答</button>
     </div>
-    <!-- 校园墙精选滚动栏 -->
+    <!-- 校园墙拍卖滚动栏 -->
     <div class="pickup-bar">
-      <span class="pickup-label" onclick="openPickupLabelClick(event)">🏆 校园墙精选</span>
+      <span class="pickup-label" onclick="openPickupLabelClick(event)">🏆 校园墙拍卖</span>
       <div class="pickup-track" onclick="showPickupContentPopup()">
         <div class="pickup-scroll" id="pickupScroll">
           <span>✨ 欢迎来到校园墙</span><span>✨ 欢迎来到校园墙</span>
@@ -1404,7 +1404,7 @@
           <span>📢 测试内容 2 — 本周热门话题推荐</span>
           <span>💡 测试内容 3 — 学习资源分享汇总</span>
           <span>🎉 测试内容 4 — 校园新鲜事速递</span>
-          <span>⭐ 测试内容 5 — 精选帖子展示</span>
+          <span>⭐ 测试内容 5 — 拍卖展示</span>
         </div>
       </div>
     </div>
@@ -1693,7 +1693,7 @@
           <div style="background:rgba(34,197,94,0.06); border-radius:12px; padding:14px 16px; margin-bottom:12px;">
             <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
               <span style="font-size:16px;">💰</span>
-              <span>完成认证后立即获得 <b style="color:#22c55e;">300 Credits</b> 奖励，可用于拍卖精选展示位</span>
+              <span>完成认证后立即获得 <b style="color:#22c55e;">300 Credits</b> 奖励，可用于拍卖展示位</span>
             </div>
             <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
               <span style="font-size:16px;">🔑</span>
@@ -1724,12 +1724,12 @@
     </div>
   </div>
 
-  <!-- ===== 校园墙精选拍卖弹窗 ===== -->
+  <!-- ===== 校园墙拍卖弹窗 ===== -->
   <div class="modal-overlay" id="pickupOverlay" onclick="closePickupOverlay(event)" style="display:none;">
     <div onclick="event.stopPropagation()" class="pickup-modal" style="animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
       <div class="pickup-modal-header">
         <div style="display:flex;align-items:center;gap:16px;flex:1;">
-          <span style="font-size:20px;font-weight:700;color:#5a3d00;">🏆 校园墙精选拍卖</span>
+          <span style="font-size:20px;font-weight:700;color:#5a3d00;">🏆 校园墙拍卖拍卖</span>
           <span id="pickupTabBid" class="pickup-tab active" onclick="switchPickupTab('bid')">竞价</span>
           <span id="pickupTabMy" class="pickup-tab" onclick="switchPickupTab('my')">📋 我的拍卖</span>
           <span id="pickupTabRules" class="pickup-tab" onclick="togglePickupRules()" style="margin-left:auto;">📜 规则</span>
@@ -1745,7 +1745,7 @@
 
           <!-- 内容区域 -->
           <div class="pickup-section" id="pickupContentSection" style="display:none;">
-            <label class="pickup-label-inner">📝 要展示的内容</label>
+            <label class="pickup-label-inner">📝 要让所有人看到的内容</label>
             <input id="pickupContent" maxlength="100" placeholder="输入你想在滚动栏展示的文字（最多100字）"
                    class="pickup-input">
             <div style="text-align:right;font-size:11px;color:#aaa;margin-top:2px;"><span id="pickupContentCount">0</span>/100</div>
@@ -1834,7 +1834,7 @@
                 <span class="pickup-rule-icon">📝</span>
                 <div>
                   <div class="pickup-rule-title">展示内容</div>
-                  <div class="pickup-rule-desc">获胜后需提交展示内容（100 字以内），将在校园墙精选滚动栏中循环展示。内容需经后台审核。</div>
+                  <div class="pickup-rule-desc">获胜后需提交展示内容（100 字以内），将在校园墙拍卖栏中循环展示。内容需经后台审核。</div>
                 </div>
               </div>
               <div class="pickup-rule-item">
@@ -1862,7 +1862,7 @@
         </div>
       </div>
       <div class="pickup-modal-footer">
-        <span style="font-size:11px;color:#997;">竞价结束后最高出价者的内容将展示在对应时段的校园墙精选滚动栏</span>
+        <span style="font-size:11px;color:#997;">竞价结束后最高出价者的内容将展示在对应时段的校园墙拍卖栏</span>
       </div>
     </div>
   </div>
@@ -1871,7 +1871,7 @@
   <div class="pickup-content-overlay" id="pickupContentOverlay" onclick="closePickupContentOverlay(event)" style="display:none;">
     <div class="pickup-content-box" onclick="event.stopPropagation()">
       <div class="pickup-content-header">
-        <span style="font-size:18px;font-weight:700;color:#5a3d00;">📌 今日精选展示</span>
+        <span style="font-size:18px;font-weight:700;color:#5a3d00;">📌 今日拍卖展示</span>
         <button onclick="closePickupContentModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
       </div>
       <div class="pickup-content-body" id="pickupContentBody">
@@ -3628,7 +3628,7 @@
         {
           selector: '#checkinBtn',
           title: '✅ 每日签到',
-          desc: '每天签到可获得 <b>100 Credits</b>！<br>坚持连续签到还有连击奖励，Credits 可用于拍卖精选展示位',
+          desc: '每天签到可获得 <b>100 Credits</b>！<br>坚持连续签到还有连击奖励，Credits 可用于拍卖展示位',
           btnText: '下一步',
           position: 'bottom'
         },
@@ -3640,10 +3640,10 @@
           btnText: '下一步',
           position: 'bottom'
         },
-        // Step 6：精选拍卖滚动栏
+        // Step 6：拍卖滚动栏
         {
           selector: '.pickup-label',
-          title: '🏆 校园墙精选拍卖',
+          title: '🏆 校园墙拍卖拍卖',
           desc: '通过 Credits 竞价，赢得滚动栏展示位！<br>内容将在当前时段内循环展示给所有人看',
           btnText: '下一步',
           position: 'bottom'
@@ -3831,7 +3831,7 @@
       _spotlight.tooltip.style.display  = 'none';
     }
 
-    // ===== 校园墙精选拍卖系统 =====
+    // ===== 校园墙拍卖系统 =====
     let pickupSelectedSlot = null;
     let pickupSlotsData = [];
 

@@ -3694,7 +3694,7 @@ app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 校园墙精选拍卖系统 =====
+// ===== 校园墙拍卖系统 =====
 const PICKUP_SLOTS = ['00-04', '04-08', '08-12', '12-16', '16-20', '20-23'];
 const BASE_BID = 300;
 const BID_STEP = 50;
@@ -3784,7 +3784,7 @@ app.get('/api/pickup/auctions', (req, res) => {
   });
 });
 
-// 获取当前正在展示的精选内容
+// 获取当前正在展示的拍卖内容
 app.get('/api/pickup/current', (req, res) => {
   const date = todayStr();
   const currentSlot = getCurrentSlot();
@@ -3856,7 +3856,7 @@ app.post('/api/pickup/bid', (req, res) => {
   if (userCredit < amount) return res.json({ ok: false, msg: '余额不足，当前余额：' + userCredit + ' Credits' });
 
   // 扣减出价金额（冻结）
-  changeCredit(session.id, -amount, '校园墙精选出价 - ' + slotLabel(slot) + ' - 出价 ' + amount + ' Credits');
+  changeCredit(session.id, -amount, '校园墙拍卖出价 - ' + slotLabel(slot) + ' - 出价 ' + amount + ' Credits');
   // 添加到竞价记录，默认待审核
   const bid = {
     id: 'bid_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -3981,7 +3981,7 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
         } else {
           // 拒绝：标记为rejected，退还冻结的credit
           auction.bids[bi].reviewStatus = 'rejected';
-          changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '校园墙精选内容审核未通过 - 退还出价 ' + auction.bids[bi].amount + ' Credits');
+          changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '校园墙拍卖内容审核未通过 - 退还出价 ' + auction.bids[bi].amount + ' Credits');
         }
         writePickupAuctions(auctions);
         return res.json({ ok: true, msg: action === 'approve' ? '已通过审核' : '已拒绝并退还 ' + auction.bids[bi].amount + ' Credits' });
@@ -4144,7 +4144,7 @@ app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) =
   if (uIdx !== -1 && users[uIdx].status !== 'banned') {
     users[uIdx].status = 'banned';
     users[uIdx].bannedAt = new Date().toISOString();
-    users[uIdx].banReason = '校园墙精选展示内容违规（举报处理）';
+    users[uIdx].banReason = '校园墙拍卖展示内容违规（举报处理）';
     writeUsers(users);
     banMsg = '，已封禁用户 ' + users[uIdx].username;
   }
