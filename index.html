@@ -1422,7 +1422,7 @@
       <div class="tape" style="--tape-rotate: -3deg;"></div>
       <h3>📝 写便利贴</h3>
       <textarea id="noteInput" placeholder="在这里写点什么..."></textarea>
-      <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/200</div>
+      <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/400</div>
       <div class="modal-tags">
         <button class="modal-tag t-daily active" data-tag="日常" onclick="selectTag(this)">💬 日常</button>
         <button class="modal-tag t-love" data-tag="表白" onclick="selectTag(this)">💕 表白</button>
@@ -3373,14 +3373,14 @@
       const count = this.value.length;
       const el = document.getElementById('noteCount');
       el.textContent = count;
-      el.style.color = count > 200 ? '#d32f2f' : 'inherit';
+      el.style.color = count > 400 ? '#d32f2f' : 'inherit';
     });
 
     async function submitNote() {
       const input = document.getElementById('noteInput');
       const content = input.value.trim();
       if (!content) { showToast('⚠️ 便利贴不能空白哦～'); return; }
-      if (content.length > 200) { showToast('⚠️ 内容超过 200 字限制，请精简后发送'); return; }
+      if (content.length > 400) { showToast('⚠️ 内容超过 400 字限制，请精简后发送'); return; }
       if (hasSpecialChars(content)) { showToast('⚠️ 内容包含特殊字符，请移除后重试'); return; }
 
       const newPost = await createPost(currentTag, content);
@@ -5199,7 +5199,7 @@
       const content = input.value.trim();
       if (!content) { showToast('内容不能为空'); return; }
       if (hasSpecialChars(content)) { showToast('包含特殊字符'); return; }
-      if (content.length > 200) { showToast('⚠️ 评论超过 200 字限制，请精简后发送'); return; }
+      if (content.length > 400) { showToast('⚠️ 评论超过 400 字限制，请精简后发送'); return; }
 
       try {
         const res = await fetch('/api/discussions/' + currentDiscussionId + '/comments', {

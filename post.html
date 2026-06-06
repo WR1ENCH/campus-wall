@@ -616,7 +616,7 @@
     const content = input.value.trim();
     if (!content) { toast('请输入评论内容'); return; }
     if (SPECIAL_CHAR_REG.test(content)) { toast('⚠️ 评论包含特殊字符，请移除后重试'); return; }
-    if (content.length > 200) { toast('⚠️ 评论超过 200 字限制，请精简后发送'); return; }
+    if (content.length > 400) { toast('⚠️ 评论超过 400 字限制，请精简后发送'); return; }
 
     let author = '匿名', avatar = '🙈', userId = null;
     if (USER_TOKEN) {

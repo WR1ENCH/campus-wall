@@ -159,7 +159,7 @@ app.use((req, res, next) => {
 
 app.use(express.static(__dirname)); // 静态文件服务
 
-const CONTENT_MAX_LENGTH = 200; // 帖子/评论字数上限
+const CONTENT_MAX_LENGTH = 400; // 帖子/评论字数上限
 
 // ===== 数据读写 =====
 function ensureDir() {
