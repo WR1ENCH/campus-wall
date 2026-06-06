@@ -134,7 +134,6 @@ body {
   cursor: pointer;
   transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   opacity: 0;
-  animation: fadeIn 1s 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .hero-cta:hover {
@@ -266,13 +265,28 @@ body {
     if (!hDeleting) {
       hEl.textContent = cur.slice(0, hCharI + 1);
       hCharI++;
-      if (hCharI === cur.length) { hDeleting = true; setTimeout(heroTick, 2200); return; }
+      if (hCharI === cur.length) {
+        // 打完"校园墙"时，显示立即访问按钮
+        if (ht === 1) { showCtaButton(); }
+        hDeleting = true; setTimeout(heroTick, 2200); return;
+      }
       setTimeout(heroTick, 150);
     } else {
       hEl.textContent = cur.slice(0, hCharI - 1);
       hCharI--;
       if (hCharI === 0) { hDeleting = false; ht = (ht + 1) % heroTexts.length; setTimeout(heroTick, 800); return; }
       setTimeout(heroTick, 70);
+    }
+  }
+
+  // 显示立即访问按钮（带渐入动画）
+  function showCtaButton() {
+    var btn = document.querySelector(".hero-cta");
+    if (btn && !btn.dataset.shown) {
+      btn.dataset.shown = "1";
+      btn.style.transition = "opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)";
+      btn.style.opacity = "1";
+      btn.style.transform = "translateY(0)";
     }
   }
 
