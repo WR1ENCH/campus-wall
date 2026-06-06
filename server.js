@@ -133,8 +133,8 @@ function sanitizeString(val) {
 }
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    // 排除包含 base64 或特殊格式的字段不过滤
-    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, images, ...rest } = req.body;
+    // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
+    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
@@ -143,7 +143,15 @@ app.use((req, res, next) => {
       ...(challenge !== undefined ? { challenge } : {}),
       ...(prefix !== undefined ? { prefix } : {}),
       ...(nonce !== undefined ? { nonce } : {}),
-      ...(images !== undefined ? { images } : {})
+      ...(images !== undefined ? { images } : {}),
+      ...(content !== undefined ? { content } : {}),
+      ...(title !== undefined ? { title } : {}),
+      ...(text !== undefined ? { text } : {}),
+      ...(body !== undefined ? { body } : {}),
+      ...(reason !== undefined ? { reason } : {}),
+      ...(answer !== undefined ? { answer } : {}),
+      ...(question !== undefined ? { question } : {}),
+      ...(description !== undefined ? { description } : {})
     };
   }
   next();
