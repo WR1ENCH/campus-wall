@@ -163,11 +163,12 @@ body {
 }
 
 #typingText {
-  font-size: 15px;
+  display: inline-block;
+  font-size: 16px;
   font-weight: 400;
-  letter-spacing: 0.03em;
-  color: #1d1d1f;
-  font-family: "SF Mono", "Fira Code", "PingFang SC", monospace;
+  letter-spacing: 0.04em;
+  color: #333333;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
   white-space: nowrap;
 }
 
@@ -175,8 +176,8 @@ body {
   display: inline-block;
   width: 2px;
   height: 1em;
-  background: #1d1d1f;
-  margin-left: 3px;
+  background: #333333;
+  margin-left: 2px;
   vertical-align: text-bottom;
   animation: blink 1s step-end infinite;
 }
@@ -265,28 +266,33 @@ body {
 </section>
 
 <script>
-const texts = ["powered by wr1Ench", "由wr1Ench技术驱动"];
-let t = 0, charI = 0, deleting = false;
-const el = document.getElementById("typingText");
-const cursor = document.querySelector(".cursor");
+(function() {
+  const texts = ["powered by wr1Ench", "由wr1Ench技术驱动"];
+  var t = 0, charI = 0, deleting = false;
+  var el = document.getElementById("typingText");
+  var cursor = document.querySelector(".cursor");
 
-function tick() {
-  const cur = texts[t];
-  if (!deleting) {
-    el.textContent = cur.slice(0, charI + 1);
-    charI++;
-    if (charI === 1) cursor.classList.remove("hidden");
-    if (charI === cur.length) { deleting = true; return setTimeout(tick, 2000); }
-    return setTimeout(tick, 100);
-  } else {
-    cursor.classList.add("hidden");
-    el.textContent = cur.slice(0, charI - 1);
-    charI--;
-    if (charI === 0) { deleting = false; t = (t + 1) % texts.length; return setTimeout(tick, 600); }
-    return setTimeout(tick, 50);
+  if (!el || !cursor) return;
+
+  function tick() {
+    var cur = texts[t];
+    if (!deleting) {
+      el.textContent = cur.slice(0, charI + 1);
+      charI++;
+      if (charI === 1) cursor.style.display = "";
+      if (charI === cur.length) { deleting = true; setTimeout(tick, 2000); return; }
+      setTimeout(tick, 100);
+    } else {
+      cursor.style.display = "none";
+      el.textContent = cur.slice(0, charI - 1);
+      charI--;
+      if (charI === 0) { deleting = false; t = (t + 1) % texts.length; cursor.style.display = ""; setTimeout(tick, 600); return; }
+      setTimeout(tick, 50);
+    }
   }
-}
-setTimeout(tick, 1600);
+
+  window.addEventListener("load", function() { setTimeout(tick, 1800); });
+})();
 </script>
 
 </body>
