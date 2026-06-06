@@ -5,7 +5,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const svgCaptcha = require('svg-captcha');
-const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats } = require('./sensitiveWords');
+const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
 
 // ===== 崩溃保护 =====
@@ -3226,6 +3226,65 @@ app.get('/api/admin/sensitive-stats', requireAdmin, (req, res) => {
     res.json({ ok: true, data: stats });
   } catch (e) {
     res.json({ ok: false, msg: '获取统计失败: ' + e.message });
+  }
+});
+
+// ===== 敏感词白名单管理（管理员）=====
+
+// 获取白名单列表
+app.get('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+  try {
+    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: true, data: [] });
+    const list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    res.json({ ok: true, data: Array.isArray(list) ? list : [] });
+  } catch (e) {
+    res.json({ ok: false, msg: '读取白名单失败: ' + e.message });
+  }
+});
+
+// 添加白名单
+app.post('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+  try {
+    const { word } = req.body;
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
+    const trimmed = word.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
+
+    let list = [];
+    if (fs.existsSync(WHITELIST_FILE)) list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    if (!Array.isArray(list)) list = [];
+
+    if (list.includes(trimmed)) return res.json({ ok: false, msg: '该词已在白名单中' });
+
+    list.push(trimmed);
+    saveWhitelist(list);
+    reloadSensitive();
+
+    res.json({ ok: true, data: list });
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+// 删除白名单
+app.delete('/api/admin/sensitive-whitelist/:word', requireAdmin, (req, res) => {
+  try {
+    const word = decodeURIComponent(req.params.word);
+    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: false, msg: '白名单为空' });
+    let list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    if (!Array.isArray(list)) list = [];
+
+    const idx = list.indexOf(word);
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该白名单词' });
+
+    list.splice(idx, 1);
+    saveWhitelist(list);
+    reloadSensitive();
+
+    res.json({ ok: true, data: list });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
   }
 });
 

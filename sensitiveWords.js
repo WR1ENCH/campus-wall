@@ -16,6 +16,7 @@ const CORE_WORDS = [
 
 const DATA_DIR = path.resolve(__dirname, 'data');
 const CUSTOM_FILE = path.join(DATA_DIR, 'sensitive_custom.json');
+const WHITELIST_FILE = path.join(DATA_DIR, 'sensitive_whitelist.json');
 
 // ===== 从加密词库文件加载 =====
 const ENC_FILE = 'tencent_sensitive_words.enc';
@@ -59,23 +60,44 @@ function loadCustomWords() {
   }
 }
 
+// ===== 从白名单文件加载 =====
+function loadWhitelist() {
+  try {
+    if (!fs.existsSync(WHITELIST_FILE)) return [];
+    const raw = fs.readFileSync(WHITELIST_FILE, 'utf-8');
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [];
+    return list.filter(w => typeof w === 'string' && w.trim().length >= 1);
+  } catch (e) {
+    console.error('[sensitiveWords] 加载白名单失败:', e.message);
+    return [];
+  }
+}
+
+function saveWhitelist(list) {
+  fs.writeFileSync(WHITELIST_FILE, JSON.stringify(list, null, 2), 'utf-8');
+}
+
 // ===== 构建去重词集 =====
 const externalWords = loadExternalWords();
 let customWords = loadCustomWords();
+let whitelist = loadWhitelist();
 let ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords, ...customWords])];
 
 // ===== 重新加载词库（添加/删除自定义词后调用）=====
 function reload() {
   customWords = loadCustomWords();
+  whitelist = loadWhitelist();
   ALL_WORDS = [...new Set([...CORE_WORDS, ...externalWords, ...customWords])];
-  console.log(`[sensitiveWords] 已重新加载词库，总计 ${ALL_WORDS.length} 个词`);
+  console.log(`[sensitiveWords] 已重新加载词库，总计 ${ALL_WORDS.length} 个词，白名单 ${whitelist.length} 个`);
 }
 
-// ===== 检测函数 =====
+// ===== 检测函数（自动排除白名单中的词）=====
 function check(text) {
   if (!text || typeof text !== 'string') return [];
   const found = [];
   for (const word of ALL_WORDS) {
+    if (whitelist.includes(word)) continue; // 白名单中的词跳过
     if (text.includes(word)) found.push(word);
     if (found.length >= 20) break;
   }
@@ -88,9 +110,11 @@ function getStats() {
     internal: CORE_WORDS.length,
     external: externalWords.length,
     custom: customWords.length,
+    whitelist: whitelist.length,
     total: ALL_WORDS.length,
     words: ALL_WORDS,
+    whitelistWords: whitelist,
   };
 }
 
-module.exports = { check, getStats, reload, CUSTOM_FILE };
+module.exports = { check, getStats, reload, CUSTOM_FILE, WHITELIST_FILE, saveWhitelist };

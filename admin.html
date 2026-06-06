@@ -1000,21 +1000,43 @@
             内置词 <strong id="swInternalCount">0</strong> ·
             外部词 <strong id="swExternalCount">0</strong> ·
             自定义 <strong id="swCustomCount">0</strong> ·
+            白名单 <strong id="swWhitelistCount">0</strong> ·
             总计 <strong id="swTotalCount">0</strong>
           </span>
-          <input type="text" id="swAddInput" placeholder="输入违禁词" maxlength="50"
-                 style="width:180px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;"
-                 onkeydown="if(event.key==='Enter') doAddSensitiveWord()">
-          <button class="btn-primary" onclick="doAddSensitiveWord()" style="padding:5px 14px;font-size:13px;">➕ 添加</button>
-          <div id="swAddError" style="color:var(--danger);font-size:12px;"></div>
         </div>
         <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadSensitiveWords()">🔄 刷新</button>
       </div>
+
+      <!-- 自定义违禁词 -->
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header">
           <span>自定义违禁词列表（共 <strong id="swListCount">0</strong>）</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="swAddInput" placeholder="输入违禁词" maxlength="50"
+                   style="width:160px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;"
+                   onkeydown="if(event.key==='Enter') doAddSensitiveWord()">
+            <button class="btn-primary" onclick="doAddSensitiveWord()" style="padding:4px 12px;font-size:13px;">➕ 添加</button>
+            <div id="swAddError" style="color:var(--danger);font-size:12px;"></div>
+          </div>
         </div>
         <div id="sensitiveWordsBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+
+      <!-- 敏感词白名单 -->
+      <div class="admins-table" style="margin-top:16px;">
+        <div class="table-header" style="background:#f0fdf4;border-left:3px solid #22c55e;">
+          <span style="color:#166534;">🛡️ 敏感词白名单（共 <strong id="whitelistCount">0</strong>）— 白名单中的词语不会被检测为敏感词</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="wlAddInput" placeholder="输入要放行的词语" maxlength="50"
+                   style="width:170px;padding:4px 8px;border:1px solid #86efac;border-radius:6px;font-size:13px;font-family:inherit;outline:none;background:#fff;"
+                   onkeydown="if(event.key==='Enter') doAddWhitelist()">
+            <button onclick="doAddWhitelist()" style="padding:4px 12px;font-size:13px;border:none;border-radius:6px;cursor:pointer;background:#22c55e;color:#fff;font-weight:600;">✓ 添加</button>
+            <div id="wlAddError" style="color:#dc2626;font-size:12px;"></div>
+          </div>
+        </div>
+        <div id="whitelistBody">
           <div class="loading"><div class="spinner"></div>加载中…</div>
         </div>
       </div>
@@ -2000,6 +2022,7 @@
         document.getElementById('swInternalCount').textContent = statsJson.data.internal || 0;
         document.getElementById('swExternalCount').textContent = statsJson.data.external || 0;
         document.getElementById('swCustomCount').textContent = statsJson.data.custom || 0;
+        document.getElementById('swWhitelistCount').textContent = statsJson.data.whitelist || 0;
         document.getElementById('swTotalCount').textContent = statsJson.data.total || 0;
       }
       // 加载自定义词列表
@@ -2022,6 +2045,29 @@
       }).join('');
     } catch (e) {
       document.getElementById('sensitiveWordsBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
+    }
+
+    // 加载白名单
+    try {
+      const wlRes = await fetch('/api/admin/sensitive-whitelist', { headers: authHeaders() });
+      const wlJson = await wlRes.json();
+      const wlBody = document.getElementById('whitelistBody');
+      if (!wlJson.ok) { wlBody.innerHTML = '<div class="empty-tip">加载失败：' + escHtml(wlJson.msg || '') + '</div>'; return; }
+      const wlList = wlJson.data || [];
+      document.getElementById('whitelistCount').textContent = wlList.length;
+      if (!wlList.length) {
+        wlBody.innerHTML = '<div class="empty-tip" style="padding:40px;color:#166534;">暂无白名单词语，被误拦截的词可以添加到这里放行</div>';
+        return;
+      }
+      wlBody.innerHTML = wlList.map(function(w, i) {
+        return '<div style="display:flex;align-items:center;padding:8px 14px;border-bottom:1px solid #bbf7d0;gap:10px;background:#f0fdf4;">' +
+          '<span style="color:#166534;width:32px;text-align:center;font-size:12px;">' + (i + 1) + '</span>' +
+          '<span style="flex:1;font-size:14px;font-weight:500;color:#166534;">' + escHtml(w) + '</span>' +
+          '<button onclick="deleteWhitelistWord(\'' + escHtml(w).replace(/'/g, "\\'") + '\')" style="padding:3px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;background:#fecaca;color:#991b1b;font-weight:600;">✕ 移除</button>' +
+          '</div>';
+      }).join('');
+    } catch (e) {
+      document.getElementById('whitelistBody').innerHTML = '<div class="empty-tip">网络错误：' + escHtml(e.message) + '</div>';
     }
   }
 
@@ -2063,6 +2109,51 @@
         loadSensitiveWords();
       } else {
         showToast('❌ ' + (json.msg || '删除失败'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ 网络错误', 'error');
+    }
+  }
+
+  // ===== 敏感词白名单 =====
+  async function doAddWhitelist() {
+    const input = document.getElementById('wlAddInput');
+    const errEl = document.getElementById('wlAddError');
+    const word = input.value.trim();
+    if (!word) { errEl.textContent = '请输入要放行的词语'; return; }
+    errEl.textContent = '';
+    try {
+      const res = await fetch('/api/admin/sensitive-whitelist', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ word: word })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        input.value = '';
+        showToast('✅ 已加入白名单：' + word, 'success');
+        loadSensitiveWords();
+      } else {
+        errEl.textContent = json.msg || '添加失败';
+      }
+    } catch (e) {
+      errEl.textContent = '网络错误';
+    }
+  }
+
+  async function deleteWhitelistWord(word) {
+    if (!confirm('确定要从白名单移除「' + word + '」吗？\n\n移除后该词将重新被敏感词检测拦截。')) return;
+    try {
+      const res = await fetch('/api/admin/sensitive-whitelist/' + encodeURIComponent(word), {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 已从白名单移除：' + word, 'success');
+        loadSensitiveWords();
+      } else {
+        showToast('❌ ' + (json.msg || '移除失败'), 'error');
       }
     } catch (e) {
       showToast('❌ 网络错误', 'error');
