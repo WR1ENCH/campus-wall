@@ -2150,6 +2150,21 @@
 
     // ===== 信任此浏览器 =====
     let _pendingTrustUser = null;  // 登录成功后暂存用户信息
+    let _pendingNewbieGuide = false;  // 等弹窗全部关闭后触发新手引导
+
+    // 当信任浏览器 + 同学认证两个弹窗都关闭后，才启动新手引导
+    function tryStartNewbieGuide() {
+      if (!_pendingNewbieGuide) return;
+      var trustOpen = document.getElementById('trustBrowserOverlay');
+      var certOpen = document.getElementById('certGuideOverlay');
+      if ((!trustOpen || trustOpen.style.display !== 'flex') &&
+          (!certOpen || certOpen.style.display !== 'flex')) {
+        _pendingNewbieGuide = false;
+        _spotlight.step = 0;
+        localStorage.removeItem('newbieGuideShown');
+        setTimeout(function() { showNewbieGuide(); }, 400);
+      }
+    }
 
     function showTrustBrowserModal() {
       document.getElementById('trustBrowserOverlay').style.display = 'flex';
@@ -2162,6 +2177,7 @@
       hideTrustBrowserModal();
       if (!agree || !_pendingTrustUser) {
         _pendingTrustUser = null;
+        tryStartNewbieGuide();
         return;
       }
       // 生成信任令牌（随机字符串）
@@ -2175,7 +2191,7 @@
         });
       } catch {}
       _pendingTrustUser = null;
-    }
+      tryStartNewbieGuide();
 
     // 自动登录：页面加载时检查信任令牌
     async function tryAutoLogin() {
@@ -2418,9 +2434,9 @@
             showTrustBrowserModal();
           }
           showCertGuide();
-          _spotlight.step = 0;
-          localStorage.removeItem('newbieGuideShown');
-          setTimeout(() => showNewbieGuide(), 800);
+          // 等信任浏览器 + 同学认证两个弹窗都关闭后再触发新手引导
+          _pendingNewbieGuide = true;
+          tryStartNewbieGuide();
         } else {
           document.getElementById('userLoginError').textContent = json.msg || '注册失败';
           // 验证码错误时自动刷新
@@ -2571,9 +2587,11 @@
       if (action === 'later') {
         localStorage.setItem('cert_guide_dismissed', new Date().toISOString().slice(0, 10));
       }
+      tryStartNewbieGuide();
     }
     function goCertify() {
       document.getElementById('certGuideOverlay').style.display = 'none';
+      tryStartNewbieGuide();
       if (currentUser && currentUser.id) {
         window.open('user.html?id=' + currentUser.id, '_blank');
       }
