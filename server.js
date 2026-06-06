@@ -92,6 +92,7 @@ function decryptCert(cipherText) {
 }
 
 const app = express();
+app.set('trust proxy', true); // 信任代理，从 X-Forwarded-For 读取真实客户端IP
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
@@ -107,6 +108,11 @@ const QA_FILE = path.join(DATA_DIR, 'qa_questions.json');
 const QA_ANSWERS_FILE = path.join(DATA_DIR, 'qa_answers.json');
 const PICKUP_AUCTION_FILE = path.join(DATA_DIR, 'pickup_auctions.json');
 const PICKUP_REPORT_FILE = path.join(DATA_DIR, 'pickup_reports.json');
+
+// 获取真实客户端IP（支持反向代理/WAF穿透）
+function getClientIP(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || req.socket.remoteAddress || '-';
+}
 
 // 中间件
 app.use(cors());
@@ -298,7 +304,7 @@ app.post('/api/admin/init', (req, res) => {
 // 登录
 app.post('/api/admin/login', (req, res) => {
   const { id, password } = req.body;
-  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ip = getClientIP(req);
   const ua = req.headers['user-agent'] || '-';
 
   if (!id || !password) {
@@ -644,7 +650,7 @@ app.post('/api/user/register', (req, res) => {
     return res.json({ ok: false, msg: '账号已被注册' });
   }
 
-  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ip = getClientIP(req);
   const newUser = {
     id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
     username,
@@ -677,7 +683,7 @@ app.post('/api/user/register', (req, res) => {
 // 登录
 app.post('/api/user/login', (req, res) => {
   const { username, password, captchaId, captchaText } = req.body;
-  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ip = getClientIP(req);
   const ua = req.headers['user-agent'] || '-';
 
   if (!username || !password) {
@@ -731,7 +737,7 @@ app.post('/api/user/login', (req, res) => {
 // 智学网账号登录（通过已认证的智学账号登录校园墙）
 app.post('/api/user/zhixue-login', (req, res) => {
   const { zhixueUsername, password, captchaId, captchaText } = req.body;
-  const ip = req.ip || req.headers['x-forwarded-for'] || '-';
+  const ip = getClientIP(req);
   const ua = req.headers['user-agent'] || '-';
 
   // 验证码校验
@@ -2949,9 +2955,9 @@ const ONLINE_TIMEOUT = 120000; // 2 分钟无心跳视为离线
 // 心跳接口（用户登录后定时调用）
 app.post('/api/user/heartbeat', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) { onlineUsers.set('anon_' + req.ip, Date.now()); return res.json({ ok: true }); }
+  if (!token) { onlineUsers.set('anon_' + getClientIP(req), Date.now()); return res.json({ ok: true }); }
   const session = verifyUserToken(token);
-  if (!session || !session.id) { onlineUsers.set('anon_' + req.ip, Date.now()); return res.json({ ok: true }); }
+  if (!session || !session.id) { onlineUsers.set('anon_' + getClientIP(req), Date.now()); return res.json({ ok: true }); }
   onlineUsers.set(session.id, Date.now());
   res.json({ ok: true });
 });
