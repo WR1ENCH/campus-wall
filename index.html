@@ -1454,8 +1454,9 @@
       <div class="detail-content" id="detailContent"></div>
       <div class="detail-footer">
         <div class="detail-author">
-          <a href="#" id="detailAvatarLink" style="text-decoration:none; color:inherit;">
-            <span id="detailAvatar"></span>
+          <a href="#" id="detailAvatarLink" style="text-decoration:none; color:inherit;display:inline-flex;align-items:center;gap:4px;">
+            <span id="detailAvatarEmoji" style="font-size:22px;display:none;line-height:1;"></span>
+            <img id="detailAvatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;" onerror="this.style.display='none'">
           </a>
           <a href="#" id="detailAuthorLink" style="text-decoration:none; color:inherit;">
             <span id="detailAuthor"></span>
@@ -2959,7 +2960,7 @@
           <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
           <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${post.content}</div>
           <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
-            <span>${post.avatar} ${post.author}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}</span>
+            <span style="display:flex;align-items:center;gap:3px;">${post.avatar && post.avatar.startsWith('data:') ? '<img src="' + escHtml(post.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : (post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')} ${post.author}${post.authorAdminRole === 'super' ? ' 🔴 超管认证' : post.authorAdminRole === 'admin' ? ' 🟡 普管认证' : ''}</span>
             <span style="display:flex;gap:4px;align-items:center;">
               <span>${post.liked ? '❤️' : '🤍'} ${post.likes}</span>
               <span>⚠️</span>
@@ -3046,7 +3047,18 @@
 
       document.getElementById('detailType').textContent = cfg.emoji + ' ' + post.type;
       document.getElementById('detailContent').textContent = post.content;
-      document.getElementById('detailAvatar').textContent = post.avatar;
+      // 设置头像（base64 用 img 标签，emoji 用 span 文本）
+      const avatarEl = document.getElementById('detailAvatar');
+      const avatarEmoji = document.getElementById('detailAvatarEmoji');
+      if (post.avatar && post.avatar.startsWith('data:')) {
+        avatarEl.src = post.avatar;
+        avatarEl.style.display = 'inline-block';
+        avatarEmoji.style.display = 'none';
+      } else {
+        avatarEl.style.display = 'none';
+        avatarEmoji.textContent = (post.avatar && post.avatar.length <= 4) ? post.avatar : '🙈';
+        avatarEmoji.style.display = '';
+      }
       document.getElementById('detailAuthor').textContent = post.author;
       document.getElementById('detailTime').textContent = '· ' + post.time;
       // 管理员认证标识
