@@ -538,6 +538,35 @@
       .users-header > *:nth-child(9), .users-row > *:nth-child(9) { display: none; }
       .form-row { grid-template-columns: 1fr; }
     }
+
+    /* 已删除内容 tab 样式 */
+    .deleted-tab {
+      flex: 1; padding: 9px 0; font-size: 13px; font-weight: 600;
+      border: none; cursor: pointer; background: var(--bg-main);
+      color: var(--text-sub); transition: all 0.2s;
+    }
+    .deleted-tab.active {
+      background: var(--accent); color: #fff;
+    }
+    .deleted-tab:hover:not(.active) { background: var(--border); }
+
+    /* 已删除内容卡片 */
+    .deleted-card {
+      background: var(--card-bg); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 10px;
+      box-shadow: var(--shadow); border-left: 4px solid var(--danger);
+    }
+    .deleted-card .del-meta {
+      display: flex; gap: 12px; font-size: 12px;
+      color: var(--text-sub); margin-top: 6px; flex-wrap: wrap;
+    }
+    .deleted-card .del-badge {
+      display: inline-block; padding: 1px 8px; border-radius: 8px;
+      font-size: 11px; font-weight: 600;
+    }
+    .del-badge-admin { background: #fee2e2; color: #dc2626; }
+    .del-badge-user { background: #fef3c7; color: #d97706; }
+    .del-badge-system { background: #e0e7ff; color: #4f46e5; }
   </style>
 </head>
 <body>
@@ -700,6 +729,15 @@
       <div class="nav-item" onclick="showPage('creditadmin', this)">
         <span class="nav-icon">🪙</span>
         <span>Credit 管理</span>
+      </div>
+    </div>
+
+    <!-- 数据保留 -->
+    <div class="nav-section">
+      <div class="nav-label">数据保留</div>
+      <div class="nav-item" onclick="showPage('deleted', this)">
+        <span class="nav-icon">🗑️</span>
+        <span>已删除内容</span>
       </div>
     </div>
 
@@ -1338,6 +1376,65 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ===== 已删除内容管理 ===== -->
+<div class="page" id="page-deleted" style="display:none;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <div style="font-size:20px;font-weight:700;color:var(--text-main);">🗑️ 已删除内容</div>
+    <div style="font-size:13px;color:var(--text-sub);">内容删除后至少保留一年，仅管理员可见</div>
+  </div>
+
+  <!-- 统计概览 -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+    <div class="stat-card" style="background:linear-gradient(135deg,#6366f1,#818cf8);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删帖子</div>
+      <div class="stat-value" style="color:#fff;" id="deletedPostCount">0</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删评论</div>
+      <div class="stat-value" style="color:#fff;" id="deletedCommentCount">0</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#ec4899,#f472b6);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删讨论</div>
+      <div class="stat-value" style="color:#fff;" id="deletedDiscussionCount">0</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删讨论评论</div>
+      <div class="stat-value" style="color:#fff;" id="deletedDiscCommentCount">0</div>
+    </div>
+  </div>
+
+  <!-- Tab 切换 -->
+  <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px;">
+    <button class="deleted-tab active" onclick="switchDeletedTab('posts')" id="tabDelPosts">帖子</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('comments')" id="tabDelComments">评论</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('discussions')" id="tabDelDiscussions">讨论</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('discComments')" id="tabDelDiscComments">讨论评论</button>
+  </div>
+
+  <!-- 加载状态 -->
+  <div id="deletedLoading" class="loading"><div class="spinner"></div>加载中…</div>
+
+  <!-- 帖子列表 -->
+  <div id="deletedPostsPanel" style="display:none;">
+    <div id="deletedPostsBody"></div>
+  </div>
+
+  <!-- 评论列表 -->
+  <div id="deletedCommentsPanel" style="display:none;">
+    <div id="deletedCommentsBody"></div>
+  </div>
+
+  <!-- 讨论列表 -->
+  <div id="deletedDiscussionsPanel" style="display:none;">
+    <div id="deletedDiscussionsBody"></div>
+  </div>
+
+  <!-- 讨论评论列表 -->
+  <div id="deletedDiscCommentsPanel" style="display:none;">
+    <div id="deletedDiscCommentsBody"></div>
   </div>
 </div>
 
@@ -3133,6 +3230,7 @@
     if (id === 'announcement') { loadAnnouncement(); }
     if (id === 'creditcards') { loadCards(); }
     if (id === 'creditadmin') { loadCreditOverview(); }
+    if (id === 'deleted') { loadDeletedContent(); }
   }
 
   function refreshCurrent() {
@@ -4331,6 +4429,121 @@
     } catch (e) {
       showToast('❌ 网络错误', 'error');
     }
+  }
+
+  let _deletedData = null;
+  let _deletedActiveTab = 'posts';
+
+  // 加载已删除内容
+  async function loadDeletedContent() {
+    const loading = document.getElementById('deletedLoading');
+    loading.style.display = '';
+    document.getElementById('deletedPostsPanel').style.display = 'none';
+    document.getElementById('deletedCommentsPanel').style.display = 'none';
+    document.getElementById('deletedDiscussionsPanel').style.display = 'none';
+    document.getElementById('deletedDiscCommentsPanel').style.display = 'none';
+    try {
+      const res = await fetch('/api/admin/deleted-content', { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) { loading.innerHTML = '<div class="empty-tip">❌ ' + escHtml(json.msg || '加载失败') + '</div>'; return; }
+      _deletedData = json.data;
+      loading.style.display = 'none';
+      // 更新统计
+      const d = json.data;
+      document.getElementById('deletedPostCount').textContent = d.posts.length;
+      document.getElementById('deletedCommentCount').textContent = d.postComments.length;
+      document.getElementById('deletedDiscussionCount').textContent = d.discussions.length;
+      document.getElementById('deletedDiscCommentCount').textContent = d.discussionComments.length;
+      // 渲染当前 tab
+      switchDeletedTab(_deletedActiveTab);
+    } catch (e) {
+      loading.innerHTML = '<div class="empty-tip">❌ 网络错误：' + escHtml(e.message) + '</div>';
+    }
+  }
+
+  // 切换已删除内容 tab
+  function switchDeletedTab(tab) {
+    _deletedActiveTab = tab;
+    // 更新 tab 高亮
+    document.querySelectorAll('.deleted-tab').forEach(t => t.classList.remove('active'));
+    const tabMap = { posts: 'tabDelPosts', comments: 'tabDelComments', discussions: 'tabDelDiscussions', discComments: 'tabDelDiscComments' };
+    document.getElementById(tabMap[tab]).classList.add('active');
+    // 隐藏所有面板
+    ['Posts', 'Comments', 'Discussions', 'DiscComments'].forEach(p => {
+      document.getElementById('deleted' + p + 'Panel').style.display = 'none';
+    });
+    // 清空所有 body
+    if (!_deletedData) return;
+    // 显示对应面板
+    const panelId = tab === 'posts' ? 'Posts' : tab === 'comments' ? 'Comments' : tab === 'discussions' ? 'Discussions' : 'DiscComments';
+    document.getElementById('deleted' + panelId + 'Panel').style.display = '';
+    const bodyId = 'deleted' + panelId + 'Body';
+    const items = tab === 'posts' ? _deletedData.posts : tab === 'comments' ? _deletedData.postComments : tab === 'discussions' ? _deletedData.discussions : _deletedData.discussionComments;
+    renderDeletedItems(bodyId, items, tab);
+  }
+
+  function renderDeletedItems(bodyId, items, type) {
+    const body = document.getElementById(bodyId);
+    if (!items || items.length === 0) {
+      body.innerHTML = '<div class="empty-tip">暂无已删除内容</div>';
+      return;
+    }
+    // 按删除时间倒序
+    items.sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+    let html = '';
+    items.forEach(item => {
+      const time = item.time ? new Date(item.time).toLocaleString('zh-CN') : '-';
+      const delTime = item.deletedAt ? new Date(item.deletedAt).toLocaleString('zh-CN') : '-';
+      const byWho = item.deletedBy || 'unknown';
+      const badgeClass = byWho === 'admin' ? 'del-badge-admin' : byWho === 'user' ? 'del-badge-user' : 'del-badge-system';
+      const badgeText = byWho === 'admin' ? '管理员删除' : byWho === 'user' ? '用户自删' : '系统删除';
+
+      if (type === 'posts') {
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:600;font-size:14px;word-break:break-word;">' + escHtml(item.content || '(无内容)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>📝 ' + escHtml(item.type) + '</span>' +
+          '<span>👤 ' + escHtml(item.author) + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span>❤️ ' + item.likeCount + ' 💬 ' + item.commentCount + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'comments') {
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-size:13px;color:var(--text-sub);margin-bottom:4px;">📌 帖子：' + escHtml((item.postContent || '').substring(0, 80)) + '</div>' +
+          '<div style="font-weight:500;font-size:13px;">💬 ' + escHtml(item.content || '(无内容)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.author) + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'discussions') {
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:600;font-size:14px;">💬 ' + escHtml(item.title || '(无标题)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.createdBy) + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'discComments') {
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:500;font-size:13px;word-break:break-word;">💬 ' + escHtml(item.content || '(无内容)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.author) + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      }
+    });
+    body.innerHTML = html;
   }
 
   // ===== 启动 =====

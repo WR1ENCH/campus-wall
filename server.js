@@ -54,6 +54,20 @@ function verifyPassword(password, storedHash) {
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(inputHash, 'hex'));
 }
 
+/**
+ * 获取安全的同学认证展示状态（已废弃——统一使用 getSafeCertStatus）
+ * 校验：approved 必须有审核记录（zhixueReviewedBy），否则降级
+ * @param {object} user 用户对象
+ * @returns {string|null} 'approved' | 'pending' | 'rejected' | null
+ */
+function getDisplayZhixueStatus(user) {
+  const status = user.zhixueStatus || null;
+  if (status === 'approved' && !user.zhixueReviewedBy) {
+    return null;
+  }
+  return status;
+}
+
 // ===== 实名信息对称加密（AES-256-CBC）=====
 // 密钥从环境变量读取，不存在则每次启动随机生成（重启后密文失效，可接受）
 const CERT_ENC_KEY = crypto.createHash('sha256')
@@ -737,7 +751,7 @@ app.post('/api/user/login', (req, res) => {
       username: user.username,
       nickname: user.nickname,
       avatar: user.avatar,
-      zhixueStatus: user.zhixueStatus || null
+      zhixueStatus: getDisplayZhixueStatus(user)
     }
   });
 });
@@ -761,7 +775,12 @@ app.post('/api/user/zhixue-login', (req, res) => {
   }
 
   const users = readUsers();
-  const user = users.find(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+  let user = users.find(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+  // 防御：approved 必须有审核记录
+  if (user && !user.zhixueReviewedBy) {
+    console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
+    user = null;
+  }
   if (!user) {
     addLoginLog('user', zhixueUsername, false, ip, ua);
     return res.json({ ok: false, msg: '当前账号可能错误或者未绑定校园墙账号' });
@@ -795,7 +814,8 @@ app.post('/api/user/zhixue-login', (req, res) => {
       id: user.id,
       username: user.username,
       nickname: user.nickname,
-      avatar: user.avatar
+      avatar: user.avatar,
+      zhixueStatus: 'approved'
     }
   });
 });
@@ -832,7 +852,7 @@ app.post('/api/user/auto-login', (req, res) => {
   }
   entry.lastUsedAt = Date.now();
   writeTrustTokens(tokens);
-  res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: user.zhixueStatus || null } });
+  res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user) } });
 });
 
 // 撤销信任（用户退出时清除）
@@ -881,7 +901,7 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: user.zhixueStatus || null, zhixueUsername: user.zhixueUsername || null } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
 });
 
 // ===== 签到 =====
@@ -1297,6 +1317,18 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   }
 
   const realName = decryptCert ? decryptCert(user.certRealName) : null;
+  // 未通过审核时，返回编辑所需的预填数据（手动认证字段 / 智学账号）
+  let editData = null;
+  if (displayStatus !== 'approved') {
+    editData = {
+      certType: user.zhixueCertType || 'zhixue',
+      zhixueUsername: user.zhixueUsername || null,
+      manualName: user.zhixueManualName || null,
+      manualEmail: user.zhixueManualEmail || null,
+      manualNote: user.zhixueManualNote || null,
+      manualImages: user.zhixueManualImages || null
+    };
+  }
   res.json({
     ok: true,
     data: {
@@ -1304,7 +1336,8 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
       zhixueUsername: user.zhixueUsername,
       status: displayStatus,
       submittedAt: user.zhixueSubmittedAt || null,
-      realName: (displayStatus === 'approved' && realName) ? realName : null
+      realName: (displayStatus === 'approved' && realName) ? realName : null,
+      editData   // 非 approved 时用于前端预填表单
     }
   });
 });
@@ -1633,7 +1666,7 @@ app.get('/api/users/:id/posts', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   const posts = readPosts();
-  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname);
+  const userPosts = posts.filter(p => !p.deleted && (p.userId === user.id || p.author === user.nickname));
   res.json({ ok: true, data: userPosts });
 });
 
@@ -1687,26 +1720,32 @@ app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// 删除用户（仅管理员）—— 同时删除该用户的所有帖子
+// 删除用户（仅管理员）—— 用户账号物理删除，其内容软删除保留
 app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
   const userId = req.params.id;
-  let users = readUsers();
+  const users = readUsers();
   const user = users.find(u => u.id === userId);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 先删除该用户的所有帖子
-  let posts = readPosts();
-  const userNickname = user.nickname;
-  const beforePostCount = posts.length;
-  posts = posts.filter(p => p.userId !== userId && p.author !== userNickname);
-  const deletedPostCount = beforePostCount - posts.length;
+  // 软删除该用户的所有帖子
+  const posts = readPosts();
+  const now = new Date().toISOString();
+  let softDeleted = 0;
+  posts.forEach(p => {
+    if (!p.deleted && (p.userId === userId || p.author === user.nickname)) {
+      p.deleted = true;
+      p.deletedAt = now;
+      p.deletedBy = 'system';
+      softDeleted++;
+    }
+  });
   writePosts(posts);
 
-  // 再删除用户
-  users = users.filter(u => u.id !== userId);
-  writeUsers(users);
+  // 再删除用户账号
+  const updated = users.filter(u => u.id !== userId);
+  writeUsers(updated);
 
-  res.json({ ok: true, deletedPosts: deletedPostCount });
+  res.json({ ok: true, deletedPosts: softDeleted });
 });
 
 // 重置用户密码（仅管理员）—— 生成随机密码返回给管理员
@@ -1772,9 +1811,11 @@ function incUserPostCount(nickname) {
 // 获取所有帖子
 app.get('/api/posts', (req, res) => {
   const posts = readPosts();
+  // 过滤已删除的帖子（普通用户不可见）
+  const activePosts = posts.filter(p => !p.deleted);
   const users = readUsers();
   // 为每个帖子附加作者的管理员角色信息
-  const postsWithAdmin = posts.map(p => {
+  const postsWithAdmin = activePosts.map(p => {
     if (p.userId) {
       const author = users.find(u => u.id === p.userId);
       if (author) {
@@ -1802,6 +1843,11 @@ app.get('/api/posts/:id', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+  // 过滤已删除的评论
+  if (post.comments) {
+    post.comments = post.comments.filter(c => !c.deleted);
+  }
   if (post.userId) {
     const users = readUsers();
     const author = users.find(u => u.id === post.userId);
@@ -2057,7 +2103,7 @@ app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
   res.json({ ok: true, data: { liked: comment.liked, likes: comment.likes } });
 });
 
-// 删除评论（评论作者或帖子作者可删）
+// 删除评论（评论作者或帖子作者可删）—— 改为软删除
 app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   const userId = req.headers['x-user-token'] ? (() => {
     try { return JSON.parse(Buffer.from(req.headers['x-user-token'].split('.')[1], 'base64').toString()).id; } catch { return null; }
@@ -2065,16 +2111,18 @@ app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.postId);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
-  const idx = (post.comments || []).findIndex(c => c.id === req.params.commentId);
-  if (idx === -1) return res.json({ ok: false, msg: '评论不存在' });
-  const comment = post.comments[idx];
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+  if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
   const isCommentAuthor = userId && comment.userId && userId === comment.userId;
   const isPostAuthor = userId && post.userId && userId === post.userId;
   if (!isCommentAuthor && !isPostAuthor) {
     return res.json({ ok: false, msg: '无权删除此评论' });
   }
-  post.comments.splice(idx, 1);
-  post.commentsCount = post.comments.length;
+  comment.deleted = true;
+  comment.deletedAt = new Date().toISOString();
+  comment.deletedBy = userId === comment.userId ? 'user' : 'post_author';
+  // 不减少 commentsCount，保留计数
   writePosts(posts);
   res.json({ ok: true });
 });
@@ -2100,24 +2148,26 @@ app.post('/api/comments/:commentId/report', (req, res) => {
   res.json({ ok: true });
 });
 
-// 批量删除评论（管理后台）
+// 批量删除评论（管理后台）—— 改为软删除
 app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
   const posts = readPosts();
   let found = false;
+  const now = new Date().toISOString();
   posts.forEach(post => {
-    const idx = (post.comments || []).findIndex(c => c.id === req.params.commentId);
-    if (idx !== -1) {
-      post.comments.splice(idx, 1);
-      post.commentsCount = post.comments.length;
+    const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+    if (comment && !comment.deleted) {
+      comment.deleted = true;
+      comment.deletedAt = now;
+      comment.deletedBy = 'admin';
       found = true;
     }
   });
-  if (!found) return res.json({ ok: false, msg: '评论不存在' });
+  if (!found) return res.json({ ok: false, msg: '评论不存在或已被删除' });
   writePosts(posts);
   // 同时删除该评论的举报记录
   const reports = readReports();
   const remaining = reports.filter(r => r.targetId !== req.params.commentId || r.type !== 'comment');
-  writeReports(reports);
+  writeReports(remaining);
   res.json({ ok: true });
 });
 
@@ -2126,13 +2176,16 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
   if (!Array.isArray(ids) || ids.length === 0) return res.json({ ok: false, msg: '请提供要删除的评论 ID 列表' });
   const posts = readPosts();
   let deletedCount = 0;
+  const now = new Date().toISOString();
   posts.forEach(post => {
-    const before = post.comments ? post.comments.length : 0;
-    if (post.comments) {
-      post.comments = post.comments.filter(c => !ids.includes(c.id));
-      post.commentsCount = post.comments.length;
-      deletedCount += before - post.comments.length;
-    }
+    (post.comments || []).forEach(c => {
+      if (ids.includes(c.id) && !c.deleted) {
+        c.deleted = true;
+        c.deletedAt = now;
+        c.deletedBy = 'admin';
+        deletedCount++;
+      }
+    });
   });
   writePosts(posts);
   // 同时删除相关的举报记录
@@ -2142,34 +2195,41 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deleted: deletedCount });
 });
 
-// 批量删除帖子
+// 批量删除帖子 —— 改为软删除
 app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.json({ ok: false, msg: '请提供要删除的帖子 ID 列表' });
   }
-  let posts = readPosts();
-  const before = posts.length;
-  posts = posts.filter(p => !ids.includes(p.id));
+  const posts = readPosts();
+  let deletedCount = 0;
+  posts.forEach(p => {
+    if (ids.includes(p.id) && !p.deleted) {
+      p.deleted = true;
+      p.deletedAt = new Date().toISOString();
+      p.deletedBy = 'admin';
+      deletedCount++;
+    }
+  });
   writePosts(posts);
-  res.json({ ok: true, deleted: before - posts.length });
+  res.json({ ok: true, deleted: deletedCount });
 });
 
-// 删除帖子（仅管理员）
+// 删除帖子（仅管理员）—— 改为软删除
 app.delete('/api/posts/:id', requireAdmin, (req, res) => {
-  let posts = readPosts();
-  const before = posts.length;
-  posts = posts.filter(p => p.id !== req.params.id);
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
 
-  if (posts.length === before) {
-    return res.json({ ok: false, msg: '帖子不存在' });
-  }
-
+  post.deleted = true;
+  post.deletedAt = new Date().toISOString();
+  post.deletedBy = 'admin';
   writePosts(posts);
   res.json({ ok: true });
 });
 
-// 用户删除自己发的帖子
+// 用户删除自己发的帖子 —— 改为软删除
 app.delete('/api/user/posts/:id', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
@@ -2179,10 +2239,13 @@ app.delete('/api/user/posts/:id', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
   if (post.userId !== session.id) return res.json({ ok: false, msg: '无权删除他人的帖子' });
 
-  const updated = posts.filter(p => p.id !== req.params.id);
-  writePosts(updated);
+  post.deleted = true;
+  post.deletedAt = new Date().toISOString();
+  post.deletedBy = 'user';
+  writePosts(posts);
   res.json({ ok: true });
 });
 
@@ -2514,7 +2577,7 @@ app.get('/api/discussions', (req, res) => {
   const discussions = readDiscussions();
   const now = new Date();
   const active = discussions
-    .filter(d => !d.expiresAt || parseLocalDateTime(d.expiresAt) > now)
+    .filter(d => !d.deleted && (!d.expiresAt || parseLocalDateTime(d.expiresAt) > now))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json({ ok: true, data: active });
 });
@@ -2562,18 +2625,28 @@ app.put('/api/discussions/:id', requireAdmin, (req, res) => {
   res.json({ ok: true, data: discussions[idx] });
 });
 
-// 删除讨论话题（管理员）
+// 删除讨论话题（管理员）—— 改为软删除
 app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
-  let discussions = readDiscussions();
-  const before = discussions.length;
-  discussions = discussions.filter(d => d.id !== req.params.id);
-  if (discussions.length === before) return res.json({ ok: false, msg: '话题不存在' });
+  const discussions = readDiscussions();
+  const d = discussions.find(d => d.id === req.params.id);
+  if (!d) return res.json({ ok: false, msg: '话题不存在' });
+  if (d.deleted) return res.json({ ok: false, msg: '话题已被删除' });
+  const now = new Date().toISOString();
+  d.deleted = true;
+  d.deletedAt = now;
+  d.deletedBy = 'admin';
   writeDiscussions(discussions);
 
-  // 同时删除该话题下的所有评论
-  let comments = readDiscussionComments();
-  const remaining = comments.filter(c => c.discussionId !== req.params.id);
-  writeDiscussionComments(remaining);
+  // 同时软删除该话题下的所有评论
+  const comments = readDiscussionComments();
+  comments.forEach(c => {
+    if (c.discussionId === req.params.id && !c.deleted) {
+      c.deleted = true;
+      c.deletedAt = now;
+      c.deletedBy = 'admin';
+    }
+  });
+  writeDiscussionComments(comments);
 
   res.json({ ok: true });
 });
@@ -2582,7 +2655,7 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
 app.get('/api/discussions/:id/comments', (req, res) => {
   const comments = readDiscussionComments();
   const discussionComments = comments
-    .filter(c => c.discussionId === req.params.id)
+    .filter(c => c.discussionId === req.params.id && !c.deleted)
     .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   // 构建嵌套结构
@@ -2701,7 +2774,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   });
 });
 
-// 删除讨论评论（发送者或管理员可删）
+// 删除讨论评论（发送者或管理员可删）—— 改为软删除
 app.delete('/api/discussions/comments/:id', (req, res) => {
   const token = req.headers['x-user-token'];
   const adminToken = req.headers['x-admin-token'];
@@ -2726,10 +2799,10 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
   }
 
   const comments = readDiscussionComments();
-  const idx = comments.findIndex(c => c.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '评论不存在' });
+  const comment = comments.find(c => c.id === req.params.id);
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+  if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
 
-  const comment = comments[idx];
   // 检查权限：评论作者、回复作者、管理员
   const isAuthor = userId && comment.userId && userId === comment.userId;
   const isParentAuthor = userId && comment.parentId
@@ -2740,12 +2813,17 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     return res.json({ ok: false, msg: '无权删除此评论' });
   }
 
-  comments.splice(idx, 1);
-  // 同时删除所有子回复
-  const children = comments.filter(c => c.parentId === req.params.id);
-  const childIds = children.map(c => c.id);
-  const remaining = comments.filter(c => c.id !== req.params.id && !childIds.includes(c.id));
-  writeDiscussionComments(remaining);
+  const now = new Date().toISOString();
+  const byWho = isAdmin ? 'admin' : 'user';
+  // 软删除该评论及其所有子回复
+  comments.forEach(c => {
+    if (c.id === req.params.id || c.parentId === req.params.id) {
+      c.deleted = true;
+      c.deletedAt = now;
+      c.deletedBy = byWho;
+    }
+  });
+  writeDiscussionComments(comments);
 
   res.json({ ok: true });
 });
@@ -2902,28 +2980,48 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   report.handledAt = new Date().toISOString();
   if (action) report.action = action;
 
-  // 如果 action 是 delete_post，同时删除被举报的帖子
+  // 如果 action 是 delete_post，同时软删除被举报的帖子
   if (action === 'delete_post' && report.postId) {
-    let posts = readPosts();
-    posts = posts.filter(p => p.id !== report.postId);
-    writePosts(posts);
-  }
-  // 如果 action 是 delete_comment，同时删除被举报的评论
-  if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
-    let posts = readPosts();
-    posts.forEach(post => {
-      if (post.comments) {
-        post.comments = post.comments.filter(c => c.id !== report.targetId);
-        post.commentsCount = post.comments.length;
+    const posts = readPosts();
+    const now = new Date().toISOString();
+    posts.forEach(p => {
+      if (p.id === report.postId && !p.deleted) {
+        p.deleted = true;
+        p.deletedAt = now;
+        p.deletedBy = 'admin';
       }
     });
     writePosts(posts);
   }
-  // 如果 action 是 delete_discussion_comment，同时删除被举报的讨论区评论
+  // 如果 action 是 delete_comment，同时软删除被举报的评论
+  if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
+    const posts = readPosts();
+    const now = new Date().toISOString();
+    posts.forEach(post => {
+      if (post.comments) {
+        post.comments.forEach(c => {
+          if (c.id === report.targetId && !c.deleted) {
+            c.deleted = true;
+            c.deletedAt = now;
+            c.deletedBy = 'admin';
+          }
+        });
+      }
+    });
+    writePosts(posts);
+  }
+  // 如果 action 是 delete_discussion_comment，同时软删除被举报的讨论区评论
   if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
     const comments = readDiscussionComments();
-    const filtered = comments.filter(c => c.id !== report.targetId);
-    writeDiscussionComments(filtered);
+    const now = new Date().toISOString();
+    comments.forEach(c => {
+      if (c.id === report.targetId && !c.deleted) {
+        c.deleted = true;
+        c.deletedAt = now;
+        c.deletedBy = 'admin';
+      }
+    });
+    writeDiscussionComments(comments);
   }
 
   writeReports(reports);
@@ -2969,6 +3067,93 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   res.json({ ok: true,
     msg: days === 0 ? '已永久封禁该用户' : '已封禁该用户 ' + days + ' 天',
     user: { id: user.id, username: user.username, nickname: user.nickname }
+  });
+});
+
+// ===== 管理端：查看已删除内容 =====
+app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  const users = readUsers();
+  const discussions = readDiscussions();
+  const discussionComments = readDiscussionComments();
+
+  // 已删除的帖子（含作者信息）
+  const deletedPosts = posts
+    .filter(p => p.deleted)
+    .map(p => {
+      const author = users.find(u => u.id === p.userId);
+      return {
+        id: p.id,
+        content: p.content ? p.content.substring(0, 200) : '',
+        type: p.type || '',
+        author: p.author || (author ? author.nickname : '未知'),
+        userId: p.userId,
+        time: p.time || p.createdAt,
+        deletedAt: p.deletedAt,
+        deletedBy: p.deletedBy,
+        likeCount: (p.likes || []).length || p.likes || 0,
+        commentCount: (p.comments || []).length || p.commentsCount || 0
+      };
+    });
+
+  // 已删除的帖子内评论
+  const deletedPostComments = [];
+  posts.forEach(post => {
+    if (post.deleted) return; // 帖子已删，评论随帖子保留即可
+    (post.comments || []).forEach(c => {
+      if (c.deleted) {
+        deletedPostComments.push({
+          id: c.id,
+          postId: post.id,
+          postContent: (post.content || '').substring(0, 100),
+          content: (c.content || '').substring(0, 200),
+          author: c.author || '未知',
+          userId: c.userId,
+          time: c.time || c.createdAt,
+          deletedAt: c.deletedAt,
+          deletedBy: c.deletedBy
+        });
+      }
+    });
+  });
+
+  // 已删除的讨论话题
+  const deletedDiscussions = discussions
+    .filter(d => d.deleted)
+    .map(d => ({
+      id: d.id,
+      title: d.title || '',
+      createdBy: d.createdBy || '未知',
+      createdAt: d.createdAt,
+      deletedAt: d.deletedAt,
+      deletedBy: d.deletedBy
+    }));
+
+  // 已删除的讨论区评论
+  const deletedDiscComments = discussionComments
+    .filter(c => c.deleted)
+    .map(c => ({
+      id: c.id,
+      discussionId: c.discussionId,
+      content: (c.content || '').substring(0, 200),
+      author: c.author || '未知',
+      userId: c.userId,
+      time: c.createdAt,
+      deletedAt: c.deletedAt,
+      deletedBy: c.deletedBy
+    }));
+
+  res.json({
+    ok: true,
+    data: {
+      posts: deletedPosts,
+      postComments: deletedPostComments,
+      discussions: deletedDiscussions,
+      discussionComments: deletedDiscComments,
+      summary: {
+        totalDeleted: deletedPosts.length + deletedPostComments.length + deletedDiscussions.length + deletedDiscComments.length
+      }
+    }
   });
 });
 
@@ -4251,7 +4436,32 @@ app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) =
   });
 });
 
+// 启动时修复异常认证数据：approved 无审核记录 → 降级
+function fixCertDataOnStart() {
+  try {
+    const users = readUsers();
+    let changed = false;
+    users.forEach(u => {
+      if (u.zhixueStatus === 'approved' && !u.zhixueReviewedBy) {
+        console.warn('[启动修复] 用户', u.id, '(' + u.nickname + ') 状态为 approved 但缺少审核记录，重置为 null');
+        delete u.zhixueStatus;
+        changed = true;
+      }
+      // nully 状态的认证残留数据也清理（有 zhixueUsername/manualNote 但无 status）
+      if (!u.zhixueStatus && (u.zhixueUsername || u.zhixueManualNote)) {
+        // 有提交数据但状态为空 → 这可能是 bug 导致的残留，设为 pending 以触发审核
+        u.zhixueStatus = 'pending';
+        changed = true;
+      }
+    });
+    if (changed) writeUsers(users);
+  } catch (e) {
+    console.error('[启动修复] 认证数据检查失败:', e.message);
+  }
+}
+
 app.listen(PORT, () => {
+  fixCertDataOnStart();
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);
   console.log(`  → http://localhost:${PORT}/admin.html`);

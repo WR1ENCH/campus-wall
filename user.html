@@ -570,6 +570,9 @@
               <span style="font-weight:600; color:var(--text-main);">🎓 同学认证</span>
               <span id="zhixueStatusBadge" style="padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold;"></span>
             </div>
+            <div id="zhixueEditArea" style="margin-top:8px; text-align:center; display:none;">
+              <button id="editCertBtn" class="edit-btn" style="font-size:12px; padding:5px 14px;">✏️ 编辑认证信息</button>
+            </div>
           </div>
         </div>
       </div>
@@ -831,6 +834,8 @@
       bindZhixueBtn.addEventListener('click', openBindZhixueModal);
     }
 
+    let _pendingEditData = null; // 编辑认证时预填数据
+
     // 查询当前用户是否已绑定智学网（同学认证）
     async function loadZhixueInfo() {
       try {
@@ -847,6 +852,20 @@
           statusBadge.style.background = style.bg;
           statusBadge.style.color = style.color;
           zhixueInfo.style.display = '';
+
+          // 存储编辑数据，用于预填表单
+          _pendingEditData = info.editData || null;
+
+          // pending 或 rejected → 显示编辑按钮
+          const editArea = document.getElementById('zhixueEditArea');
+          const editBtn = document.getElementById('editCertBtn');
+          if (info.status === 'pending' || info.status === 'rejected') {
+            editArea.style.display = '';
+            if (editBtn) editBtn.onclick = () => openBindZhixueModal(_pendingEditData);
+          } else {
+            editArea.style.display = 'none';
+          }
+
           // 只有未认证且不是pending状态时才显示绑定按钮
           if (!info.status || info.status === 'rejected' || info.status === 'none') {
             if (bindZhixueBtn) bindZhixueBtn.style.display = '';
@@ -855,6 +874,7 @@
           }
         } else {
           zhixueInfo.style.display = 'none';
+          _pendingEditData = null;
           if (bindZhixueBtn) bindZhixueBtn.style.display = '';
         }
       } catch (e) {
@@ -863,19 +883,24 @@
     }
 
     // 打开绑定弹窗（同学认证）
-    function openBindZhixueModal() {
+    function openBindZhixueModal(editData) {
       const old = document.getElementById('bindZhixueModal');
       if (old) old.remove();
+      // 根据编辑模式设置标题和提示
+      const isEdit = editData && (editData.certType === 'zhixue' || editData.certType === 'manual');
+      const headerTitle = isEdit ? '✏️ 修改认证信息' : '🎓 同学认证';
+      const headerDesc = isEdit
+        ? '修改后将重新提交审核，请确保信息准确'
+        : '我们正致力于维护校园墙真实性<br>为维护本墙环境，建议您即可完成同学认证';
 
       const modal = document.createElement('div');
       modal.id = 'bindZhixueModal';
       modal.className = 'modal-overlay';
       modal.innerHTML = `
         <div class="modal" style="max-width:420px;">
-          <div class="modal-header">🎓 同学认证</div>
+          <div class="modal-header">${headerTitle}</div>
           <div style="padding:0 20px 4px;font-size:13px;color:var(--text-sub);line-height:1.7;text-align:center;">
-            我们正致力于维护校园墙真实性<br>
-            为维护本墙环境，建议您即可完成同学认证
+            ${headerDesc}
           </div>
           <div class="modal-body">
             <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-weight:bold; display:none;"></div>
@@ -951,12 +976,44 @@
 
             <div class="modal-actions">
               <button class="modal-btn modal-btn-secondary" onclick="closeBindZhixueModal()">取消</button>
-              <button class="modal-btn bind-zhixue-btn" onclick="doBindZhixue()">提交审核</button>
+              <button class="modal-btn bind-zhixue-btn" onclick="doBindZhixue()">${isEdit ? '重新提交审核' : '提交审核'}</button>
             </div>
           </div>
         </div>
       `;
       document.body.appendChild(modal);
+
+      // 预填表单（编辑模式）
+      if (editData) {
+        if (editData.certType === 'zhixue' && editData.zhixueUsername) {
+          document.getElementById('zhixueInputUsername').value = editData.zhixueUsername;
+          // 密码不可解密，留空让用户重新输入
+          document.getElementById('zhixueInputPassword').placeholder = '如需修改密码请重新输入';
+        } else if (editData.certType === 'manual') {
+          if (editData.manualName) document.getElementById('manualName').value = editData.manualName;
+          if (editData.manualEmail) document.getElementById('manualEmail').value = editData.manualEmail;
+          if (editData.manualNote) document.getElementById('manualNote').value = editData.manualNote;
+          if (editData.manualImages && editData.manualImages.length > 0) {
+            // 清空并填充已有图片
+            const preview = document.getElementById('manualImagesPreview');
+            preview.innerHTML = '';
+            manualImages.length = 0;
+            editData.manualImages.forEach((src, i) => {
+              manualImages.push(src);
+              const img = document.createElement('div');
+              img.style.cssText = 'position:relative; width:72px; height:72px;';
+              img.innerHTML = `
+                <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
+                <button onclick="removeManualImage(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
+              `;
+              preview.appendChild(img);
+            });
+            // 切换到手动认证 tab
+            switchCertTab('manual');
+          }
+        }
+      }
+
       requestAnimationFrame(() => modal.classList.add('show'));
     }
 

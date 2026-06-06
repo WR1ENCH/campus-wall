@@ -2385,8 +2385,8 @@
         });
         const json = await res.json();
         if (json.ok) {
-          const { token, id, username: u, nickname, avatar } = json.data;
-          currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: 'approved' };
+          const { token, id, username: u, nickname, avatar, zhixueStatus } = json.data;
+          currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || 'approved' };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
           hideLoginModal();
