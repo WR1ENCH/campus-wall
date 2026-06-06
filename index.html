@@ -2929,7 +2929,7 @@
             <div class="note-footer" onclick="event.stopPropagation()">
               <div class="note-author">
                 ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
-                <span>${post.avatar}</span>
+                ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈'}</span>`}
                 ${post.userId ? '</a>' : ''}
                 ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
                 <span>${post.author}</span>${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}
@@ -5048,7 +5048,7 @@
         const reportBtn = currentUser ? `<button class="report-btn" onclick="reportDiscussionComment('${c.id}')">举报</button>` : '';
         let html = `<div class="discussion-comment">
           <div class="discussion-comment-header">
-            <span class="discussion-comment-avatar">${c.avatar || '🙈'}</span>
+            <span class="discussion-comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '🙈')}</span>
             <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
             <span class="discussion-comment-time">${timeStr}</span>
           </div>
@@ -5172,7 +5172,7 @@
         div.dataset.id = c.id;
         div.innerHTML = `
           <div class="discussion-comment-header">
-            <span class="discussion-comment-avatar">${c.avatar || '🙈'}</span>
+            <span class="discussion-comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '🙈')}</span>
             <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
             <span class="discussion-comment-time">${timeStr}</span>
           </div>
