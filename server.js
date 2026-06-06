@@ -1289,15 +1289,22 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
     return res.json({ ok: true, data: null });
   }
 
+  // 校验：status=approved 必须有 reviewedBy（管理员审核记录），否则降级为 pending
+  let displayStatus = user.zhixueStatus || 'pending';
+  if (displayStatus === 'approved' && !user.zhixueReviewedBy) {
+    displayStatus = 'pending';
+    console.warn('[zhixue-info] 用户', user.id, '状态为 approved 但缺少审核记录，降级为 pending');
+  }
+
   const realName = decryptCert ? decryptCert(user.certRealName) : null;
   res.json({
     ok: true,
     data: {
       type: user.zhixueCertType || 'zhixue',
       zhixueUsername: user.zhixueUsername,
-      status: user.zhixueStatus || 'pending',
+      status: displayStatus,
       submittedAt: user.zhixueSubmittedAt || null,
-      realName: (user.zhixueStatus === 'approved' && realName) ? realName : null
+      realName: (displayStatus === 'approved' && realName) ? realName : null
     }
   });
 });
@@ -1771,11 +1778,16 @@ app.get('/api/posts', (req, res) => {
     if (p.userId) {
       const author = users.find(u => u.id === p.userId);
       if (author) {
+        // 认证状态校验：approved 必须有审核记录
+        let zhixueStatus = author.zhixueStatus || null;
+        if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
+          zhixueStatus = null;
+        }
         return {
           ...p,
           authorAdminRole: author.bindAdminRole || null,
           authorBindAdminId: author.bindAdminId || null,
-          authorZhixueStatus: author.zhixueStatus || null,
+          authorZhixueStatus: zhixueStatus,
           authorZhixueCertType: author.zhixueCertType || null
         };
       }
@@ -1794,7 +1806,11 @@ app.get('/api/posts/:id', (req, res) => {
     const users = readUsers();
     const author = users.find(u => u.id === post.userId);
     if (author) {
-      return res.json({ ok: true, data: { ...post, authorAdminRole: author.bindAdminRole || null, authorBindAdminId: author.bindAdminId || null, authorZhixueStatus: author.zhixueStatus || null, authorZhixueCertType: author.zhixueCertType || null } });
+      let zhixueStatus = author.zhixueStatus || null;
+      if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
+        zhixueStatus = null;
+      }
+      return res.json({ ok: true, data: { ...post, authorAdminRole: author.bindAdminRole || null, authorBindAdminId: author.bindAdminId || null, authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
     }
   }
   res.json({ ok: true, data: post });
