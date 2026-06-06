@@ -2606,44 +2606,48 @@
     }).join('');
   }
 
+  // 安全复制到剪贴板（兼容 HTTP / HTTPS）
+  function fallbackCopyText(text, successMsg) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast(successMsg, 'success');
+  }
+
+  function safeCopy(text, successMsg) {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(text).then(function() {
+          showToast(successMsg, 'success');
+        }).catch(function() {
+          fallbackCopyText(text, successMsg);
+        });
+      } else {
+        fallbackCopyText(text, successMsg);
+      }
+    } catch(e) {
+      fallbackCopyText(text, successMsg);
+    }
+  }
+
   function batchCopyCards() {
     if (selectedCardIds.size === 0) {
       showToast('⚠️ 请先勾选要复制的卡密');
       return;
     }
-    const selected = allCards.filter(c => selectedCardIds.has(c.code));
-    const text = selected.map(c => c.code).join('\n');
-    navigator.clipboard.writeText(text).then(function() {
-      showToast('✅ 已复制 ' + selected.length + ' 张卡密', 'success');
-    }).catch(function() {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showToast('✅ 已复制 ' + selected.length + ' 张卡密', 'success');
-    });
+    var selected = allCards.filter(function(c) { return selectedCardIds.has(c.code); });
+    var text = selected.map(function(c) { return c.code; }).join('\n');
+    safeCopy(text, '✅ 已复制 ' + selected.length + ' 张卡密');
   }
 
   function copyCardCode(code, event) {
     event.stopPropagation();
-    navigator.clipboard.writeText(code).then(function() {
-      showToast('✅ 已复制: ' + code, 'success');
-    }).catch(function() {
-      // fallback
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      showToast('✅ 已复制: ' + code, 'success');
-    });
+    safeCopy(code, '✅ 已复制: ' + code);
   }
 
   function openCreateCardModal() {

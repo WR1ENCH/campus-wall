@@ -3133,18 +3133,33 @@
     function copyPostId() {
       const idEl = document.getElementById('detailPostIdValue');
       if (!idEl || !idEl.textContent) return;
-      navigator.clipboard.writeText(idEl.textContent).then(() => {
-        showToast('📋 帖子ID已复制！');
-      }).catch(() => {
-        // fallback for older browsers
+      const text = idEl.textContent;
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('📋 帖子ID已复制！');
+          }).catch(() => {
+            // fallback for older browsers
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('📋 帖子ID已复制！');
+          });
+        } else {
+          throw new Error('no clipboard');
+        }
+      } catch(e) {
         const ta = document.createElement('textarea');
-        ta.value = idEl.textContent;
+        ta.value = text;
         document.body.appendChild(ta);
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
         showToast('📋 帖子ID已复制！');
-      });
+      }
     }
 
     function reportBullying() {
