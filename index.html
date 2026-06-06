@@ -90,9 +90,19 @@
       background: rgba(139,111,94,0.92);
       backdrop-filter: blur(12px);
       padding: 14px 24px;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; justify-content: flex-start;
       border-bottom: 3px solid rgba(0,0,0,0.15);
       box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .top-left-group {
+      display: flex; align-items: center; gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .top-right-area {
+      margin-left: auto;
+      flex-shrink: 0;
     }
 
     .wall-title {
@@ -1343,16 +1353,19 @@
 <body>
   <!-- 固定层：顶栏 -->
   <div class="top-bar" id="topBar">
-    <div class="wall-title">
-      <span>📌</span>
-      <span>校园墙</span>
+    <div class="top-left-group">
+      <div class="wall-title">
+        <span>📌</span>
+        <span>校园墙</span>
+      </div>
+      <div class="top-stats">
+        <span>📝 今日 <strong id="todayCount">0</strong></span>
+        <span>🔥 热度 <strong id="hotCount">0</strong></span>
+        <span>👥 在线 <strong id="onlineCount">67</strong></span>
+      </div>
     </div>
-    <div class="top-stats">
-      <span>📝 今日 <strong id="todayCount">0</strong></span>
-      <span>🔥 热度 <strong id="hotCount">0</strong></span>
-      <span>👥 在线 <strong id="onlineCount">67</strong></span>
-    </div>
-    <!-- 用户信息区 -->
+    <!-- 右侧区域：用户信息 / 登录入口 -->
+    <div class="top-right-area">
     <div id="userInfoBar" style="display:none;">
       <div class="user-info-bar">
         <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
@@ -1370,6 +1383,7 @@
     <div id="loginEntrance" style="display:none;">
       <button class="user-logout-sm" onclick="showLoginModal()" style="padding:6px 12px;font-size:12px;">🔑 登录</button>
     </div>
+    </div><!-- /top-right-area -->
   </div>
 
   <!-- 固定层：操作栏 -->
