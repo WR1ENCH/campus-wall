@@ -4715,7 +4715,7 @@ app.post('/api/notices', (req, res) => {
   const sc = readSC();
   if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
 
-  const { title, content, author } = req.body;
+  const { title, content, author, level } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
 
@@ -4725,6 +4725,7 @@ app.post('/api/notices', (req, res) => {
     title: title.trim(),
     content: content.trim(),
     author: (author && author.trim()) ? author.trim() : session.name,
+    level: level === 'T0' ? 'T0' : 'T1',
     createdAt: new Date().toISOString()
   });
   writeNotices(notices);

@@ -2665,6 +2665,18 @@
       if (currentUser && currentUser.zhixueStatus !== 'approved') {
         checkCertResult();
       }
+      // T0 重要通知：延迟推送（等认证弹窗等关闭后再弹出）
+      setTimeout(function() {
+        if (_pendingT0Notif) {
+          // 不要跟其他弹窗冲突
+          var certOpen = document.getElementById('certRejectedOverlay') && document.getElementById('certRejectedOverlay').style.display === 'flex';
+          var certConfirmOpen = document.getElementById('certConfirmOverlay') && document.getElementById('certConfirmOverlay').style.display === 'flex';
+          if (!certOpen && !certConfirmOpen) {
+            _notifMarkRead(_pendingT0Notif.id);
+            openNotifWithItem(_pendingT0Notif.id);
+          }
+        }
+      }, 1500);
     }
 
     // ===== 公告 =====
@@ -2712,10 +2724,13 @@
     }
 
     // 页面加载时检查未读通知，更新 🔔 红点（不弹窗）
+    var _pendingT0Notif = null; // 待推送的T0通知
+
     async function checkNotifBadge() {
       var badge = document.getElementById('notifBadge');
       if (!badge) return;
       var unread = 0;
+      _pendingT0Notif = null;
       try {
         var annRes = await fetch('/api/announcement');
         var annJson = await annRes.json();
@@ -2724,12 +2739,17 @@
           if (annId !== annJson.data.publishedAt) unread++;
         }
 
-        // 检查学生会通知
+        // 检查学生会通知（含T0）
         var nRes = await fetch('/api/notices');
         var nJson = await nRes.json();
         if (nJson.ok && nJson.data) {
           (nJson.data || []).forEach(function(n) {
-            if (_notifUnreadCheck('sc_' + n.id)) unread++;
+            if (_notifUnreadCheck('sc_' + n.id)) {
+              unread++;
+              if (n.level === 'T0') {
+                _pendingT0Notif = { id: 'sc_' + n.id, icon: '📋', title: n.title, content: n.content, time: n.createdAt, author: n.author };
+              }
+            }
           });
         }
 
@@ -2745,6 +2765,25 @@
         }
       } catch(e) {}
       badge.style.display = unread > 0 ? '' : 'none';
+    }
+
+    // 打开通知窗口并定位到指定通知（用于 T0 强制推送）
+    function openNotifWithItem(targetId) {
+      openNotifModal();
+      // 等 loadNotifications 渲染完后选中目标
+      var wait = setInterval(function() {
+        var items = window._notifItems;
+        if (!items) return;
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].id === targetId) {
+            showNotifDetail(i);
+            clearInterval(wait);
+            break;
+          }
+        }
+      }, 50);
+      // 最多等 3 秒
+      setTimeout(function() { clearInterval(wait); }, 3000);
     }
 
     async function loadNotifications() {
@@ -2787,11 +2826,12 @@
               items.push({
                 id: nid,
                 icon: '📋',
-                title: n.title,
+                title: (n.level === 'T0' ? '🔴 ' : '') + n.title,
                 time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
                 isNew: nu,
                 content: n.content || '',
-                type: n.author || '通知'
+                type: n.author || '通知',
+                level: n.level || 'T1'
               });
               if (nu) unreadCount++;
             });
@@ -2892,8 +2932,9 @@
       // 渲染右侧
       var item = items[idx];
       var content = document.getElementById('notifContent');
-      content.innerHTML = '<div style="margin-bottom:16px;">' +
+      content.innerHTML = '<div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
         '<span style="font-size:12px;color:#6b7280;background:#f3f4f6;padding:2px 10px;border-radius:10px;">' + item.type + '</span>' +
+        (item.level === 'T0' ? '<span style="font-size:11px;color:#fff;background:#ef4444;padding:2px 8px;border-radius:8px;font-weight:600;">重要</span>' : '') +
         '</div>' +
         '<div style="font-size:20px;margin-bottom:4px;">' + item.icon + '</div>' +
         '<h2 style="font-size:18px;font-weight:600;margin:0 0 8px;color:#1f2937;">' + item.title + '</h2>' +
