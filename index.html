@@ -2731,6 +2731,25 @@
           });
         }
 
+        // 获取学生会通知
+        try {
+          var notifRes = await fetch('/api/notices');
+          var notifJson = await notifRes.json();
+          if (notifJson.ok && notifJson.data) {
+            (notifJson.data || []).forEach(function(n) {
+              items.push({
+                id: 'sc_' + n.id,
+                icon: '📋',
+                title: n.title,
+                time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
+                isNew: true,
+                content: n.content || '',
+                type: '学生会 · ' + (n.author || '通知')
+              });
+            });
+          }
+        } catch(e) { /* ignore */ }
+
         // 获取认证信息
         var token = localStorage.getItem('campus_user_token');
         if (token) {
