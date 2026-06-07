@@ -136,6 +136,34 @@ body {
   opacity: 0;
 }
 
+.hero-cta-white {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 32px;
+  border-radius: 980px;
+  background: rgba(255,255,255,0.08);
+  color: #e0e0e0;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: 0;
+}
+
+.hero-cta-white:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.35);
+  transform: translateY(-1px);
+}
+
+.hero-cta-white:active {
+  transform: scale(0.97);
+}
+
 .hero-cta:hover {
   background: linear-gradient(135deg, var(--cyan-light), var(--cyan-mid));
   transform: translateY(-1px);
@@ -236,10 +264,15 @@ body {
         <span class="cursor"></span>
       </span>
     </div>
-    <a href="http://154.37.221.232/" class="hero-cta">
-      立即访问
-      <span class="cta-arrow">→</span>
-    </a>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="knowledge.html" class="hero-cta-white" id="quickstartBtn">
+        📖 快速开始
+      </a>
+      <a href="http://154.37.221.232/" class="hero-cta">
+        立即访问
+        <span class="cta-arrow">→</span>
+      </a>
+    </div>
   </div>
 </section>
 
@@ -281,13 +314,15 @@ body {
 
   // 显示立即访问按钮（带渐入动画）
   function showCtaButton() {
-    var btn = document.querySelector(".hero-cta");
-    if (btn && !btn.dataset.shown) {
-      btn.dataset.shown = "1";
-      btn.style.transition = "opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)";
-      btn.style.opacity = "1";
-      btn.style.transform = "translateY(0)";
-    }
+    var btns = document.querySelectorAll(".hero-cta, .hero-cta-white");
+    btns.forEach(function(btn) {
+      if (btn && !btn.dataset.shown) {
+        btn.dataset.shown = "1";
+        btn.style.transition = "opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)";
+        btn.style.opacity = "1";
+        btn.style.transform = "translateY(0)";
+      }
+    });
   }
 
   // 小字打字机
