@@ -570,6 +570,11 @@
     .del-badge-admin { background: #fee2e2; color: #dc2626; }
     .del-badge-user { background: #fef3c7; color: #d97706; }
     .del-badge-system { background: #e0e7ff; color: #4f46e5; }
+
+    /* 同学认证 tab 样式 */
+    .zhixue-tab { background: var(--bg-main); color: var(--text-sub); }
+    .zhixue-tab.active { background: var(--accent); color: #fff; }
+    .zhixue-tab:hover:not(.active) { background: var(--border); }
   </style>
 </head>
 <body>
@@ -965,12 +970,17 @@
     <!-- 同学认证审核页 -->
     <div class="page" id="page-zhixue" style="display:none;">
       <div class="post-toolbar">
-        <div style="flex:1;">
-          <span style="font-size:14px;color:var(--text-sub);">
+        <div style="flex:1;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:14px;color:var(--text-sub);" id="zhixueStatusText">
             待审核 <strong id="zhixuePendingCount">0</strong> 人
           </span>
+          <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <button class="zhixue-tab active" onclick="switchZhixueTab('pending')" id="zhixueTabPending" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;transition:all 0.2s;">⏳ 待审核</button>
+            <button class="zhixue-tab" onclick="switchZhixueTab('approved')" id="zhixueTabApproved" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;transition:all 0.2s;">✅ 已通过</button>
+            <button class="zhixue-tab" onclick="switchZhixueTab('rejected')" id="zhixueTabRejected" style="padding:5px 12px;font-size:12px;border:none;cursor:pointer;transition:all 0.2s;">❌ 已驳回</button>
+          </div>
         </div>
-        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadZhixuePending()">🔄 刷新</button>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadZhixueRecords()">🔄 刷新</button>
       </div>
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header" id="zhixueHeader">
@@ -3073,70 +3083,131 @@
   }
 
     // ===== 同学认证审核 =====
-    async function loadZhixuePending() {
+    let _zhixueRecords = [];
+    let _zhixueActiveTab = 'pending';
+
+    // 加载所有认证记录
+    async function loadZhixueRecords() {
       try {
-        const res = await fetch('/api/admin/zhixue-pending', { headers: authHeaders() });
+        const res = await fetch('/api/admin/zhixue-records', { headers: authHeaders() });
         const json = await res.json();
-        if (!json.ok) { document.getElementById('zhixueBody').innerHTML = '<div class="error">' + json.msg + '</div>'; return; }
-        const list = json.data || [];
-        document.getElementById('zhixuePendingCount').textContent = list.length;
-        if (list.length === 0) {
-          document.getElementById('zhixueBody').innerHTML = '<div class="empty">暂无待审核申请</div>';
-          return;
-        }
-        let html = '';
-        list.forEach(u => {
-          const submittedAt = u.submittedAt ? new Date(u.submittedAt).toLocaleString('zh-CN') : '-';
-          const isManual = u.certType === 'manual';
-          const typeBadge = isManual
-            ? '<span style="background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">📄 手动认证</span>'
-            : '<span style="background:#22c55e;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">🖥️ 智学认证</span>';
-
-          // 认证详细信息
-          let certDetail = '';
-          if (isManual) {
-            certDetail = `
-              <div style="font-size:13px; margin-bottom:10px; padding:10px; background:var(--bg-main); border-radius:10px;">
-                <div style="font-weight:600; margin-bottom:6px; color:var(--text-main);">说明</div>
-                <div style="color:var(--text-sub); white-space:pre-wrap; font-size:13px;">${u.manualNote || '-'}</div>
-              </div>
-              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-                ${(u.manualImages || []).map((src, idx) => `
-                  <img src="${src}" onclick="viewCertImage('${src}')"
-                    style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;"
-                    title="点击查看大图">
-                `).join('')}
-              </div>`;
-          } else {
-            certDetail = `
-              <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px; padding:10px; background:var(--bg-main); border-radius:10px;">
-                <div style="margin-bottom:4px;">账号：<strong style="color:var(--text-main);">${u.zhixueUsername || '-'}</strong></div>
-                <div>密码：<strong style="color:var(--text-main);">${u.zhixuePassword || '-'}</strong></div>
-              </div>`;
-          }
-
-          html += `
-          <div class="user-card" style="padding:16px; border-bottom:1px solid var(--border);">
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-              <div class="user-avatar" style="width:40px;height:40px;font-size:18px;overflow:hidden;">${u.avatar && u.avatar.startsWith('data:') ? avatarImg(u.avatar, 40, 40) : (u.avatar && u.avatar.length <= 4 ? u.avatar : (u.nickname?.charAt(0) || '👤'))}</div>
-              <div style="flex:1;">
-                <div style="font-weight:600; display:flex; align-items:center; gap:8px;">
-                  ${u.nickname || '匿名'} ${typeBadge}
-                </div>
-                <div style="font-size:12px;color:var(--text-sub);">提交时间：${submittedAt}</div>
-              </div>
-            </div>
-            ${certDetail}
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue('${u.id}', '${(u.zhixueManualName || '').replace(/'/g, "\\'")}')">✅ 通过</button>
-              <button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="rejectZhixue('${u.id}')">❌ 拒绝</button>
-            </div>
-          </div>
-        `;
-        });
-        document.getElementById('zhixueBody').innerHTML = html;
+        if (!json.ok) { document.getElementById('zhixueBody').innerHTML = '<div class=\"error\">' + json.msg + '</div>'; return; }
+        _zhixueRecords = json.data || [];
+        const pending = _zhixueRecords.filter(r => r.status === 'pending');
+        const approved = _zhixueRecords.filter(r => r.status === 'approved' || r.status === 'pending_confirm');
+        const rejected = _zhixueRecords.filter(r => r.status === 'rejected');
+        document.getElementById('zhixuePendingCount').textContent = pending.length;
+        document.getElementById('zhixueTabPending').textContent = '⏳ 待审核 (' + pending.length + ')';
+        document.getElementById('zhixueTabApproved').textContent = '✅ 已通过 (' + approved.length + ')';
+        document.getElementById('zhixueTabRejected').textContent = '❌ 已驳回 (' + rejected.length + ')';
+        renderZhixueTab(_zhixueActiveTab);
       } catch (e) {
-        document.getElementById('zhixueBody').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+        document.getElementById('zhixueBody').innerHTML = '<div class=\"error\">加载失败：' + e.message + '</div>';
+      }
+    }
+
+    function switchZhixueTab(tab) {
+      _zhixueActiveTab = tab;
+      document.querySelectorAll('.zhixue-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('zhixueTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      renderZhixueTab(tab);
+    }
+
+    function renderZhixueTab(tab) {
+      let list = [];
+      if (tab === 'pending') {
+        list = _zhixueRecords.filter(r => r.status === 'pending');
+        document.getElementById('zhixueStatusText').innerHTML = '待审核 <strong>' + list.length + '</strong> 人';
+      } else if (tab === 'approved') {
+        list = _zhixueRecords.filter(r => r.status === 'approved' || r.status === 'pending_confirm');
+        document.getElementById('zhixueStatusText').innerHTML = '已通过 <strong>' + list.length + '</strong> 人';
+      } else if (tab === 'rejected') {
+        list = _zhixueRecords.filter(r => r.status === 'rejected');
+        document.getElementById('zhixueStatusText').innerHTML = '已驳回 <strong>' + list.length + '</strong> 人';
+      }
+
+      if (list.length === 0) {
+        const tips = { pending: '暂无待审核申请', approved: '暂无已通过的认证', rejected: '暂无已驳回的认证' };
+        document.getElementById('zhixueBody').innerHTML = '<div class=\"empty\">' + (tips[tab] || '暂无数据') + '</div>';
+        return;
+      }
+
+      let html = '';
+      list.forEach(u => {
+        const submittedAt = u.submittedAt ? new Date(u.submittedAt).toLocaleString('zh-CN') : '-';
+        const reviewedAt = u.reviewedAt ? new Date(u.reviewedAt).toLocaleString('zh-CN') : '-';
+        const isManual = u.certType === 'manual';
+        const typeBadge = isManual
+          ? '<span style="background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">📄 手动认证</span>'
+          : '<span style="background:#22c55e;color:#fff;padding:2px 7px;border-radius:8px;font-size:11px;font-weight:bold;">🖥️ 智学认证</span>';
+
+        html += '<div class=\"user-card\" style=\"padding:16px;border-bottom:1px solid var(--border);\">' +
+          '<div style=\"display:flex;align-items:center;gap:12px;margin-bottom:12px;\">' +
+          '<div class=\"user-avatar\" style=\"width:40px;height:40px;font-size:18px;overflow:hidden;\">' + (u.avatar && u.avatar.startsWith('data:') ? avatarImg(u.avatar, 40, 40) : (u.avatar && u.avatar.length <= 4 ? u.avatar : (u.nickname?.charAt(0) || '👤'))) + '</div>' +
+          '<div style=\"flex:1;\">' +
+          '<div style=\"font-weight:600;display:flex;align-items:center;gap:8px;\">' + (u.nickname || '匿名') + ' ' + typeBadge + '</div>' +
+          '<div style=\"font-size:12px;color:var(--text-sub);\">' +
+          (tab === 'pending' ? '提交时间：' + submittedAt :
+           tab === 'approved' ? '通过时间：' + reviewedAt + ' · 审核人：' + (u.reviewedBy || '-') :
+           '驳回时间：' + reviewedAt + ' · 审核人：' + (u.reviewedBy || '-')) +
+          '</div></div></div>';
+
+        // pending 显示详情
+        if (tab === 'pending') {
+          if (isManual) {
+            html += '<div style=\"font-size:13px;margin-bottom:10px;padding:10px;background:var(--bg-main);border-radius:10px;\">' +
+              '<div style=\"font-weight:600;margin-bottom:6px;color:var(--text-main);\">说明</div>' +
+              '<div style=\"color:var(--text-sub);white-space:pre-wrap;font-size:13px;\">' + (u.manualNote || '-') + '</div></div>';
+            html += '<div style=\"display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;\">' +
+              (u.manualImages || []).map(function(src) {
+                return '<img src="' + src + '" onclick="viewCertImage(\'' + src + '\')" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;" title="点击查看大图">';
+              }).join('') + '</div>';
+          } else {
+            html += '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:12px;padding:10px;background:var(--bg-main);border-radius:10px;\">' +
+              '<div style=\"margin-bottom:4px;\">账号：<strong style=\"color:var(--text-main);\">' + (u.zhixueUsername || '-') + '</strong></div></div>';
+          }
+        }
+
+        // rejected 显示驳回原因
+        if (tab === 'rejected' && u.rejectReason) {
+          html += '<div style=\"font-size:13px;margin-bottom:10px;padding:10px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;\">' +
+            '<div style=\"font-weight:600;margin-bottom:4px;color:#991b1b;\">驳回原因</div>' +
+            '<div style=\"color:#991b1b;\">' + (u.rejectReason || '-') + '</div></div>';
+        }
+
+        // 操作按钮
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+        if (tab === 'pending') {
+          var mn = (u.zhixueManualName || '').replace(/'/g, "\\'");
+          html += '<button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="approveZhixue(\'' + u.id + '\', \'' + mn + '\')">\u2705 通过</button>' +
+            '<button class="btn-danger" style="font-size:12px;padding:6px 14px;" onclick="rejectZhixue(\'' + u.id + '\')">\u274C 拒绝</button>';
+        } else if (tab === 'approved') {
+          html += '<button class="btn-cancel" style="font-size:12px;padding:6px 14px;" onclick="resetZhixueRecord(\'' + u.id + '\', \'' + (u.nickname || '').replace(/'/g, "\\'") + '\')">🔄 撤销通过</button>';
+        } else if (tab === 'rejected') {
+          html += '<button class="btn-primary" style="font-size:12px;padding:6px 14px;" onclick="resetZhixueRecord(\'' + u.id + '\', \'' + (u.nickname || '').replace(/'/g, "\\'") + '\')">🔄 恢复审核</button>';
+        }
+        html += '</div></div>';
+      });
+      document.getElementById('zhixueBody').innerHTML = html;
+    }
+
+    // 重置认证记录为待审核
+    async function resetZhixueRecord(userId, nickname) {
+      if (!confirm('确定将「' + nickname + '」的认证记录重置为待审核状态吗？')) return;
+      try {
+        const res = await fetch('/api/admin/zhixue/' + userId + '/reset', {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ ' + json.msg, 'success');
+          loadZhixueRecords();
+        } else {
+          showToast('❌ ' + (json.msg || '操作失败'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ 网络错误', 'error');
       }
     }
 
@@ -3200,7 +3271,7 @@
         if (json.ok) {
           closeApproveCertModal();
           showToast('✅ 已通过审核，奖励 300 Credits');
-          loadZhixuePending();
+          loadZhixueRecords();
         } else {
           showToast('❌ ' + (json.msg || '操作失败'), 'error');
         }
@@ -3251,7 +3322,7 @@
         if (json.ok) {
           closeRejectCertModal();
           showToast('✅ 已驳回');
-          loadZhixuePending();
+          loadZhixueRecords();
         } else {
           showToast('❌ ' + (json.msg || '操作失败'), 'error');
         }
@@ -3296,7 +3367,7 @@
     if (id === 'sensitivewords') { loadSensitiveWords(); }
     if (id === 'bullyingnames') { loadBullyingNames(); }
     if (id === 'loginlogs') { loadLoginLogs(); }
-    if (id === 'zhixue') { loadZhixuePending(); }
+    if (id === 'zhixue') { loadZhixueRecords(); }
     if (id === 'announcement') { loadAnnouncement(); }
     if (id === 'creditcards') { loadCards(); }
     if (id === 'creditadmin') { loadCreditOverview(); }

@@ -1485,6 +1485,56 @@ app.post('/api/user/deny-zhixue', (req, res) => {
   res.json({ ok: true, msg: '已标记为未通过，请重新提交认证信息' });
 });
 
+// 获取所有同学认证记录（仅管理员，按状态分组）
+app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const records = users
+    .filter(u => u.zhixueStatus && ['pending', 'approved', 'rejected', 'pending_confirm'].includes(u.zhixueStatus))
+    .map(u => ({
+      id: u.id,
+      nickname: u.nickname,
+      avatar: u.avatar,
+      certType: u.zhixueCertType || 'zhixue',
+      zhixueUsername: u.zhixueUsername,
+      zhixueManualName: u.zhixueManualName,
+      status: u.zhixueStatus,
+      rejectReason: u.zhixueRejectReason || null,
+      submittedAt: u.zhixueSubmittedAt,
+      reviewedAt: u.zhixueReviewedAt,
+      reviewedBy: u.zhixueReviewedBy
+    }))
+    .sort((a, b) => {
+      const ta = a.submittedAt || a.reviewedAt || '';
+      const tb = b.submittedAt || b.reviewedAt || '';
+      return tb.localeCompare(ta); // 最新的在前
+    });
+  res.json({ ok: true, data: records });
+});
+
+// 重置认证记录为待审核（管理员撤销通过/恢复被驳回的记录）
+app.post('/api/admin/zhixue/:userId/reset', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === req.params.userId);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  const u = users[userIndex];
+  if (!u.zhixueStatus || !['approved', 'rejected', 'pending_confirm'].includes(u.zhixueStatus)) {
+    return res.json({ ok: false, msg: '该用户当前状态无需重置' });
+  }
+
+  u.zhixueStatus = 'pending';
+  u.zhixueReviewedAt = null;
+  u.zhixueReviewedBy = null;
+  u.zhixueRejectReason = null;
+  u.zhixueRejectedAt = null;
+  u.certRealName = null;
+  u.certClassName = null;
+  u.zhixuePassword = u._origPassword || null; // 保留密码以便重新审核
+  writeUsers(users);
+
+  res.json({ ok: true, msg: '已重置为待审核状态' });
+});
+
 // 获取指定用户公开信息（通过用户ID）
 app.get('/api/users/:id', (req, res) => {
   const users = readUsers();
