@@ -617,6 +617,27 @@ body {
     finally { btn.disabled = false; btn.textContent = '\uD83D\uDCE2 \u53D1\u5E03'; }
   };
 
+  // ===== 删除通知 =====
+  window.deleteNotice = async function(id) {
+    if (!confirm('\u786E\u5B9A\u8981\u5220\u9664\u8FD9\u6761\u901A\u77E5\u5417\uFF1F')) return;
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/notices/' + id, {
+        method: 'DELETE',
+        headers: { 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 ' + json.msg, 'success');
+        loadNotices();
+      } else {
+        showToast('\u274C ' + (json.msg || '\u5220\u9664\u5931\u8D25'), 'error');
+      }
+    } catch(e) {
+      showToast('\u274C \u7F51\u7EDC\u9519\u8BEF', 'error');
+    }
+  };
+
   // ===== 加载通知列表 =====
   async function loadNotices() {
     try {
@@ -636,8 +657,13 @@ body {
           hour: '2-digit', minute: '2-digit'
         }) : '';
         html += '<div class="notice-card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
+          '<div style="flex:1;">' +
           '<div class="notice-title">' + escHtml(n.title) + '</div>' +
           '<div class="notice-content">' + escHtml(n.content) + '</div>' +
+          '</div>' +
+          (currentUser ? '<button onclick="deleteNotice(\'' + n.id + '\')" style="flex-shrink:0;background:none;border:none;cursor:pointer;font-size:16px;color:#9ca3af;padding:2px 4px;line-height:1;border-radius:4px;" title="删除通知" onmouseover="this.style.background=\'#fee2e2\';this.style.color=\'#dc2626\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#9ca3af\'">✕</button>' : '') +
+          '</div>' +
           '<div class="notice-meta">' +
           '<span>\uD83D\uDC64 ' + escHtml(n.author || '\u5B66\u751F\u4F1A') + '</span>' +
           '<span>\uD83D\uDCC5 ' + time + '</span>' +

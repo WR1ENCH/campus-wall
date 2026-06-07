@@ -4731,6 +4731,23 @@ app.post('/api/notices', (req, res) => {
   res.json({ ok: true, msg: '通知已发布' });
 });
 
+// 删除通知（需验证token）
+app.delete('/api/notices/:id', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+
+  const notices = readNotices();
+  const before = notices.length;
+  const remaining = notices.filter(n => n.id !== req.params.id);
+  if (remaining.length === before) return res.json({ ok: false, msg: '通知不存在' });
+  writeNotices(remaining);
+  res.json({ ok: true, msg: '通知已删除' });
+});
+
 app.listen(PORT, () => {
   fixCertDataOnStart();
   console.log(`\n  📌 校园墙服务已启动`);
