@@ -4594,8 +4594,19 @@ function fixCertDataOnStart() {
 }
 
 // ===== 学生会通知 =====
+const SC_FILE = path.join(DATA_DIR, 'student_council.json');
 const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
-const STUDENT_COUNCIL_PWD = 'student2024'; // 学生会发布密码
+
+function readSC() {
+  try {
+    if (!fs.existsSync(SC_FILE)) return null;
+    return JSON.parse(fs.readFileSync(SC_FILE, 'utf-8'));
+  } catch { return null; }
+}
+
+function writeSC(data) {
+  fs.writeFileSync(SC_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
 
 function readNotices() {
   try {
@@ -4608,20 +4619,64 @@ function writeNotices(data) {
   fs.writeFileSync(NOTICES_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
+// 检测是否已初始化
+app.get('/api/student-council/check-init', (req, res) => {
+  const sc = readSC();
+  res.json({ ok: true, data: { needInit: !sc } });
+});
+
+// 首次设置学生会账号
+app.post('/api/student-council/init', (req, res) => {
+  if (readSC()) return res.json({ ok: false, msg: '已初始化，请直接登录' });
+
+  const { id, password, name } = req.body;
+  if (!id || !/^[a-zA-Z0-9_]{3,20}$/.test(id))
+    return res.json({ ok: false, msg: '账号格式：3-20位字母、数字、下划线' });
+  if (!password || password.length < 6)
+    return res.json({ ok: false, msg: '密码至少6位' });
+  if (!name || !name.trim())
+    return res.json({ ok: false, msg: '请输入名称' });
+
+  writeSC({
+    id, name: name.trim(),
+    password: hashPassword(password),
+    createdAt: new Date().toISOString()
+  });
+  res.json({ ok: true, msg: '学生会账号已创建' });
+});
+
+// 学生会登录
+app.post('/api/student-council/login', (req, res) => {
+  const { id, password } = req.body;
+  if (!id || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '系统未初始化' });
+  if (sc.id !== id || !verifyPassword(password, sc.password))
+    return res.json({ ok: false, msg: '账号或密码错误' });
+
+  const token = Buffer.from(JSON.stringify({
+    id: sc.id, name: sc.name, loginAt: Date.now()
+  })).toString('base64');
+  res.json({ ok: true, data: { token, name: sc.name } });
+});
+
 // 获取通知列表（公开）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  // 按时间倒序，最多50条
   const list = notices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
 
-// 发布通知（需学生会密码）
+// 发布通知（需验证token）
 app.post('/api/notices', (req, res) => {
-  const { title, content, author, password } = req.body;
-  if (password !== STUDENT_COUNCIL_PWD) {
-    return res.json({ ok: false, msg: '密码错误' });
-  }
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { title, content, author } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
 
@@ -4630,7 +4685,7 @@ app.post('/api/notices', (req, res) => {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: title.trim(),
     content: content.trim(),
-    author: (author && author.trim()) ? author.trim() : '学生会',
+    author: (author && author.trim()) ? author.trim() : session.name,
     createdAt: new Date().toISOString()
   });
   writeNotices(notices);

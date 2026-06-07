@@ -27,6 +27,83 @@ body {
   min-height: 100vh;
 }
 
+/* ===== Login Screen ===== */
+.login-screen {
+  display: none;
+  position: fixed; inset: 0; z-index: 100;
+  background: linear-gradient(135deg, #2d2a24, #4a443c);
+  align-items: center; justify-content: center;
+}
+
+.login-screen.show { display: flex; }
+
+.login-box {
+  background: var(--card); border-radius: 16px;
+  width: min(90vw, 400px); padding: 36px 32px 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-box h2 {
+  text-align: center; font-size: 22px; font-weight: 700;
+  margin-bottom: 4px; color: var(--text);
+}
+
+.login-box .login-sub {
+  text-align: center; font-size: 13px; color: var(--text-sub);
+  margin-bottom: 28px;
+}
+
+.login-field { margin-bottom: 16px; }
+
+.login-field label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text); margin-bottom: 6px;
+}
+
+.login-field input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.login-field input:focus { border-color: var(--accent); }
+
+.login-error {
+  color: #dc2626; font-size: 13px; text-align: center;
+  margin-bottom: 12px; min-height: 20px;
+}
+
+.login-btn {
+  width: 100%; padding: 11px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: background 0.2s;
+}
+
+.login-btn:hover { background: var(--accent-light); }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.login-hint {
+  text-align: center; font-size: 12px; color: var(--text-sub);
+  margin-top: 14px;
+}
+
+.login-hint a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+/* ===== Main App ===== */
+.main-app {
+  display: none;
+}
+
+.main-app.show { display: block; }
+
 /* ===== Header ===== */
 .header {
   background: linear-gradient(135deg, #2d2a24, #4a443c);
@@ -52,10 +129,22 @@ body {
 /* ===== Layout ===== */
 .container { max-width: 800px; margin: 0 auto; padding: 24px 16px 60px; }
 
-/* ===== Publish Button ===== */
+/* ===== Publish Bar ===== */
 .publish-bar {
-  display: flex; justify-content: flex-end; margin-bottom: 20px;
+  display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px;
 }
+
+.user-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; background: var(--card); border-radius: 8px;
+  font-size: 13px; color: var(--text-sub); box-shadow: var(--shadow);
+}
+
+.user-badge .logout-link {
+  color: var(--accent); cursor: pointer; font-weight: 600;
+  margin-left: 4px;
+}
+.user-badge .logout-link:hover { text-decoration: underline; }
 
 .btn-publish {
   display: inline-flex; align-items: center; gap: 6px;
@@ -114,7 +203,11 @@ body {
   backdrop-filter: blur(4px);
 }
 
-.modal {
+.modal { /* same as above but reusing */ }
+
+.modal-overlay.show { display: flex; }
+
+.modal-box {
   background: var(--card); border-radius: 16px;
   width: min(92vw, 520px); max-height: 90vh;
   box-shadow: 0 8px 40px rgba(0,0,0,0.15);
@@ -127,55 +220,20 @@ body {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 24px; border-bottom: 1px solid var(--border);
-}
-
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); }
 .modal-header h3 { font-size: 17px; font-weight: 600; }
-
-.modal-close {
-  background: none; border: none; font-size: 22px; cursor: pointer;
-  color: var(--text-sub); padding: 0; line-height: 1;
-}
-
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-sub); padding: 0; line-height: 1; }
 .modal-close:hover { color: var(--text); }
-
 .modal-body { padding: 20px 24px; }
-
 .form-group { margin-bottom: 16px; }
-
-.form-group label {
-  display: block; font-size: 13px; font-weight: 600;
-  color: var(--text); margin-bottom: 6px;
-}
-
-.form-input {
-  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
-  border-radius: 8px; font-size: 14px; font-family: inherit;
-  outline: none; transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.form-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
 .form-input:focus { border-color: var(--accent); }
 .form-textarea { min-height: 120px; resize: vertical; }
-
 .form-error { color: #dc2626; font-size: 13px; margin-top: 4px; }
-
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
-
-.btn-cancel {
-  padding: 9px 18px; border: 1px solid var(--border);
-  border-radius: 8px; background: transparent; color: var(--text-sub);
-  font-size: 14px; cursor: pointer; font-family: inherit;
-}
-
-.btn-submit {
-  padding: 9px 20px; border: none; border-radius: 8px;
-  background: var(--accent); color: #fff;
-  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
-}
-
+.btn-cancel { padding: 9px 18px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-sub); font-size: 14px; cursor: pointer; font-family: inherit; }
+.btn-submit { padding: 9px 20px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-submit:hover { background: var(--accent-light); }
 .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -187,46 +245,96 @@ body {
   animation: toastIn 0.3s ease;
   pointer-events: none;
 }
-
 .toast.success { background: #16a34a; }
 .toast.error { background: #dc2626; }
-
 @keyframes toastIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 600px) {
   .header { padding: 28px 16px 24px; }
   .header h1 { font-size: 22px; }
   .notice-card { padding: 18px; }
   .notice-card .notice-title { font-size: 16px; }
-  .modal { width: 96vw; }
+  .modal-box { width: 96vw; }
   .modal-body { padding: 16px; }
+  .login-box { padding: 28px 20px; }
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>&#x1F4E2; 学生会通知</h1>
-  <p>Student Union Announcements</p>
-  <div class="subtitle">&#x2014; 校园权威信息发布 &#x2014;</div>
+<!-- ===== Login Screen ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h2 id="loginTitle">&#x1F4E2; 学生会登录</h2>
+    <div class="login-sub" id="loginSub">登录后即可发布通知</div>
+    <div class="login-error" id="loginError"></div>
+
+    <!-- Init form (首次设置) -->
+    <div id="initForm">
+      <div class="login-field">
+        <label for="initId">账号</label>
+        <input id="initId" maxlength="20" placeholder="3-20位字母、数字、下划线">
+      </div>
+      <div class="login-field">
+        <label for="initName">名称</label>
+        <input id="initName" maxlength="20" placeholder="例如：学生会宣传部">
+      </div>
+      <div class="login-field">
+        <label for="initPwd">密码</label>
+        <input id="initPwd" type="password" maxlength="50" placeholder="至少6位">
+      </div>
+      <div class="login-field">
+        <label for="initPwd2">确认密码</label>
+        <input id="initPwd2" type="password" maxlength="50" placeholder="再次输入密码">
+      </div>
+      <button class="login-btn" id="initBtn" onclick="doInit()">&#x1F4E2; 创建账号</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="loginForm" style="display:none;">
+      <div class="login-field">
+        <label for="loginId">账号</label>
+        <input id="loginId" maxlength="20" placeholder="输入账号">
+      </div>
+      <div class="login-field">
+        <label for="loginPwd">密码</label>
+        <input id="loginPwd" type="password" maxlength="50" placeholder="输入密码"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
+      <div class="login-hint">还没有账号？<a onclick="switchToInit()">首次设置</a></div>
+    </div>
+  </div>
 </div>
 
-<div class="container">
-  <div class="publish-bar">
-    <button class="btn-publish" onclick="openPublishModal()">&#x270F;&#xFE0F; 发布通知</button>
+<!-- ===== Main App ===== -->
+<div class="main-app" id="mainApp">
+  <div class="header">
+    <h1>&#x1F4E2; 学生会通知</h1>
+    <p>Student Union Announcements</p>
+    <div class="subtitle">&#x2014; 校园权威信息发布 &#x2014;</div>
   </div>
-  <div id="noticeList">
-    <div class="loading">加载中&#x2026;</div>
+
+  <div class="container">
+    <div class="publish-bar">
+      <div class="user-badge" id="userBadge" style="display:none;">
+        &#x1F464; <span id="userName"></span>
+        <span class="logout-link" onclick="doLogout()">退出</span>
+      </div>
+      <button class="btn-publish" onclick="checkAndPublish()">&#x270F;&#xFE0F; 发布通知</button>
+    </div>
+    <div id="noticeList">
+      <div class="loading">加载中&#x2026;</div>
+    </div>
   </div>
 </div>
 
 <!-- ===== Publish Modal ===== -->
 <div class="modal-overlay" id="publishOverlay" onclick="if(event.target===this)closePublishModal()">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3>&#x270F;&#xFE0F; 发布通知</h3>
       <button class="modal-close" onclick="closePublishModal()">&times;</button>
@@ -241,14 +349,10 @@ body {
         <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;"></textarea>
       </div>
       <div class="form-group">
-        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
+        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填，默认使用账号名称）</span></label>
         <input class="form-input" id="notifAuthor" maxlength="30" placeholder="例如：宣传部">
       </div>
-      <div class="form-group">
-        <label for="notifPwd">学生会密码</label>
-        <input class="form-input" id="notifPwd" type="password" maxlength="50" placeholder="输入发布密码">
-        <div class="form-error" id="publishError"></div>
-      </div>
+      <div class="form-error" id="publishError"></div>
       <div class="form-actions">
         <button class="btn-cancel" onclick="closePublishModal()">取消</button>
         <button class="btn-submit" id="publishBtn" onclick="doPublish()">&#x1F4E2; 发布</button>
@@ -259,43 +363,126 @@ body {
 
 <script>
 (function() {
-  var publishedIds = {};
+  var currentUser = null;
+  var SC_TOKEN_KEY = 'sc_token';
 
-  async function loadNotices() {
+  // ===== 初始化检测 =====
+  async function checkInit() {
     try {
-      var res = await fetch('/api/notices');
+      var res = await fetch('/api/student-council/check-init');
       var json = await res.json();
-      var list = document.getElementById('noticeList');
-      if (!json.ok) { list.innerHTML = '<div class="empty-tip">加载失败</div>'; return; }
-      var data = json.data || [];
-      if (data.length === 0) {
-        list.innerHTML = '<div class="empty-tip">暂无通知</div>';
-        return;
+      if (json.ok && json.data.needInit) {
+        // 显示首次设置
+        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 设置学生会账号';
+        document.getElementById('loginSub').textContent = '首次使用，请创建学生会账号';
+        document.getElementById('initForm').style.display = '';
+        document.getElementById('loginForm').style.display = 'none';
+      } else {
+        document.getElementById('initForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = '';
       }
-      var html = '';
-      data.forEach(function(n) {
-        var time = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN', {
-          year: 'numeric', month: 'long', day: 'numeric',
-          hour: '2-digit', minute: '2-digit'
-        }) : '';
-        html += '<div class="notice-card">' +
-          '<div class="notice-title">' + escHtml(n.title) + '</div>' +
-          '<div class="notice-content">' + escHtml(n.content) + '</div>' +
-          '<div class="notice-meta">' +
-          '<span>&#x1F464; ' + escHtml(n.author || '学生会') + '</span>' +
-          '<span>&#x1F4C5; ' + time + '</span>' +
-          '</div></div>';
-      });
-      list.innerHTML = html;
+      document.getElementById('loginScreen').classList.add('show');
     } catch(e) {
-      document.getElementById('noticeList').innerHTML = '<div class="empty-tip">网络错误</div>';
+      showToast('\u274C 网络错误', 'error');
     }
   }
 
-  function escHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  // ===== 首次设置 =====
+  window.doInit = async function() {
+    var id = document.getElementById('initId').value.trim();
+    var name = document.getElementById('initName').value.trim();
+    var pwd = document.getElementById('initPwd').value;
+    var pwd2 = document.getElementById('initPwd2').value;
+
+    var errEl = document.getElementById('loginError');
+    if (!id) { errEl.textContent = '\u8BF7\u586B\u5199\u8D26\u53F7'; return; }
+    if (!name) { errEl.textContent = '\u8BF7\u586B\u5199\u540D\u79F0'; return; }
+    if (pwd.length < 6) { errEl.textContent = '\u5BC6\u7801\u81F3\u5C116\u4F4D'; return; }
+    if (pwd !== pwd2) { errEl.textContent = '\u4E24\u6B21\u5BC6\u7801\u4E0D\u4E00\u81F4'; return; }
+
+    var btn = document.getElementById('initBtn');
+    btn.disabled = true; btn.textContent = '\u521B\u5EFA\u4E2D\u2026';
+    errEl.textContent = '';
+    try {
+      var res = await fetch('/api/student-council/init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, name: name, password: pwd })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 ' + json.msg, 'success');
+        // 创建成功后自动切换到登录
+        document.getElementById('initForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = '';
+        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 学生会登录';
+        document.getElementById('loginSub').textContent = '登录后即可发布通知';
+        document.getElementById('loginError').textContent = '';
+      } else {
+        errEl.textContent = json.msg || '\u521B\u5EFA\u5931\u8D25';
+      }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
+    finally { btn.disabled = false; btn.textContent = '\uD83D\uDCE2 创建账号'; }
+  };
+
+  // ===== 登录 =====
+  window.doLogin = async function() {
+    var id = document.getElementById('loginId').value.trim();
+    var pwd = document.getElementById('loginPwd').value;
+    var errEl = document.getElementById('loginError');
+    if (!id || !pwd) { errEl.textContent = '\u8BF7\u8F93\u5165\u8D26\u53F7\u548C\u5BC6\u7801'; return; }
+    errEl.textContent = '';
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = '\u767B\u5F55\u4E2D\u2026';
+    try {
+      var res = await fetch('/api/student-council/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, password: pwd })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        currentUser = json.data;
+        localStorage.setItem(SC_TOKEN_KEY, currentUser.token);
+        document.getElementById('loginScreen').classList.remove('show');
+        document.getElementById('mainApp').classList.add('show');
+        document.getElementById('userBadge').style.display = 'inline-flex';
+        document.getElementById('userName').textContent = currentUser.name;
+        loadNotices();
+      } else {
+        errEl.textContent = json.msg || '\u767B\u5F55\u5931\u8D25';
+      }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
+    finally { btn.disabled = false; btn.textContent = '\u767B \u5F55'; }
+  };
+
+  // ===== 退出 =====
+  window.doLogout = function() {
+    currentUser = null;
+    localStorage.removeItem(SC_TOKEN_KEY);
+    document.getElementById('mainApp').classList.remove('show');
+    document.getElementById('loginScreen').classList.add('show');
+    document.getElementById('loginId').value = '';
+    document.getElementById('loginPwd').value = '';
+    document.getElementById('loginError').textContent = '';
+  };
+
+  window.switchToInit = function() {
+    document.getElementById('initForm').style.display = '';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 设置学生会账号';
+    document.getElementById('loginSub').textContent = '首次使用，请创建学生会账号';
+    document.getElementById('loginError').textContent = '';
+  };
+
+  // ===== 发布通知 =====
+  window.checkAndPublish = function() {
+    if (!currentUser) {
+      showToast('\u8BF7\u5148\u767B\u5F55', 'error');
+      return;
+    }
+    openPublishModal();
+  };
 
   window.openPublishModal = function() {
     document.getElementById('publishOverlay').style.display = 'flex';
@@ -311,40 +498,76 @@ body {
     var title = document.getElementById('notifTitle').value.trim();
     var content = document.getElementById('notifContent').value.trim();
     var author = document.getElementById('notifAuthor').value.trim();
-    var password = document.getElementById('notifPwd').value;
 
     var errEl = document.getElementById('publishError');
-    if (!title) { errEl.textContent = '请填写标题'; return; }
-    if (!content) { errEl.textContent = '请填写内容'; return; }
-    if (!password) { errEl.textContent = '请输入学生会密码'; return; }
+    if (!title) { errEl.textContent = '\u8BF7\u586B\u5199\u6807\u9898'; return; }
+    if (!content) { errEl.textContent = '\u8BF7\u586B\u5199\u5185\u5BB9'; return; }
 
     var btn = document.getElementById('publishBtn');
-    btn.disabled = true; btn.textContent = '发布中…';
+    btn.disabled = true; btn.textContent = '\u53D1\u5E03\u4E2D\u2026';
     errEl.textContent = '';
     try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
       var res = await fetch('/api/notices', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title, content: content, author: author, password: password })
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
+        body: JSON.stringify({ title: title, content: content, author: author })
       });
       var json = await res.json();
       if (json.ok) {
-        showToast('&#x2705; 通知已发布', 'success');
+        showToast('\u2705 \u901A\u77E5\u5DF2\u53D1\u5E03', 'success');
         closePublishModal();
         document.getElementById('notifTitle').value = '';
         document.getElementById('notifContent').value = '';
         document.getElementById('notifAuthor').value = '';
-        document.getElementById('notifPwd').value = '';
         loadNotices();
       } else {
-        errEl.textContent = json.msg || '发布失败';
+        errEl.textContent = json.msg || '\u53D1\u5E03\u5931\u8D25';
+        if (json.code === 'NOT_LOGIN') {
+          showToast('\u767B\u5F55\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u91CD\u65B0\u767B\u5F55', 'error');
+          doLogout();
+        }
       }
-    } catch(e) {
-      errEl.textContent = '网络错误';
-    } finally {
-      btn.disabled = false; btn.textContent = '&#x1F4E2; 发布';
-    }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
+    finally { btn.disabled = false; btn.textContent = '\uD83D\uDCE2 \u53D1\u5E03'; }
   };
+
+  // ===== 加载通知列表 =====
+  async function loadNotices() {
+    try {
+      var res = await fetch('/api/notices');
+      var json = await res.json();
+      var list = document.getElementById('noticeList');
+      if (!json.ok) { list.innerHTML = '<div class="empty-tip">\u52A0\u8F7D\u5931\u8D25</div>'; return; }
+      var data = json.data || [];
+      if (data.length === 0) {
+        list.innerHTML = '<div class="empty-tip">\u6682\u65E0\u901A\u77E5</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(n) {
+        var time = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN', {
+          year: 'numeric', month: 'long', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }) : '';
+        html += '<div class="notice-card">' +
+          '<div class="notice-title">' + escHtml(n.title) + '</div>' +
+          '<div class="notice-content">' + escHtml(n.content) + '</div>' +
+          '<div class="notice-meta">' +
+          '<span>\uD83D\uDC64 ' + escHtml(n.author || '\u5B66\u751F\u4F1A') + '</span>' +
+          '<span>\uD83D\uDCC5 ' + time + '</span>' +
+          '</div></div>';
+      });
+      list.innerHTML = html;
+    } catch(e) {
+      document.getElementById('noticeList').innerHTML = '<div class="empty-tip">\u7F51\u7EDC\u9519\u8BEF</div>';
+    }
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
   function showToast(msg, type) {
     var t = document.createElement('div');
@@ -354,7 +577,23 @@ body {
     setTimeout(function() { t.remove(); }, 2500);
   }
 
-  loadNotices();
+  // ===== 启动 =====
+  var savedToken = localStorage.getItem(SC_TOKEN_KEY);
+  if (savedToken) {
+    // 尝试用已有 token 直接进
+    try {
+      var session = JSON.parse(atob(savedToken));
+      currentUser = { token: savedToken, name: session.name };
+      document.getElementById('mainApp').classList.add('show');
+      document.getElementById('userBadge').style.display = 'inline-flex';
+      document.getElementById('userName').textContent = session.name;
+      loadNotices();
+    } catch(e) {
+      checkInit();
+    }
+  } else {
+    checkInit();
+  }
 })();
 </script>
 </body>
