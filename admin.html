@@ -3115,16 +3115,19 @@
 
     function renderZhixueTab(tab) {
       let list = [];
+      const tabLabels = { pending: '待审核', approved: '已通过', rejected: '已驳回' };
       if (tab === 'pending') {
         list = _zhixueRecords.filter(r => r.status === 'pending');
-        document.getElementById('zhixueStatusText').innerHTML = '待审核 <strong>' + list.length + '</strong> 人';
       } else if (tab === 'approved') {
         list = _zhixueRecords.filter(r => r.status === 'approved' || r.status === 'pending_confirm');
-        document.getElementById('zhixueStatusText').innerHTML = '已通过 <strong>' + list.length + '</strong> 人';
       } else if (tab === 'rejected') {
         list = _zhixueRecords.filter(r => r.status === 'rejected');
-        document.getElementById('zhixueStatusText').innerHTML = '已驳回 <strong>' + list.length + '</strong> 人';
       }
+      document.getElementById('zhixuePendingCount').textContent = list.length;
+      // 更新前缀文字（保留 <strong> 元素，只改前面的文本节点）
+      var st = document.getElementById('zhixueStatusText');
+      var label = tabLabels[tab] || '待审核';
+      st.childNodes[0].textContent = label + ' ';
 
       if (list.length === 0) {
         const tips = { pending: '暂无待审核申请', approved: '暂无已通过的认证', rejected: '暂无已驳回的认证' };
