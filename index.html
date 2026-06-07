@@ -2744,7 +2744,7 @@
                 time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
                 isNew: true,
                 content: n.content || '',
-                type: '学生会 · ' + (n.author || '通知')
+                type: n.author || '通知'
               });
             });
           }
