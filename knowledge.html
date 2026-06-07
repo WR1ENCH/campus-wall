@@ -114,6 +114,9 @@ body {
   font-weight: 500;
 }
 
+.toc-link.toc-sub { font-size: 12px; padding-left: 24px; color: var(--text-sub); }
+.toc-link.toc-subsub { font-size: 11px; padding-left: 36px; color: #666680; }
+
 /* ===== Main Content ===== */
 .content-area {
   flex: 1;
@@ -122,9 +125,15 @@ body {
   color: var(--cyan-mid);
 }
 
-.content-area h1, .content-area h2 {
+.content-area h1, .content-area h2, .content-area h3, .content-area h4 {
   color: var(--cyan-light);
 }
+
+.content-area h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.02em; line-height: 1.3; }
+.content-area h2 { font-size: 22px; font-weight: 600; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); letter-spacing: -0.01em; line-height: 1.4; }
+.content-area h2:first-of-type { margin-top: 0; }
+.content-area h3 { font-size: 17px; font-weight: 600; margin-top: 24px; margin-bottom: 10px; }
+.content-area h4 { font-size: 15px; font-weight: 600; margin-top: 20px; margin-bottom: 8px; color: var(--cyan-mid); }
 
 .content-area p, .content-area li, .content-area div {
   color: var(--cyan-mid);
@@ -229,6 +238,8 @@ body {
   }
   .content-area h1 { font-size: 26px; }
   .content-area h2 { font-size: 19px; margin-top: 36px; }
+  .content-area h3 { font-size: 16px; margin-top: 20px; }
+  .content-area h4 { font-size: 14px; margin-top: 16px; }
 }
 
 /* ===== Mobile TOC toggle ===== */
@@ -338,8 +349,10 @@ body {
       <li class="toc-item"><a class="toc-link" href="#forgot-password">忘记密码</a></li>
       <li class="toc-item"><a class="toc-link" href="#auto-login">自动登录</a></li>
       <li class="toc-item"><a class="toc-link" href="#cert">同学认证</a></li>
-      <li class="toc-item"><a class="toc-link" href="#zhixue-cert">智学认证</a></li>
-      <li class="toc-item"><a class="toc-link" href="#manual-cert">手动认证</a></li>
+      <li class="toc-item"><a class="toc-link toc-sub" href="#zhixue-cert">　智学认证</a></li>
+      <li class="toc-item"><a class="toc-link toc-subsub" href="#zhixue-pass">　　验证通过</a></li>
+      <li class="toc-item"><a class="toc-link toc-subsub" href="#zhixue-reject">　　验证驳回</a></li>
+      <li class="toc-item"><a class="toc-link toc-sub" href="#manual-cert">　手动认证</a></li>
     </ul>
   </aside>
 
@@ -380,7 +393,7 @@ body {
     <!-- 用户注册与登录 -->
     <h2 id="register">用户注册与登录</h2>
 
-    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">用户注册</h3>
+    <h3>用户注册</h3>
     <p>请访问<a href="http://154.37.221.232/"><strong>校园墙</strong></a>，若你是首次进入，屏幕会首先弹出<strong>登录窗口</strong></p>
     <img src="image.png" alt="登录窗口">
     <p>若你不是首次进入，请你点击右上角的<strong>登录</strong>按钮<br>若你已登录账号，请你先点击<strong>退出</strong>按钮，再点击<strong>登录</strong>按钮</p>
@@ -393,14 +406,14 @@ body {
       <strong>你的密码将在服务器中进行<u>密文保存</u>，<u>任何人包括服务器管理员都无法获取到你的真实密码</u>，校园墙不会<u>以任何非官方渠道</u>向你获取你的密码，<u>请注意个人隐私安全</u></strong>
     </blockquote>
 
-    <h3 id="login" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">用户登录</h3>
+    <h3 id="login">用户登录</h3>
     <p><strong>现已推出两种登录方式</strong>，分别为<strong>账密登录</strong>与<strong>智学登录</strong></p>
     <img src="image-3.png" alt="登录方式">
     <img src="image-4.png" alt="智学登录">
     <p><strong>请自行选择合适的方式登录</strong></p>
     <blockquote><strong>只有通过了<u>同学认证</u>后，才<u>能够通过所绑定的智学网账号</u>来登录</strong></blockquote>
 
-    <h3 id="forgot-password" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">忘记密码</h3>
+    <h3 id="forgot-password">忘记密码</h3>
     <p>如果你使用<strong>账密登录</strong>时忘记了密码，你可以通过<strong>你所绑定的智学网账号</strong>密码实现重置密码</p>
     <img src="image-5.png" alt="忘记密码">
     <blockquote>
@@ -408,7 +421,7 @@ body {
       如果你需要重置的是<strong>智学网的账号密码</strong>，请自行访问<a href="https://zhixue.com">智学网</a>进行重置
     </blockquote>
 
-    <h3 id="auto-login" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">自动登录</h3>
+    <h3 id="auto-login">自动登录</h3>
     <p>完成注册或登录后，你可以在弹出的窗口中确定<strong>是否信任你的浏览器</strong>，如果你选择信任，那么<strong>你的登录信息将保存在你的本地浏览器</strong>中，下次访问校园墙将会<strong>自动登录</strong></p>
     <img src="image-2.png" alt="信任浏览器">
     <blockquote>如果你<strong>使用公共设备</strong>访问校园墙，为了你的隐私安全，<strong>请不要选择信任此浏览器</strong></blockquote>
@@ -423,7 +436,7 @@ body {
     </blockquote>
 
     <!-- 智学认证 -->
-    <h2 id="zhixue-cert">智学认证</h2>
+    <h3 id="zhixue-cert">智学认证</h3>
     <blockquote>为了维护你的隐私与合法权益，你有权利查看<strong>智学认证</strong>的运行流程</blockquote>
 
     <img src="image-6.png" alt="智学认证窗口">
@@ -435,21 +448,21 @@ body {
 
     <img src="image-8.png" alt="智学认证信息填写">
 
-    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">验证通过</h3>
+    <h4 id="zhixue-pass">验证通过</h4>
     <p>当你的智学验证在后台审核通过，<strong><u>为避免你的身份信息获取错误</u></strong>，我们会在你下一次打开校园墙时<strong><u>弹出验证窗口</u></strong></p>
     <img src="image-9.png" alt="验证通过确认窗口">
     <p>当你<strong>确认此身份信息</strong>，那么此身份信息<strong><u>将与你的账号绑定</u></strong></p>
     <p>如果你认为<u>这不是你的真实信息</u>，<strong>请选择不是本人信息，后重新填写验证信息</strong></p>
     <p>如果你认为<strong>你所提交的信息没有问题</strong>，但无法通过智学验证，请<a href="http://154.37.221.232/report.html"><u>报告这个问题</u></a>，或尝试<strong>手动验证</strong></p>
 
-    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">验证驳回</h3>
+    <h4 id="zhixue-reject">验证驳回</h4>
     <p>如果后台审核认为你的信息有误，我们会驳回你的智学验证</p>
     <p>你会在下一次登录看到弹出的<strong>验证驳回提示窗口</strong>，请按照引导<strong>重新填写验证信息</strong></p>
     <img src="image-10.png" alt="验证驳回提示">
     <p>如果你认为<strong>你所提交的信息没有问题</strong>，但无法通过智学验证，请<a href="http://154.37.221.232/report.html"><u>报告这个问题</u></a>，或尝试<strong>手动验证</strong></p>
 
     <!-- 手动认证 -->
-    <h2 id="manual-cert">手动认证</h2>
+    <h3 id="manual-cert">手动认证</h3>
     <p>对于特殊情况的用户，我们提供了手动认证的渠道</p>
     <p>请在手动认证的窗口中如实填写你的个人信息</p>
     <img src="image-11.png" alt="手动认证窗口">
@@ -483,8 +496,10 @@ body {
       <li class="toc-item"><a class="toc-link" href="#forgot-password" onclick="closeMobileSidebar()">忘记密码</a></li>
       <li class="toc-item"><a class="toc-link" href="#auto-login" onclick="closeMobileSidebar()">自动登录</a></li>
       <li class="toc-item"><a class="toc-link" href="#cert" onclick="closeMobileSidebar()">同学认证</a></li>
-      <li class="toc-item"><a class="toc-link" href="#zhixue-cert" onclick="closeMobileSidebar()">智学认证</a></li>
-      <li class="toc-item"><a class="toc-link" href="#manual-cert" onclick="closeMobileSidebar()">手动认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#zhixue-cert" onclick="closeMobileSidebar()" style="font-size:12px;padding-left:24px;">智学认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#zhixue-pass" onclick="closeMobileSidebar()" style="font-size:11px;padding-left:36px;">验证通过</a></li>
+      <li class="toc-item"><a class="toc-link" href="#zhixue-reject" onclick="closeMobileSidebar()" style="font-size:11px;padding-left:36px;">验证驳回</a></li>
+      <li class="toc-item"><a class="toc-link" href="#manual-cert" onclick="closeMobileSidebar()" style="font-size:12px;padding-left:24px;">手动认证</a></li>
     </ul>
   </div>
 </div>
@@ -492,7 +507,7 @@ body {
 <script>
 (function() {
   // ===== 高亮当前阅读位置对应的 TOC 链接 =====
-  var headings = document.querySelectorAll('.content-area h2');
+  var headings = document.querySelectorAll('.content-area h2, .content-area h3[id], .content-area h4[id]');
   var links = document.querySelectorAll('.toc-link');
 
   function updateActiveLink() {
