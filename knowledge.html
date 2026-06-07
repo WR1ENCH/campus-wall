@@ -330,19 +330,39 @@ body {
     <div class="toc-logo">📌 校园墙</div>
     <div class="toc-title">目录</div>
     <ul class="toc-list" id="tocList">
+      <li class="toc-item"><a class="toc-link" href="#intro">项目简介</a></li>
       <li class="toc-item"><a class="toc-link" href="#quickstart">快速开始</a></li>
       <li class="toc-item"><a class="toc-link" href="#agreement">用户协议</a></li>
       <li class="toc-item"><a class="toc-link" href="#register">用户注册</a></li>
       <li class="toc-item"><a class="toc-link" href="#login">用户登录</a></li>
       <li class="toc-item"><a class="toc-link" href="#forgot-password">忘记密码</a></li>
       <li class="toc-item"><a class="toc-link" href="#auto-login">自动登录</a></li>
+      <li class="toc-item"><a class="toc-link" href="#cert">同学认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#zhixue-cert">智学认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#manual-cert">手动认证</a></li>
     </ul>
   </aside>
 
   <!-- ===== Main Content ===== -->
   <main class="content-area" id="mainContent">
 
-    <h1>📌 欢迎来到校园墙</h1>
+    <h1>&#x1F4CC; 欢迎来到校园墙</h1>
+
+    <p style="text-align:center;"><i>powered by wr1Ench</i><br><b><i>自由主义万岁</i></b></p>
+
+    <p>一个简洁优雅的校园匿名留言板系统，支持发帖、点赞、评论、举报、讨论区、QA问答、霸凌举报，以及完整的内容管理后台。</p>
+
+    <p>
+      <img src="https://img.shields.io/badge/Node.js-18+-green" style="display:inline;border:none;box-shadow:none;margin:0;">
+      <img src="https://img.shields.io/badge/Express-4.x-blue" style="display:inline;border:none;box-shadow:none;margin:0;">
+      <img src="https://img.shields.io/badge/License-GPL%20V3-yellow" style="display:inline;border:none;box-shadow:none;margin:0;">
+    </p>
+
+    <blockquote>
+      <strong><u>校园墙是开源自由软件</u></strong>，<strong><i>遵守GPL-V3 Licence</i></strong>，<strong><u>你可以在这里查看我们的<a href="https://gitee.com/wr1Ench/campus-wall">Gitee项目地址</a></u></strong><br>
+      <strong><u>校园墙需要你的力量</u>！欢迎你在我们的<a href="https://gitee.com/wr1Ench/campus-wall">Gitee项目地址</a>中提交你贡献的代码</strong><br>
+      <strong>对于校园墙使用中的问题，请在此提交<a href="https://gitee.com/wr1Ench/campus-wall/issues">issue</a>，或在<a href="http://154.37.221.232/report.html">站内报告问题</a></strong>
+    </blockquote>
 
     <!-- 快速开始 -->
     <h2 id="quickstart">快速开始</h2>
@@ -357,8 +377,10 @@ body {
     <p>为了保障合法权利，避免产生非必要的法律风波，所有校园墙用户有义务阅读并遵守<a href="http://154.37.221.232/agreement.html"><strong>校园墙用户协议</strong></a>，同时确保你满足条件获取校园墙服务</p>
     <p>用户协议始终保持更新修订，请务必关注用户协议的修订情况<br>如果你对用户协议的修订有<strong>建设性意见</strong>，请务必<a href="http://154.37.221.232/report.html"><strong>联系我们</strong></a></p>
 
-    <!-- 用户注册 -->
-    <h2 id="register">用户注册</h2>
+    <!-- 用户注册与登录 -->
+    <h2 id="register">用户注册与登录</h2>
+
+    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">用户注册</h3>
     <p>请访问<a href="http://154.37.221.232/"><strong>校园墙</strong></a>，若你是首次进入，屏幕会首先弹出<strong>登录窗口</strong></p>
     <img src="image.png" alt="登录窗口">
     <p>若你不是首次进入，请你点击右上角的<strong>登录</strong>按钮<br>若你已登录账号，请你先点击<strong>退出</strong>按钮，再点击<strong>登录</strong>按钮</p>
@@ -371,28 +393,70 @@ body {
       <strong>你的密码将在服务器中进行<u>密文保存</u>，<u>任何人包括服务器管理员都无法获取到你的真实密码</u>，校园墙不会<u>以任何非官方渠道</u>向你获取你的密码，<u>请注意个人隐私安全</u></strong>
     </blockquote>
 
-    <!-- 用户登录 -->
-    <h2 id="login">用户登录</h2>
+    <h3 id="login" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">用户登录</h3>
     <p><strong>现已推出两种登录方式</strong>，分别为<strong>账密登录</strong>与<strong>智学登录</strong></p>
     <img src="image-3.png" alt="登录方式">
     <img src="image-4.png" alt="智学登录">
     <p><strong>请自行选择合适的方式登录</strong></p>
-    <blockquote><strong>只有通过了<u>同学验证</u>后，才<u>能够通过所绑定的智学网账号</u>来登录</strong></blockquote>
+    <blockquote><strong>只有通过了<u>同学认证</u>后，才<u>能够通过所绑定的智学网账号</u>来登录</strong></blockquote>
 
-    <!-- 忘记密码 -->
-    <h2 id="forgot-password">忘记密码</h2>
+    <h3 id="forgot-password" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">忘记密码</h3>
     <p>如果你使用<strong>账密登录</strong>时忘记了密码，你可以通过<strong>你所绑定的智学网账号</strong>密码实现重置密码</p>
     <img src="image-5.png" alt="忘记密码">
     <blockquote>
-      如果你<strong>未通过同学验证</strong>，那么你<strong>无法通过此方法重置密码</strong>，请你自行联系校园墙管理员重置密码<br>
+      如果你<strong>未通过同学认证</strong>，那么你<strong>无法通过此方法重置密码</strong>，请你自行联系校园墙管理员重置密码<br>
       如果你需要重置的是<strong>智学网的账号密码</strong>，请自行访问<a href="https://zhixue.com">智学网</a>进行重置
     </blockquote>
 
-    <!-- 自动登录 -->
-    <h2 id="auto-login">自动登录</h2>
+    <h3 id="auto-login" style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">自动登录</h3>
     <p>完成注册或登录后，你可以在弹出的窗口中确定<strong>是否信任你的浏览器</strong>，如果你选择信任，那么<strong>你的登录信息将保存在你的本地浏览器</strong>中，下次访问校园墙将会<strong>自动登录</strong></p>
     <img src="image-2.png" alt="信任浏览器">
     <blockquote>如果你<strong>使用公共设备</strong>访问校园墙，为了你的隐私安全，<strong>请不要选择信任此浏览器</strong></blockquote>
+
+    <!-- 同学认证 -->
+    <h2 id="cert">同学认证</h2>
+    <p>为了确保所有校园墙用户都为我们的面向对象，<strong>请及时完成同学认证</strong></p>
+    <p>请在校园墙主页的右上角进入你的<strong>用户主页</strong>，在用户主页中点击<strong>同学认证</strong>中进行同学验证</p>
+    <blockquote>
+      对于同学验证的身份信息，将在服务器后台进行密文保存<br>
+      <strong><u>隐私是一项基本人权</u></strong>，除非在<strong><u>有权机关的合法文件支持下</u></strong>，我们<strong>坚决不提供任何信息</strong>
+    </blockquote>
+
+    <!-- 智学认证 -->
+    <h2 id="zhixue-cert">智学认证</h2>
+    <blockquote>为了维护你的隐私与合法权益，你有权利查看<strong>智学认证</strong>的运行流程</blockquote>
+
+    <img src="image-6.png" alt="智学认证窗口">
+    <p>请先准备好你本人的智学网账号密码，确保其能够被登录，且你的密码并非<strong>弱密码</strong>，然后将你的信息填写进入智学认证的窗口</p>
+    <blockquote>
+      例如，你的智学网账号为<strong>'12345678'</strong>，同时你的密码也为<strong>'12345678'</strong>，那么你的密码会被智学网判定为<strong>弱密码</strong><br>
+      对于弱密码，<strong><u>校园墙为了你的隐私信息安全</u></strong>，我们<strong>无法进行同学验证</strong>，请你尽快<strong>修改你的智学网密码再提交同学认证</strong>
+    </blockquote>
+
+    <img src="image-8.png" alt="智学认证信息填写">
+
+    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">验证通过</h3>
+    <p>当你的智学验证在后台审核通过，<strong><u>为避免你的身份信息获取错误</u></strong>，我们会在你下一次打开校园墙时<strong><u>弹出验证窗口</u></strong></p>
+    <img src="image-9.png" alt="验证通过确认窗口">
+    <p>当你<strong>确认此身份信息</strong>，那么此身份信息<strong><u>将与你的账号绑定</u></strong></p>
+    <p>如果你认为<u>这不是你的真实信息</u>，<strong>请选择不是本人信息，后重新填写验证信息</strong></p>
+    <p>如果你认为<strong>你所提交的信息没有问题</strong>，但无法通过智学验证，请<a href="http://154.37.221.232/report.html"><u>报告这个问题</u></a>，或尝试<strong>手动验证</strong></p>
+
+    <h3 style="font-size:17px;font-weight:600;color:var(--cyan-light);margin-top:24px;margin-bottom:10px;">验证驳回</h3>
+    <p>如果后台审核认为你的信息有误，我们会驳回你的智学验证</p>
+    <p>你会在下一次登录看到弹出的<strong>验证驳回提示窗口</strong>，请按照引导<strong>重新填写验证信息</strong></p>
+    <img src="image-10.png" alt="验证驳回提示">
+    <p>如果你认为<strong>你所提交的信息没有问题</strong>，但无法通过智学验证，请<a href="http://154.37.221.232/report.html"><u>报告这个问题</u></a>，或尝试<strong>手动验证</strong></p>
+
+    <!-- 手动认证 -->
+    <h2 id="manual-cert">手动认证</h2>
+    <p>对于特殊情况的用户，我们提供了手动认证的渠道</p>
+    <p>请在手动认证的窗口中如实填写你的个人信息</p>
+    <img src="image-11.png" alt="手动认证窗口">
+    <blockquote>
+      通常不建议使用手动验证，手动验证需要提交的信息更多，同时需要的时间更长，且需要接受后台审核的质询<br>
+      请确保你所提供的电子邮件地址是可用的，后台审核需要借此对你提交的信息进行质询
+    </blockquote>
 
   </main>
 </div>
@@ -418,6 +482,9 @@ body {
       <li class="toc-item"><a class="toc-link" href="#login" onclick="closeMobileSidebar()">用户登录</a></li>
       <li class="toc-item"><a class="toc-link" href="#forgot-password" onclick="closeMobileSidebar()">忘记密码</a></li>
       <li class="toc-item"><a class="toc-link" href="#auto-login" onclick="closeMobileSidebar()">自动登录</a></li>
+      <li class="toc-item"><a class="toc-link" href="#cert" onclick="closeMobileSidebar()">同学认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#zhixue-cert" onclick="closeMobileSidebar()">智学认证</a></li>
+      <li class="toc-item"><a class="toc-link" href="#manual-cert" onclick="closeMobileSidebar()">手动认证</a></li>
     </ul>
   </div>
 </div>
