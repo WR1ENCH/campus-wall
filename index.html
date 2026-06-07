@@ -2335,7 +2335,7 @@
           updateUserBar();
           checkAnnouncement();
           if (currentUser.zhixueStatus !== 'approved') checkCertResult();
-          checkNotifBadge();
+          await checkNotifBadge();
           return true;
         } else {
           // 令牌失效，清除
@@ -2655,7 +2655,7 @@
       }
       updateUserBar();
       checkAnnouncement();
-      checkNotifBadge();
+      await checkNotifBadge();
       // 首次访问（无记录）→ 弹出登录框
       if (!currentUser && !localStorage.getItem('campus_wall_visited')) {
         localStorage.setItem('campus_wall_visited', '1');
@@ -2665,18 +2665,6 @@
       if (currentUser && currentUser.zhixueStatus !== 'approved') {
         checkCertResult();
       }
-      // T0 重要通知：延迟推送（等认证弹窗等关闭后再弹出）
-      setTimeout(function() {
-        if (_pendingT0Notif) {
-          // 不要跟其他弹窗冲突
-          var certOpen = document.getElementById('certRejectedOverlay') && document.getElementById('certRejectedOverlay').style.display === 'flex';
-          var certConfirmOpen = document.getElementById('certConfirmOverlay') && document.getElementById('certConfirmOverlay').style.display === 'flex';
-          if (!certOpen && !certConfirmOpen) {
-            _notifMarkRead(_pendingT0Notif.id);
-            openNotifWithItem(_pendingT0Notif.id);
-          }
-        }
-      }, 1500);
     }
 
     // ===== 公告 =====
@@ -2765,6 +2753,20 @@
         }
       } catch(e) {}
       badge.style.display = unread > 0 ? '' : 'none';
+
+      // T0 重要通知：延迟自动推送（等认证弹窗等关闭后再弹出）
+      if (_pendingT0Notif) {
+        setTimeout(function() {
+          var r = document.getElementById('certRejectedOverlay');
+          var c = document.getElementById('certConfirmOverlay');
+          var certOpen = r && r.style.display === 'flex';
+          var certConfirmOpen = c && c.style.display === 'flex';
+          if (!certOpen && !certConfirmOpen) {
+            _notifMarkRead(_pendingT0Notif.id);
+            openNotifWithItem(_pendingT0Notif.id);
+          }
+        }, 800);
+      }
     }
 
     // 打开通知窗口并定位到指定通知（用于 T0 强制推送）
