@@ -479,6 +479,7 @@ body {
       if (json.ok) {
         currentUser = json.data;
         localStorage.setItem(SC_TOKEN_KEY, currentUser.token);
+        localStorage.setItem('sc_name', currentUser.name);        localStorage.setItem('sc_name', currentUser.name);
         document.getElementById('loginScreen').classList.remove('show');
         document.getElementById('mainApp').classList.add('show');
         document.getElementById('userBadge').style.display = 'inline-flex';
@@ -495,6 +496,7 @@ body {
   window.doLogout = function() {
     currentUser = null;
     localStorage.removeItem(SC_TOKEN_KEY);
+    localStorage.removeItem('sc_name');
     document.getElementById('mainApp').classList.remove('show');
     document.getElementById('loginScreen').classList.add('show');
     document.getElementById('loginId').value = '';
@@ -540,7 +542,7 @@ body {
       if (json.ok) {
         currentUser = json.data;
         localStorage.setItem(SC_TOKEN_KEY, currentUser.token);
-        document.getElementById('userName').textContent = currentUser.name;
+        localStorage.setItem('sc_name', currentUser.name);        document.getElementById('userName').textContent = currentUser.name;
         showToast('\u2705 \u6635\u79F0\u5DF2\u4FEE\u6539', 'success');
         closeSettingsModal();
       } else {
@@ -678,18 +680,13 @@ body {
 
   // ===== 启动 =====
   var savedToken = localStorage.getItem(SC_TOKEN_KEY);
+  var savedName = localStorage.getItem('sc_name');
   if (savedToken) {
-    // 尝试用已有 token 直接进
-    try {
-      var session = JSON.parse(atob(savedToken));
-      currentUser = { token: savedToken, name: session.name };
-      document.getElementById('mainApp').classList.add('show');
-      document.getElementById('userBadge').style.display = 'inline-flex';
-      document.getElementById('userName').textContent = session.name;
-      loadNotices();
-    } catch(e) {
-      checkInit();
-    }
+    currentUser = { token: savedToken, name: savedName || '学生会' };
+    document.getElementById('mainApp').classList.add('show');
+    document.getElementById('userBadge').style.display = 'inline-flex';
+    document.getElementById('userName').textContent = savedName || '学生会';
+    loadNotices();
   } else {
     checkInit();
   }

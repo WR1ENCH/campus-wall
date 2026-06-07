@@ -4655,7 +4655,7 @@ app.post('/api/student-council/login', (req, res) => {
     return res.json({ ok: false, msg: '账号或密码错误' });
 
   const token = Buffer.from(JSON.stringify({
-    id: sc.id, name: sc.name, loginAt: Date.now()
+    id: sc.id, loginAt: Date.now()
   })).toString('base64');
   res.json({ ok: true, data: { token, name: sc.name } });
 });
@@ -4695,7 +4695,7 @@ app.post('/api/student-council/change-name', (req, res) => {
   sc.name = name.trim();
   writeSC(sc);
   // 返回新 token 和新名称
-  const newToken = Buffer.from(JSON.stringify({ id: sc.id, name: sc.name, loginAt: Date.now() })).toString('base64');
+  const newToken = Buffer.from(JSON.stringify({ id: sc.id, loginAt: Date.now() })).toString('base64');
   res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
