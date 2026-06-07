@@ -774,6 +774,7 @@
       .compose-btn { font-size: 18px; padding: 4px 8px; min-width: 32px; justify-content: center; }
       .action-btns { gap: 6px; }
       .action-btns .compose-btn { flex: 0 0 auto; }
+      .action-btns .notif-btn { font-size: 16px; padding: 4px 8px; }
 
       /* 登录后隐藏logo，用户信息替代左位 */
       .top-bar.logged-in { justify-content: flex-start; padding: 10px 16px; }
@@ -1388,7 +1389,6 @@
     </div>
     <!-- 右侧区域：用户信息 / 登录入口 -->
     <div class="top-right-area">
-    <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知">🔔</button>
     <div id="userInfoBar" style="display:none;">
       <div class="user-info-bar">
         <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
@@ -1415,6 +1415,7 @@
       <button class="compose-btn" onclick="openModal()">✏️ <span class="btn-label">贴一张</span></button>
       <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 <span class="btn-label">讨论区</span></button>
       <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 <span class="btn-label">你问我答</span></button>
+      <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知" style="background:transparent;border:1.5px solid rgba(0,0,0,0.1);border-radius:4px;font-size:16px;padding:6px 10px;cursor:pointer;">🔔</button>
     </div>
     <!-- 校园墙拍卖滚动栏 -->
     <div class="pickup-bar">
