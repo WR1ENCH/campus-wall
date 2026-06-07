@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生会 · 通知公告</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f0ebe3;
+  --card: #ffffff;
+  --text: #2d2a24;
+  --text-sub: #8a8580;
+  --accent: #b8860b;
+  --accent-light: #daa520;
+  --border: #e0dad0;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 12px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.header {
+  background: linear-gradient(135deg, #2d2a24, #4a443c);
+  color: #f0ebe3;
+  padding: 40px 24px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-light), var(--accent), var(--accent-light));
+}
+
+.header h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 6px; }
+.header p { font-size: 14px; color: rgba(240,235,227,0.7); }
+.header .subtitle { font-size: 12px; color: rgba(240,235,227,0.5); margin-top: 8px; letter-spacing: 0.08em; }
+
+/* ===== Layout ===== */
+.container { max-width: 800px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* ===== Publish Button ===== */
+.publish-bar {
+  display: flex; justify-content: flex-end; margin-bottom: 20px;
+}
+
+.btn-publish {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.2s;
+}
+
+.btn-publish:hover { background: var(--accent-light); transform: translateY(-1px); }
+.btn-publish:active { transform: scale(0.97); }
+
+/* ===== Notice Card ===== */
+.notice-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--accent-light);
+  transition: transform 0.2s;
+}
+
+.notice-card:hover { transform: translateY(-1px); }
+
+.notice-card .notice-title {
+  font-size: 18px; font-weight: 600; color: var(--text);
+  margin-bottom: 10px; line-height: 1.4;
+}
+
+.notice-card .notice-content {
+  font-size: 14px; color: var(--text);
+  line-height: 1.8; white-space: pre-wrap;
+  margin-bottom: 14px;
+}
+
+.notice-card .notice-meta {
+  display: flex; gap: 16px; font-size: 12px; color: var(--text-sub);
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+
+.empty-tip {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-sub); font-size: 15px;
+}
+
+.loading {
+  text-align: center; padding: 40px; color: var(--text-sub);
+}
+
+/* ===== Publish Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 200;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: var(--card); border-radius: 16px;
+  width: min(92vw, 520px); max-height: 90vh;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  animation: modalIn 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px; border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 { font-size: 17px; font-weight: 600; }
+
+.modal-close {
+  background: none; border: none; font-size: 22px; cursor: pointer;
+  color: var(--text-sub); padding: 0; line-height: 1;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.modal-body { padding: 20px 24px; }
+
+.form-group { margin-bottom: 16px; }
+
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--text); margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus { border-color: var(--accent); }
+.form-textarea { min-height: 120px; resize: vertical; }
+
+.form-error { color: #dc2626; font-size: 13px; margin-top: 4px; }
+
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+
+.btn-cancel {
+  padding: 9px 18px; border: 1px solid var(--border);
+  border-radius: 8px; background: transparent; color: var(--text-sub);
+  font-size: 14px; cursor: pointer; font-family: inherit;
+}
+
+.btn-submit {
+  padding: 9px 20px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+
+.btn-submit:hover { background: var(--accent-light); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  padding: 10px 24px; border-radius: 8px; color: #fff;
+  font-size: 14px; font-weight: 500; z-index: 999;
+  animation: toastIn 0.3s ease;
+  pointer-events: none;
+}
+
+.toast.success { background: #16a34a; }
+.toast.error { background: #dc2626; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .header { padding: 28px 16px 24px; }
+  .header h1 { font-size: 22px; }
+  .notice-card { padding: 18px; }
+  .notice-card .notice-title { font-size: 16px; }
+  .modal { width: 96vw; }
+  .modal-body { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>&#x1F4E2; 学生会通知</h1>
+  <p>Student Union Announcements</p>
+  <div class="subtitle">&#x2014; 校园权威信息发布 &#x2014;</div>
+</div>
+
+<div class="container">
+  <div class="publish-bar">
+    <button class="btn-publish" onclick="openPublishModal()">&#x270F;&#xFE0F; 发布通知</button>
+  </div>
+  <div id="noticeList">
+    <div class="loading">加载中&#x2026;</div>
+  </div>
+</div>
+
+<!-- ===== Publish Modal ===== -->
+<div class="modal-overlay" id="publishOverlay" onclick="if(event.target===this)closePublishModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>&#x270F;&#xFE0F; 发布通知</h3>
+      <button class="modal-close" onclick="closePublishModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="notifTitle">标题</label>
+        <input class="form-input" id="notifTitle" maxlength="100" placeholder="通知标题">
+      </div>
+      <div class="form-group">
+        <label for="notifContent">内容</label>
+        <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
+        <input class="form-input" id="notifAuthor" maxlength="30" placeholder="例如：宣传部">
+      </div>
+      <div class="form-group">
+        <label for="notifPwd">学生会密码</label>
+        <input class="form-input" id="notifPwd" type="password" maxlength="50" placeholder="输入发布密码">
+        <div class="form-error" id="publishError"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="closePublishModal()">取消</button>
+        <button class="btn-submit" id="publishBtn" onclick="doPublish()">&#x1F4E2; 发布</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var publishedIds = {};
+
+  async function loadNotices() {
+    try {
+      var res = await fetch('/api/notices');
+      var json = await res.json();
+      var list = document.getElementById('noticeList');
+      if (!json.ok) { list.innerHTML = '<div class="empty-tip">加载失败</div>'; return; }
+      var data = json.data || [];
+      if (data.length === 0) {
+        list.innerHTML = '<div class="empty-tip">暂无通知</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(n) {
+        var time = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN', {
+          year: 'numeric', month: 'long', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        }) : '';
+        html += '<div class="notice-card">' +
+          '<div class="notice-title">' + escHtml(n.title) + '</div>' +
+          '<div class="notice-content">' + escHtml(n.content) + '</div>' +
+          '<div class="notice-meta">' +
+          '<span>&#x1F464; ' + escHtml(n.author || '学生会') + '</span>' +
+          '<span>&#x1F4C5; ' + time + '</span>' +
+          '</div></div>';
+      });
+      list.innerHTML = html;
+    } catch(e) {
+      document.getElementById('noticeList').innerHTML = '<div class="empty-tip">网络错误</div>';
+    }
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  window.openPublishModal = function() {
+    document.getElementById('publishOverlay').style.display = 'flex';
+    document.getElementById('publishError').textContent = '';
+  };
+
+  window.closePublishModal = function() {
+    document.getElementById('publishOverlay').style.display = 'none';
+    document.getElementById('publishError').textContent = '';
+  };
+
+  window.doPublish = async function() {
+    var title = document.getElementById('notifTitle').value.trim();
+    var content = document.getElementById('notifContent').value.trim();
+    var author = document.getElementById('notifAuthor').value.trim();
+    var password = document.getElementById('notifPwd').value;
+
+    var errEl = document.getElementById('publishError');
+    if (!title) { errEl.textContent = '请填写标题'; return; }
+    if (!content) { errEl.textContent = '请填写内容'; return; }
+    if (!password) { errEl.textContent = '请输入学生会密码'; return; }
+
+    var btn = document.getElementById('publishBtn');
+    btn.disabled = true; btn.textContent = '发布中…';
+    errEl.textContent = '';
+    try {
+      var res = await fetch('/api/notices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, content: content, author: author, password: password })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('&#x2705; 通知已发布', 'success');
+        closePublishModal();
+        document.getElementById('notifTitle').value = '';
+        document.getElementById('notifContent').value = '';
+        document.getElementById('notifAuthor').value = '';
+        document.getElementById('notifPwd').value = '';
+        loadNotices();
+      } else {
+        errEl.textContent = json.msg || '发布失败';
+      }
+    } catch(e) {
+      errEl.textContent = '网络错误';
+    } finally {
+      btn.disabled = false; btn.textContent = '&#x1F4E2; 发布';
+    }
+  };
+
+  function showToast(msg, type) {
+    var t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.innerHTML = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 2500);
+  }
+
+  loadNotices();
+})();
+</script>
+</body>
+</html>

@@ -4593,6 +4593,50 @@ function fixCertDataOnStart() {
   }
 }
 
+// ===== 学生会通知 =====
+const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
+const STUDENT_COUNCIL_PWD = 'student2024'; // 学生会发布密码
+
+function readNotices() {
+  try {
+    if (!fs.existsSync(NOTICES_FILE)) return [];
+    return JSON.parse(fs.readFileSync(NOTICES_FILE, 'utf-8'));
+  } catch { return []; }
+}
+
+function writeNotices(data) {
+  fs.writeFileSync(NOTICES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+// 获取通知列表（公开）
+app.get('/api/notices', (req, res) => {
+  const notices = readNotices();
+  // 按时间倒序，最多50条
+  const list = notices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
+  res.json({ ok: true, data: list });
+});
+
+// 发布通知（需学生会密码）
+app.post('/api/notices', (req, res) => {
+  const { title, content, author, password } = req.body;
+  if (password !== STUDENT_COUNCIL_PWD) {
+    return res.json({ ok: false, msg: '密码错误' });
+  }
+  if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
+  if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
+
+  const notices = readNotices();
+  notices.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    title: title.trim(),
+    content: content.trim(),
+    author: (author && author.trim()) ? author.trim() : '学生会',
+    createdAt: new Date().toISOString()
+  });
+  writeNotices(notices);
+  res.json({ ok: true, msg: '通知已发布' });
+});
+
 app.listen(PORT, () => {
   fixCertDataOnStart();
   console.log(`\n  📌 校园墙服务已启动`);
