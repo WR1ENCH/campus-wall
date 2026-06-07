@@ -2335,6 +2335,7 @@
           updateUserBar();
           checkAnnouncement();
           if (currentUser.zhixueStatus !== 'approved') checkCertResult();
+          checkNotifBadge();
           return true;
         } else {
           // 令牌失效，清除
@@ -2654,6 +2655,7 @@
       }
       updateUserBar();
       checkAnnouncement();
+      checkNotifBadge();
       // 首次访问（无记录）→ 弹出登录框
       if (!currentUser && !localStorage.getItem('campus_wall_visited')) {
         localStorage.setItem('campus_wall_visited', '1');
@@ -2707,6 +2709,42 @@
 
     function closeNotifModal() {
       document.getElementById('notifOverlay').style.display = 'none';
+    }
+
+    // 页面加载时检查未读通知，更新 🔔 红点（不弹窗）
+    async function checkNotifBadge() {
+      var badge = document.getElementById('notifBadge');
+      if (!badge) return;
+      var unread = 0;
+      try {
+        var annRes = await fetch('/api/announcement');
+        var annJson = await annRes.json();
+        if (annJson.ok && annJson.data) {
+          var annId = localStorage.getItem('announcement_id');
+          if (annId !== annJson.data.publishedAt) unread++;
+        }
+
+        // 检查学生会通知
+        var nRes = await fetch('/api/notices');
+        var nJson = await nRes.json();
+        if (nJson.ok && nJson.data) {
+          (nJson.data || []).forEach(function(n) {
+            if (_notifUnreadCheck('sc_' + n.id)) unread++;
+          });
+        }
+
+        // 检查认证通知
+        var token = localStorage.getItem('campus_user_token');
+        if (token) {
+          var cRes = await fetch('/api/user/me/zhixue-info', { headers: { 'x-user-token': token } });
+          var cJson = await cRes.json();
+          if (cJson.ok && cJson.data) {
+            if (cJson.data.status === 'rejected' && _notifUnreadCheck('cert_rejected')) unread++;
+            if (cJson.data.status === 'approved' && _notifUnreadCheck('cert_approved')) unread++;
+          }
+        }
+      } catch(e) {}
+      badge.style.display = unread > 0 ? '' : 'none';
     }
 
     async function loadNotifications() {
