@@ -232,69 +232,87 @@ body {
 }
 
 /* ===== Mobile TOC toggle ===== */
-.mobile-toc-toggle {
+@media (max-width: 860px) {
+  .mobile-hamburger { display: flex; }
+}
+
+/* ===== Mobile top bar ===== */
+.mobile-hamburger {
   display: none;
   position: fixed;
-  bottom: 88px;
-  right: 32px;
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: var(--card);
-  border: 1px solid var(--border);
+  top: 0; left: 0; right: 0;
+  height: 48px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  padding: 0 16px;
+  z-index: 150;
+  gap: 10px;
+}
+
+.mobile-hamburger-btn {
+  width: 36px; height: 36px;
+  border: none;
+  background: transparent;
   color: var(--cyan-light);
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
+  display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 101;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
-.mobile-toc-toggle:active { transform: scale(0.92); }
+.mobile-hamburger-btn:hover { background: rgba(0,255,213,0.08); }
 
-.mobile-toc-panel {
+.mobile-hamburger-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cyan-light);
+}
+
+/* Mobile sidebar overlay */
+.mobile-sidebar-overlay {
   display: none;
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 200;
-  backdrop-filter: blur(4px);
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 300;
 }
 
-.mobile-toc-panel.show { display: flex; align-items: center; justify-content: center; }
+.mobile-sidebar-overlay.show { display: block; }
 
-.mobile-toc-content {
+.mobile-sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 260px;
+  height: 100vh;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  width: 80%;
-  max-width: 320px;
-  max-height: 70vh;
+  border-right: 1px solid var(--border);
+  z-index: 301;
+  padding: 24px 20px;
   overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
 }
 
-.mobile-toc-content .toc-link {
+.mobile-sidebar.open { transform: translateX(0); }
+
+.mobile-sidebar .toc-logo {
+  font-size: 18px;
+  margin-bottom: 24px;
+}
+
+.mobile-sidebar .toc-link {
   padding: 10px 14px;
-  font-size: 15px;
-}
-
-.mobile-toc-close {
-  display: block;
-  margin-top: 16px;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-sub);
   font-size: 14px;
-  cursor: pointer;
-  font-family: inherit;
 }
 
 @media (max-width: 860px) {
-  .mobile-toc-toggle { display: flex; }
+  .toc-sidebar { display: none; }
+  .content-area { padding: 64px 16px 60px; }
+  .mobile-hamburger { display: flex; }
 }
 </style>
 </head>
@@ -377,20 +395,25 @@ body {
 <!-- ===== Back to Top ===== -->
 <button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
 
-<!-- ===== Mobile TOC ===== -->
-<button class="mobile-toc-toggle" id="mobileTocToggle" onclick="toggleMobileToc()">&#9776;</button>
-<div class="mobile-toc-panel" id="mobileTocPanel" onclick="if(event.target===this)closeMobileToc()">
-  <div class="mobile-toc-content">
-    <div style="font-size:15px;font-weight:600;color:var(--cyan-light);margin-bottom:16px;text-align:center;">&#x1F4CC; 目录</div>
-    <ul class="toc-list" id="mobileTocList">
-      <li class="toc-item"><a class="toc-link" href="#quickstart" onclick="closeMobileToc()">快速开始</a></li>
-      <li class="toc-item"><a class="toc-link" href="#agreement" onclick="closeMobileToc()">用户协议</a></li>
-      <li class="toc-item"><a class="toc-link" href="#register" onclick="closeMobileToc()">用户注册</a></li>
-      <li class="toc-item"><a class="toc-link" href="#login" onclick="closeMobileToc()">用户登录</a></li>
-      <li class="toc-item"><a class="toc-link" href="#forgot-password" onclick="closeMobileToc()">忘记密码</a></li>
-      <li class="toc-item"><a class="toc-link" href="#auto-login" onclick="closeMobileToc()">自动登录</a></li>
+<!-- ===== Mobile top bar ===== -->
+<div class="mobile-hamburger" id="mobileTopBar">
+  <button class="mobile-hamburger-btn" id="hamburgerBtn" onclick="toggleMobileSidebar()">&#9776;</button>
+  <span class="mobile-hamburger-title">&#x1F4CC; 校园墙</span>
+</div>
+
+<!-- ===== Mobile sidebar overlay ===== -->
+<div class="mobile-sidebar-overlay" id="mobileSidebarOverlay" onclick="closeMobileSidebar()">
+  <div class="mobile-sidebar" id="mobileSidebar" onclick="event.stopPropagation()">
+    <div class="toc-logo">&#x1F4CC; 校园墙</div>
+    <div class="toc-title">目录</div>
+    <ul class="toc-list">
+      <li class="toc-item"><a class="toc-link" href="#quickstart" onclick="closeMobileSidebar()">快速开始</a></li>
+      <li class="toc-item"><a class="toc-link" href="#agreement" onclick="closeMobileSidebar()">用户协议</a></li>
+      <li class="toc-item"><a class="toc-link" href="#register" onclick="closeMobileSidebar()">用户注册</a></li>
+      <li class="toc-item"><a class="toc-link" href="#login" onclick="closeMobileSidebar()">用户登录</a></li>
+      <li class="toc-item"><a class="toc-link" href="#forgot-password" onclick="closeMobileSidebar()">忘记密码</a></li>
+      <li class="toc-item"><a class="toc-link" href="#auto-login" onclick="closeMobileSidebar()">自动登录</a></li>
     </ul>
-    <button class="mobile-toc-close" onclick="closeMobileToc()">关闭</button>
   </div>
 </div>
 
@@ -420,13 +443,23 @@ body {
     backTop.classList.toggle('show', window.scrollY > 400);
   });
 
-  // ===== Mobile TOC =====
-  window.toggleMobileToc = function() {
-    document.getElementById('mobileTocPanel').classList.toggle('show');
+  // ===== Mobile sidebar =====
+  window.toggleMobileSidebar = function() {
+    var overlay = document.getElementById('mobileSidebarOverlay');
+    var sidebar = document.getElementById('mobileSidebar');
+    var isOpen = sidebar.classList.contains('open');
+    if (isOpen) {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    } else {
+      sidebar.classList.add('open');
+      overlay.classList.add('show');
+    }
   };
 
-  window.closeMobileToc = function() {
-    document.getElementById('mobileTocPanel').classList.remove('show');
+  window.closeMobileSidebar = function() {
+    document.getElementById('mobileSidebar').classList.remove('open');
+    document.getElementById('mobileSidebarOverlay').classList.remove('show');
   };
 })();
 </script>
