@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园墙 · 知识库</title>
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --card: #1a1a28;
+  --border: rgba(0, 255, 213, 0.1);
+  --cyan-light: #00ffd5;
+  --cyan-mid: #00d4aa;
+  --cyan-dark: #00a88c;
+  --glow: rgba(0, 255, 213, 0.15);
+  --text: #c8c8d0;
+  --text-sub: #8888a0;
+  --text-heading: #e8e8f0;
+  --accent: var(--cyan-mid);
+  --radius: 12px;
+}
+
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Noto Sans SC", sans-serif;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ===== Layout ===== */
+.app-wrapper {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar / TOC ===== */
+.toc-sidebar {
+  position: sticky;
+  top: 0;
+  width: 240px;
+  min-width: 240px;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 40px 20px 40px 0;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.toc-sidebar::-webkit-scrollbar { width: 4px; }
+.toc-sidebar::-webkit-scrollbar-track { background: transparent; }
+.toc-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.toc-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cyan-light);
+  margin-bottom: 28px;
+  letter-spacing: -0.02em;
+}
+
+.toc-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+}
+
+.toc-item {
+  margin-bottom: 2px;
+}
+
+.toc-link {
+  display: block;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-sub);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+
+.toc-link:hover {
+  color: var(--cyan-light);
+  background: rgba(0, 255, 213, 0.05);
+}
+
+.toc-link.active {
+  color: var(--cyan-light);
+  background: rgba(0, 255, 213, 0.08);
+  font-weight: 500;
+}
+
+/* ===== Main Content ===== */
+.content-area {
+  flex: 1;
+  padding: 40px 48px 80px;
+  min-width: 0;
+}
+
+.content-area h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.content-area h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.content-area h2:first-of-type {
+  margin-top: 0;
+}
+
+.content-area p {
+  margin-bottom: 16px;
+  color: var(--text);
+  line-height: 1.8;
+}
+
+.content-area strong {
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.content-area u {
+  text-decoration: none;
+  color: var(--cyan-mid);
+  font-weight: 500;
+}
+
+.content-area a {
+  color: var(--cyan-light);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 255, 213, 0.3);
+  transition: border-color 0.2s;
+}
+
+.content-area a:hover {
+  border-bottom-color: var(--cyan-light);
+}
+
+.content-area blockquote {
+  margin: 20px 0;
+  padding: 16px 20px;
+  background: rgba(0, 255, 213, 0.04);
+  border-left: 3px solid var(--cyan-mid);
+  border-radius: 0 10px 10px 0;
+  color: var(--text-sub);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.content-area blockquote u {
+  color: var(--cyan-light);
+}
+
+.content-area img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.content-area li {
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+/* ===== Back to top ===== */
+.back-top {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--cyan-mid);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.back-top.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-top:hover {
+  background: var(--cyan-mid);
+  color: var(--bg);
+  border-color: var(--cyan-mid);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 860px) {
+  .toc-sidebar {
+    display: none;
+  }
+  .content-area {
+    padding: 28px 20px 60px;
+  }
+  .content-area h1 { font-size: 26px; }
+  .content-area h2 { font-size: 19px; margin-top: 36px; }
+}
+
+/* ===== Mobile TOC toggle ===== */
+.mobile-toc-toggle {
+  display: none;
+  position: fixed;
+  bottom: 88px;
+  right: 32px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--cyan-light);
+  font-size: 20px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.mobile-toc-toggle:active { transform: scale(0.92); }
+
+.mobile-toc-panel {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+
+.mobile-toc-panel.show { display: flex; align-items: center; justify-content: center; }
+
+.mobile-toc-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 80%;
+  max-width: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mobile-toc-content .toc-link {
+  padding: 10px 14px;
+  font-size: 15px;
+}
+
+.mobile-toc-close {
+  display: block;
+  margin-top: 16px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (max-width: 860px) {
+  .mobile-toc-toggle { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ===== Sidebar TOC ===== -->
+  <aside class="toc-sidebar" id="tocSidebar">
+    <div class="toc-logo">📌 校园墙</div>
+    <div class="toc-title">目录</div>
+    <ul class="toc-list" id="tocList">
+      <li class="toc-item"><a class="toc-link" href="#quickstart">快速开始</a></li>
+      <li class="toc-item"><a class="toc-link" href="#agreement">用户协议</a></li>
+      <li class="toc-item"><a class="toc-link" href="#register">用户注册</a></li>
+      <li class="toc-item"><a class="toc-link" href="#login">用户登录</a></li>
+      <li class="toc-item"><a class="toc-link" href="#forgot-password">忘记密码</a></li>
+      <li class="toc-item"><a class="toc-link" href="#auto-login">自动登录</a></li>
+    </ul>
+  </aside>
+
+  <!-- ===== Main Content ===== -->
+  <main class="content-area" id="mainContent">
+
+    <h1>📌 欢迎来到校园墙</h1>
+
+    <!-- 快速开始 -->
+    <h2 id="quickstart">快速开始</h2>
+    <p><strong>请在这里打开<a href="http://154.37.221.232/"><u>校园墙</u></a>网页，即可开始你的校园墙体验</strong></p>
+    <blockquote>
+      <strong>请注意 ！</strong><br>
+      校园墙目前仅面向<u>泉州九中</u>，因此其他学校的师生暂无法获得校园墙服务，面向<u>其他学校的代理招募</u>正在进行，请给我们一点时间
+    </blockquote>
+
+    <!-- 用户协议 -->
+    <h2 id="agreement">用户协议</h2>
+    <p>为了保障合法权利，避免产生非必要的法律风波，所有校园墙用户有义务阅读并遵守<a href="http://154.37.221.232/agreement.html"><strong>校园墙用户协议</strong></a>，同时确保你满足条件获取校园墙服务</p>
+    <p>用户协议始终保持更新修订，请务必关注用户协议的修订情况<br>如果你对用户协议的修订有<strong>建设性意见</strong>，请务必<a href="http://154.37.221.232/report.html"><strong>联系我们</strong></a></p>
+
+    <!-- 用户注册 -->
+    <h2 id="register">用户注册</h2>
+    <p>请访问<a href="http://154.37.221.232/"><strong>校园墙</strong></a>，若你是首次进入，屏幕会首先弹出<strong>登录窗口</strong></p>
+    <img src="image.png" alt="登录窗口">
+    <p>若你不是首次进入，请你点击右上角的<strong>登录</strong>按钮<br>若你已登录账号，请你先点击<strong>退出</strong>按钮，再点击<strong>登录</strong>按钮</p>
+    <p>在<strong>登录窗口</strong>中，选择<strong>注册</strong>，点击后会弹出<strong>精简版用户协议</strong>确定窗口，<u>你有且只有阅读并同意才可注册账号</u></p>
+    <p>注册过程中，请按照提示<strong>准确输入信息</strong></p>
+    <img src="image-1.png" alt="注册界面">
+    <blockquote>
+      <strong>请不要在昵称一栏填写你或其他师生的<u>真实姓名</u></strong>，<strong>更不要填写任何具有<u>侮辱性的词汇</u></strong><br>
+      <strong>目前唯一面向普通用户的恢复密码的方式是通过<u>已绑定的智学网账号</u>来进行恢复密码，因此对于未进行同学认证的用户，请妥善保管<u>你的密码</u></strong><br>
+      <strong>你的密码将在服务器中进行<u>密文保存</u>，<u>任何人包括服务器管理员都无法获取到你的真实密码</u>，校园墙不会<u>以任何非官方渠道</u>向你获取你的密码，<u>请注意个人隐私安全</u></strong>
+    </blockquote>
+
+    <!-- 用户登录 -->
+    <h2 id="login">用户登录</h2>
+    <p><strong>现已推出两种登录方式</strong>，分别为<strong>账密登录</strong>与<strong>智学登录</strong></p>
+    <img src="image-3.png" alt="登录方式">
+    <img src="image-4.png" alt="智学登录">
+    <p><strong>请自行选择合适的方式登录</strong></p>
+    <blockquote><strong>只有通过了<u>同学验证</u>后，才<u>能够通过所绑定的智学网账号</u>来登录</strong></blockquote>
+
+    <!-- 忘记密码 -->
+    <h2 id="forgot-password">忘记密码</h2>
+    <p>如果你使用<strong>账密登录</strong>时忘记了密码，你可以通过<strong>你所绑定的智学网账号</strong>密码实现重置密码</p>
+    <img src="image-5.png" alt="忘记密码">
+    <blockquote>
+      如果你<strong>未通过同学验证</strong>，那么你<strong>无法通过此方法重置密码</strong>，请你自行联系校园墙管理员重置密码<br>
+      如果你需要重置的是<strong>智学网的账号密码</strong>，请自行访问<a href="https://zhixue.com">智学网</a>进行重置
+    </blockquote>
+
+    <!-- 自动登录 -->
+    <h2 id="auto-login">自动登录</h2>
+    <p>完成注册或登录后，你可以在弹出的窗口中确定<strong>是否信任你的浏览器</strong>，如果你选择信任，那么<strong>你的登录信息将保存在你的本地浏览器</strong>中，下次访问校园墙将会<strong>自动登录</strong></p>
+    <img src="image-2.png" alt="信任浏览器">
+    <blockquote>如果你<strong>使用公共设备</strong>访问校园墙，为了你的隐私安全，<strong>请不要选择信任此浏览器</strong></blockquote>
+
+  </main>
+</div>
+
+<!-- ===== Back to Top ===== -->
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+<!-- ===== Mobile TOC ===== -->
+<button class="mobile-toc-toggle" id="mobileTocToggle" onclick="toggleMobileToc()">&#9776;</button>
+<div class="mobile-toc-panel" id="mobileTocPanel" onclick="if(event.target===this)closeMobileToc()">
+  <div class="mobile-toc-content">
+    <div style="font-size:15px;font-weight:600;color:var(--cyan-light);margin-bottom:16px;text-align:center;">&#x1F4CC; 目录</div>
+    <ul class="toc-list" id="mobileTocList">
+      <li class="toc-item"><a class="toc-link" href="#quickstart" onclick="closeMobileToc()">快速开始</a></li>
+      <li class="toc-item"><a class="toc-link" href="#agreement" onclick="closeMobileToc()">用户协议</a></li>
+      <li class="toc-item"><a class="toc-link" href="#register" onclick="closeMobileToc()">用户注册</a></li>
+      <li class="toc-item"><a class="toc-link" href="#login" onclick="closeMobileToc()">用户登录</a></li>
+      <li class="toc-item"><a class="toc-link" href="#forgot-password" onclick="closeMobileToc()">忘记密码</a></li>
+      <li class="toc-item"><a class="toc-link" href="#auto-login" onclick="closeMobileToc()">自动登录</a></li>
+    </ul>
+    <button class="mobile-toc-close" onclick="closeMobileToc()">关闭</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ===== 高亮当前阅读位置对应的 TOC 链接 =====
+  var headings = document.querySelectorAll('.content-area h2');
+  var links = document.querySelectorAll('.toc-link');
+
+  function updateActiveLink() {
+    var scrollY = window.scrollY + 100;
+    var activeIndex = 0;
+    headings.forEach(function(h, i) {
+      if (h.offsetTop <= scrollY) activeIndex = i;
+    });
+    links.forEach(function(l, i) {
+      l.classList.toggle('active', i === activeIndex);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveLink);
+  window.addEventListener('load', updateActiveLink);
+
+  // ===== Back to top visibility =====
+  var backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', function() {
+    backTop.classList.toggle('show', window.scrollY > 400);
+  });
+
+  // ===== Mobile TOC =====
+  window.toggleMobileToc = function() {
+    document.getElementById('mobileTocPanel').classList.toggle('show');
+  };
+
+  window.closeMobileToc = function() {
+    document.getElementById('mobileTocPanel').classList.remove('show');
+  };
+})();
+</script>
+
+</body>
+</html>
