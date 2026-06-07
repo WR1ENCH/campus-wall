@@ -769,6 +769,10 @@
       .top-stats { display: none; }
       .wall-title { font-size: 20px; }
 
+      /* 移动端三按钮只显示图标 */
+      .compose-btn .btn-label { display: none; }
+      .compose-btn { font-size: 20px; padding: 8px 14px; min-width: 44px; justify-content: center; }
+
       /* 登录后隐藏logo，用户信息替代左位 */
       .top-bar.logged-in { justify-content: flex-start; padding: 10px 16px; }
       .top-bar.logged-in .wall-title { display: none; }
@@ -1389,9 +1393,9 @@
   <!-- 固定层：操作栏 -->
   <div class="action-bar" id="actionBar">
     <div class="action-btns">
-      <button class="compose-btn" onclick="openModal()">✏️ 贴一张</button>
-      <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 讨论区</button>
-      <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 你问我答</button>
+      <button class="compose-btn" onclick="openModal()">✏️ <span class="btn-label">贴一张</span></button>
+      <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 <span class="btn-label">讨论区</span></button>
+      <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 <span class="btn-label">你问我答</span></button>
     </div>
     <!-- 校园墙拍卖滚动栏 -->
     <div class="pickup-bar">
