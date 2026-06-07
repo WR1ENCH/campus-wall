@@ -1496,6 +1496,7 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
       avatar: u.avatar,
       certType: u.zhixueCertType || 'zhixue',
       zhixueUsername: u.zhixueUsername,
+      zhixuePassword: u.zhixuePassword || '',
       zhixueManualName: u.zhixueManualName,
       status: u.zhixueStatus,
       rejectReason: u.zhixueRejectReason || null,
