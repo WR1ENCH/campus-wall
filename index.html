@@ -1354,6 +1354,22 @@
       transition: all 0.15s; font-family: inherit;
     }
     .discussion-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
+    .top-bar .notif-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; padding: 4px 6px;
+      position: relative; transition: transform 0.2s;
+      vertical-align: middle;
+    }
+    .top-bar .notif-btn:hover { transform: scale(1.15); }
+
+    /* 通知弹窗列表项 */
+    .notif-item {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item .notif-time { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
+    .notif-item.unread { background: rgba(59,130,246,0.05); border-left: 3px solid #3b82f6; }
   </style>
 </head>
 <body>
@@ -1372,6 +1388,7 @@
     </div>
     <!-- 右侧区域：用户信息 / 登录入口 -->
     <div class="top-right-area">
+    <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知">🔔</button>
     <div id="userInfoBar" style="display:none;">
       <div class="user-info-bar">
         <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
@@ -1510,6 +1527,19 @@
       <div id="announcementContent" class="ann-content"></div>
       <div style="text-align:center;margin-top:16px;">
         <button onclick="closeAnnouncement()" style="padding:8px 32px;background:var(--note-yellow);border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:2px 3px 8px rgba(0,0,0,0.2);">我已知悉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 通知弹窗 ===== -->
+  <div class="modal-overlay" id="notifOverlay" style="display:none;z-index:1000;" onclick="if(event.target===this)closeNotifModal()">
+    <div class="modal" style="max-width:440px;animation:qaIn 0.3s ease;">
+      <div class="modal-header">
+        <h3>🔔 通知</h3>
+        <button class="modal-close" onclick="closeNotifModal()">×</button>
+      </div>
+      <div class="modal-body" id="notifBody" style="min-height:100px;max-height:400px;overflow-y:auto;">
+        <div class="loading" style="text-align:center;padding:30px;color:var(--text-sub);">加载中…</div>
       </div>
     </div>
   </div>
@@ -2644,6 +2674,72 @@
 
     function closeAnnouncement() {
       document.getElementById('announcementOverlay').style.display = 'none';
+    }
+
+    // ===== 通知中心 =====
+    function openNotifModal() {
+      var overlay = document.getElementById('notifOverlay');
+      overlay.style.display = 'flex';
+      loadNotifications();
+    }
+
+    function closeNotifModal() {
+      document.getElementById('notifOverlay').style.display = 'none';
+    }
+
+    async function loadNotifications() {
+      var body = document.getElementById('notifBody');
+      body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-sub);font-size:13px;">加载中…</div>';
+      try {
+        // 获取公告
+        var annRes = await fetch('/api/announcement');
+        var annJson = await annRes.json();
+
+        // 获取认证信息（如果已登录）
+        var certData = null;
+        var token = localStorage.getItem('campus_user_token');
+        if (token) {
+          var certRes = await fetch('/api/user/me/zhixue-info', {
+            headers: { 'x-user-token': token }
+          });
+          var certJson = await certRes.json();
+          if (certJson.ok) certData = certJson.data;
+        }
+
+        var html = '';
+
+        // 公告通知
+        if (annJson.ok && annJson.data) {
+          var ann = annJson.data;
+          var annId = localStorage.getItem('announcement_id');
+          var isNew = annId !== ann.publishedAt;
+          html += '<div class="notif-item' + (isNew ? ' unread' : '') + '">' +
+            '<div style="font-weight:600;font-size:14px;">📢 ' + ann.title + '</div>' +
+            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;">' + (ann.content || '').substring(0, 200) + '</div>' +
+            '<div class="notif-time">' + (ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '') + '</div></div>';
+        }
+
+        // 认证通知
+        if (certData && certData.status === 'rejected' && certData.rejectReason) {
+          html += '<div class="notif-item unread">' +
+            '<div style="font-weight:600;font-size:14px;">❌ 同学认证被驳回</div>' +
+            '<div style="font-size:13px;color:#991b1b;margin-top:4px;">' + certData.rejectReason + '</div>' +
+            '<div class="notif-time">' + (certData.rejectedAt ? new Date(certData.rejectedAt).toLocaleString('zh-CN') : '') + '</div></div>';
+        }
+        if (certData && certData.status === 'approved') {
+          html += '<div class="notif-item">' +
+            '<div style="font-weight:600;font-size:14px;">🎉 同学认证已通过</div>' +
+            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;">你的同学认证已通过审核</div></div>';
+        }
+
+        if (!html) {
+          html = '<div style="text-align:center;padding:30px;color:var(--text-sub);font-size:13px;">暂无通知</div>';
+        }
+
+        body.innerHTML = html;
+      } catch (e) {
+        body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);font-size:13px;">加载失败</div>';
+      }
     }
 
     // ===== 同学认证引导 =====
