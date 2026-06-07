@@ -4660,6 +4660,45 @@ app.post('/api/student-council/login', (req, res) => {
   res.json({ ok: true, data: { token, name: sc.name } });
 });
 
+// 修改密码
+app.post('/api/student-council/change-pwd', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { oldPwd, newPwd } = req.body;
+  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '请填写完整' });
+  if (!verifyPassword(oldPwd, sc.password)) return res.json({ ok: false, msg: '旧密码错误' });
+  if (newPwd.length < 6) return res.json({ ok: false, msg: '新密码至少6位' });
+  if (oldPwd === newPwd) return res.json({ ok: false, msg: '新旧密码不能相同' });
+
+  sc.password = hashPassword(newPwd);
+  writeSC(sc);
+  res.json({ ok: true, msg: '密码已修改' });
+});
+
+// 修改昵称
+app.post('/api/student-council/change-name', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.json({ ok: false, msg: '请输入名称' });
+
+  sc.name = name.trim();
+  writeSC(sc);
+  // 返回新 token 和新名称
+  const newToken = Buffer.from(JSON.stringify({ id: sc.id, name: sc.name, loginAt: Date.now() })).toString('base64');
+  res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
+});
+
 // 获取通知列表（公开）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();

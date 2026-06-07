@@ -322,6 +322,7 @@ body {
     <div class="publish-bar">
       <div class="user-badge" id="userBadge" style="display:none;">
         &#x1F464; <span id="userName"></span>
+        <span class="logout-link" onclick="openSettingsModal()" style="margin-left:2px;">&#x2699;&#xFE0F;</span>
         <span class="logout-link" onclick="doLogout()">退出</span>
       </div>
       <button class="btn-publish" onclick="checkAndPublish()">&#x270F;&#xFE0F; 发布通知</button>
@@ -356,6 +357,40 @@ body {
       <div class="form-actions">
         <button class="btn-cancel" onclick="closePublishModal()">取消</button>
         <button class="btn-submit" id="publishBtn" onclick="doPublish()">&#x1F4E2; 发布</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Settings Modal ===== -->
+<div class="modal-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsModal()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
+    <div class="modal-header">
+      <h3>&#x2699;&#xFE0F; 账号设置</h3>
+      <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- 修改昵称 -->
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+        <div class="form-group">
+          <label for="settingsName">昵称</label>
+          <input class="form-input" id="settingsName" maxlength="20" placeholder="输入新昵称">
+        </div>
+        <div class="form-error" id="nameError"></div>
+        <button class="btn-submit" style="margin-top:8px;" onclick="doChangeName()">&#x270F;&#xFE0F; 修改昵称</button>
+      </div>
+      <!-- 修改密码 -->
+      <div>
+        <div class="form-group">
+          <label for="settingsOldPwd">旧密码</label>
+          <input class="form-input" id="settingsOldPwd" type="password" maxlength="50" placeholder="输入当前密码">
+        </div>
+        <div class="form-group">
+          <label for="settingsNewPwd">新密码</label>
+          <input class="form-input" id="settingsNewPwd" type="password" maxlength="50" placeholder="至少6位">
+        </div>
+        <div class="form-error" id="pwdError"></div>
+        <button class="btn-submit" onclick="doChangePwd()">&#x1F512; 修改密码</button>
       </div>
     </div>
   </div>
@@ -473,6 +508,70 @@ body {
     document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 设置学生会账号';
     document.getElementById('loginSub').textContent = '首次使用，请创建学生会账号';
     document.getElementById('loginError').textContent = '';
+  };
+
+  // ===== 账号设置 =====
+  window.openSettingsModal = function() {
+    document.getElementById('settingsName').value = currentUser ? currentUser.name : '';
+    document.getElementById('settingsOldPwd').value = '';
+    document.getElementById('settingsNewPwd').value = '';
+    document.getElementById('nameError').textContent = '';
+    document.getElementById('pwdError').textContent = '';
+    document.getElementById('settingsOverlay').style.display = 'flex';
+  };
+
+  window.closeSettingsModal = function() {
+    document.getElementById('settingsOverlay').style.display = 'none';
+  };
+
+  window.doChangeName = async function() {
+    var name = document.getElementById('settingsName').value.trim();
+    var errEl = document.getElementById('nameError');
+    if (!name) { errEl.textContent = '\u8BF7\u8F93\u5165\u6635\u79F0'; return; }
+    errEl.textContent = '';
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/student-council/change-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
+        body: JSON.stringify({ name: name })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        currentUser = json.data;
+        localStorage.setItem(SC_TOKEN_KEY, currentUser.token);
+        document.getElementById('userName').textContent = currentUser.name;
+        showToast('\u2705 \u6635\u79F0\u5DF2\u4FEE\u6539', 'success');
+        closeSettingsModal();
+      } else {
+        errEl.textContent = json.msg || '\u4FEE\u6539\u5931\u8D25';
+      }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
+  };
+
+  window.doChangePwd = async function() {
+    var oldPwd = document.getElementById('settingsOldPwd').value;
+    var newPwd = document.getElementById('settingsNewPwd').value;
+    var errEl = document.getElementById('pwdError');
+    if (!oldPwd || !newPwd) { errEl.textContent = '\u8BF7\u586B\u5199\u5BC6\u7801'; return; }
+    if (newPwd.length < 6) { errEl.textContent = '\u65B0\u5BC6\u7801\u81F3\u5C116\u4F4D'; return; }
+    errEl.textContent = '';
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/student-council/change-pwd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
+        body: JSON.stringify({ oldPwd: oldPwd, newPwd: newPwd })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 \u5BC6\u7801\u5DF2\u4FEE\u6539', 'success');
+        document.getElementById('settingsOldPwd').value = '';
+        document.getElementById('settingsNewPwd').value = '';
+      } else {
+        errEl.textContent = json.msg || '\u4FEE\u6539\u5931\u8D25';
+      }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
   };
 
   // ===== 发布通知 =====
