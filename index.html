@@ -867,6 +867,10 @@
       .pickup-modal-footer { padding: 8px 14px; }
       .pickup-modal-footer span { font-size: 10px !important; }
 
+      /* 通知弹窗移动端 */
+      #notifOverlay > div > div:last-child { flex-direction: column !important; }
+      #notifSidebar { width: 100% !important; min-width: auto !important; max-height: 180px; border-right: none !important; border-bottom: 1px solid #e5e7eb; }
+
       /* 我的拍卖 */
       #pickupMyBidsList { max-height: 260px !important; }
     }
@@ -1371,6 +1375,15 @@
     .notif-item:last-child { border-bottom: none; }
     .notif-item .notif-time { font-size: 11px; color: var(--text-sub); margin-top: 6px; }
     .notif-item.unread { background: rgba(59,130,246,0.04); }
+
+    /* 通知左侧栏 */
+    .notif-sidebar-item {
+      padding: 12px 14px; cursor: pointer; border-bottom: 1px solid #e5e7eb;
+      transition: background 0.15s;
+    }
+    .notif-sidebar-item:hover { background: #e5e7eb; }
+    .notif-sidebar-item.active { background: #dbeafe; }
+    .notif-sidebar-item.active > div:first-child > span:nth-child(2) { color: #2563eb; }
   </style>
 </head>
 <body>
@@ -1539,8 +1552,13 @@
         <h3 style="margin:0;font-size:18px;font-weight:600;">🔔 通知</h3>
         <button class="modal-close" onclick="closeNotifModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;padding:0;line-height:1;">&times;</button>
       </div>
-      <div class="modal-body" id="notifBody" style="flex:1;overflow-y:auto;padding:16px 20px;min-height:200px;">
-        <div class="loading" style="text-align:center;padding:30px;color:var(--text-sub);">加载中…</div>
+      <div style="display:flex;flex:1;overflow:hidden;min-height:300px;">
+        <!-- 左侧：标题列表 -->
+        <div id="notifSidebar" style="width:200px;min-width:200px;overflow-y:auto;border-right:1px solid #e5e7eb;background:#f9fafb;"></div>
+        <!-- 右侧：具体内容 -->
+        <div id="notifContent" style="flex:1;overflow-y:auto;padding:20px 24px;">
+          <div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px;">选择一个通知查看详情</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2689,65 +2707,108 @@
     }
 
     async function loadNotifications() {
-      var body = document.getElementById('notifBody');
-      body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-sub);font-size:13px;">加载中…</div>';
+      var sidebar = document.getElementById('notifSidebar');
+      var content = document.getElementById('notifContent');
+      sidebar.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;font-size:13px;">加载中…</div>';
+      content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px;">选择一个通知查看详情</div>';
+
+      var items = [];
       try {
         // 获取公告
         var annRes = await fetch('/api/announcement');
         var annJson = await annRes.json();
+        if (annJson.ok && annJson.data) {
+          var ann = annJson.data;
+          var annId = localStorage.getItem('announcement_id');
+          items.push({
+            id: 'announcement',
+            icon: '📢',
+            title: ann.title,
+            time: ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '',
+            isNew: annId !== ann.publishedAt,
+            content: ann.content || '',
+            type: '公告'
+          });
+        }
 
-        // 获取认证信息（如果已登录）
-        var certData = null;
+        // 获取认证信息
         var token = localStorage.getItem('campus_user_token');
         if (token) {
           var certRes = await fetch('/api/user/me/zhixue-info', {
             headers: { 'x-user-token': token }
           });
           var certJson = await certRes.json();
-          if (certJson.ok) certData = certJson.data;
+          if (certJson.ok && certJson.data) {
+            var cd = certJson.data;
+            if (cd.status === 'rejected' && cd.rejectReason) {
+              items.push({
+                id: 'cert_rejected',
+                icon: '❌',
+                title: '同学认证被驳回',
+                time: cd.rejectedAt ? new Date(cd.rejectedAt).toLocaleString('zh-CN') : '',
+                isNew: true,
+                content: cd.rejectReason,
+                type: '认证'
+              });
+            }
+            if (cd.status === 'approved') {
+              items.push({
+                id: 'cert_approved',
+                icon: '🎉',
+                title: '同学认证已通过',
+                time: '',
+                isNew: false,
+                content: '你的同学认证已通过审核，现在可以使用智学账号登录和找回密码了。',
+                type: '认证'
+              });
+            }
+          }
         }
+      } catch(e) { /* ignore */ }
 
-        var html = '';
-
-        // 公告通知
-        if (annJson.ok && annJson.data) {
-          var ann = annJson.data;
-          var annId = localStorage.getItem('announcement_id');
-          var isNew = annId !== ann.publishedAt;
-          html += '<div class="notif-item' + (isNew ? ' unread' : '') + '" style="display:flex;gap:14px;padding:14px 16px;">' +
-            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">📢</div>' +
-            '<div style="flex:1;min-width:0;">' +
-            '<div style="font-weight:600;font-size:14px;">' + ann.title + '</div>' +
-            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;line-height:1.5;">' + (ann.content || '').substring(0, 200) + '</div>' +
-            '<div class="notif-time">' + (ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '') + '</div></div></div>';
-        }
-
-        // 认证通知
-        if (certData && certData.status === 'rejected' && certData.rejectReason) {
-          html += '<div class="notif-item unread" style="display:flex;gap:14px;padding:14px 16px;">' +
-            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">❌</div>' +
-            '<div style="flex:1;min-width:0;">' +
-            '<div style="font-weight:600;font-size:14px;">同学认证被驳回</div>' +
-            '<div style="font-size:13px;color:#991b1b;margin-top:4px;line-height:1.5;">' + certData.rejectReason + '</div>' +
-            '<div class="notif-time">' + (certData.rejectedAt ? new Date(certData.rejectedAt).toLocaleString('zh-CN') : '') + '</div></div></div>';
-        }
-        if (certData && certData.status === 'approved') {
-          html += '<div class="notif-item" style="display:flex;gap:14px;padding:14px 16px;">' +
-            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">🎉</div>' +
-            '<div style="flex:1;min-width:0;">' +
-            '<div style="font-weight:600;font-size:14px;">同学认证已通过</div>' +
-            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;line-height:1.5;">你的同学认证已通过审核</div></div></div>';
-        }
-
-        if (!html) {
-          html = '<div style="text-align:center;padding:30px;color:var(--text-sub);font-size:13px;">暂无通知</div>';
-        }
-
-        body.innerHTML = html;
-      } catch (e) {
-        body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--danger);font-size:13px;">加载失败</div>';
+      if (items.length === 0) {
+        sidebar.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">暂无通知</div>';
+        return;
       }
+
+      // 渲染左侧列表
+      var sidebarHtml = '';
+      items.forEach(function(item, i) {
+        sidebarHtml += '<div class="notif-sidebar-item' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '" onclick="showNotifDetail(' + i + ')">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<span>' + item.icon + '</span>' +
+          '<span style="flex:1;font-size:13px;font-weight:' + (item.isNew ? '600' : '400') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + item.title + '</span>' +
+          (item.isNew ? '<span style="width:6px;height:6px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>' : '') +
+          '</div>' +
+          '<div style="font-size:11px;color:#9ca3af;margin-top:2px;padding-left:24px;">' + item.time + '</div></div>';
+      });
+      sidebar.innerHTML = sidebarHtml;
+
+      // 默认显示第一条
+      showNotifDetail(0);
+      window._notifItems = items;
     }
+
+    window.showNotifDetail = function(idx) {
+      var items = window._notifItems || [];
+      if (idx < 0 || idx >= items.length) return;
+
+      // 高亮左侧
+      document.querySelectorAll('.notif-sidebar-item').forEach(function(el) {
+        el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+      });
+
+      // 渲染右侧
+      var item = items[idx];
+      var content = document.getElementById('notifContent');
+      content.innerHTML = '<div style="margin-bottom:16px;">' +
+        '<span style="font-size:12px;color:#6b7280;background:#f3f4f6;padding:2px 10px;border-radius:10px;">' + item.type + '</span>' +
+        '</div>' +
+        '<div style="font-size:20px;margin-bottom:4px;">' + item.icon + '</div>' +
+        '<h2 style="font-size:18px;font-weight:600;margin:0 0 8px;color:#1f2937;">' + item.title + '</h2>' +
+        (item.time ? '<div style="font-size:12px;color:#9ca3af;margin-bottom:14px;">' + item.time + '</div>' : '') +
+        '<div style="font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">' + item.content + '</div>';
+    };
 
     // ===== 同学认证引导 =====
     function showCertGuide() {
