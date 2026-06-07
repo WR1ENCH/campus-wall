@@ -1428,7 +1428,7 @@
       <button class="compose-btn" onclick="openModal()">✏️ <span class="btn-label">贴一张</span></button>
       <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 <span class="btn-label">讨论区</span></button>
       <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 <span class="btn-label">你问我答</span></button>
-      <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知" style="background:transparent;border:1.5px solid rgba(0,0,0,0.1);border-radius:4px;font-size:16px;padding:6px 10px;cursor:pointer;">🔔</button>
+      <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知" style="background:transparent;border:1.5px solid rgba(0,0,0,0.1);border-radius:4px;font-size:16px;padding:6px 10px;cursor:pointer;position:relative;">🔔<span id="notifBadge" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:2px solid #fff;"></span></button>
     </div>
     <!-- 校园墙拍卖滚动栏 -->
     <div class="pickup-bar">
@@ -2696,6 +2696,9 @@
     }
 
     // ===== 通知中心 =====
+    var _notifUnreadCheck = function(id) { return !localStorage.getItem('notif_read_' + id); };
+    var _notifMarkRead = function(id) { localStorage.setItem('notif_read_' + id, '1'); };
+
     function openNotifModal() {
       var overlay = document.getElementById('notifOverlay');
       overlay.style.display = 'flex';
@@ -2713,6 +2716,8 @@
       content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px;">选择一个通知查看详情</div>';
 
       var items = [];
+      var unreadCount = 0;
+
       try {
         // 获取公告
         var annRes = await fetch('/api/announcement');
@@ -2720,15 +2725,17 @@
         if (annJson.ok && annJson.data) {
           var ann = annJson.data;
           var annId = localStorage.getItem('announcement_id');
+          var isNew = annId !== ann.publishedAt;
           items.push({
             id: 'announcement',
             icon: '📢',
             title: ann.title,
             time: ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '',
-            isNew: annId !== ann.publishedAt,
+            isNew: isNew,
             content: ann.content || '',
             type: '公告'
           });
+          if (isNew) unreadCount++;
         }
 
         // 获取学生会通知
@@ -2737,15 +2744,18 @@
           var notifJson = await notifRes.json();
           if (notifJson.ok && notifJson.data) {
             (notifJson.data || []).forEach(function(n) {
+              var nid = 'sc_' + n.id;
+              var nu = _notifUnreadCheck(nid);
               items.push({
-                id: 'sc_' + n.id,
+                id: nid,
                 icon: '📋',
                 title: n.title,
                 time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
-                isNew: true,
+                isNew: nu,
                 content: n.content || '',
                 type: n.author || '通知'
               });
+              if (nu) unreadCount++;
             });
           }
         } catch(e) { /* ignore */ }
@@ -2760,30 +2770,38 @@
           if (certJson.ok && certJson.data) {
             var cd = certJson.data;
             if (cd.status === 'rejected' && cd.rejectReason) {
+              var nu = _notifUnreadCheck('cert_rejected');
               items.push({
                 id: 'cert_rejected',
                 icon: '❌',
                 title: '同学认证被驳回',
                 time: cd.rejectedAt ? new Date(cd.rejectedAt).toLocaleString('zh-CN') : '',
-                isNew: true,
+                isNew: nu,
                 content: cd.rejectReason,
                 type: '认证'
               });
+              if (nu) unreadCount++;
             }
             if (cd.status === 'approved') {
+              var nu = _notifUnreadCheck('cert_approved');
               items.push({
                 id: 'cert_approved',
                 icon: '🎉',
                 title: '同学认证已通过',
                 time: '',
-                isNew: false,
+                isNew: nu,
                 content: '你的同学认证已通过审核，现在可以使用智学账号登录和找回密码了。',
                 type: '认证'
               });
+              if (nu) unreadCount++;
             }
           }
         }
       } catch(e) { /* ignore */ }
+
+      // 更新按钮红点
+      var badge = document.getElementById('notifBadge');
+      if (badge) badge.style.display = unreadCount > 0 ? '' : 'none';
 
       if (items.length === 0) {
         sidebar.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">暂无通知</div>';
@@ -2797,7 +2815,7 @@
           '<div style="display:flex;align-items:center;gap:8px;">' +
           '<span>' + item.icon + '</span>' +
           '<span style="flex:1;font-size:13px;font-weight:' + (item.isNew ? '600' : '400') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + item.title + '</span>' +
-          (item.isNew ? '<span style="width:6px;height:6px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>' : '') +
+          (item.isNew ? '<span class="unread-dot" style="width:6px;height:6px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></span>' : '') +
           '</div>' +
           '<div style="font-size:11px;color:#9ca3af;margin-top:2px;padding-left:24px;">' + item.time + '</div></div>';
       });
@@ -2811,6 +2829,22 @@
     window.showNotifDetail = function(idx) {
       var items = window._notifItems || [];
       if (idx < 0 || idx >= items.length) return;
+
+      // 标记为已读
+      if (items[idx].isNew) {
+        _notifMarkRead(items[idx].id);
+        items[idx].isNew = false;
+        // 更新左侧蓝点
+        var el = document.querySelector('.notif-sidebar-item[data-idx="' + idx + '"]');
+        if (el) {
+          var dot = el.querySelector('.unread-dot');
+          if (dot) dot.style.display = 'none';
+        }
+        // 重新计算未读总数，更新红点
+        var unread = items.filter(function(i) { return i.isNew; }).length;
+        var badge = document.getElementById('notifBadge');
+        if (badge) badge.style.display = unread > 0 ? '' : 'none';
+      }
 
       // 高亮左侧
       document.querySelectorAll('.notif-sidebar-item').forEach(function(el) {
