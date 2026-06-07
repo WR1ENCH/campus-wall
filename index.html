@@ -1725,6 +1725,58 @@
     </div>
   </div>
 
+  <!-- ===== 认证驳回弹窗 ===== -->
+  <div class="modal-overlay" id="certRejectedOverlay" style="display:none; animation: qaOverlayIn 0.3s ease;">
+    <div class="modal" style="max-width:420px; animation: qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+      <div class="modal-header">❌ 同学认证被驳回</div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="font-size:14px;background:#fef2f2;border-radius:12px;padding:16px;margin-bottom:16px;line-height:1.7;color:#991b1b;text-align:left;">
+          <div style="font-weight:600;margin-bottom:6px;">驳回原因：</div>
+          <div id="certRejectReasonText" style="font-size:13px;"></div>
+        </div>
+        <p style="font-size:13px;color:var(--text-sub);margin-bottom:18px;">你可以修改认证信息后重新提交审核。</p>
+        <button onclick="goCertify()" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">✏️ 重新填写认证信息</button>
+        <button onclick="hideCertRejected()" style="display:block;margin:10px auto 0;padding:8px 16px;border:none;background:none;color:var(--text-sub);font-size:13px;cursor:pointer;">稍后再说</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 认证通过弹窗（手动认证） ===== -->
+  <div class="modal-overlay" id="certApprovedOverlay" style="display:none; animation: qaOverlayIn 0.3s ease;">
+    <div class="modal" style="max-width:400px; animation: qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+      <div class="modal-header">🎉 同学认证已通过</div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="font-size:48px;margin:10px 0;">🎓</div>
+        <p style="font-size:15px;color:var(--text-main);font-weight:500;margin-bottom:6px;">恭喜！你的同学认证已通过审核</p>
+        <p style="font-size:13px;color:var(--text-sub);margin-bottom:18px;">现在你可以使用智学账号登录和找回密码了</p>
+        <button onclick="hideCertApproved()" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 智学认证信息确认弹窗 ===== -->
+  <div class="modal-overlay" id="certConfirmOverlay" style="display:none; animation: qaOverlayIn 0.3s ease;">
+    <div class="modal" style="max-width:420px; animation: qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+      <div class="modal-header">📋 确认认证信息</div>
+      <div class="modal-body" style="text-align:center;">
+        <p style="font-size:13px;color:var(--text-sub);margin-bottom:16px;">管理员已审核通过你的智学认证，请确认以下信息是否为你本人：</p>
+        <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:16px;text-align:left;">
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #dcfce7;">
+            <span style="color:#166534;font-weight:500;">👤 姓名</span>
+            <span id="certConfirmName" style="color:#166534;font-weight:600;"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 0;">
+            <span style="color:#166534;font-weight:500;">🏫 班级</span>
+            <span id="certConfirmClass" style="color:#166534;font-weight:600;"></span>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-sub);margin-bottom:18px;">确认后信息将与账号永久绑定，并获得 300 Credits 奖励</p>
+        <button onclick="doConfirmZhixue()" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">✅ 确认为本人信息</button>
+        <button onclick="doDenyZhixue()" style="display:block;margin:10px auto 0;padding:8px 16px;border:none;background:none;color:var(--danger);font-size:13px;cursor:pointer;text-decoration:underline;">❌ 不是本人信息，重新填写</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 校园墙拍卖弹窗 ===== -->
   <div class="modal-overlay" id="pickupOverlay" onclick="closePickupOverlay(event)" style="display:none;">
     <div onclick="event.stopPropagation()" class="pickup-modal" style="animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
@@ -2227,7 +2279,7 @@
           localStorage.setItem('campus_user_token', token);
           updateUserBar();
           checkAnnouncement();
-          if (currentUser.zhixueStatus !== 'approved') showCertGuide();
+          if (currentUser.zhixueStatus !== 'approved') checkCertResult();
           return true;
         } else {
           // 令牌失效，清除
@@ -2350,7 +2402,7 @@
             showTrustBrowserModal();
           }
           checkAnnouncement();
-          showCertGuide();
+          checkCertResult();
           // 被封禁：弹窗提示，关闭后自动退出登录
           if (json.banned) {
             showBannedPopup(json.banInfo || {});
@@ -2398,7 +2450,7 @@
             showTrustBrowserModal();
           }
           checkAnnouncement();
-          showCertGuide();
+          checkCertResult();
           // 被封禁：弹窗提示，关闭后自动退出登录
           if (json.banned) {
             showBannedPopup(json.banInfo || {});
@@ -2449,7 +2501,7 @@
             _pendingTrustUser = { token };
             showTrustBrowserModal();
           }
-          showCertGuide();
+          checkCertResult();
           // 等信任浏览器 + 同学认证两个弹窗都关闭后再触发新手引导
           _pendingNewbieGuide = true;
           tryStartNewbieGuide();
@@ -2554,7 +2606,7 @@
       }
       // 已登录但未完成同学认证 → 弹出认证引导
       if (currentUser && currentUser.zhixueStatus !== 'approved') {
-        showCertGuide();
+        checkCertResult();
       }
     }
 
@@ -2607,9 +2659,106 @@
     }
     function goCertify() {
       document.getElementById('certGuideOverlay').style.display = 'none';
+      document.getElementById('certRejectedOverlay').style.display = 'none';
       tryStartNewbieGuide();
       if (currentUser && currentUser.id) {
         window.open('user.html?id=' + currentUser.id, '_blank');
+      }
+    }
+
+    // ===== 认证结果弹窗 =====
+    let _certResultChecked = false;
+
+    // 登录后检查认证结果并弹出相应窗口
+    async function checkCertResult() {
+      if (_certResultChecked) return;
+      if (!currentUser || !currentUser.id) return;
+      _certResultChecked = true;
+      try {
+        const resp = await fetch('/api/user/me/zhixue-info', {
+          headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
+        });
+        const json = await resp.json();
+        if (!json.ok) { showCertGuide(); return; }
+        if (!json.data) { showCertGuide(); return; } // 无认证数据
+        const info = json.data;
+
+        if (info.status === 'rejected' && info.rejectReason) {
+          // 驳回弹窗
+          document.getElementById('certRejectReasonText').textContent = info.rejectReason;
+          document.getElementById('certRejectedOverlay').style.display = 'flex';
+        } else if (info.status === 'pending_confirm') {
+          // 智学认证确认弹窗
+          document.getElementById('certConfirmName').textContent = info.realName || '(未填写)';
+          document.getElementById('certConfirmClass').textContent = info.className || '(未填写)';
+          document.getElementById('certConfirmOverlay').style.display = 'flex';
+        } else if (info.status === 'approved' && info.type === 'manual') {
+          // 手动认证通过弹窗（仅一次）
+          const ackKey = 'cert_approved_ack_' + currentUser.id;
+          if (!localStorage.getItem(ackKey)) {
+            document.getElementById('certApprovedOverlay').style.display = 'flex';
+            localStorage.setItem(ackKey, '1');
+          }
+        } else if (info.status !== 'approved') {
+          // 其他非通过状态 → 显示认证引导
+          showCertGuide();
+        }
+      } catch (e) {
+        console.warn('检查认证结果失败', e);
+        showCertGuide();
+      }
+    }
+
+    function hideCertRejected() {
+      document.getElementById('certRejectedOverlay').style.display = 'none';
+      tryStartNewbieGuide();
+    }
+
+    function hideCertApproved() {
+      document.getElementById('certApprovedOverlay').style.display = 'none';
+      tryStartNewbieGuide();
+    }
+
+    async function doConfirmZhixue() {
+      try {
+        const resp = await fetch('/api/user/confirm-zhixue', {
+          method: 'POST',
+          headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
+        });
+        const json = await resp.json();
+        if (json.ok) {
+          document.getElementById('certConfirmOverlay').style.display = 'none';
+          currentUser.zhixueStatus = 'approved';
+          showToast('🎉 ' + json.msg, 'success');
+          tryStartNewbieGuide();
+        } else {
+          showToast('❌ ' + (json.msg || '操作失败'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ 网络错误', 'error');
+      }
+    }
+
+    async function doDenyZhixue() {
+      try {
+        const resp = await fetch('/api/user/deny-zhixue', {
+          method: 'POST',
+          headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
+        });
+        const json = await resp.json();
+        if (json.ok) {
+          document.getElementById('certConfirmOverlay').style.display = 'none';
+          currentUser.zhixueStatus = null;
+          showToast('ℹ️ ' + json.msg, 'info');
+          // 跳转到用户主页重新提交
+          if (currentUser && currentUser.id) {
+            window.open('user.html?id=' + currentUser.id, '_blank');
+          }
+        } else {
+          showToast('❌ ' + (json.msg || '操作失败'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ 网络错误', 'error');
       }
     }
 

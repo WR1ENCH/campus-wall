@@ -1505,6 +1505,32 @@
   </div>
 </div>
 
+<!-- ===== 驳回认证：填写原因弹窗 ===== -->
+<div class="modal-overlay" id="rejectCertModal" onclick="if(event.target===this)closeRejectCertModal()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>❌ 驳回认证申请</h3>
+      <button class="modal-close" onclick="closeRejectCertModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#6b5a4e;margin:0 0 18px;line-height:1.6;">
+        驳回后用户将收到通知，并可以重新提交认证信息。
+      </p>
+      <div style="margin-bottom:4px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:#4a3728;margin-bottom:6px;">
+          驳回原因 <span style="color:#dc2626;">*</span>
+        </label>
+        <textarea id="rejectCertReason" rows="4" maxlength="500" placeholder="请填写驳回原因，用户将看到此说明"
+          style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeRejectCertModal()">取消</button>
+      <button class="btn-primary" id="rejectCertConfirmBtn" onclick="submitRejectCert()" style="background:var(--danger);">❌ 确认驳回</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 管理员弹窗（添加/编辑） ===== -->
 <div class="modal-overlay" id="adminModal" onclick="if(event.target===this)closeAdminModal()">
   <div class="modal">
@@ -3189,19 +3215,56 @@
       openApproveCertModal(userId, manualName || '');
     }
 
-  async function rejectZhixue(userId) {
-    if (!confirm('确定拒绝该认证申请？')) return;
-    try {
-      const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
-        method: 'PUT',
+    let _pendingRejectUserId = null;
+
+    function openRejectCertModal(userId) {
+      _pendingRejectUserId = userId;
+      document.getElementById('rejectCertReason').value = '';
+      document.getElementById('rejectCertModal').classList.add('show');
+      setTimeout(() => document.getElementById('rejectCertReason').focus(), 100);
+    }
+
+    function closeRejectCertModal() {
+      document.getElementById('rejectCertModal').classList.remove('show');
+      _pendingRejectUserId = null;
+    }
+
+    async function submitRejectCert() {
+      const userId = _pendingRejectUserId;
+      if (!userId) return;
+      const reason = document.getElementById('rejectCertReason').value.trim();
+      if (!reason) {
+        document.getElementById('rejectCertReason').style.borderColor = '#dc2626';
+        document.getElementById('rejectCertReason').focus();
+        return;
+      }
+      document.getElementById('rejectCertReason').style.borderColor = '#d4c5a9';
+      const btn = document.getElementById('rejectCertConfirmBtn');
+      btn.disabled = true; btn.textContent = '提交中…';
+      try {
+        const res = await fetch('/api/admin/zhixue/' + userId + '/review', {
+          method: 'PUT',
           headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'reject' })
-      });
-      const json = await res.json();
-      if (json.ok) { alert('已拒绝'); loadZhixuePending(); }
-      else alert(json.msg || '操作失败');
-    } catch (e) { alert('操作失败：' + e.message); }
-  }
+          body: JSON.stringify({ action: 'reject', rejectReason: reason })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          closeRejectCertModal();
+          showToast('✅ 已驳回');
+          loadZhixuePending();
+        } else {
+          showToast('❌ ' + (json.msg || '操作失败'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ 操作失败：' + e.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = '❌ 确认驳回';
+      }
+    }
+
+    function rejectZhixue(userId) {
+      openRejectCertModal(userId);
+    }
 
     function updateClock() {
     const now = new Date();

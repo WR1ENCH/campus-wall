@@ -775,9 +775,9 @@ app.post('/api/user/zhixue-login', (req, res) => {
   }
 
   const users = readUsers();
-  let user = users.find(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+  let user = users.find(u => u.zhixueUsername === zhixueUsername && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
   // 防御：approved 必须有审核记录
-  if (user && !user.zhixueReviewedBy) {
+  if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
     console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
     user = null;
   }
@@ -1317,9 +1317,10 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   }
 
   const realName = decryptCert ? decryptCert(user.certRealName) : null;
-  // 未通过审核时，返回编辑所需的预填数据（手动认证字段 / 智学账号）
+  const className = user.certClassName ? (decryptCert ? decryptCert(user.certClassName) : null) : null;
+  // 未通过审核或被驳回时，返回编辑所需的预填数据
   let editData = null;
-  if (displayStatus !== 'approved') {
+  if (displayStatus !== 'approved' && displayStatus !== 'pending_confirm') {
     editData = {
       certType: user.zhixueCertType || 'zhixue',
       zhixueUsername: user.zhixueUsername || null,
@@ -1336,8 +1337,11 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
       zhixueUsername: user.zhixueUsername,
       status: displayStatus,
       submittedAt: user.zhixueSubmittedAt || null,
-      realName: (displayStatus === 'approved' && realName) ? realName : null,
-      editData   // 非 approved 时用于前端预填表单
+      realName: ((displayStatus === 'approved' || displayStatus === 'pending_confirm') && realName) ? realName : null,
+      className: (displayStatus === 'pending_confirm' && className) ? className : null,
+      rejectReason: displayStatus === 'rejected' ? (user.zhixueRejectReason || null) : null,
+      rejectedAt: displayStatus === 'rejected' ? (user.zhixueRejectedAt || null) : null,
+      editData
     }
   });
 });
@@ -1364,43 +1368,121 @@ app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
 
 // 审核同学认证（通过/拒绝）
 app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
-  const { action, realName, className } = req.body; // action: approve | reject
+  const { action, realName, className, rejectReason } = req.body; // action: approve | reject
   if (!['approve', 'reject'].includes(action)) {
     return res.json({ ok: false, msg: '无效的操作' });
   }
-  // 通过时：智学认证必须填写姓名；手动认证有 manualName 兜底，管理员可不填
-  if (action === 'approve') {
-    const u = (readUsers()).find(u => u.id === req.params.userId);
-    const isManual = u && u.zhixueCertType === 'manual';
-    const hasManualName = u && u.zhixueManualName;
-    if (!isManual && !hasManualName && (!realName || !realName.trim())) {
-      return res.json({ ok: false, msg: '请填写学生姓名' });
+
+  // 拒绝时必须填写原因
+  if (action === 'reject') {
+    if (!rejectReason || !rejectReason.trim()) {
+      return res.json({ ok: false, msg: '请填写驳回原因' });
     }
   }
+
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === req.params.userId);
   if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
-  users[userIndex].zhixueStatus = action === 'approve' ? 'approved' : 'rejected';
-  users[userIndex].zhixueReviewedAt = new Date().toISOString();
-  users[userIndex].zhixueReviewedBy = req.admin.id;
+  const now = new Date().toISOString();
 
-  // 通过后：加密存储姓名班级，隐藏密码，奖励 300 Credits
-  if (action === 'approve') {
-    users[userIndex].zhixuePassword = null;
-    users[userIndex].credit = (users[userIndex].credit || 0) + 300;
-    // 智学验证：管理员填写的姓名；手动认证：若管理员填了就用管理员的，否则用用户提交的 manualName
-    const nameToStore = (realName && realName.trim())
-      ? realName.trim()
-      : (users[userIndex].zhixueManualName || null);
-    if (nameToStore) {
-      users[userIndex].certRealName = encryptCert(nameToStore);
-    }
-    users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
+  if (action === 'reject') {
+    users[userIndex].zhixueStatus = 'rejected';
+    users[userIndex].zhixueRejectReason = rejectReason.trim();
+    users[userIndex].zhixueRejectedAt = now;
+    users[userIndex].zhixueReviewedAt = now;
+    users[userIndex].zhixueReviewedBy = req.admin.id;
+    writeUsers(users);
+    return res.json({ ok: true, msg: '已拒绝该申请' });
   }
+
+  // === approve 流程 ===
+  // 通过时：智学认证必须填写姓名；手动认证有 manualName 兜底，管理员可不填
+  const u = users[userIndex];
+  const isManual = u.zhixueCertType === 'manual';
+  const hasManualName = u.zhixueManualName;
+  if (!isManual && !hasManualName && (!realName || !realName.trim())) {
+    return res.json({ ok: false, msg: '请填写学生姓名' });
+  }
+
+  // 智学认证 → pending_confirm（等待用户确认）
+  // 手动认证 → approved（直接通过）
+  users[userIndex].zhixueStatus = isManual ? 'approved' : 'pending_confirm';
+  users[userIndex].zhixueReviewedAt = now;
+  users[userIndex].zhixueReviewedBy = req.admin.id;
+  users[userIndex].zhixuePassword = null;
+  users[userIndex].zhixueRejectReason = null;
+  users[userIndex].zhixueRejectedAt = null;
+
+  // 加密存储姓名班级（pending_confirm 时也存，供用户确认时展示）
+  const nameToStore = (realName && realName.trim())
+    ? realName.trim()
+    : (u.zhixueManualName || null);
+  if (nameToStore) {
+    users[userIndex].certRealName = encryptCert(nameToStore);
+  }
+  users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
+
+  if (isManual) {
+    // 手动认证直接通过，奖励 Credits
+    users[userIndex].credit = (users[userIndex].credit || 0) + 300;
+  }
+
   writeUsers(users);
 
-  res.json({ ok: true, msg: action === 'approve' ? '已通过审核' : '已拒绝' });
+  if (isManual) {
+    return res.json({ ok: true, msg: '已通过审核' });
+  } else {
+    return res.json({ ok: true, msg: '审核通过，等待用户确认信息', pendingConfirm: true });
+  }
+});
+
+// 用户确认智学认证信息（pending_confirm → approved）
+app.post('/api/user/confirm-zhixue', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
+  if (users[userIndex].zhixueStatus !== 'pending_confirm') {
+    return res.json({ ok: false, msg: '当前无需确认认证信息' });
+  }
+
+  users[userIndex].zhixueStatus = 'approved';
+  users[userIndex].zhixueConfirmedAt = new Date().toISOString();
+  // 奖励 Credits（确认时才发放）
+  users[userIndex].credit = (users[userIndex].credit || 0) + 300;
+  writeUsers(users);
+
+  res.json({ ok: true, msg: '认证信息已确认，欢迎！' });
+});
+
+// 用户否认智学认证信息（pending_confirm → rejected）
+app.post('/api/user/deny-zhixue', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === session.id);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  if (users[userIndex].zhixueStatus !== 'pending_confirm') {
+    return res.json({ ok: false, msg: '当前无需确认认证信息' });
+  }
+
+  users[userIndex].zhixueStatus = 'rejected';
+  users[userIndex].zhixueRejectReason = '你确认提交的信息并非本人，请重新填写正确的信息';
+  users[userIndex].zhixueRejectedAt = new Date().toISOString();
+  users[userIndex].certRealName = null;
+  users[userIndex].certClassName = null;
+  writeUsers(users);
+
+  res.json({ ok: true, msg: '已标记为未通过，请重新提交认证信息' });
 });
 
 // 获取指定用户公开信息（通过用户ID）
