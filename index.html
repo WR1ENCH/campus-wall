@@ -1365,12 +1365,12 @@
 
     /* 通知弹窗列表项 */
     .notif-item {
-      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid #e5e7eb;
       line-height: 1.5;
     }
     .notif-item:last-child { border-bottom: none; }
-    .notif-item .notif-time { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
-    .notif-item.unread { background: rgba(59,130,246,0.05); border-left: 3px solid #3b82f6; }
+    .notif-item .notif-time { font-size: 11px; color: var(--text-sub); margin-top: 6px; }
+    .notif-item.unread { background: rgba(59,130,246,0.04); }
   </style>
 </head>
 <body>
@@ -2714,23 +2714,29 @@
           var ann = annJson.data;
           var annId = localStorage.getItem('announcement_id');
           var isNew = annId !== ann.publishedAt;
-          html += '<div class="notif-item' + (isNew ? ' unread' : '') + '">' +
-            '<div style="font-weight:600;font-size:14px;">📢 ' + ann.title + '</div>' +
-            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;">' + (ann.content || '').substring(0, 200) + '</div>' +
-            '<div class="notif-time">' + (ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '') + '</div></div>';
+          html += '<div class="notif-item' + (isNew ? ' unread' : '') + '" style="display:flex;gap:14px;padding:14px 16px;">' +
+            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">📢</div>' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="font-weight:600;font-size:14px;">' + ann.title + '</div>' +
+            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;line-height:1.5;">' + (ann.content || '').substring(0, 200) + '</div>' +
+            '<div class="notif-time">' + (ann.publishedAt ? new Date(ann.publishedAt).toLocaleString('zh-CN') : '') + '</div></div></div>';
         }
 
         // 认证通知
         if (certData && certData.status === 'rejected' && certData.rejectReason) {
-          html += '<div class="notif-item unread">' +
-            '<div style="font-weight:600;font-size:14px;">❌ 同学认证被驳回</div>' +
-            '<div style="font-size:13px;color:#991b1b;margin-top:4px;">' + certData.rejectReason + '</div>' +
-            '<div class="notif-time">' + (certData.rejectedAt ? new Date(certData.rejectedAt).toLocaleString('zh-CN') : '') + '</div></div>';
+          html += '<div class="notif-item unread" style="display:flex;gap:14px;padding:14px 16px;">' +
+            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">❌</div>' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="font-weight:600;font-size:14px;">同学认证被驳回</div>' +
+            '<div style="font-size:13px;color:#991b1b;margin-top:4px;line-height:1.5;">' + certData.rejectReason + '</div>' +
+            '<div class="notif-time">' + (certData.rejectedAt ? new Date(certData.rejectedAt).toLocaleString('zh-CN') : '') + '</div></div></div>';
         }
         if (certData && certData.status === 'approved') {
-          html += '<div class="notif-item">' +
-            '<div style="font-weight:600;font-size:14px;">🎉 同学认证已通过</div>' +
-            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;">你的同学认证已通过审核</div></div>';
+          html += '<div class="notif-item" style="display:flex;gap:14px;padding:14px 16px;">' +
+            '<div style="flex-shrink:0;width:48px;text-align:center;font-size:22px;padding-top:2px;">🎉</div>' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="font-weight:600;font-size:14px;">同学认证已通过</div>' +
+            '<div style="font-size:13px;color:var(--text-sub);margin-top:4px;line-height:1.5;">你的同学认证已通过审核</div></div></div>';
         }
 
         if (!html) {
