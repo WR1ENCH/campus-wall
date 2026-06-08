@@ -740,6 +740,15 @@
       </div>
     </div>
 
+    <!-- 通知管理 -->
+    <div class="nav-section">
+      <div class="nav-label">通知管理</div>
+      <div class="nav-item" onclick="showPage('noticeApps', this)">
+        <span class="nav-icon">📨</span>
+        <span>通知账号申请</span>
+      </div>
+    </div>
+
     <!-- 数据保留 -->
     <div class="nav-section">
       <div class="nav-label">数据保留</div>
@@ -963,6 +972,28 @@
         </div>
         <div style="display:flex;gap:10px;margin-top:8px;">
           <button class="btn-confirm" onclick="saveAnnouncement()">📢 发布公告</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知账号申请审核 -->
+    <div class="page" id="page-noticeApps" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            待审核 <strong id="noticeAppCount">0</strong> 条
+          </span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadNoticeApps()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>通知发布账号申请</span>
+          </div>
+        </div>
+        <div id="noticeAppsBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
         </div>
       </div>
     </div>
@@ -1537,6 +1568,37 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeRejectCertModal()">取消</button>
       <button class="btn-primary" id="rejectCertConfirmBtn" onclick="submitRejectCert()" style="background:var(--danger);">❌ 确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 通知账号申请：通过弹窗 ===== -->
+<div class="modal-overlay" id="approveAppModal" onclick="if(event.target===this)closeApproveAppModal()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>✅ 通过申请</h3>
+      <button class="modal-close" onclick="closeApproveAppModal()">x</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub);margin-bottom:16px;line-height:1.6;">
+        通过后将自动为该用户创建通知发布账号。
+      </p>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">账号ID</label>
+        <input id="approveAppId" maxlength="30" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">账号名称</label>
+        <input id="approveAppName" maxlength="30" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:4px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">初始密码 <span style="font-weight:400;color:var(--text-sub);font-size:12px;">（留空自动生成）</span></label>
+        <input id="approveAppPwd" maxlength="50" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="自动生成8位随机密码">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeApproveAppModal()">取消</button>
+      <button class="btn-primary" id="approveAppConfirmBtn" onclick="submitApproveApp()">✅ 确认通过</button>
     </div>
   </div>
 </div>
@@ -3376,6 +3438,7 @@
     if (id === 'creditcards') { loadCards(); }
     if (id === 'creditadmin') { loadCreditOverview(); }
     if (id === 'deleted') { loadDeletedContent(); }
+    if (id === 'noticeApps') { loadNoticeApps(); }
   }
 
   function refreshCurrent() {
@@ -4697,6 +4760,124 @@
       }
     });
     body.innerHTML = html;
+  }
+
+  // ===== 通知账号申请管理 =====
+  var _pendingApproveId = null;
+
+  async function loadNoticeApps() {
+    var body = document.getElementById('noticeAppsBody');
+    body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      var res = await fetch('/api/admin/notice-applications', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) { body.innerHTML = '<div class="error">' + (json.msg || '加载失败') + '</div>'; return; }
+      var data = json.data || [];
+      var pending = data.filter(function(a) { return a.status === 'pending'; });
+      document.getElementById('noticeAppCount').textContent = pending.length;
+      if (data.length === 0) {
+        body.innerHTML = '<div class="empty">暂无申请</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(a) {
+        var time = a.createdAt ? new Date(a.createdAt).toLocaleString('zh-CN') : '-';
+        var statusHtml = a.status === 'pending'
+          ? '<span style=\"color:#d97706;font-weight:600;\">⏳ 待审核</span>'
+          : a.status === 'approved'
+            ? '<span style=\"color:#16a34a;font-weight:600;\">✅ 已通过</span>'
+            : '<span style=\"color:#dc2626;font-weight:600;\">❌ 已拒绝</span>';
+        var reviewTime = a.reviewedAt ? new Date(a.reviewedAt).toLocaleString('zh-CN') : '';
+        html += '<div class="user-card" style=\"padding:16px;border-bottom:1px solid var(--border);\">' +
+          '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;gap:10px;\">' +
+          '<div style=\"flex:1;\">' +
+          '<div style=\"font-weight:600;font-size:14px;margin-bottom:4px;\">👤 ' + escHtml(a.name || '') + '</div>' +
+          '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:6px;\">' +
+          '📂 ' + escHtml(a.department || '') + ' · 📞 ' + escHtml(a.contact || '') +
+          '</div>' +
+          '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:6px;padding:8px;background:var(--bg-main);border-radius:8px;\">' +
+          '💬 ' + escHtml(a.reason || '') +
+          '</div>' +
+          '<div style=\"font-size:12px;color:var(--text-sub);\">' +
+          '📅 ' + time + ' · ' + statusHtml +
+          (a.reviewedAt ? ' · 审核时间：' + reviewTime : '') +
+          (a.accountId ? ' · 账号：<code>' + escHtml(a.accountId) + '</code>' : '') +
+          '</div></div>' +
+          (a.status === 'pending'
+            ? '<div style=\"display:flex;gap:6px;flex-shrink:0;\">' +
+              '<button class=\"btn-primary\" style=\"font-size:12px;padding:6px 12px;\" onclick=\"openApproveAppModal(\'' + a.id + '\')\">✅ 通过</button>' +
+              '<button class=\"btn-danger\" style=\"font-size:12px;padding:6px 12px;\" onclick=\"rejectApp(\'' + a.id + '\')\">❌ 拒绝</button></div>'
+            : '') +
+          '</div></div>';
+      });
+      body.innerHTML = html;
+    } catch(e) {
+      body.innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+    }
+  }
+
+  // 通过申请
+  function openApproveAppModal(appId) {
+    _pendingApproveId = appId;
+    document.getElementById('approveAppId').value = 'sc_' + appId.slice(0, 8);
+    document.getElementById('approveAppName').value = '';
+    document.getElementById('approveAppPwd').value = '';
+    document.getElementById('approveAppModal').classList.add('show');
+  }
+
+  function closeApproveAppModal() {
+    document.getElementById('approveAppModal').classList.remove('show');
+    _pendingApproveId = null;
+  }
+
+  async function submitApproveApp() {
+    var appId = _pendingApproveId;
+    if (!appId) return;
+    var accountId = document.getElementById('approveAppId').value.trim();
+    var accountName = document.getElementById('approveAppName').value.trim();
+    var accountPwd = document.getElementById('approveAppPwd').value.trim();
+    if (!accountId) { alert('请填写账号ID'); return; }
+    var btn = document.getElementById('approveAppConfirmBtn');
+    btn.disabled = true; btn.textContent = '处理中…';
+    try {
+      var res = await fetch('/api/admin/notice-applications/' + appId + '/review', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', accountId: accountId, accountName: accountName, accountPwd: accountPwd })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        closeApproveAppModal();
+        if (json.data) {
+          showToast('✅ 已通过！账号：' + json.data.accountId + '，密码：' + json.data.accountPwd, 'success');
+        } else {
+          showToast('✅ ' + json.msg, 'success');
+        }
+        loadNoticeApps();
+      } else {
+        alert('操作失败：' + (json.msg || '未知错误'));
+      }
+    } catch(e) { alert('网络错误'); }
+    finally { btn.disabled = false; btn.textContent = '✅ 确认通过'; }
+  }
+
+  // 拒绝申请
+  async function rejectApp(appId) {
+    if (!confirm('确定拒绝该申请吗？')) return;
+    try {
+      var res = await fetch('/api/admin/notice-applications/' + appId + '/review', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadNoticeApps();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
   }
 
   // ===== 启动 =====
