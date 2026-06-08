@@ -4791,6 +4791,18 @@ app.put('/api/notices/:id', (req, res) => {
 
 // ===== 通知发布账号申请 =====
 const APP_FILE = path.join(DATA_DIR, 'notice_applications.json');
+const PASSKEY_FILE = path.join(DATA_DIR, 'notice_passkey.json');
+
+function readPasskey() {
+  try {
+    if (!fs.existsSync(PASSKEY_FILE)) return null;
+    return JSON.parse(fs.readFileSync(PASSKEY_FILE, 'utf-8'));
+  } catch { return null; }
+}
+
+function writePasskey(data) {
+  fs.writeFileSync(PASSKEY_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
 
 function readApps() {
   try {
@@ -4803,9 +4815,19 @@ function writeApps(data) {
   fs.writeFileSync(APP_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// 提交申请（公开）
+// 提交申请（公开，需 pass-key）
 app.post('/api/notice-account/apply', (req, res) => {
-  const { name, department, contact, reason } = req.body;
+  const { name, department, contact, reason, passkey } = req.body;
+
+  // 验证 pass-key
+  const stored = readPasskey();
+  if (!stored || !stored.key) {
+    return res.json({ ok: false, msg: '系统暂未开放申请，请稍后再试' });
+  }
+  if (!passkey || passkey.trim() !== stored.key) {
+    return res.json({ ok: false, msg: '通行码错误，请确认后重新输入' });
+  }
+
   if (!name || !name.trim()) return res.json({ ok: false, msg: '请填写申请人姓名' });
   if (!department || !department.trim()) return res.json({ ok: false, msg: '请填写部门/组织' });
   if (!contact || !contact.trim()) return res.json({ ok: false, msg: '请填写联系方式' });
@@ -4897,6 +4919,26 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
   writeApps(apps);
 
   res.json({ ok: true, msg: '已通过并创建账号', data: { accountId: loginId, accountPwd: loginPwd } });
+});
+
+// 获取当前 pass-key（仅管理员）
+app.get('/api/admin/notice-passkey', requireAdmin, (req, res) => {
+  const stored = readPasskey();
+  res.json({ ok: true, data: { hasKey: !!stored && !!stored.key, key: stored ? stored.key : null, createdAt: stored ? stored.createdAt : null } });
+});
+
+// 生成/刷新 pass-key（仅管理员）
+app.post('/api/admin/notice-passkey', requireAdmin, (req, res) => {
+  const { action, key } = req.body;
+  if (action === 'clear') {
+    writePasskey({});
+    return res.json({ ok: true, msg: '通行码已清空，暂停申请' });
+  }
+
+  // 自动生成或手动设置
+  const newKey = (key && key.trim()) ? key.trim() : Math.random().toString(36).slice(2, 10).toUpperCase();
+  writePasskey({ key: newKey, createdAt: new Date().toISOString(), createdBy: req.admin.id });
+  res.json({ ok: true, msg: '通行码已生成', data: { key: newKey } });
 });
 
 app.listen(PORT, () => {

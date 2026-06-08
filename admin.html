@@ -986,6 +986,24 @@
         </div>
         <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadNoticeApps()">🔄 刷新</button>
       </div>
+
+      <!-- Pass-Key 管理卡片 -->
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">🔑 通行码管理</div>
+            <div style="font-size:12px;color:var(--text-sub);">
+              当前通行码：<code id="currentPasskey" style="background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:13px;letter-spacing:2px;">-</code>
+              <span id="passkeyCreatedAt" style="margin-left:8px;font-size:11px;color:var(--text-sub);"></span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="generatePasskey()">🔄 生成新码</button>
+            <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="clearPasskey()">⏹️ 暂停申请</button>
+          </div>
+        </div>
+      </div>
+
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -4749,6 +4767,23 @@
     var body = document.getElementById('noticeAppsBody');
     body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
     try {
+      // 加载通行码信息
+      try {
+        var pkRes = await fetch('/api/admin/notice-passkey', { headers: authHeaders() });
+        var pkJson = await pkRes.json();
+        if (pkJson.ok && pkJson.data) {
+          var el = document.getElementById('currentPasskey');
+          if (el) {
+            el.textContent = pkJson.data.hasKey ? pkJson.data.key : '-';
+            el.style.color = pkJson.data.hasKey ? 'var(--text)' : 'var(--text-sub)';
+          }
+          var ctEl = document.getElementById('passkeyCreatedAt');
+          if (ctEl) {
+            ctEl.textContent = pkJson.data.createdAt ? '生成于 ' + new Date(pkJson.data.createdAt).toLocaleString('zh-CN') : '';
+          }
+        }
+      } catch(e) {}
+
       var res = await fetch('/api/admin/notice-applications', { headers: authHeaders() });
       var json = await res.json();
       if (!json.ok) { body.innerHTML = '<div class="error">' + (json.msg || '加载失败') + '</div>'; return; }
@@ -4859,6 +4894,44 @@
       }
     } catch(e) { showToast('❌ 网络错误', 'error'); }
   }
+
+  // ===== Pass-Key 管理 =====
+  window.generatePasskey = async function() {
+    var newKey = prompt('输入自定义通行码（留空自动生成）:', '');
+    if (newKey === null) return; // 取消
+    try {
+      var res = await fetch('/api/admin/notice-passkey', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate', key: newKey.trim() || '' })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ 新通行码：' + json.data.key, 'success');
+        loadNoticeApps();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  };
+
+  window.clearPasskey = async function() {
+    if (!confirm('确定清空通行码吗？清空后用户将无法提交申请。')) return;
+    try {
+      var res = await fetch('/api/admin/notice-passkey', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear' })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadNoticeApps();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  };
 
   // ===== 启动 =====
   checkSession();

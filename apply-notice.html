@@ -275,6 +275,15 @@
           <label>申请理由 <span class="required">*</span></label>
           <textarea class="form-input" id="applyReason" maxlength="500" placeholder="请说明你需要发布通知的原因和用途&#x2026;"></textarea>
         </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;font-weight:600;color:#5a3e2b;">通行码</span>
+            <span class="required">*</span>
+            <span style="font-size:11px;font-weight:400;color:#8b7355;">（向管理员获取）</span>
+          </label>
+          <input class="form-input" id="applyPasskey" maxlength="20" placeholder="输入管理员提供的通行码" style="letter-spacing:2px;text-transform:uppercase;">
+          <div style="font-size:11px;color:#8b7355;margin-top:4px;">只有输入正确的通行码才能提交申请</div>
+        </div>
         <div class="form-error" id="applyError"></div>
         <button class="submit-btn" id="applyBtn" onclick="doApply()">&#x1F4E8; 提交申请</button>
       </div>
@@ -305,12 +314,14 @@
     var dept = document.getElementById('applyDept').value.trim();
     var contact = document.getElementById('applyContact').value.trim();
     var reason = document.getElementById('applyReason').value.trim();
+    var passkey = document.getElementById('applyPasskey').value.trim();
     var errEl = document.getElementById('applyError');
 
     if (!name) { errEl.textContent = '请填写申请人姓名'; document.getElementById('applyName').focus(); return; }
     if (!dept) { errEl.textContent = '请填写部门/组织'; document.getElementById('applyDept').focus(); return; }
     if (!contact) { errEl.textContent = '请填写联系方式'; document.getElementById('applyContact').focus(); return; }
     if (!reason) { errEl.textContent = '请填写申请理由'; document.getElementById('applyReason').focus(); return; }
+    if (!passkey) { errEl.textContent = '请输入通行码'; document.getElementById('applyPasskey').focus(); return; }
     errEl.textContent = '';
 
     var btn = document.getElementById('applyBtn');
@@ -319,7 +330,7 @@
       var res = await fetch('/api/notice-account/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, department: dept, contact: contact, reason: reason })
+        body: JSON.stringify({ name: name, department: dept, contact: contact, reason: reason, passkey: passkey })
       });
       var json = await res.json();
       if (json.ok) {
