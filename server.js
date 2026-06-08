@@ -4682,7 +4682,7 @@ app.post('/api/student-council/login', (req, res) => {
   const users = readUsers();
   const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher === true && u.status !== 'banned');
   if (user) {
-    if (user.password !== password) {
+    if (!verifyPassword(password, user.password)) {
       return res.json({ ok: false, msg: '账号或密码错误' });
     }
     const token = Buffer.from(JSON.stringify({ id: user.id, loginAt: Date.now() })).toString('base64');
