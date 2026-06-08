@@ -747,6 +747,10 @@
         <span class="nav-icon">📨</span>
         <span>通知账号申请</span>
       </div>
+      <div class="nav-item" onclick="showPage('noticePublishers', this)">
+        <span class="nav-icon">📢</span>
+        <span>通知发布者</span>
+      </div>
     </div>
 
     <!-- 数据保留 -->
@@ -1011,6 +1015,26 @@
           </div>
         </div>
         <div id="noticeAppsBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知发布者管理 -->
+    <div class="page" id="page-noticePublishers" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            共 <strong id="publisherCount">0</strong> 位发布者
+          </span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPublishers()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header">
+          <span>通知发布者列表（使用校园墙账号登录通知页面）</span>
+        </div>
+        <div id="publishersBody">
           <div class="loading"><div class="spinner"></div>加载中…</div>
         </div>
       </div>
@@ -3437,6 +3461,7 @@
     if (id === 'creditadmin') { loadCreditOverview(); }
     if (id === 'deleted') { loadDeletedContent(); }
     if (id === 'noticeApps') { loadNoticeApps(); }
+    if (id === 'noticePublishers') { loadPublishers(); }
   }
 
   function refreshCurrent() {
@@ -4890,6 +4915,55 @@
       if (json.ok) {
         showToast('✅ ' + json.msg, 'success');
         loadNoticeApps();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  // ===== 通知发布者管理 =====
+  async function loadPublishers() {
+    var body = document.getElementById('publishersBody');
+    body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      var res = await fetch('/api/admin/notice-publishers', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) { body.innerHTML = '<div class="error">' + (json.msg || '加载失败') + '</div>'; return; }
+      var data = json.data || [];
+      document.getElementById('publisherCount').textContent = data.length;
+      if (data.length === 0) {
+        body.innerHTML = '<div class="empty">暂无通知发布者</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(u) {
+        var avatarHtml = u.avatar && u.avatar.startsWith('data:') ? avatarImg(u.avatar, 36, 36) : (u.nickname?.charAt(0) || '👤');
+        var addedAt = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '-';
+        html += '<div class="user-card" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">' +
+          '<div class="user-avatar" style="width:36px;height:36px;font-size:16px;overflow:hidden;">' + avatarHtml + '</div>' +
+          '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:14px;">' + escHtml(u.nickname || '未知') + '</div>' +
+          '<div style="font-size:12px;color:var(--text-sub);">授予时间：' + addedAt + ' · 已发布 ' + (u.appsCount || 0) + ' 条</div></div>' +
+          '<button class="btn-danger" style="font-size:12px;padding:6px 12px;" onclick="removePublisher(\'' + u.id + '\', \'' + (u.nickname || '').replace(/'/g, "\\'") + '\')">移除权限</button></div>';
+      });
+      body.innerHTML = html;
+    } catch(e) {
+      body.innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+    }
+  }
+
+  async function removePublisher(userId, nickname) {
+    if (!confirm('确定移除「' + nickname + '」的通知发布权限吗？')) return;
+    try {
+      var res = await fetch('/api/admin/notice-publishers/remove', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadPublishers();
       } else {
         showToast('❌ ' + (json.msg || '操作失败'), 'error');
       }

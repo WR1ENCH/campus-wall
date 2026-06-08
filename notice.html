@@ -289,13 +289,26 @@ body {
     <!-- Login form -->
     <div id="loginForm" style="display:none;">
       <div class="login-field">
-        <label for="loginId">账号</label>
-        <input id="loginId" maxlength="20" placeholder="输入账号">
+        <label for="loginId">昵称 / 账号</label>
+        <input id="loginId" maxlength="20" placeholder="校园墙昵称或学生会账号">
       </div>
       <div class="login-field">
         <label for="loginPwd">密码</label>
         <input id="loginPwd" type="password" maxlength="50" placeholder="输入密码"
                onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <!-- 验证码 -->
+      <div class="login-field">
+        <label>验证码</label>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <input id="loginCaptchaInput" maxlength="6" placeholder="输入验证码"
+            style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:#fff;letter-spacing:3px;text-transform:uppercase;box-sizing:border-box;">
+          <div id="loginCaptchaWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;border:1.5px solid var(--border);"
+               onclick="refreshLoginCaptcha()" title="点击刷新">
+            <img id="loginCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">&#x1F4A1; 点击图片刷新验证码</div>
       </div>
       <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
     </div>
@@ -503,12 +516,28 @@ body {
     finally { btn.disabled = false; btn.textContent = '\uD83D\uDCE2 创建账号'; }
   };
 
+  var _loginCaptchaId = null;
+
+  async function refreshLoginCaptcha() {
+    try {
+      var resp = await fetch('/api/captcha');
+      var json = await resp.json();
+      if (json.ok) {
+        _loginCaptchaId = json.data.id;
+        document.getElementById('loginCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+      }
+    } catch(e) {}
+  }
+  window.refreshLoginCaptcha = refreshLoginCaptcha;
+
   // ===== 登录 =====
   window.doLogin = async function() {
     var id = document.getElementById('loginId').value.trim();
     var pwd = document.getElementById('loginPwd').value;
+    var captchaText = document.getElementById('loginCaptchaInput').value.trim();
     var errEl = document.getElementById('loginError');
     if (!id || !pwd) { errEl.textContent = '\u8BF7\u8F93\u5165\u8D26\u53F7\u548C\u5BC6\u7801'; return; }
+    if (!_loginCaptchaId || !captchaText) { errEl.textContent = '\u8BF7\u8F93\u5165\u9A8C\u8BC1\u7801'; return; }
     errEl.textContent = '';
     var btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = '\u767B\u5F55\u4E2D\u2026';
@@ -516,7 +545,7 @@ body {
       var res = await fetch('/api/student-council/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id, password: pwd })
+        body: JSON.stringify({ id: id, password: pwd, captchaId: _loginCaptchaId, captchaText: captchaText })
       });
       var json = await res.json();
       if (json.ok) {
@@ -833,6 +862,7 @@ body {
     document.getElementById('userName').textContent = savedName || '学生会';
     loadNotices();
   } else {
+    refreshLoginCaptcha();
     checkInit();
   }
 })();

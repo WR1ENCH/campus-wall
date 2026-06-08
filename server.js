@@ -4654,19 +4654,42 @@ app.post('/api/student-council/init', (req, res) => {
   res.json({ ok: true, msg: '学生会账号已创建' });
 });
 
-// 学生会登录
+// 学生会登录（支持原学生会账号 + 校园墙用户登录）
 app.post('/api/student-council/login', (req, res) => {
-  const { id, password } = req.body;
-  if (!id || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
-  const sc = readSC();
-  if (!sc) return res.json({ ok: false, msg: '系统未初始化' });
-  if (sc.id !== id || !verifyPassword(password, sc.password))
-    return res.json({ ok: false, msg: '账号或密码错误' });
+  const { id, password, captchaId, captchaText } = req.body;
 
-  const token = Buffer.from(JSON.stringify({
-    id: sc.id, loginAt: Date.now()
-  })).toString('base64');
-  res.json({ ok: true, data: { token, name: sc.name } });
+  // 验证 captcha
+  if (captchaId && captchaText) {
+    const entry = captchaStore.get(captchaId);
+    if (!entry || entry.text !== captchaText.toLowerCase()) {
+      return res.json({ ok: false, msg: '验证码错误' });
+    }
+    captchaStore.delete(captchaId);
+  }
+
+  if (!id || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
+
+  // 尝试原学生会账号登录
+  const sc = readSC();
+  if (sc && sc.id === id) {
+    if (!verifyPassword(password, sc.password))
+      return res.json({ ok: false, msg: '账号或密码错误' });
+    const token = Buffer.from(JSON.stringify({ id: sc.id, loginAt: Date.now() })).toString('base64');
+    return res.json({ ok: true, data: { token, name: sc.name, type: 'sc' } });
+  }
+
+  // 尝试校园墙用户登录（需 noticePublisher 权限）
+  const users = readUsers();
+  const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher === true && u.status !== 'banned');
+  if (user) {
+    if (user.password !== password) {
+      return res.json({ ok: false, msg: '账号或密码错误' });
+    }
+    const token = Buffer.from(JSON.stringify({ id: user.id, loginAt: Date.now() })).toString('base64');
+    return res.json({ ok: true, data: { token, name: user.nickname, type: 'user' } });
+  }
+
+  return res.json({ ok: false, msg: '账号或密码错误' });
 });
 
 // 修改密码
@@ -4892,48 +4915,23 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
     return res.json({ ok: true, msg: '已拒绝该申请' });
   }
 
-  // 通过：创建学生会账号
-  const loginId = accountId || ('sc_' + app.id.slice(0, 8));
-  const loginPwd = accountPwd || Math.random().toString(36).slice(2, 10);
-  const loginName = app.name;
-
-  // 写入 student_council.json（如果已存在则追加提示）
-  let sc;
-  try {
-    const scRaw = fs.readFileSync(SC_FILE, 'utf-8');
-    sc = JSON.parse(scRaw);
-  } catch {
-    sc = null;
-  }
-  if (sc && sc.id === loginId) {
-    return res.json({ ok: false, msg: '该账号ID已存在，请指定其他ID' });
+  // 通过：标记校园墙用户为通知发布者
+  const users = readUsers();
+  const targetUser = users.find(u => u.id === app.userId);
+  if (!targetUser) {
+    return res.json({ ok: false, msg: '未找到对应的校园墙用户，请确认该用户已注册' });
   }
 
-  const newSC = {
-    id: loginId,
-    name: loginName,
-    password: hashPassword(loginPwd),
-    createdAt: new Date().toISOString(),
-    fromApproved: true
-  };
-  if (sc) {
-    // 如果已有账号配置文件，但不想覆盖，可考虑多账号模式
-    // 简单起见：只记录到 applications 中，管理员手动创建
-    // 这里直接覆写 student_council.json 改为多账号模式？
-    // 保持简单：写入文件但给个提示
-    fs.writeFileSync(SC_FILE, JSON.stringify(newSC, null, 2), 'utf-8');
-  } else {
-    fs.writeFileSync(SC_FILE, JSON.stringify(newSC, null, 2), 'utf-8');
-  }
+  targetUser.noticePublisher = true;
+  targetUser.noticePublisherAddedAt = new Date().toISOString();
+  writeUsers(users);
 
   app.status = 'approved';
   app.reviewedAt = new Date().toISOString();
   app.reviewedBy = req.admin.id;
-  app.accountId = loginId;
-  app.accountPwd = loginPwd;
   writeApps(apps);
 
-  res.json({ ok: true, msg: '已通过并创建账号', data: { accountId: loginId, accountPwd: loginPwd } });
+  res.json({ ok: true, msg: '已通过，该用户可使用校园墙账号密码登录通知管理页面' });
 });
 
 // 获取当前 pass-key（仅管理员）
@@ -4954,6 +4952,36 @@ app.post('/api/admin/notice-passkey', requireAdmin, (req, res) => {
   const newKey = (key && key.trim()) ? key.trim() : Math.random().toString(36).slice(2, 10).toUpperCase();
   writePasskey({ key: newKey, createdAt: new Date().toISOString(), createdBy: req.admin.id });
   res.json({ ok: true, msg: '通行码已生成', data: { key: newKey } });
+});
+
+// ===== 通知发布者管理（仅管理员） =====
+// 获取所有通知发布者
+app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const publishers = users
+    .filter(u => u.noticePublisher === true)
+    .map(u => ({
+      id: u.id,
+      nickname: u.nickname,
+      avatar: u.avatar,
+      createdAt: u.noticePublisherAddedAt || u.createdAt || '',
+      appsCount: (readApps().filter(a => a.userId === u.id && a.status === 'approved').length)
+    }));
+  res.json({ ok: true, data: publishers });
+});
+
+// 移除通知发布者权限
+app.post('/api/admin/notice-publishers/remove', requireAdmin, (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.json({ ok: false, msg: '请指定用户ID' });
+  const users = readUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (!user.noticePublisher) return res.json({ ok: false, msg: '该用户不是通知发布者' });
+
+  user.noticePublisher = false;
+  writeUsers(users);
+  res.json({ ok: true, msg: '已移除发布权限' });
 });
 
 app.listen(PORT, () => {
