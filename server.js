@@ -4870,10 +4870,11 @@ app.post('/api/notice-account/apply', (req, res) => {
   if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请填写申请理由' });
 
   const apps = readApps();
-  // 检查是否已有待审核/已通过的申请
-  const existing = apps.find(a => a.contact === contact.trim() && (a.status === 'pending' || a.status === 'approved'));
+  // 每人只能申请一次（除非被驳回）
+  const existing = apps.find(a => a.userId === session.id && a.status !== 'rejected');
   if (existing) {
-    return res.json({ ok: false, msg: '该联系方式已提交过申请，请等待审核结果' });
+    const hint = existing.status === 'pending' ? '请等待审核结果' : '你的申请已通过';
+    return res.json({ ok: false, msg: '你已提交过申请，' + hint });
   }
 
   apps.push({
@@ -4889,6 +4890,25 @@ app.post('/api/notice-account/apply', (req, res) => {
   });
   writeApps(apps);
   res.json({ ok: true, msg: '申请已提交，请等待管理员审核' });
+});
+
+// 获取用户的通知申请审核结果通知（读取后清除）
+app.get('/api/user/notice-app-notification', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, data: null });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, data: null });
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user || !user._noticeAppNotification) return res.json({ ok: true, data: null });
+
+  const notif = user._noticeAppNotification;
+  // 清除通知（一次性读取）
+  delete user._noticeAppNotification;
+  writeUsers(users);
+
+  res.json({ ok: true, data: notif });
 });
 
 // 查看申请列表（仅管理员）
@@ -4912,6 +4932,19 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
     app.reviewedAt = new Date().toISOString();
     app.reviewedBy = req.admin.id;
     writeApps(apps);
+
+    // 存储通知到用户记录
+    const users = readUsers();
+    const targetUser = users.find(u => u.id === app.userId);
+    if (targetUser) {
+      targetUser._noticeAppNotification = {
+        status: 'rejected',
+        message: '你的通知发布申请已被驳回，可以重新提交申请',
+        timestamp: new Date().toISOString()
+      };
+      writeUsers(users);
+    }
+
     return res.json({ ok: true, msg: '已拒绝该申请' });
   }
 
@@ -4924,6 +4957,11 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
 
   targetUser.noticePublisher = true;
   targetUser.noticePublisherAddedAt = new Date().toISOString();
+  targetUser._noticeAppNotification = {
+    status: 'approved',
+    message: '你的通知发布申请已通过！请访问 http://154.37.221.232/notice.html 管理通知',
+    timestamp: new Date().toISOString()
+  };
   writeUsers(users);
 
   app.status = 'approved';

@@ -2752,6 +2752,34 @@
           }
         }
       } catch(e) {}
+
+      // 检查通知申请审核结果
+      try {
+        var token = localStorage.getItem('campus_user_token');
+        if (token) {
+          var nrRes = await fetch('/api/user/notice-app-notification', { headers: { 'x-user-token': token } });
+          var nrJson = await nrRes.json();
+          if (nrJson.ok && nrJson.data) {
+            var nr = nrJson.data;
+            window._noticeAppNotif = nr;
+            var nu = _notifUnreadCheck('notice_app_result');
+            if (nu) {
+              unread++;
+              if (!_pendingT0Notif) {
+                _pendingT0Notif = {
+                  id: 'notice_app_result',
+                  icon: nr.status === 'approved' ? '\uD83C\uDF89' : '\u274C',
+                  title: nr.status === 'approved' ? '通知申请已通过' : '通知申请被驳回',
+                  content: nr.message,
+                  time: nr.timestamp || '',
+                  author: '系统'
+                };
+              }
+            }
+          }
+        }
+      } catch(e) {}
+
       badge.style.display = unread > 0 ? '' : 'none';
 
       // T0 重要通知：延迟自动推送（等认证弹窗等关闭后再弹出）
@@ -2878,6 +2906,22 @@
           }
         }
       } catch(e) { /* ignore */ }
+
+      // 通知申请结果
+      if (window._noticeAppNotif) {
+        var nr = window._noticeAppNotif;
+        var nu = _notifUnreadCheck('notice_app_result');
+        items.push({
+          id: 'notice_app_result',
+          icon: nr.status === 'approved' ? '\uD83C\uDF89' : '\u274C',
+          title: nr.status === 'approved' ? '通知申请已通过' : '通知申请被驳回',
+          time: nr.timestamp ? new Date(nr.timestamp).toLocaleString('zh-CN') : '',
+          isNew: nu,
+          content: nr.message,
+          type: '通知'
+        });
+        if (nu) unreadCount++;
+      }
 
       // 更新按钮红点
       var badge = document.getElementById('notifBadge');
