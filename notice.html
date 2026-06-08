@@ -739,11 +739,15 @@ body {
   var _selectedNotifLevel = 'T1';
   var _publishImages = [];
 
-  // ===== Markdown 工具 =====
+// ===== Markdown 工具 =====
   function renderMarkdown(text) {
     if (!text) return '';
     var html = text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*/g, '__BOLD__')
+      .replace(/\*/g, '__ITALIC__')
+      .replace(/__BOLD__(.+?)__BOLD__/g, '<strong>$1</strong>')
+      .replace(/__ITALIC__(.+?)__ITALIC__/g, '<em>$1</em>')
       .replace(/^### (.+)$/gm, '<h3>$1</h3>')
       .replace(/^## (.+)$/gm, '<h2>$1</h2>')
       .replace(/^# (.+)$/gm, '<h1>$1</h1>')
@@ -753,19 +757,16 @@ body {
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src=\"$2\" alt=\"$1\" style=\"max-width:100%;border-radius:8px;margin:6px 0;\">')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"nofollow\">$1</a>')
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:6px 0;">')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="nofollow">$1</a>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>');
     // Wrap consecutive <li> in <ul>
     html = html.replace(/((?:<li>.*?<\/li>)+)/g, '<ul>$1</ul>');
     // Wrap standalone <blockquote> in proper block
-    html = html.replace(/<blockquote>/g, '<blockquote style=\"margin:10px 0;padding:10px 14px;border-left:3px solid var(--accent);background:rgba(0,0,0,0.02);border-radius:0 6px 6px 0;color:var(--text-sub);\">');
+    html = html.replace(/<blockquote>/g, '<blockquote style="margin:10px 0;padding:10px 14px;border-left:3px solid var(--accent);background:rgba(0,0,0,0.02);border-radius:0 6px 6px 0;color:var(--text-sub);">');
     return '<p>' + html + '</p>';
   }
-
   window.insertMd = function(textareaId, before, after) {
     var ta = document.getElementById(textareaId);
     var start = ta.selectionStart, end = ta.selectionEnd;
