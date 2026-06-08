@@ -170,9 +170,21 @@ body {
 
 .notice-card .notice-content {
   font-size: 14px; color: var(--text);
-  line-height: 1.8; white-space: pre-wrap;
+  line-height: 1.8;
   margin-bottom: 14px;
 }
+.notice-card .notice-content p { margin: 6px 0; }
+.notice-card .notice-content ul, .notice-card .notice-content ol { padding-left: 20px; margin: 6px 0; }
+.notice-card .notice-content li { margin: 2px 0; }
+.notice-card .notice-content code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 13px; font-family: monospace; }
+.notice-card .notice-content blockquote {
+  margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--accent);
+  background: rgba(0,0,0,0.02); border-radius: 0 6px 6px 0; color: var(--text-sub);
+}
+.notice-card .notice-content a { color: var(--accent); }
+.notice-card .notice-content img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+.notice-card .notice-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.notice-card .notice-content h1, .notice-card .notice-content h2, .notice-card .notice-content h3 { margin: 12px 0 6px; font-weight: 600; color: var(--text); }
 
 .notice-card .notice-meta {
   display: flex; gap: 16px; font-size: 12px; color: var(--text-sub);
@@ -187,6 +199,25 @@ body {
 .loading {
   text-align: center; padding: 40px; color: var(--text-sub);
 }
+
+/* Markdown 预览 */
+.md-preview {
+  background: var(--card-bg); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 14px 16px; font-size: 14px;
+  line-height: 1.8; color: var(--text); min-height: 80px;
+  white-space: normal;
+}
+.md-preview strong { font-weight: 700; }
+.md-preview em { font-style: italic; }
+.md-preview code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace; }
+.md-preview a { color: var(--accent); }
+.md-preview blockquote {
+  margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--accent);
+  background: rgba(0,0,0,0.02); border-radius: 0 6px 6px 0; color: var(--text-sub);
+}
+.md-preview ul, .md-preview ol { padding-left: 20px; margin: 8px 0; }
+.md-preview hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+.md-preview h1, .md-preview h2, .md-preview h3 { margin: 14px 0 8px; font-weight: 600; color: var(--text); }
 
 /* ===== Publish Modal ===== */
 .modal-overlay {
@@ -350,8 +381,21 @@ body {
         <input class="form-input" id="notifTitle" maxlength="100" placeholder="通知标题">
       </div>
       <div class="form-group">
-        <label for="notifContent">内容</label>
-        <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;"></textarea>
+        <label for="notifContent">内容 <span style="font-weight:400;color:var(--text-sub);">（支持 Markdown）</span></label>
+        <!-- Markdown 工具栏 -->
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:var(--bg-main);border:1.5px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;">
+          <button type="button" onclick="insertMd('notifContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
+          <button type="button" onclick="insertMd('notifContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;" title="斜体">I</button>
+          <button type="button" onclick="insertMd('notifContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{"<>"}</button>
+          <button type="button" onclick="insertMd('notifContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
+          <button type="button" onclick="insertMd('notifContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="无序列表">•</button>
+          <button type="button" onclick="insertMd('notifContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="有序列表">1.</button>
+          <button type="button" onclick="insertMd('notifContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">"</button>
+          <button type="button" onclick="insertMd('notifContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
+          <button type="button" onclick="togglePreview('notifContent')" id="previewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
+        </div>
+        <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;（支持 Markdown 格式）"></textarea>
+        <div id="notifContentPreview" class="md-preview" style="display:none;"></div>
       </div>
       <div class="form-group">
         <label>图片 <span style="font-weight:400;color:var(--text-sub);">（选填，每张≤10MB）</span></label>
@@ -434,8 +478,20 @@ body {
         <input class="form-input" id="editTitle" maxlength="100" placeholder="通知标题">
       </div>
       <div class="form-group">
-        <label for="editContent">内容</label>
-        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容&#x2026;" style="min-height:120px;"></textarea>
+        <label for="editContent">内容 <span style="font-weight:400;color:var(--text-sub);">（支持 Markdown）</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:var(--bg-main);border:1.5px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;">
+          <button type="button" onclick="insertMd('editContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;">B</button>
+          <button type="button" onclick="insertMd('editContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;">I</button>
+          <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;">{"<>"}</button>
+          <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">🔗</button>
+          <button type="button" onclick="insertMd('editContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">•</button>
+          <button type="button" onclick="insertMd('editContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">1.</button>
+          <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">"</button>
+          <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">—</button>
+          <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;">👁️ 预览</button>
+        </div>
+        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容&#x2026;（支持 Markdown 格式）" style="min-height:120px;"></textarea>
+        <div id="editContentPreview" class="md-preview" style="display:none;"></div>
       </div>
       <div class="form-group">
         <label for="editAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
@@ -670,6 +726,59 @@ body {
   var _selectedNotifLevel = 'T1';
   var _publishImages = [];
 
+  // ===== Markdown 工具 =====
+  function renderMarkdown(text) {
+    if (!text) return '';
+    var html = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/^---+\s*$/gm, '<hr>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^\* (.+)$/gm, '<li>$1</li>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src=\"$2\" alt=\"$1\" style=\"max-width:100%;border-radius:8px;margin:6px 0;\">')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"nofollow\">$1</a>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/((?:<li>.*?<\/li>)+)/g, '<ul>$1</ul>');
+    // Wrap standalone <blockquote> in proper block
+    html = html.replace(/<blockquote>/g, '<blockquote style=\"margin:10px 0;padding:10px 14px;border-left:3px solid var(--accent);background:rgba(0,0,0,0.02);border-radius:0 6px 6px 0;color:var(--text-sub);\">');
+    return '<p>' + html + '</p>';
+  }
+
+  window.insertMd = function(textareaId, before, after) {
+    var ta = document.getElementById(textareaId);
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    var text = ta.value;
+    ta.value = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
+    ta.focus();
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = start + before.length + (end - start);
+  };
+
+  window.togglePreview = function(textareaId) {
+    var ta = document.getElementById(textareaId);
+    var preview = document.getElementById(textareaId + 'Preview');
+    var btn = document.getElementById((textareaId === 'notifContent' ? '' : 'edit') + 'PreviewBtn');
+    if (preview.style.display === 'none') {
+      preview.innerHTML = renderMarkdown(ta.value);
+      preview.style.display = '';
+      ta.style.display = 'none';
+      btn.textContent = '✏️ 编辑';
+    } else {
+      preview.style.display = 'none';
+      ta.style.display = '';
+      btn.textContent = '👁️ 预览';
+    }
+  };
+
   window.selectNotifLevel = function(level) {
     _selectedNotifLevel = level;
     document.getElementById('levelT1Label').style.borderColor = level === 'T1' ? 'var(--accent)' : 'var(--border)';
@@ -869,7 +978,7 @@ body {
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
           '<div style="flex:1;">' +
           '<div class="notice-title">' + escHtml(n.title) + '</div>' +
-          '<div class="notice-content">' + escHtml(n.content) + '</div>' +
+          '<div class="notice-content">' + renderMarkdown(n.content) + '</div>' +
           (n.images && n.images.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;margin-bottom:4px;">' +
             n.images.map(function(src) {
               return '<img src="' + src + '" style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);object-fit:contain;cursor:pointer;" onclick="window.open(this.src)" onerror="this.style.display=\'none\'">';
