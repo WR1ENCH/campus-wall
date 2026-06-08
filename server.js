@@ -4611,7 +4611,16 @@ function writeSC(data) {
 function readNotices() {
   try {
     if (!fs.existsSync(NOTICES_FILE)) return [];
-    return JSON.parse(fs.readFileSync(NOTICES_FILE, 'utf-8'));
+    let notices = JSON.parse(fs.readFileSync(NOTICES_FILE, 'utf-8'));
+    // 自动清理 60 天前的通知
+    const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    const before = notices.length;
+    notices = notices.filter(n => {
+      const t = new Date(n.createdAt).getTime();
+      return !isNaN(t) && t >= cutoff;
+    });
+    if (notices.length < before) writeNotices(notices);
+    return notices;
   } catch { return []; }
 }
 
