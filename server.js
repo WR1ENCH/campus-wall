@@ -4748,9 +4748,20 @@ app.post('/api/notices', (req, res) => {
   const sc = readSC();
   if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
 
-  const { title, content, author, level } = req.body;
+  const { title, content, author, level, images } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
+
+  // 验证图片（base64 data URL，每张≤10MB）
+  var validImages = [];
+  var maxSize = 10 * 1024 * 1024;
+  if (Array.isArray(images)) {
+    images.forEach(function(img) {
+      if (typeof img === 'string' && img.startsWith('data:') && img.length <= maxSize) {
+        validImages.push(img);
+      }
+    });
+  }
 
   const notices = readNotices();
   notices.push({
@@ -4759,6 +4770,7 @@ app.post('/api/notices', (req, res) => {
     content: content.trim(),
     author: (author && author.trim()) ? author.trim() : session.name,
     level: level === 'T0' ? 'T0' : 'T1',
+    images: validImages.length > 0 ? validImages : undefined,
     createdAt: new Date().toISOString()
   });
   writeNotices(notices);
@@ -4794,9 +4806,19 @@ app.put('/api/notices/:id', (req, res) => {
   const sc = readSC();
   if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
 
-  const { title, content, author, level } = req.body;
+  const { title, content, author, level, images } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
+
+  var maxSize = 10 * 1024 * 1024;
+  var validImages = [];
+  if (Array.isArray(images)) {
+    images.forEach(function(img) {
+      if (typeof img === 'string' && img.startsWith('data:') && img.length <= maxSize) {
+        validImages.push(img);
+      }
+    });
+  }
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
@@ -4807,6 +4829,9 @@ app.put('/api/notices/:id', (req, res) => {
   notice.content = content.trim();
   if (author && author.trim()) notice.author = author.trim();
   if (level) notice.level = level === 'T0' ? 'T0' : 'T1';
+  if (Array.isArray(images)) {
+    notice.images = validImages.length > 0 ? validImages : undefined;
+  }
   notice.updatedAt = new Date().toISOString();
   writeNotices(notices);
   res.json({ ok: true, msg: '通知已修改' });

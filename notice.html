@@ -354,6 +354,14 @@ body {
         <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;"></textarea>
       </div>
       <div class="form-group">
+        <label>图片 <span style="font-weight:400;color:var(--text-sub);">（选填，每张≤10MB）</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;" id="publishImagePreview"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 16px;border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-sub);transition:all 0.2s;">
+          &#x1F5BC;&#xFE0F; 选择图片
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="handlePublishImages(this)">
+        </label>
+      </div>
+      <div class="form-group">
         <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填，默认使用账号名称）</span></label>
         <input class="form-input" id="notifAuthor" maxlength="30" placeholder="例如：宣传部">
       </div>
@@ -660,11 +668,49 @@ body {
   };
 
   var _selectedNotifLevel = 'T1';
+  var _publishImages = [];
+
   window.selectNotifLevel = function(level) {
     _selectedNotifLevel = level;
     document.getElementById('levelT1Label').style.borderColor = level === 'T1' ? 'var(--accent)' : 'var(--border)';
     document.getElementById('levelT0Label').style.borderColor = level === 'T0' ? 'var(--accent)' : 'var(--border)';
     document.querySelector('input[name="notifLevel"][value="' + level + '"]').checked = true;
+  };
+
+  window.handlePublishImages = function(input) {
+    var files = input.files;
+    var maxBytes = 10 * 1024 * 1024;
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].size > maxBytes) {
+        showToast('\u274C ' + files[i].name + ' \u8D85\u8FC710MB', 'error');
+        continue;
+      }
+      (function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          _publishImages.push(e.target.result);
+          renderPublishPreview();
+        };
+        reader.readAsDataURL(file);
+      })(files[i]);
+    }
+    input.value = '';
+  };
+
+  function renderPublishPreview() {
+    var container = document.getElementById('publishImagePreview');
+    var html = '';
+    _publishImages.forEach(function(src, idx) {
+      html += '<div style=\"position:relative;display:inline-block;\">' +
+        '<img src=\"' + src + '\" style=\"height:80px;width:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);\">' +
+        '<button onclick=\"removePublishImage(' + idx + ')\" style=\"position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:12px;cursor:pointer;line-height:20px;text-align:center;\">&times;</button></div>';
+    });
+    container.innerHTML = html;
+  }
+
+  window.removePublishImage = function(idx) {
+    _publishImages.splice(idx, 1);
+    renderPublishPreview();
   };
 
   window.doPublish = async function() {
@@ -684,7 +730,7 @@ body {
       var res = await fetch('/api/notices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
-        body: JSON.stringify({ title: title, content: content, author: author, level: _selectedNotifLevel })
+        body: JSON.stringify({ title: title, content: content, author: author, level: _selectedNotifLevel, images: _publishImages })
       });
       var json = await res.json();
       if (json.ok) {
@@ -693,6 +739,8 @@ body {
         document.getElementById('notifTitle').value = '';
         document.getElementById('notifContent').value = '';
         document.getElementById('notifAuthor').value = '';
+        _publishImages = [];
+        renderPublishPreview();
         loadNotices();
       } else {
         errEl.textContent = json.msg || '\u53D1\u5E03\u5931\u8D25';
@@ -822,6 +870,11 @@ body {
           '<div style="flex:1;">' +
           '<div class="notice-title">' + escHtml(n.title) + '</div>' +
           '<div class="notice-content">' + escHtml(n.content) + '</div>' +
+          (n.images && n.images.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;margin-bottom:4px;">' +
+            n.images.map(function(src) {
+              return '<img src="' + src + '" style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--border);object-fit:contain;cursor:pointer;" onclick="window.open(this.src)" onerror="this.style.display=\'none\'">';
+            }).join('') +
+          '</div>' : '') +
           '</div>' +
           (currentUser ? '<div style="display:flex;gap:2px;flex-shrink:0;">' +
             '<button onclick="openEditModal(\'' + n.id + '\')" style="background:none;border:none;cursor:pointer;font-size:14px;color:#9ca3af;padding:2px 5px;line-height:1;border-radius:4px;" title="修改通知" onmouseover="this.style.background=\'#dbeafe\';this.style.color=\'#2563eb\'" onmouseout="this.style.background=\'transparent\';this.style.color=\'#9ca3af\'">✏️</button>' +
