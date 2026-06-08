@@ -1596,27 +1596,19 @@
 
 <!-- ===== 通知账号申请：通过弹窗 ===== -->
 <div class="modal-overlay" id="approveAppModal" onclick="if(event.target===this)closeApproveAppModal()">
-  <div class="modal" style="max-width:440px;">
+  <div class="modal" style="max-width:400px;">
     <div class="modal-header">
       <h3>✅ 通过申请</h3>
       <button class="modal-close" onclick="closeApproveAppModal()">x</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-sub);margin-bottom:16px;line-height:1.6;">
-        通过后将自动为该用户创建通知发布账号。
+      <p style="font-size:14px;text-align:center;line-height:1.8;padding:8px 0;">
+        确定通过该申请吗？<br>
+        <span style="font-size:13px;color:var(--text-sub);">
+          通过后该用户可使用其校园墙账号密码<br>
+          登录 <code>notice.html</code> 发布通知
+        </span>
       </p>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">账号ID</label>
-        <input id="approveAppId" maxlength="30" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">账号名称</label>
-        <input id="approveAppName" maxlength="30" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;">
-      </div>
-      <div style="margin-bottom:4px;">
-        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:4px;">初始密码 <span style="font-weight:400;color:var(--text-sub);font-size:12px;">（留空自动生成）</span></label>
-        <input id="approveAppPwd" maxlength="50" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="自动生成8位随机密码">
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeApproveAppModal()">取消</button>
@@ -4860,9 +4852,6 @@
   // 通过申请
   function openApproveAppModal(appId) {
     _pendingApproveId = appId;
-    document.getElementById('approveAppId').value = 'sc_' + appId.slice(0, 8);
-    document.getElementById('approveAppName').value = '';
-    document.getElementById('approveAppPwd').value = '';
     document.getElementById('approveAppModal').classList.add('show');
   }
 
@@ -4874,26 +4863,18 @@
   async function submitApproveApp() {
     var appId = _pendingApproveId;
     if (!appId) return;
-    var accountId = document.getElementById('approveAppId').value.trim();
-    var accountName = document.getElementById('approveAppName').value.trim();
-    var accountPwd = document.getElementById('approveAppPwd').value.trim();
-    if (!accountId) { alert('请填写账号ID'); return; }
     var btn = document.getElementById('approveAppConfirmBtn');
     btn.disabled = true; btn.textContent = '处理中…';
     try {
       var res = await fetch('/api/admin/notice-applications/' + appId + '/review', {
         method: 'POST',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', accountId: accountId, accountName: accountName, accountPwd: accountPwd })
+        body: JSON.stringify({ action: 'approve' })
       });
       var json = await res.json();
       if (json.ok) {
         closeApproveAppModal();
-        if (json.data) {
-          showToast('✅ 已通过！账号：' + json.data.accountId + '，密码：' + json.data.accountPwd, 'success');
-        } else {
-          showToast('✅ ' + json.msg, 'success');
-        }
+        showToast('✅ ' + json.msg, 'success');
         loadNoticeApps();
       } else {
         alert('操作失败：' + (json.msg || '未知错误'));
