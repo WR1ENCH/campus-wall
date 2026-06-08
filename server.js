@@ -4762,6 +4762,33 @@ app.delete('/api/notices/:id', (req, res) => {
   res.json({ ok: true, msg: '通知已删除' });
 });
 
+// 修改通知（需验证token）
+app.put('/api/notices/:id', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { title, content, author, level } = req.body;
+  if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
+  if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
+
+  const notices = readNotices();
+  const notice = notices.find(n => n.id === req.params.id);
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
+
+  notice.title = title.trim();
+  notice.content = content.trim();
+  if (author && author.trim()) notice.author = author.trim();
+  if (level) notice.level = level === 'T0' ? 'T0' : 'T1';
+  notice.updatedAt = new Date().toISOString();
+  writeNotices(notices);
+  res.json({ ok: true, msg: '通知已修改' });
+});
+
 app.listen(PORT, () => {
   fixCertDataOnStart();
   console.log(`\n  📌 校园墙服务已启动`);
