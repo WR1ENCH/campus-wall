@@ -311,7 +311,8 @@
 
         // 生成二维码图片
         document.getElementById('qrBox').classList.add('show');
-        const qrUrl = 'campuswall://login/' + qrToken;
+        const SERVER_URL = 'http://154.37.221.232';
+        const qrUrl = SERVER_URL + '/api/user/qrcode/scan?token=' + qrToken;
         const container = document.getElementById('qrCanvas');
         container.innerHTML = '';
         if (typeof QRCode !== 'undefined') {
