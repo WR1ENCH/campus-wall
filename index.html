@@ -3029,12 +3029,14 @@
         const info = json.data;
 
         if (info.status === 'rejected' && info.rejectReason) {
-          // 驳回弹窗（仅一次）
+          // 驳回弹窗（仅一次，新驳回重新弹出）
           var ackKey = 'cert_rejected_ack_' + currentUser.id;
-          if (!localStorage.getItem(ackKey)) {
+          var lastAck = localStorage.getItem(ackKey);
+          var newRejectTime = info.rejectedAt || '';
+          if (!lastAck || lastAck !== newRejectTime) {
             document.getElementById('certRejectReasonText').textContent = info.rejectReason;
             document.getElementById('certRejectedOverlay').style.display = 'flex';
-            localStorage.setItem(ackKey, '1');
+            localStorage.setItem(ackKey, newRejectTime || '1');
           }
         } else if (info.status === 'pending_confirm') {
           // 智学认证确认弹窗
