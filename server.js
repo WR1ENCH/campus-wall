@@ -4959,7 +4959,7 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
   targetUser.noticePublisherAddedAt = new Date().toISOString();
   targetUser._noticeAppNotification = {
     status: 'approved',
-    message: '你的通知发布申请已通过！请访问 http://154.37.221.232/notice.html 管理通知',
+    message: '你的通知发布申请已通过！你可以使用校园墙账号密码登录 notice.html 管理通知',
     timestamp: new Date().toISOString()
   };
   writeUsers(users);
