@@ -4817,7 +4817,14 @@ function writeApps(data) {
 
 // 提交申请（公开，需 pass-key）
 app.post('/api/notice-account/apply', (req, res) => {
-  const { name, department, contact, reason, passkey } = req.body;
+  const { name, department, contact, reason, passkey, captchaId, captchaText } = req.body;
+
+  // 验证 captcha
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId);
 
   // 验证 pass-key
   const stored = readPasskey();
