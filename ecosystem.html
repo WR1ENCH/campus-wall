@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园生态接入</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      background: #c4a882;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg,
+          transparent, transparent 59px,
+          rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px,
+          transparent 61px, transparent 120px
+        ),
+        repeating-linear-gradient(90deg,
+          transparent, transparent 119px,
+          rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px,
+          transparent 121px, transparent 240px
+        ),
+        repeating-linear-gradient(0deg,
+          rgba(180,140,100,0.3) 0px,
+          rgba(200,160,120,0.1) 30px,
+          rgba(170,130,90,0.2) 60px,
+          rgba(190,150,110,0.15) 90px,
+          rgba(175,135,95,0.25) 120px
+        );
+      background-size: 240px 120px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 16px;
+      min-height: 100vh;
+    }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .page-title h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #5a3e2b;
+    }
+
+    .page-title p {
+      font-size: 13px;
+      color: #8b7355;
+      margin-top: 6px;
+    }
+
+    /* 入口卡片 */
+    .entry-card {
+      background: #fff9b1;
+      border-radius: 0;
+      padding: 28px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.1);
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      transform: rotate(-0.3deg);
+    }
+
+    .entry-card:hover {
+      transform: rotate(0deg) translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2), 0 12px 40px rgba(0,0,0,0.12);
+    }
+
+    .entry-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 28px 28px 0;
+      border-color: transparent #c4a882 transparent transparent;
+      box-shadow: -2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .entry-card .icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .entry-card .title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #5a3e2b;
+      margin-bottom: 6px;
+    }
+
+    .entry-card .subtitle {
+      font-size: 13px;
+      color: #8b7355;
+      line-height: 1.6;
+    }
+
+    .entry-card .arrow {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #d4a373;
+      font-weight: 600;
+    }
+
+    /* 返回链接 */
+    .back-link {
+      display: inline-block;
+      margin-top: 28px;
+      color: #8b7355;
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #5a3e2b; text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .container { padding: 28px 12px; }
+      .page-title h1 { font-size: 20px; }
+      .entry-card { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-title">
+      <h1>🏫 校园生态接入</h1>
+      <p>连接校园服务，共建数字校园</p>
+    </div>
+
+    <a class="entry-card" href="apply-notice.html">
+      <div class="icon">📢</div>
+      <div class="title">我是学生会 / 校园学生组织成员</div>
+      <div class="subtitle">申请校园墙通知接口，接入校园生态</div>
+      <div class="arrow">前往申请 →</div>
+    </a>
+
+    <div style="text-align:center;">
+      <a class="back-link" href="index.html">← 返回校园墙</a>
+    </div>
+  </div>
+</body>
+</html>
