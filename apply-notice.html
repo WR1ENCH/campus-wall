@@ -331,6 +331,27 @@
   </div>
 
   <script>
+  // 检查登录状态
+  var _userToken = localStorage.getItem('campus_user_token');
+  var _userNickname = '';
+  if (_userToken) {
+    try {
+      var payload = JSON.parse(atob(_userToken.split('.')[1]));
+      _userNickname = payload.nickname || '';
+      if (_userNickname) document.getElementById('applyName').value = _userNickname;
+    } catch(e) {}
+  }
+
+  if (!_userToken) {
+    document.getElementById('applyForm').innerHTML =
+      '<div style="text-align:center;padding:40px 0;">' +
+      '<div style="font-size:48px;margin-bottom:12px;">🔒</div>' +
+      '<h2 style="font-size:18px;color:#5a3e2b;margin-bottom:8px;">请先登录校园墙</h2>' +
+      '<p style="font-size:14px;color:#8b7355;margin-bottom:20px;">你需要先登录校园墙账号才能提交申请</p>' +
+      '<a href="http://154.37.221.232/" class="submit-btn" style="display:inline-block;text-decoration:none;width:auto;padding:12px 32px;">前往登录</a>' +
+      '</div>';
+  }
+
   function showToast(msg, type) {
     var t = document.createElement('div');
     t.className = 'toast ' + type;
@@ -397,7 +418,7 @@
     try {
       var res = await fetch('/api/notice-account/apply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-token': _userToken },
         body: JSON.stringify({ name: _pendingFormData.name, department: _pendingFormData.department, contact: _pendingFormData.contact, reason: _pendingFormData.reason, passkey: passkey, captchaId: _pendingFormData.captchaId, captchaText: _pendingFormData.captchaText })
       });
       var json = await res.json();

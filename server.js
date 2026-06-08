@@ -4819,6 +4819,12 @@ function writeApps(data) {
 app.post('/api/notice-account/apply', (req, res) => {
   const { name, department, contact, reason, passkey, captchaId, captchaText } = req.body;
 
+  // 验证用户登录
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录校园墙账号', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+
   // 验证 captcha
   const entry = captchaStore.get(captchaId);
   if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
@@ -4854,6 +4860,8 @@ app.post('/api/notice-account/apply', (req, res) => {
     contact: contact.trim(),
     reason: reason.trim(),
     status: 'pending',
+    userId: session.id,
+    userNickname: session.nickname || name.trim(),
     createdAt: new Date().toISOString()
   });
   writeApps(apps);

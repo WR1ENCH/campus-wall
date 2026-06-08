@@ -4806,7 +4806,8 @@
         html += '<div class="user-card" style=\"padding:16px;border-bottom:1px solid var(--border);\">' +
           '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;gap:10px;\">' +
           '<div style=\"flex:1;\">' +
-          '<div style=\"font-weight:600;font-size:14px;margin-bottom:4px;\">👤 ' + escHtml(a.name || '') + '</div>' +
+          '<div style=\"font-weight:600;font-size:14px;margin-bottom:2px;\">👤 ' + escHtml(a.name || '') + '</div>' +
+          (a.userNickname ? '<div style=\"font-size:11px;color:var(--text-sub);margin-bottom:4px;\">🏷️ 校园墙用户：' + escHtml(a.userNickname) + '</div>' : '') +
           '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:6px;\">' +
           '📂 ' + escHtml(a.department || '') + ' · 📞 ' + escHtml(a.contact || '') +
           '</div>' +
