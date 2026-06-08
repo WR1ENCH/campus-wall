@@ -4698,8 +4698,12 @@ app.post('/api/student-council/change-pwd', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '未登录' });
   let session;
   try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
-  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { oldPwd, newPwd } = req.body;
   if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '请填写完整' });
@@ -4718,8 +4722,12 @@ app.post('/api/student-council/change-name', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '未登录' });
   let session;
   try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
-  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { name } = req.body;
   if (!name || !name.trim()) return res.json({ ok: false, msg: '请输入名称' });
@@ -4745,8 +4753,12 @@ app.post('/api/notices', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   let session;
   try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
-  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { title, content, author, level, images } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
@@ -4783,8 +4795,13 @@ app.delete('/api/notices/:id', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   let session;
   try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+
+  // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
-  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
@@ -4803,8 +4820,12 @@ app.put('/api/notices/:id', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   let session;
   try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
-  if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { title, content, author, level, images } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
