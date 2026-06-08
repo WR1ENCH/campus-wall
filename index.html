@@ -2762,20 +2762,17 @@
           if (nrJson.ok && nrJson.data) {
             var nr = nrJson.data;
             window._noticeAppNotif = nr;
-            var nu = _notifUnreadCheck('notice_app_result');
-            if (nu) {
-              unread++;
-              if (!_pendingT0Notif) {
-                _pendingT0Notif = {
-                  id: 'notice_app_result',
-                  icon: nr.status === 'approved' ? '\uD83C\uDF89' : '\u274C',
-                  title: nr.status === 'approved' ? '通知申请已通过' : '通知申请被驳回',
-                  content: nr.message,
-                  time: nr.timestamp || '',
-                  author: '系统'
-                };
-              }
-            }
+            // 清除旧的已读标记，确保新通知显示为未读
+            localStorage.removeItem('notif_read_notice_app_result');
+            unread++;
+            _pendingT0Notif = {
+              id: 'notice_app_result',
+              icon: nr.status === 'approved' ? '\uD83C\uDF89' : '\u274C',
+              title: nr.status === 'approved' ? '通知申请已通过' : '通知申请被驳回',
+              content: nr.message,
+              time: nr.timestamp || '',
+              author: '系统'
+            };
           }
         }
       } catch(e) {}
