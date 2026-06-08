@@ -1420,16 +1420,12 @@
       </div>
     </div>
 
-  </div>
-</div>
-
 <!-- ===== 已删除内容管理 ===== -->
 <div class="page" id="page-deleted" style="display:none;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
     <div style="font-size:20px;font-weight:700;color:var(--text-main);">🗑️ 已删除内容</div>
     <div style="font-size:13px;color:var(--text-sub);">内容删除后至少保留一年，仅管理员可见</div>
   </div>
-
   <!-- 统计概览 -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
     <div class="stat-card" style="background:linear-gradient(135deg,#6366f1,#818cf8);border:none;flex-direction:column;gap:4px;">
@@ -1449,7 +1445,6 @@
       <div class="stat-value" style="color:#fff;" id="deletedDiscCommentCount">0</div>
     </div>
   </div>
-
   <!-- Tab 切换 -->
   <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px;">
     <button class="deleted-tab active" onclick="switchDeletedTab('posts')" id="tabDelPosts">帖子</button>
@@ -1457,28 +1452,13 @@
     <button class="deleted-tab" onclick="switchDeletedTab('discussions')" id="tabDelDiscussions">讨论</button>
     <button class="deleted-tab" onclick="switchDeletedTab('discComments')" id="tabDelDiscComments">讨论评论</button>
   </div>
-
-  <!-- 加载状态 -->
   <div id="deletedLoading" class="loading"><div class="spinner"></div>加载中…</div>
+  <div id="deletedPostsPanel" style="display:none;"><div id="deletedPostsBody"></div></div>
+  <div id="deletedCommentsPanel" style="display:none;"><div id="deletedCommentsBody"></div></div>
+  <div id="deletedDiscussionsPanel" style="display:none;"><div id="deletedDiscussionsBody"></div></div>
+  <div id="deletedDiscCommentsPanel" style="display:none;"><div id="deletedDiscCommentsBody"></div></div>
+</div>
 
-  <!-- 帖子列表 -->
-  <div id="deletedPostsPanel" style="display:none;">
-    <div id="deletedPostsBody"></div>
-  </div>
-
-  <!-- 评论列表 -->
-  <div id="deletedCommentsPanel" style="display:none;">
-    <div id="deletedCommentsBody"></div>
-  </div>
-
-  <!-- 讨论列表 -->
-  <div id="deletedDiscussionsPanel" style="display:none;">
-    <div id="deletedDiscussionsBody"></div>
-  </div>
-
-  <!-- 讨论评论列表 -->
-  <div id="deletedDiscCommentsPanel" style="display:none;">
-    <div id="deletedDiscCommentsBody"></div>
   </div>
 </div>
 
