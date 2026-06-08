@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>校园墙精选</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -238,7 +238,7 @@
       <button class="btn" id="generateBtn" onclick="generateQrCode()">生成登录二维码</button>
 
       <div class="qr-box" id="qrBox">
-        <canvas id="qrCanvas"></canvas>
+        <div id="qrCanvas"></div>
         <div class="qr-content" id="qrContent" style="display:none;"></div>
         <div class="timer-bar">
           <div class="timer-progress" id="timerProgress"></div>
@@ -312,16 +312,21 @@
         // 生成二维码图片
         document.getElementById('qrBox').classList.add('show');
         const qrUrl = 'campuswall://login/' + qrToken;
-        const canvas = document.getElementById('qrCanvas');
-        if (canvas && typeof QRCode !== 'undefined') {
-          QRCode.toCanvas(canvas, qrUrl, { width: 160, margin: 1, color: { dark: '#5a3e2b', light: '#fffdf5' } }, function(err) {
-            if (err) console.error(err);
+        const container = document.getElementById('qrCanvas');
+        container.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(container, {
+            text: qrUrl,
+            width: 160,
+            height: 160,
+            colorDark: '#5a3e2b',
+            colorLight: '#fffdf5',
+            correctLevel: QRCode.CorrectLevel.L
           });
         } else {
           // 后备：显示文字
           document.getElementById('qrContent').style.display = 'block';
           document.getElementById('qrContent').textContent = qrUrl;
-          document.getElementById('qrCanvas').style.display = 'none';
         }
 
         btn.disabled = false;
