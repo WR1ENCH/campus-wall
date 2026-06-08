@@ -881,6 +881,92 @@ app.post('/api/user/revoke-trust', (req, res) => {
   res.json({ ok: true });
 });
 
+// ===== 二维码登录 =====
+const qrCodeStore = new Map(); // qrToken -> { userId, createdAt, status: 'pending'|'scanned'|'confirmed'|'expired', userAgent }
+const QR_CODE_TTL = 5 * 60 * 1000; // 5分钟有效期
+
+// 生成二维码（网页端调用）
+app.get('/api/user/qrcode/generate', (req, res) => {
+  // 验证 captcha（从 query 参数）
+  const { captchaId, captchaText } = req.query;
+  if (captchaId && captchaText) {
+    const entry = captchaStore.get(captchaId);
+    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+      return res.json({ ok: false, msg: '验证码错误', needCaptcha: true });
+    }
+    captchaStore.delete(captchaId); // 一次性使用
+  } else {
+    return res.json({ ok: false, msg: '请先验证验证码', needCaptcha: true });
+  }
+
+  const qrToken = crypto.randomBytes(16).toString('hex');
+  qrCodeStore.set(qrToken, {
+    userId: null,
+    createdAt: Date.now(),
+    status: 'pending',
+    userAgent: req.headers['user-agent']
+  });
+  // 清理过期二维码
+  cleanupQrCodes();
+  res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
+});
+
+// 小程序扫码（查询状态）
+app.get('/api/user/qrcode/status', (req, res) => {
+  const { qrToken } = req.query;
+  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
+  const qr = qrCodeStore.get(qrToken);
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
+  if (Date.now() - qr.createdAt > QR_CODE_TTL) {
+    qr.status = 'expired';
+    return res.json({ ok: false, msg: '二维码已失效' });
+  }
+  if (qr.status === 'confirmed') {
+    // 返回用户信息给小程序
+    const users = readUsers();
+    const user = users.find(u => u.id === qr.userId);
+    if (user) {
+      qrCodeStore.delete(qrToken); // 一次性使用
+      return res.json({ ok: true, confirmed: true, user: { id: user.id, nickname: user.nickname, avatar: user.avatar } });
+    }
+  }
+  if (qr.status === 'scanned') {
+    return res.json({ ok: true, scanned: true, userId: qr.userId });
+  }
+  res.json({ ok: true, pending: true });
+});
+
+// 小程序确认登录
+app.post('/api/user/qrcode/confirm', (req, res) => {
+  const { qrToken, userId } = req.body;
+  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
+  const qr = qrCodeStore.get(qrToken);
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
+  if (Date.now() - qr.createdAt > QR_CODE_TTL) {
+    qr.status = 'expired';
+    return res.json({ ok: false, msg: '二维码已失效' });
+  }
+  if (qr.status !== 'scanned') return res.json({ ok: false, msg: '等待扫码确认' });
+  const users = readUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  qr.status = 'confirmed';
+  qr.userId = user.id;
+  res.json({ ok: true });
+});
+
+// 清理过期二维码
+function cleanupQrCodes() {
+  const now = Date.now();
+  for (const [token, qr] of qrCodeStore) {
+    if (now - qr.createdAt > QR_CODE_TTL) {
+      qr.status = 'expired';
+      qrCodeStore.delete(token);
+    }
+  }
+}
+setInterval(cleanupQrCodes, 60000);
+
 // 找回密码（通过已认证的智学网账号）
 app.post('/api/user/forgot-password', (req, res) => {
   const { zhixueUsername, newPassword, confirmPassword } = req.body;

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>校园墙精选</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background-color: #c4a882;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+        repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+      background-size: 240px 120px;
+      min-height: 100vh;
+      color: #5a3d00;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 48px 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #5a3d00;
+    }
+
+    /* 便利贴卡片 */
+    .sticky-card {
+      background: #fff9b1;
+      border-radius: 0;
+      padding: 32px 28px;
+      width: 100%;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.15),
+        0 8px 32px rgba(0,0,0,0.1);
+      position: relative;
+      transform: rotate(-0.5deg);
+      transition: transform 0.3s ease;
+    }
+    .sticky-card:hover {
+      transform: rotate(0deg);
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #5a3d00;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .form-item {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #5a3d00;
+    }
+    .form-input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border: 2px solid #d4c4a0;
+      border-radius: 4px;
+      background: #fffdf5;
+      color: #5a3d00;
+      font-family: inherit;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #c4a882;
+    }
+
+    /* 验证码区域 */
+    .captcha-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .captcha-input {
+      flex: 1;
+      padding: 14px;
+      font-size: 16px;
+      border: 2px solid #d4c4a0;
+      border-radius: 4px;
+      background: #fffdf5;
+      color: #5a3d00;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      text-align: center;
+    }
+    .captcha-input:focus {
+      outline: none;
+      border-color: #c4a882;
+    }
+    .captcha-img {
+      width: 120px;
+      height: 50px;
+      border: 2px solid #d4c4a0;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #8b7355, #6b5344);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(90,61,0,0.3);
+      font-family: inherit;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover {
+      box-shadow: 0 6px 16px rgba(90,61,0,0.4);
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* 二维码展示区域 */
+    .qr-box {
+      background: #fffdf5;
+      border-radius: 4px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+      border: 2px dashed #d4c4a0;
+    }
+    .qr-box.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .qr-content {
+      font-size: 14px;
+      word-break: break-all;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-family: monospace;
+      color: #333;
+    }
+
+    /* 进度条 */
+    .timer-bar {
+      height: 10px;
+      background: #e8e0cc;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .timer-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #8b7355, #6b5344);
+      border-radius: 5px;
+      transition: width 1s linear;
+      width: 100%;
+    }
+    .timer-text {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .tips {
+      font-size: 13px;
+      color: #888;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏆 校园墙精选</h1>
+
+    <div class="sticky-card">
+      <a class="back-link" href="index.html">← 返回校园墙</a>
+
+      <div class="form-item">
+        <label class="form-label">验证码</label>
+        <div class="captcha-row">
+          <input class="captcha-input" id="captchaInput" placeholder="请输入验证码" maxlength="6" autocomplete="off">
+          <img class="captcha-img" id="captchaImg" onclick="refreshCaptcha()" title="点击刷新验证码">
+        </div>
+      </div>
+
+      <button class="btn" id="generateBtn" onclick="generateQrCode()">生成登录二维码</button>
+
+      <div class="qr-box" id="qrBox">
+        <div class="qr-content" id="qrContent"></div>
+        <div class="timer-bar">
+          <div class="timer-progress" id="timerProgress"></div>
+        </div>
+        <div class="timer-text" id="timerText">5:00 后过期</div>
+        <div class="tips">
+          请使用小程序扫码登录，二维码仅有效期5分钟
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let _captchaId = null;
+    let qrToken = null;
+    let timerInterval = null;
+    let countdown = 300; // 5分钟
+
+    // 加载验证码
+    async function loadCaptcha() {
+      try {
+        const resp = await fetch('/api/captcha');
+        const json = await resp.json();
+        if (json.ok) {
+          _captchaId = json.data.id;
+          document.getElementById('captchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+        }
+      } catch (e) {
+        console.error('加载验证码失败', e);
+      }
+    }
+
+    // 刷新验证码
+    async function refreshCaptcha() {
+      await loadCaptcha();
+      document.getElementById('captchaInput').value = '';
+      document.getElementById('captchaInput').focus();
+    }
+
+    // 生成二维码
+    async function generateQrCode() {
+      const captcha = document.getElementById('captchaInput').value.trim();
+      if (!captcha) {
+        alert('请输入验证码');
+        return;
+      }
+      if (!_captchaId) {
+        alert('验证码已失效，请刷新后重试');
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.textContent = '生成中...';
+
+      try {
+        const res = await fetch('/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha));
+        const data = await res.json();
+
+        if (!data.ok) {
+          alert(data.msg || '验证码错误');
+          await refreshCaptcha();
+          btn.disabled = false;
+          btn.textContent = '生成登录二维码';
+          return;
+        }
+
+        qrToken = data.qrToken;
+        countdown = 300;
+
+        // 显示二维码
+        document.getElementById('qrBox').classList.add('show');
+        document.getElementById('qrContent').textContent = 'campuswall://login/' + qrToken;
+
+        btn.disabled = false;
+        btn.textContent = '生成登录二维码';
+
+        // 启动倒计时
+        startTimer();
+      } catch (err) {
+        alert('网络错误');
+        btn.disabled = false;
+        btn.textContent = '生成登录二维码';
+      }
+    }
+
+    // 倒计时
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        countdown--;
+        const mins = Math.floor(countdown / 60);
+        const secs = countdown % 60;
+
+        // 更新进度条
+        const progress = (countdown / 300) * 100;
+        document.getElementById('timerProgress').style.width = progress + '%';
+        document.getElementById('timerText').textContent = mins + ':' + secs.toString().padStart(2, '0') + ' 后过期';
+
+        if (countdown <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('qrBox').classList.remove('show');
+          document.getElementById('timerText').textContent = '已过期';
+        }
+      }, 1000);
+    }
+
+    // 页面加载时加载验证码
+    loadCaptcha();
+  </script>
+</body>
+</html>
