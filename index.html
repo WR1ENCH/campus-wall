@@ -2685,10 +2685,7 @@
     function showAnnouncement(ann) {
       document.getElementById('announcementTitle').textContent = '📢 ' + ann.title;
       const raw = ann.content || '';
-      document.getElementById('announcementContent').innerHTML =
-        (typeof marked !== 'undefined' && marked.parse)
-          ? marked.parse(raw)
-          : raw.replace(/\n/g, '<br>');
+      document.getElementById('announcementContent').innerHTML = _renderMd(raw);
       document.getElementById('announcementOverlay').style.display = 'flex';
       localStorage.setItem('announcement_id', ann.publishedAt);
     }
@@ -2709,6 +2706,17 @@
 
     function closeNotifModal() {
       document.getElementById('notifOverlay').style.display = 'none';
+    }
+
+    // 简单的 Markdown 渲染函数（处理加粗和斜体）
+    function _renderMd(text) {
+      if (!text) return '';
+      var html = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+      return html;
     }
 
     // 页面加载时检查未读通知，更新 🔔 红点（不弹窗）
@@ -2983,7 +2991,7 @@
         '<h2 style="font-size:18px;font-weight:600;margin:0 0 8px;color:#1f2937;">' + item.title + '</h2>' +
         (item.time ? '<div style="font-size:12px;color:#9ca3af;margin-bottom:14px;">' + item.time + '</div>' : '') +
         '<div style="font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">' + 
-        ((typeof marked !== 'undefined' && marked.parse) ? marked.parse(item.content) : item.content.replace(/\n/g, '<br>')) + '</div>';
+        _renderMd(item.content) + '</div>';
     };
 
     // ===== 同学认证引导 =====
