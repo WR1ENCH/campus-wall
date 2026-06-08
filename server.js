@@ -4708,10 +4708,11 @@ app.post('/api/student-council/change-name', (req, res) => {
   res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
-// 获取通知列表（公开）
+// 获取通知列表（公开，过滤已删除）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  const list = notices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
+  const active = notices.filter(n => !n.deleted);
+  const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
 
@@ -4741,7 +4742,7 @@ app.post('/api/notices', (req, res) => {
   res.json({ ok: true, msg: '通知已发布' });
 });
 
-// 删除通知（需验证token）
+// 删除通知（需验证token）—— 软删除，60天后自动清理
 app.delete('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
@@ -4751,10 +4752,13 @@ app.delete('/api/notices/:id', (req, res) => {
   if (!sc || sc.id !== session.id) return res.json({ ok: false, msg: '登录已过期' });
 
   const notices = readNotices();
-  const before = notices.length;
-  const remaining = notices.filter(n => n.id !== req.params.id);
-  if (remaining.length === before) return res.json({ ok: false, msg: '通知不存在' });
-  writeNotices(remaining);
+  const notice = notices.find(n => n.id === req.params.id);
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
+
+  notice.deleted = true;
+  notice.deletedAt = new Date().toISOString();
+  writeNotices(notices);
   res.json({ ok: true, msg: '通知已删除' });
 });
 
