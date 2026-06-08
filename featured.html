@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>校园墙精选</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -237,7 +238,8 @@
       <button class="btn" id="generateBtn" onclick="generateQrCode()">生成登录二维码</button>
 
       <div class="qr-box" id="qrBox">
-        <div class="qr-content" id="qrContent"></div>
+        <canvas id="qrCanvas"></canvas>
+        <div class="qr-content" id="qrContent" style="display:none;"></div>
         <div class="timer-bar">
           <div class="timer-progress" id="timerProgress"></div>
         </div>
@@ -307,9 +309,20 @@
         qrToken = data.qrToken;
         countdown = 300;
 
-        // 显示二维码
+        // 生成二维码图片
         document.getElementById('qrBox').classList.add('show');
-        document.getElementById('qrContent').textContent = 'campuswall://login/' + qrToken;
+        const qrUrl = 'campuswall://login/' + qrToken;
+        const canvas = document.getElementById('qrCanvas');
+        if (canvas && typeof QRCode !== 'undefined') {
+          QRCode.toCanvas(canvas, qrUrl, { width: 160, margin: 1, color: { dark: '#5a3e2b', light: '#fffdf5' } }, function(err) {
+            if (err) console.error(err);
+          });
+        } else {
+          // 后备：显示文字
+          document.getElementById('qrContent').style.display = 'block';
+          document.getElementById('qrContent').textContent = qrUrl;
+          document.getElementById('qrCanvas').style.display = 'none';
+        }
 
         btn.disabled = false;
         btn.textContent = '生成登录二维码';
