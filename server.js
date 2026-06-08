@@ -635,6 +635,22 @@ setInterval(() => {
   }
 }, 60000);
 
+// 每天清理超过60天的已删除通知
+setInterval(() => {
+  const notices = readNotices();
+  const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
+  const before = new Date(cutoff).toISOString();
+  const remaining = notices.filter(n => {
+    if (!n.deleted) return true;
+    if (!n.deletedAt) return false;
+    return new Date(n.deletedAt) > new Date(before);
+  });
+  if (remaining.length !== notices.length) {
+    writeNotices(remaining);
+    console.log('[通知清理] 已清理超过60天的已删除通知');
+  }
+}, 60 * 60 * 1000);
+
 // 生成验证码
 app.get('/api/captcha', (req, res) => {
   const captcha = svgCaptcha.create({ fontSize: 50, width: 150, height: 50, noise: 2 });
