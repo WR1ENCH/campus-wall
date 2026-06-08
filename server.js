@@ -4800,8 +4800,13 @@ app.delete('/api/notices/:id', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
-  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  if (!isSC && !isPublisher) {
+    // 检查是否存在该用户
+    const userExists = users.find(u => u.id === session.id);
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
+  }
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
@@ -4814,6 +4819,66 @@ app.delete('/api/notices/:id', (req, res) => {
   res.json({ ok: true, msg: '通知已删除' });
 });
 
+// 置顶/取消置顶通知
+app.post('/api/notices/:id/pin', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  if (!isSC && !isPublisher) {
+    const userExists = users.find(u => u.id === session.id);
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
+  }
+
+  const notices = readNotices();
+  const notice = notices.find(n => n.id === req.params.id);
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
+
+  notice.pinned = !notice.pinned;
+  if (notice.pinned) {
+    notice.pinnedAt = new Date().toISOString();
+  } else {
+    notice.pinnedAt = null;
+  }
+  notice.updatedAt = new Date().toISOString();
+  writeNotices(notices);
+  res.json({ ok: true, msg: notice.pinned ? '已置顶' : '已取消置顶', pinned: notice.pinned });
+});
+
+// 同步通知到其他平台
+app.post('/api/notices/:id/sync', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  let session;
+  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const sc = readSC();
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  if (!isSC && !isPublisher) {
+    const userExists = users.find(u => u.id === session.id);
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
+  }
+
+  const notices = readNotices();
+  const notice = notices.find(n => n.id === req.params.id);
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
+
+  notice.synced = true;
+  notice.syncedAt = new Date().toISOString();
+  notice.updatedAt = new Date().toISOString();
+  writeNotices(notices);
+  res.json({ ok: true, msg: '同步成功' });
+});
+
 // 修改通知（需验证token）
 app.put('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
@@ -4824,8 +4889,13 @@ app.put('/api/notices/:id', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
-  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  if (!isSC && !isPublisher) {
+    // 检查是否存在该用户
+    const userExists = users.find(u => u.id === session.id);
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
+  }
 
   const { title, content, author, level, images } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });

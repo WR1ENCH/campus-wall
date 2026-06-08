@@ -467,12 +467,14 @@ body {
 
 <!-- ===== Edit Modal ===== -->
 <div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>&#x270F;&#xFE0F; 修改通知</h3>
-      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+  <div class="modal-box" onclick="event.stopPropagation()" style="border-radius:12px;overflow:hidden;max-width:560px;">
+    <!-- 标题栏 -->
+    <div style="background:#333;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:600;color:#fff;">编辑通知</h3>
+      <button onclick="closeEditModal()" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer;padding:0;line-height:1;">&times;</button>
     </div>
-    <div class="modal-body">
+    <!-- 表单内容 -->
+    <div class="modal-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
       <div class="form-group">
         <label for="editTitle">标题</label>
         <input class="form-input" id="editTitle" maxlength="100" placeholder="通知标题">
@@ -490,7 +492,7 @@ body {
           <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">—</button>
           <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;">👁️ 预览</button>
         </div>
-        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容&#x2026;（支持 Markdown 格式）" style="min-height:120px;"></textarea>
+        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容…（支持 Markdown 格式）" style="min-height:120px;"></textarea>
         <div id="editContentPreview" class="md-preview" style="display:none;"></div>
       </div>
       <div class="form-group">
@@ -502,16 +504,27 @@ body {
         <div style="display:flex;gap:10px;">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT1Label" onclick="selectEditLevel('T1')">
             <input type="radio" name="editLevel" value="T1" checked style="accent-color:var(--accent);">
-            <span>&#x1F4CB; T1 &#x00B7; 普通</span>
+            <span>📋 T1 · 普通</span>
           </label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT0Label" onclick="selectEditLevel('T0')">
             <input type="radio" name="editLevel" value="T0">
-            <span>&#x1F534; T0 &#x00B7; 重要</span>
+            <span>🔴 T0 · 重要</span>
           </label>
         </div>
       </div>
       <div class="form-error" id="editError"></div>
-      <button class="btn-submit" id="editSubmitBtn" onclick="doEditNotice()">&#x270F;&#xFE0F; 保存修改</button>
+    </div>
+    <!-- 底部按钮栏 -->
+    <div style="background:#f5f5f5;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e5e5e5;">
+      <div style="display:flex;gap:8px;">
+        <button onclick="doSyncNotice()" id="syncBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;">🔄 同步</button>
+        <button onclick="doPinNotice()" id="pinBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;">📌 置顶</button>
+        <button onclick="doDeleteNotice()" id="deleteNoticeBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ffcdd2;background:#fff;cursor:pointer;font-size:13px;color:#c62828;display:flex;align-items:center;gap:4px;">🗑️ 删除</button>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-cancel" onclick="closeEditModal()" style="padding:8px 20px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:14px;">取消</button>
+        <button id="editSubmitBtn" onclick="doEditNotice()" style="padding:8px 24px;border-radius:6px;border:none;background:#333;color:#fff;cursor:pointer;font-size:14px;">确定</button>
+      </div>
     </div>
   </div>
 </div>
@@ -766,7 +779,7 @@ body {
   window.togglePreview = function(textareaId) {
     var ta = document.getElementById(textareaId);
     var preview = document.getElementById(textareaId + 'Preview');
-    var btn = document.getElementById((textareaId === 'notifContent' ? '' : 'edit') + 'PreviewBtn');
+    var btn = document.getElementById((textareaId === 'notifContent' ? '' : 'edit') + 'previewBtn');
     if (preview.style.display === 'none') {
       preview.innerHTML = renderMarkdown(ta.value);
       preview.style.display = '';
@@ -902,6 +915,14 @@ body {
     document.getElementById('editSubmitBtn').disabled = false;
     document.getElementById('editSubmitBtn').textContent = '\u270F\uFE0F \u4FDD\u5B58\u4FEE\u6539';
 
+    // 重置功能按钮状态
+    var pinBtn = document.getElementById('pinBtn');
+    var syncBtn = document.getElementById('syncBtn');
+    var deleteBtn = document.getElementById('deleteNoticeBtn');
+    if (pinBtn) { pinBtn.disabled = false; pinBtn.innerHTML = '\uD83D\uDCCC \u7F6E\u9876'; }
+    if (syncBtn) { syncBtn.disabled = false; syncBtn.innerHTML = '\uD83D\uDD04 \u540C\u6B65'; }
+    if (deleteBtn) { deleteBtn.disabled = false; }
+
     // 预填当前数据
     try {
       var res = await fetch('/api/notices');
@@ -914,6 +935,10 @@ body {
           document.getElementById('editAuthor').value = n.author || '';
           var lvl = n.level === 'T0' ? 'T0' : 'T1';
           selectEditLevel(lvl);
+          // 更新置顶按钮状态
+          if (pinBtn && n.pinned) {
+            pinBtn.innerHTML = '\uD83D\uDCCC \u53D6\u6D88\u7F6E\u9876';
+          }
         }
       }
     } catch(e) {}
@@ -954,6 +979,75 @@ body {
       }
     } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
     finally { btn.disabled = false; btn.textContent = '\u270F\uFE0F \u4FDD\u5B58\u4FEE\u6539'; }
+  };
+
+  // ===== 同步通知 =====
+  window.doSyncNotice = async function() {
+    var btn = document.getElementById('syncBtn');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true; btn.textContent = '\u540C\u6B65\u4E2D\u2026';
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/notices/' + _editNotifId + '/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 ' + json.msg, 'success');
+      } else {
+        showToast('\u274C ' + json.msg, 'error');
+      }
+    } catch(e) { showToast('\u7F51\u7EDC\u9519\u8BEF', 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '\uD83D\uDD04 \u540C\u6B65'; }
+  };
+
+  // ===== 置顶通知 =====
+  window.doPinNotice = async function() {
+    var btn = document.getElementById('pinBtn');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/notices/' + _editNotifId + '/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 ' + json.msg, 'success');
+        loadNotices();
+        btn.innerHTML = json.pinned ? '\uD83D\uDCCC \u53D6\u6D88\u7F6E\u9876' : '\uD83D\uDCCC \u7F6E\u9876';
+      } else {
+        showToast('\u274C ' + json.msg, 'error');
+      }
+    } catch(e) { showToast('\u7F51\u7EDC\u9519\u8BEF', 'error'); }
+    finally { btn.disabled = false; }
+  };
+
+  // ===== 删除通知 =====
+  window.doDeleteNotice = async function() {
+    if (!confirm('\u786E\u5B9A\u8981\u5220\u9664\u6B64\u901A\u77E9\u5417\uFF1F')) return;
+    var btn = document.getElementById('deleteNoticeBtn');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/notices/' + _editNotifId, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 ' + json.msg, 'success');
+        closeEditModal();
+        loadNotices();
+      } else {
+        showToast('\u274C ' + json.msg, 'error');
+        if (json.code === 'NOT_LOGIN') { showToast('\u767B\u5F55\u5DF2\u8FC7\u671F', 'error'); doLogout(); }
+      }
+    } catch(e) { showToast('\u7F51\u7EDC\u9519\u8BEF', 'error'); }
+    finally { btn.disabled = false; }
   };
 
   // ===== 加载通知列表 =====
