@@ -5167,15 +5167,6 @@ app.post('/api/notice-account/apply', (req, res) => {
   }
   captchaStore.delete(captchaId);
 
-  // 验证 pass-key
-  const stored = readPasskey();
-  if (!stored || !stored.key) {
-    return res.json({ ok: false, msg: '系统暂未开放申请，请稍后再试' });
-  }
-  if (!passkey || passkey.trim() !== stored.key) {
-    return res.json({ ok: false, msg: '通行码错误，请确认后重新输入' });
-  }
-
   if (!name || !name.trim()) return res.json({ ok: false, msg: '请填写申请人姓名' });
   if (!department || !department.trim()) return res.json({ ok: false, msg: '请填写部门/组织' });
   if (!contact || !contact.trim()) return res.json({ ok: false, msg: '请填写联系方式' });
@@ -5189,19 +5180,55 @@ app.post('/api/notice-account/apply', (req, res) => {
     return res.json({ ok: false, msg: '你已提交过申请，' + hint });
   }
 
-  apps.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name: name.trim(),
-    department: department.trim(),
-    contact: contact.trim(),
-    reason: reason.trim(),
-    status: 'pending',
-    userId: session.id,
-    userNickname: session.nickname || name.trim(),
-    createdAt: new Date().toISOString()
-  });
-  writeApps(apps);
-  res.json({ ok: true, msg: '申请已提交，请等待管理员审核' });
+  // 验证 pass-key（选填）
+  const stored = readPasskey();
+  const hasValidPasskey = stored && stored.key && passkey && passkey.trim() === stored.key;
+
+  if (hasValidPasskey) {
+    // 通行码正确 → 自动通过，直接授予通知发布权限
+    const users = readUsers();
+    const targetUser = users.find(u => u.id === session.id);
+    if (targetUser) {
+      targetUser.noticePublisher = true;
+      targetUser.noticePublisherAddedAt = new Date().toISOString();
+      targetUser._noticeAppNotification = {
+        status: 'approved',
+        message: '你的通知发布申请已通过！你可以使用校园墙账号密码登录 notice.html 管理通知',
+        timestamp: new Date().toISOString()
+      };
+      writeUsers(users);
+    }
+    apps.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: name.trim(),
+      department: department.trim(),
+      contact: contact.trim(),
+      reason: reason.trim(),
+      status: 'approved', // 自动通过
+      userId: session.id,
+      userNickname: session.nickname || name.trim(),
+      createdAt: new Date().toISOString(),
+      reviewedAt: new Date().toISOString(),
+      reviewedBy: 'system'
+    });
+    writeApps(apps);
+    res.json({ ok: true, msg: '🎉 通行码验证通过，你已获得通知发布权限！' });
+  } else {
+    // 无通行码 → 提交申请，等待管理员审核
+    apps.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: name.trim(),
+      department: department.trim(),
+      contact: contact.trim(),
+      reason: reason.trim(),
+      status: 'pending',
+      userId: session.id,
+      userNickname: session.nickname || name.trim(),
+      createdAt: new Date().toISOString()
+    });
+    writeApps(apps);
+    res.json({ ok: true, msg: '申请已提交，请等待管理员审核' });
+  }
 });
 
 // 获取用户的通知申请审核结果通知（读取后清除）
