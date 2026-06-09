@@ -193,16 +193,27 @@ function writeNotices(data) { dropAndInsert('notices', data); }
 
 // Passkey
 function readPasskey() {
-  const row = getDb().prepare('SELECT * FROM "notice_passkey" LIMIT 1').get();
-  return row || null;
+  // 表结构为 _key / _value，需要重构为对象
+  const rows = getDb().prepare('SELECT * FROM "notice_passkey"').all();
+  if (!rows || rows.length === 0) return null;
+  const obj = {};
+  for (const r of rows) {
+    obj[r._key] = r._value;
+  }
+  return obj;
 }
 function writePasskey(data) {
   const d = getDb();
   d.exec('DELETE FROM "notice_passkey"');
   if (!data || Object.keys(data).length === 0) return;
-  const cols = Object.keys(data);
-  d.prepare(`INSERT INTO "notice_passkey" (${cols.map(c => '"' + c + '"').join(',')}) VALUES (${cols.map(() => '?').join(',')})`)
-    .run(cols.map(c => data[c]));
+  // 将对象展平为 _key / _value 行
+  const ins = d.prepare('INSERT INTO "notice_passkey" ("_key", "_value") VALUES (?, ?)');
+  const tx = d.transaction(() => {
+    for (const [k, v] of Object.entries(data)) {
+      ins.run(k, String(v));
+    }
+  });
+  tx();
 }
 
 // Apps (notice applications)
