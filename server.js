@@ -882,8 +882,36 @@ app.post('/api/user/revoke-trust', (req, res) => {
 });
 
 // ===== 二维码登录 =====
-const qrCodeStore = new Map(); // qrToken -> { userId, createdAt, status: 'pending'|'scanned'|'confirmed'|'expired', userAgent }
+const qrCodeStore = new Map();
 const QR_CODE_TTL = 5 * 60 * 1000; // 5分钟有效期
+
+// 启动时恢复已持久化的二维码
+try {
+  const fs = require('fs');
+  const qrDbPath = require('path').join(__dirname, 'data', 'qrcodes.json');
+  if (fs.existsSync(qrDbPath)) {
+    const raw = fs.readFileSync(qrDbPath, 'utf8');
+    const arr = JSON.parse(raw);
+    arr.forEach(entry => qrCodeStore.set(entry.token, entry.data));
+    console.log('[qrcode] 已恢复 ' + qrCodeStore.size + ' 个二维码令牌');
+  }
+} catch(e) {
+  console.warn('[qrcode] 恢复失败（首次运行可忽略）:', e.message);
+}
+
+function persistQrCodes() {
+  try {
+    const fs = require('fs');
+    const qrDbPath = require('path').join(__dirname, 'data', 'qrcodes.json');
+    const arr = [];
+    for (const [token, data] of qrCodeStore) {
+      arr.push({ token, data });
+    }
+    fs.writeFileSync(qrDbPath, JSON.stringify(arr, null, 2), 'utf8');
+  } catch(e) {
+    console.warn('[qrcode] 持久化失败:', e.message);
+  }
+}
 
 // 生成二维码（网页端调用）
 app.get('/api/user/qrcode/generate', (req, res) => {
@@ -894,19 +922,22 @@ app.get('/api/user/qrcode/generate', (req, res) => {
     status: 'pending',
     userAgent: req.headers['user-agent']
   });
-  // 清理过期二维码
+  persistQrCodes();
   cleanupQrCodes();
+  console.log('[qrcode] 生成二维码 token=' + qrToken.slice(0,12) + '... store_size=' + qrCodeStore.size);
   res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
 });
 
 // 小程序扫码（扫描二维码）→ 自动确认登录
 app.get('/api/user/qrcode/scan', (req, res) => {
   const { token } = req.query;
-  if (!token) return res.json({ ok: false, msg: '缺少二维码令牌' });
   const qr = qrCodeStore.get(token);
+  console.log('[qrcode] 扫码 token=' + (token ? token.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' store_size=' + qrCodeStore.size);
+  if (!token) return res.json({ ok: false, msg: '缺少二维码令牌' });
   if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
   if (Date.now() - qr.createdAt > QR_CODE_TTL) {
     qr.status = 'expired';
+    persistQrCodes();
     return res.json({ ok: false, msg: '二维码已失效' });
   }
   // 生成小程序专用用户令牌
@@ -918,6 +949,7 @@ app.get('/api/user/qrcode/scan', (req, res) => {
   };
   qr.status = 'confirmed';
   qr.sessionUser = sessionUser;
+  persistQrCodes();
   // 保存到用户列表
   const users = readUsers();
   users.push({
@@ -929,29 +961,34 @@ app.get('/api/user/qrcode/scan', (req, res) => {
     createdAt: new Date().toISOString()
   });
   writeUsers(users);
+  console.log('[qrcode] 扫码成功 创建用户=' + sessionUser.nickname + ' token=' + sessionUser.token.slice(0,12) + '...');
   res.json({ ok: true, scanned: true });
 });
 
 // 小程序查询状态
 app.get('/api/user/qrcode/status', (req, res) => {
   const { qrToken } = req.query;
-  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
   const qr = qrCodeStore.get(qrToken);
+  console.log('[qrcode] 状态查询 token=' + (qrToken ? qrToken.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' status=' + (qr ? qr.status : 'N/A'));
+  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
   if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
   if (Date.now() - qr.createdAt > QR_CODE_TTL) {
     qr.status = 'expired';
+    persistQrCodes();
     return res.json({ ok: false, msg: '二维码已失效' });
   }
   if (qr.status === 'confirmed') {
     // 返回用户信息给小程序
     if (qr.sessionUser) {
       qrCodeStore.delete(qrToken);
+      persistQrCodes();
       return res.json({ ok: true, confirmed: true, user: qr.sessionUser });
     }
     const users = readUsers();
     const user = users.find(u => u.id === qr.userId);
     if (user) {
-      qrCodeStore.delete(qrToken); // 一次性使用
+      qrCodeStore.delete(qrToken);
+      persistQrCodes();
       return res.json({ ok: true, confirmed: true, user: { id: user.id, nickname: user.nickname, avatar: user.avatar, token: user.token } });
     }
   }
@@ -983,12 +1020,15 @@ app.post('/api/user/qrcode/confirm', (req, res) => {
 // 清理过期二维码
 function cleanupQrCodes() {
   const now = Date.now();
+  let changed = false;
   for (const [token, qr] of qrCodeStore) {
     if (now - qr.createdAt > QR_CODE_TTL) {
       qr.status = 'expired';
       qrCodeStore.delete(token);
+      changed = true;
     }
   }
+  if (changed) persistQrCodes();
 }
 setInterval(cleanupQrCodes, 60000);
 
