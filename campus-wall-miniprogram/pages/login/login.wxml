@@ -16,6 +16,14 @@
     <text class="tip-text">3. 对准网页上的二维码扫描</text>
   </view>
 
+  <view class="manual-input-box">
+    <text class="tip-title" style="margin-bottom:8px;">✏️ 或者手动输入令牌</text>
+    <view style="display:flex;gap:8px;align-items:center;">
+      <input class="manual-input" id="manualTokenInput" placeholder="粘贴 campuswall://login/xxx 或直接输入 token" bindinput="onManualInput" />
+      <button class="manual-btn" bindtap="submitManualToken">确认</button>
+    </view>
+  </view>
+
   <view class="status" wx:if="{{status}}">
     <text class="status-text">{{status}}</text>
   </view>

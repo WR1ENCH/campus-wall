@@ -4,11 +4,25 @@ const API_BASE = 'http://154.37.221.232/api';
 Page({
   data: {
     status: '',
-    qrToken: ''
+    qrToken: '',
+    manualToken: ''
   },
 
   onLoad() {
     // 等待扫码
+  },
+
+  onManualInput(e) {
+    this.setData({ manualToken: e.detail.value });
+  },
+
+  submitManualToken() {
+    const input = this.data.manualToken.trim();
+    if (!input) {
+      wx.showToast({ title: '请输入令牌', icon: 'none' });
+      return;
+    }
+    this.handleScanResult(input);
   },
 
   scanQrCode() {

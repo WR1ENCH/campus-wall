@@ -1716,11 +1716,13 @@
       <div style="font-size:28px;margin-bottom:8px;">📱</div>
       <div style="font-size:16px;font-weight:700;margin-bottom:6px;">小程序扫码登录</div>
       <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;">
-        打开校园墙小程序，扫描下方二维码登录
+        打开校园墙小程序，扫描下方二维码登录<br>
+        <span style="font-size:11px;color:#999;">提示：如扫码无效，可复制下方文本在小程序中粘贴</span>
       </div>
       <div id="qrCodeBox" style="margin:16px auto;width:180px;height:180px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;">
         <div style="color:#999;">加载中...</div>
       </div>
+      <div id="qrCodeText" style="font-size:11px;color:#8b7355;word-break:break-all;margin:8px 16px;padding:8px;background:#f5f0e0;border-radius:8px;display:none;"></div>
       <div id="qrStatus" style="font-size:13px;color:#666;margin-bottom:12px;">等待扫码...</div>
       <div id="qrConfirmArea" style="display:none;margin-top:12px;">
         <button onclick="confirmQrLogin()" style="padding:10px 24px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-size:14px;cursor:pointer;">✅ 确认登录</button>
@@ -2394,10 +2396,15 @@
         try {
           new QRCode(box, { text: qrUrl, width: 160, height: 160 });
         } catch(e) {
-          box.innerHTML = `<div style="font-size:12px;word-break:break-all;text-align:center;padding:10px;">${qrUrl}</div>`;
+          box.innerHTML = '<div style="font-size:12px;color:#999;">二维码生成失败</div>';
         }
+        // 显示二维码原文（方便复制或调试）
+        const qrTextEl = document.getElementById('qrCodeText');
+        qrTextEl.textContent = qrUrl;
+        qrTextEl.style.display = 'block';
         document.getElementById('qrStatus').textContent = '等待扫码...';
         document.getElementById('qrConfirmArea').style.display = 'none';
+        console.log('[qr-login] 二维码内容:', qrUrl);
         // 轮询状态
         if (_qrPollTimer) clearInterval(_qrPollTimer);
         _qrPollTimer = setInterval(async () => {
