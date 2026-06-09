@@ -101,7 +101,8 @@ Page({
           wx.setStorageSync('userInfo', {
             id: res.user.id,
             nickname: res.user.nickname,
-            avatar: res.user.avatar
+            avatar: res.user.avatar,
+            username: res.user.username || ''
           });
           this.setData({ status: '✅ 登录成功！' });
           wx.showToast({ title: '登录成功', icon: 'success' });

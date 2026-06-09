@@ -915,16 +915,26 @@ function persistQrCodes() {
 
 // 生成二维码（网页端调用）
 app.get('/api/user/qrcode/generate', (req, res) => {
+  const { userToken } = req.query;
+  let linkedUser = null;
+  if (userToken) {
+    const session = verifyUserToken(userToken);
+    if (session) {
+      const users = readUsers();
+      linkedUser = users.find(u => u.id === session.id);
+    }
+  }
   const qrToken = crypto.randomBytes(16).toString('hex');
   qrCodeStore.set(qrToken, {
-    userId: null,
+    userId: linkedUser ? linkedUser.id : null,
+    linkedUser: linkedUser || null,
     createdAt: Date.now(),
     status: 'pending',
     userAgent: req.headers['user-agent']
   });
   persistQrCodes();
   cleanupQrCodes();
-  console.log('[qrcode] 生成二维码 token=' + qrToken.slice(0,12) + '... store_size=' + qrCodeStore.size);
+  console.log('[qrcode] 生成二维码 token=' + qrToken.slice(0,12) + '... linked=' + (linkedUser ? linkedUser.nickname : '无') + ' store_size=' + qrCodeStore.size);
   res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
 });
 
@@ -940,28 +950,47 @@ app.get('/api/user/qrcode/scan', (req, res) => {
     persistQrCodes();
     return res.json({ ok: false, msg: '二维码已失效' });
   }
-  // 生成小程序专用用户令牌
-  const sessionUser = {
-    id: 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-    nickname: '用户' + Math.random().toString(36).slice(2, 6).toUpperCase(),
-    avatar: '🙋',
-    token: crypto.randomBytes(24).toString('hex')
-  };
+  // 生成用户会话
+  let sessionUser;
+  if (qr.linkedUser) {
+    // 有关联用户：使用该用户的信息
+    sessionUser = {
+      id: qr.linkedUser.id,
+      nickname: qr.linkedUser.nickname,
+      avatar: qr.linkedUser.avatar || '🙋',
+      token: makeUserToken(qr.linkedUser),
+      username: qr.linkedUser.username || ''
+    };
+    // 更新该用户的 token（刷新有效期）
+    const allUsers = readUsers();
+    const idx = allUsers.findIndex(u => u.id === qr.linkedUser.id);
+    if (idx >= 0) {
+      allUsers[idx].token = sessionUser.token;
+      writeUsers(allUsers);
+    }
+  } else {
+    // 无关联用户：创建新用户
+    sessionUser = {
+      id: 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      nickname: '用户' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+      avatar: '🙋',
+      token: crypto.randomBytes(24).toString('hex')
+    };
+    const allUsers = readUsers();
+    allUsers.push({
+      id: sessionUser.id,
+      nickname: sessionUser.nickname,
+      avatar: sessionUser.avatar,
+      token: sessionUser.token,
+      password: '',
+      createdAt: new Date().toISOString()
+    });
+    writeUsers(allUsers);
+  }
   qr.status = 'confirmed';
   qr.sessionUser = sessionUser;
   persistQrCodes();
-  // 保存到用户列表
-  const users = readUsers();
-  users.push({
-    id: sessionUser.id,
-    nickname: sessionUser.nickname,
-    avatar: sessionUser.avatar,
-    token: sessionUser.token,
-    password: '',
-    createdAt: new Date().toISOString()
-  });
-  writeUsers(users);
-  console.log('[qrcode] 扫码成功 创建用户=' + sessionUser.nickname + ' token=' + sessionUser.token.slice(0,12) + '...');
+  console.log('[qrcode] 扫码成功', sessionUser.nickname, 'token=' + sessionUser.token.slice(0,12) + '...');
   res.json({ ok: true, scanned: true });
 });
 

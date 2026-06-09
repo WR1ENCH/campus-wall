@@ -295,7 +295,17 @@
       btn.textContent = '生成中...';
 
       try {
-        const res = await fetch('http://154.37.221.232/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha));
+        // 从 localStorage 获取当前登录用户
+        let userToken = '';
+        try {
+          const campusUser = JSON.parse(localStorage.getItem('campus_user') || '{}');
+          if (campusUser.token) userToken = campusUser.token;
+        } catch(e) {}
+
+        let url = 'http://154.37.221.232/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha);
+        if (userToken) url += '&userToken=' + encodeURIComponent(userToken);
+
+        const res = await fetch(url);
         const data = await res.json();
 
         if (!data.ok) {

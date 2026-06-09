@@ -9,6 +9,7 @@
     <view class="info">
       <text class="nickname">{{userInfo.nickname || '用户'}}</text>
       <text class="uid">ID: {{userInfo.id || '-'}}</text>
+      <text class="uid" wx:if="{{userInfo.username}}">账号: {{userInfo.username}}</text>
     </view>
   </view>
 
