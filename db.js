@@ -16,9 +16,25 @@ function getDb() {
 }
 
 // ---- helpers ----
+function tryParse(v) {
+  if (typeof v !== 'string') return v;
+  // 尝试解析 JSON 数组或对象
+  if ((v.startsWith('[') && v.endsWith(']')) || (v.startsWith('{') && v.endsWith('}'))) {
+    try { return JSON.parse(v); } catch { return v; }
+  }
+  return v;
+}
+
 function all(table) {
   try {
-    return getDb().prepare(`SELECT * FROM "${table}"`).all();
+    const rows = getDb().prepare(`SELECT * FROM "${table}"`).all();
+    // 自动恢复 JSON.stringified 的数组/对象
+    for (const row of rows) {
+      for (const k of Object.keys(row)) {
+        row[k] = tryParse(row[k]);
+      }
+    }
+    return rows;
   } catch { return []; }
 }
 
