@@ -216,9 +216,7 @@ function readAdmins() {
   }
 }
 
-function hasAdmins() {
-  return fs.existsSync(ADMINS_FILE) && readAdmins().length > 0;
-}
+function hasAdmins() { return db.readAdmins().length > 0; }
 
 function writeAdmins(admins) {
   try {
