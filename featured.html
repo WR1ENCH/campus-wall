@@ -224,8 +224,29 @@
   <div class="container">
     <h1>🏆 校园墙精选</h1>
 
-    <div class="sticky-card">
+    <!-- ===== 未登录提示 ===== -->
+    <div class="sticky-card" id="loginPrompt" style="display:none;">
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:12px;">请先登录校园墙</div>
+        <div style="font-size:14px;color:#8b7355;line-height:1.8;margin-bottom:20px;">
+          使用扫码登录小程序前，请先在校园墙网页登录账号
+        </div>
+        <a href="index.html" style="display:inline-block;padding:12px 40px;background:linear-gradient(135deg,#c4a882,#a08060);color:#fff;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;">前往登录 →</a>
+      </div>
+    </div>
+
+    <!-- ===== 已登录：主内容 ===== -->
+    <div class="sticky-card" id="mainContent" style="display:none;">
       <a class="back-link" href="index.html">← 返回校园墙</a>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px;background:#fffdf5;border-radius:8px;" id="userInfoBar">
+        <span id="userAvatar" style="font-size:32px;">🙋</span>
+        <div>
+          <div id="userNickname" style="font-size:15px;font-weight:600;color:#5a3d00;"></div>
+          <div id="userAccount" style="font-size:12px;color:#8b7355;"></div>
+        </div>
+      </div>
 
       <div class="form-item">
         <label class="form-label">验证码</label>
@@ -373,8 +394,32 @@
       }, 1000);
     }
 
-    // 页面加载时加载验证码
-    loadCaptcha();
+    // 页面加载时检查登录状态
+    (function() {
+      const token = localStorage.getItem('campus_user_token');
+      if (!token) {
+        // 未登录：显示提示
+        document.getElementById('loginPrompt').style.display = '';
+        document.getElementById('mainContent').style.display = 'none';
+        return;
+      }
+      // 已登录：显示主内容
+      document.getElementById('loginPrompt').style.display = 'none';
+      document.getElementById('mainContent').style.display = '';
+
+      // 显示用户信息
+      try {
+        const userData = JSON.parse(localStorage.getItem('campus_wall_user') || '{}');
+        if (userData.nickname) {
+          document.getElementById('userNickname').textContent = userData.nickname;
+          document.getElementById('userAccount').textContent = userData.username ? '账号: ' + userData.username : 'ID: ' + (userData.id || '');
+          if (userData.avatar) document.getElementById('userAvatar').textContent = userData.avatar;
+        }
+      } catch(e) {}
+
+      // 加载验证码
+      loadCaptcha();
+    })();
   </script>
 </body>
 </html>
