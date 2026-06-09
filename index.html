@@ -6,7 +6,6 @@
   <title>📌 校园墙 · 便利贴</title>
   <link href="https://fonts.googleapis.cn/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
-  <script src="assets/qrcode.min.js"></script>
   <style>
     :root {
       --note-yellow: #fff9b1;
@@ -1686,9 +1685,6 @@
         <button class="user-login-skip" onclick="doUserSkip()">先逛逛</button>
         <button class="user-login-confirm" id="loginConfirmBtn" onclick="doUserLogin()">登 录</button>
       </div>
-      <div style="margin-top:12px;">
-        <button onclick="showQrLogin()" style="background:none;border:none;color:#5a3d00;font-size:13px;cursor:pointer;text-decoration:underline;">📱 小程序扫码登录</button>
-      </div>
       <div class="user-login-readonly-tip" id="loginReadonlyTip" style="display:none;">
         ⚠️ 只读模式——登录后才能发帖
       </div>
@@ -1706,30 +1702,6 @@
       <div style="display:flex;gap:10px;justify-content:center;">
         <button onclick="trustBrowser(true)" style="padding:8px 22px;border-radius:8px;border:none;background:#22c55e;color:#fff;font-size:14px;cursor:pointer;">信任</button>
         <button onclick="trustBrowser(false)" style="padding:8px 22px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;font-size:14px;cursor:pointer;">跳过</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 二维码登录弹窗 ===== -->
-  <div class="user-login-overlay" id="qrLoginOverlay" style="display:none;">
-    <div class="user-login-box" style="max-width:340px;text-align:center;">
-      <div style="font-size:28px;margin-bottom:8px;">📱</div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">小程序扫码登录</div>
-      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;">
-        打开校园墙小程序，扫描下方二维码登录<br>
-        <span style="font-size:11px;color:#999;">提示：如扫码无效，可复制下方文本在小程序中粘贴</span>
-      </div>
-      <div id="qrCodeBox" style="margin:16px auto;width:180px;height:180px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;">
-        <div style="color:#999;">加载中...</div>
-      </div>
-      <div id="qrCodeText" style="font-size:11px;color:#8b7355;word-break:break-all;margin:8px 16px;padding:8px;background:#f5f0e0;border-radius:8px;display:none;"></div>
-      <div id="qrStatus" style="font-size:13px;color:#666;margin-bottom:12px;">等待扫码...</div>
-      <div id="qrConfirmArea" style="display:none;margin-top:12px;">
-        <button onclick="confirmQrLogin()" style="padding:10px 24px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-size:14px;cursor:pointer;">✅ 确认登录</button>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:center;">
-        <button onclick="refreshQrCode()" style="padding:8px 22px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;font-size:14px;cursor:pointer;">刷新二维码</button>
-        <button onclick="closeQrLogin()" style="padding:8px 22px;border-radius:8px;border:none;background:#c4a882;color:#fff;font-size:14px;cursor:pointer;">关闭</button>
       </div>
     </div>
   </div>
@@ -2342,102 +2314,6 @@
       } catch {}
       _pendingTrustUser = null;
       tryStartNewbieGuide();
-    }
-
-    // ===== 二维码登录 =====
-    let _qrToken = null;
-    let _qrPollTimer = null;
-
-    function showQrLogin() {
-      document.getElementById('qrLoginOverlay').style.display = 'flex';
-      refreshQrCode();
-    }
-
-    function closeQrLogin() {
-      document.getElementById('qrLoginOverlay').style.display = 'none';
-      document.getElementById('qrConfirmArea').style.display = 'none';
-      if (_qrPollTimer) clearInterval(_qrPollTimer);
-      _qrToken = null;
-    }
-
-    async function confirmQrLogin() {
-      if (!_qrToken) return;
-      try {
-        const res = await fetch('/api/user/qrcode/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ qrToken: _qrToken, userId: _currentUser?.id || null })
-        });
-        const data = await res.json();
-        if (!data.ok) {
-          document.getElementById('qrStatus').textContent = data.msg || '确认失败';
-        } else {
-          document.getElementById('qrStatus').textContent = '✅ 确认成功，等待小程序登录...';
-          document.getElementById('qrConfirmArea').style.display = 'none';
-        }
-      } catch(e) {
-        document.getElementById('qrStatus').textContent = '网络错误';
-      }
-    }
-
-    async function refreshQrCode() {
-      try {
-        const res = await fetch('/api/user/qrcode/generate');
-        const data = await res.json();
-        if (!data.ok) {
-          document.getElementById('qrStatus').textContent = data.msg || '生成失败';
-          return;
-        }
-        _qrToken = data.qrToken;
-        // 生成二维码 - 使用HTTP URL格式（与featured.html统一）
-        const qrUrl = '/api/user/qrcode/scan?token=' + _qrToken;
-        const box = document.getElementById('qrCodeBox');
-        box.innerHTML = '';
-        try {
-          new QRCode(box, { text: qrUrl, width: 160, height: 160 });
-        } catch(e) {
-          box.innerHTML = '<div style="font-size:12px;color:#999;">二维码生成失败</div>';
-        }
-        // 显示二维码原文（方便复制或调试）
-        const qrTextEl = document.getElementById('qrCodeText');
-        qrTextEl.textContent = qrUrl;
-        qrTextEl.style.display = 'block';
-        document.getElementById('qrStatus').textContent = '等待扫码...';
-        document.getElementById('qrConfirmArea').style.display = 'none';
-        console.log('[qr-login] 二维码内容:', qrUrl);
-        // 轮询状态
-        if (_qrPollTimer) clearInterval(_qrPollTimer);
-        _qrPollTimer = setInterval(async () => {
-          if (!_qrToken) return;
-          try {
-            const res = await fetch(`/api/user/qrcode/status?qrToken=${_qrToken}`);
-            const data = await res.json();
-            if (!data.ok) {
-              document.getElementById('qrStatus').textContent = data.msg;
-              if (_qrPollTimer) clearInterval(_qrPollTimer);
-              return;
-            }
-            if (data.confirmed && data.user) {
-              // 登录成功
-              document.getElementById('qrStatus').textContent = '✅ 登录成功！';
-              if (_qrPollTimer) clearInterval(_qrPollTimer);
-              setTimeout(() => {
-                closeQrLogin();
-                // 设置用户信息
-                _currentUser = { token: data.user.token, id: data.user.id, nickname: data.user.nickname, avatar: data.user.avatar };
-                localStorage.setItem('campus_user', JSON.stringify(_currentUser));
-                updateUserUI();
-                showTrustBrowserModal();
-              }, 1000);
-            } else if (data.scanned) {
-              document.getElementById('qrStatus').textContent = '⏳ 用户已扫码，请在电脑上点击确认';
-              document.getElementById('qrConfirmArea').style.display = 'block';
-            }
-          } catch {}
-        }, 2000);
-      } catch {
-        document.getElementById('qrStatus').textContent = '网络错误';
-      }
     }
 
     // 自动登录：页面加载时检查信任令牌
