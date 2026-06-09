@@ -7,6 +7,7 @@
     "start": "SENSITIVE_KEY=a4abce322fca09afc3d76c6bbae6077b2be1a741a7e6b1008f3a939fb9f9502a node server.js"
   },
   "dependencies": {
+    "better-sqlite3": "^11.7.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^4.22.1",
