@@ -6,6 +6,7 @@
   <title>📌 校园墙 · 便利贴</title>
   <link href="https://fonts.googleapis.cn/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --note-yellow: #fff9b1;
@@ -1721,6 +1722,9 @@
         <div style="color:#999;">加载中...</div>
       </div>
       <div id="qrStatus" style="font-size:13px;color:#666;margin-bottom:12px;">等待扫码...</div>
+      <div id="qrConfirmArea" style="display:none;margin-top:12px;">
+        <button onclick="confirmQrLogin()" style="padding:10px 24px;border:none;border-radius:8px;background:#22c55e;color:#fff;font-size:14px;cursor:pointer;">✅ 确认登录</button>
+      </div>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button onclick="refreshQrCode()" style="padding:8px 22px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#333;font-size:14px;cursor:pointer;">刷新二维码</button>
         <button onclick="closeQrLogin()" style="padding:8px 22px;border-radius:8px;border:none;background:#c4a882;color:#fff;font-size:14px;cursor:pointer;">关闭</button>
@@ -2349,8 +2353,29 @@
 
     function closeQrLogin() {
       document.getElementById('qrLoginOverlay').style.display = 'none';
+      document.getElementById('qrConfirmArea').style.display = 'none';
       if (_qrPollTimer) clearInterval(_qrPollTimer);
       _qrToken = null;
+    }
+
+    async function confirmQrLogin() {
+      if (!_qrToken) return;
+      try {
+        const res = await fetch('/api/user/qrcode/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qrToken: _qrToken, userId: _currentUser?.id || null })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          document.getElementById('qrStatus').textContent = data.msg || '确认失败';
+        } else {
+          document.getElementById('qrStatus').textContent = '✅ 确认成功，等待小程序登录...';
+          document.getElementById('qrConfirmArea').style.display = 'none';
+        }
+      } catch(e) {
+        document.getElementById('qrStatus').textContent = '网络错误';
+      }
     }
 
     async function refreshQrCode() {
@@ -2362,12 +2387,17 @@
           return;
         }
         _qrToken = data.qrToken;
-        // 生成二维码（使用 API URL 作为内容）
+        // 生成二维码图片
         const qrUrl = `campuswall://login/${_qrToken}`;
-        // 使用 Canvas 生成二维码（简化版：显示文字代替图片）
         const box = document.getElementById('qrCodeBox');
-        box.innerHTML = `<div style="font-size:12px;word-break:break-all;text-align:center;padding:10px;">${qrUrl}</div>`;
+        box.innerHTML = '';
+        try {
+          new QRCode(box, { text: qrUrl, width: 160, height: 160 });
+        } catch(e) {
+          box.innerHTML = `<div style="font-size:12px;word-break:break-all;text-align:center;padding:10px;">${qrUrl}</div>`;
+        }
         document.getElementById('qrStatus').textContent = '等待扫码...';
+        document.getElementById('qrConfirmArea').style.display = 'none';
         // 轮询状态
         if (_qrPollTimer) clearInterval(_qrPollTimer);
         _qrPollTimer = setInterval(async () => {
@@ -2393,7 +2423,8 @@
                 showTrustBrowserModal();
               }, 1000);
             } else if (data.scanned) {
-              document.getElementById('qrStatus').textContent = '⏳ 用户已扫码，等待确认...';
+              document.getElementById('qrStatus').textContent = '⏳ 用户已扫码，请在电脑上点击确认';
+              document.getElementById('qrConfirmArea').style.display = 'block';
             }
           } catch {}
         }, 2000);

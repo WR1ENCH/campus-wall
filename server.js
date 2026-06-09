@@ -887,18 +887,6 @@ const QR_CODE_TTL = 5 * 60 * 1000; // 5分钟有效期
 
 // 生成二维码（网页端调用）
 app.get('/api/user/qrcode/generate', (req, res) => {
-  // 验证 captcha（从 query 参数）
-  const { captchaId, captchaText } = req.query;
-  if (captchaId && captchaText) {
-    const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误', needCaptcha: true });
-    }
-    captchaStore.delete(captchaId); // 一次性使用
-  } else {
-    return res.json({ ok: false, msg: '请先验证验证码', needCaptcha: true });
-  }
-
   const qrToken = crypto.randomBytes(16).toString('hex');
   qrCodeStore.set(qrToken, {
     userId: null,
@@ -911,7 +899,7 @@ app.get('/api/user/qrcode/generate', (req, res) => {
   res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
 });
 
-// 小程序扫码（扫描二维码）
+// 小程序扫码（扫描二维码）→ 自动确认登录
 app.get('/api/user/qrcode/scan', (req, res) => {
   const { token } = req.query;
   if (!token) return res.json({ ok: false, msg: '缺少二维码令牌' });
@@ -921,7 +909,26 @@ app.get('/api/user/qrcode/scan', (req, res) => {
     qr.status = 'expired';
     return res.json({ ok: false, msg: '二维码已失效' });
   }
-  qr.status = 'scanned';
+  // 生成小程序专用用户令牌
+  const sessionUser = {
+    id: 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    nickname: '用户' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+    avatar: '🙋',
+    token: crypto.randomBytes(24).toString('hex')
+  };
+  qr.status = 'confirmed';
+  qr.sessionUser = sessionUser;
+  // 保存到用户列表
+  const users = readUsers();
+  users.push({
+    id: sessionUser.id,
+    nickname: sessionUser.nickname,
+    avatar: sessionUser.avatar,
+    token: sessionUser.token,
+    password: '',
+    createdAt: new Date().toISOString()
+  });
+  writeUsers(users);
   res.json({ ok: true, scanned: true });
 });
 
@@ -937,11 +944,15 @@ app.get('/api/user/qrcode/status', (req, res) => {
   }
   if (qr.status === 'confirmed') {
     // 返回用户信息给小程序
+    if (qr.sessionUser) {
+      qrCodeStore.delete(qrToken);
+      return res.json({ ok: true, confirmed: true, user: qr.sessionUser });
+    }
     const users = readUsers();
     const user = users.find(u => u.id === qr.userId);
     if (user) {
       qrCodeStore.delete(qrToken); // 一次性使用
-      return res.json({ ok: true, confirmed: true, user: { id: user.id, nickname: user.nickname, avatar: user.avatar } });
+      return res.json({ ok: true, confirmed: true, user: { id: user.id, nickname: user.nickname, avatar: user.avatar, token: user.token } });
     }
   }
   if (qr.status === 'scanned') {

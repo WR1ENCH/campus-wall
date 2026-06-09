@@ -47,8 +47,17 @@ Page({
 
     this.setData({ qrToken, status: '⏳ 扫描成功，确认中...' });
 
-    // 轮询等待用户确认
-    this.pollStatus(qrToken);
+    // 先将二维码标记为已扫描，再开始轮询
+    wx.request({
+      url: `${API_BASE}/user/qrcode/scan?token=${qrToken}`,
+      fail: () => {
+        console.warn('标记扫描失败，继续轮询');
+      },
+      complete: () => {
+        // 无论 scan 成功与否，都开始轮询
+        this.pollStatus(qrToken);
+      }
+    });
   },
 
   async pollStatus(qrToken) {
