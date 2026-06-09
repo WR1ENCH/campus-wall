@@ -1,0 +1,47 @@
+<!--pages/notice/notice.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">📮 通知中心</text>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{currentTab==0?'active':''}}" data-index="0" bindtap="switchTab">
+      <text class="tab-icon">📋</text>
+      <text>全部</text>
+    </view>
+    <view class="tab {{currentTab==1?'active':''}}" data-index="1" bindtap="switchTab">
+      <text class="tab-icon">🔴</text>
+      <text>未读</text>
+    </view>
+    <view class="tab {{currentTab==2?'active':''}}" data-index="2" bindtap="switchTab">
+      <text class="tab-icon">📢</text>
+      <text>系统</text>
+    </view>
+  </view>
+
+  <scroll-view class="notice-list" scroll-y>
+    <block wx:for="{{notices}}" wx:key="id">
+      <view class="notice-item {{item.readed?'':'unread'}}" data-id="{{item.id}}" bindtap="viewDetail" style="animation: slideUp {{index*0.1}}s ease-out">
+        <view class="notice-icon">
+          <text wx:if="{{item.type==='system'}}">📢</text>
+          <text wx:elif="{{item.type==='like'}}">❤️</text>
+          <text wx:elif="{{item.type==='comment'}}">💬</text>
+          <text wx:elif="{{item.type==='reply'}}">↩️</text>
+          <text wx:elif="{{item.type==='follow'}}">👤</text>
+          <text wx:else>📋</text>
+        </view>
+        <view class="notice-content">
+          <text class="notice-title">{{item.title}}</text>
+          <text class="notice-desc">{{item.content}}</text>
+          <text class="notice-time">{{item.time}}</text>
+        </view>
+        <view class="unread-dot" wx:if="{{!item.readed}}"></view>
+      </view>
+    </block>
+
+    <view class="empty" wx:if="{{notices.length===0}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无通知</text>
+    </view>
+  </scroll-view>
+</view>

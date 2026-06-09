@@ -1,0 +1,114 @@
+/*pages/login/login.wxss*/
+.container {
+  min-height: 100vh;
+  background-color: #c4a882;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+    repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+    repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+  background-size: 240px 120px;
+  padding: 20rpx;
+}
+
+.header {
+  padding: 60rpx 20rpx;
+  text-align: center;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #5a3d00;
+  animation: slideUp 0.4s ease-out;
+}
+
+.scan-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f5f0e0;
+  border-radius: 20rpx;
+  padding: 60rpx;
+  margin: 40rpx 20rpx;
+  border: 4rpx dashed #c4a882;
+  animation: slideUp 0.4s ease-out 0.2s both;
+}
+
+.scan-box:active {
+  background: #eae5d8;
+}
+
+.scan-icon {
+  font-size: 120rpx;
+  margin-bottom: 20rpx;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.scan-text {
+  font-size: 32rpx;
+  color: #5a3d00;
+  font-weight: bold;
+}
+
+.tips {
+  background: #f5f0e0;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin: 20rpx;
+  animation: slideUp 0.4s ease-out 0.4s both;
+}
+
+.tip-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #5a3d00;
+  margin-bottom: 20rpx;
+}
+
+.tip-text {
+  display: block;
+  font-size: 26rpx;
+  color: #8b7355;
+  margin-bottom: 10rpx;
+}
+
+.status {
+  text-align: center;
+  padding: 30rpx;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.status-text {
+  font-size: 28rpx;
+  color: #5a3d00;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}

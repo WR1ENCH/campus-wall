@@ -1,0 +1,54 @@
+{
+  "description": "校园墙微信小程序",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "bundle": false,
+    "userConfirmedBundleSwitch": false,
+    "urlCheck": false,
+    "scopeDataCheck": false,
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
+    "compileHotReLoad": false,
+    "minified": true,
+    "autoAudits": false,
+    "uglifyFileName": false,
+    "compileWorklet": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.16.1",
+  "appid": "wxaa42a48b47dd7c33",
+  "projectname": "campus-wall-miniprogram",
+  "condition": {},
+  "editorSetting": {
+    "tagTab": [
+      "WXML",
+      "JS",
+      "WXSS",
+      "JSON"
+    ],
+    "emmet": "true",
+    "postcss": "true"
+  },
+  "simulatorPluginLibVersion": {}
+}

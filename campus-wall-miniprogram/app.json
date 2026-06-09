@@ -1,0 +1,36 @@
+{
+  "pages": [
+    "pages/notice/notice",
+    "pages/index/index",
+    "pages/login/login"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#c4a882",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "校园墙通知",
+    "backgroundColor": "#c4a882",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8b7355",
+    "selectedColor": "#5a3d00",
+    "backgroundColor": "#f5f0e0",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/notice/notice",
+        "text": "通知",
+        "iconPath": "icons/notice.png",
+        "selectedIconPath": "icons/notice-active.png"
+      },
+      {
+        "pagePath": "pages/index/index",
+        "text": "我的",
+        "iconPath": "icons/user.png",
+        "selectedIconPath": "icons/user-active.png"
+      }
+    ]
+  },
+  "usingComponents": {},
+  "sitemapLocation": "sitemap.json"
+}

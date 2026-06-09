@@ -911,7 +911,21 @@ app.get('/api/user/qrcode/generate', (req, res) => {
   res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
 });
 
-// 小程序扫码（查询状态）
+// 小程序扫码（扫描二维码）
+app.get('/api/user/qrcode/scan', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.json({ ok: false, msg: '缺少二维码令牌' });
+  const qr = qrCodeStore.get(token);
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
+  if (Date.now() - qr.createdAt > QR_CODE_TTL) {
+    qr.status = 'expired';
+    return res.json({ ok: false, msg: '二维码已失效' });
+  }
+  qr.status = 'scanned';
+  res.json({ ok: true, scanned: true });
+});
+
+// 小程序查询状态
 app.get('/api/user/qrcode/status', (req, res) => {
   const { qrToken } = req.query;
   if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });

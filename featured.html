@@ -315,19 +315,19 @@
         const qrUrl = SERVER_URL + '/api/user/qrcode/scan?token=' + qrToken;
         const container = document.getElementById('qrCanvas');
         container.innerHTML = '';
-        if (typeof QRCode !== 'undefined') {
+        // 使用 qrcodejs 库生成二维码
+        try {
+          container.innerHTML = '';
           new QRCode(container, {
             text: qrUrl,
             width: 160,
             height: 160,
             colorDark: '#5a3e2b',
-            colorLight: '#fffdf5',
-            correctLevel: QRCode.CorrectLevel.L
+            colorLight: '#fffdf5'
           });
-        } else {
-          // 后备：显示文字
-          document.getElementById('qrContent').style.display = 'block';
-          document.getElementById('qrContent').textContent = qrUrl;
+        } catch (e) {
+          // 后备：显示文字链接
+          container.innerHTML = '<div style="word-break:break-all;font-size:12px;color:#5a3e2b;padding:10px;">' + qrUrl + '</div>';
         }
 
         btn.disabled = false;

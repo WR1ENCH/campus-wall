@@ -1,0 +1,22 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">📱 扫码登录</text>
+  </view>
+
+  <view class="scan-box" bindtap="scanQrCode">
+    <text class="scan-icon">📷</text>
+    <text class="scan-text">点击扫描二维码</text>
+  </view>
+
+  <view class="tips">
+    <text class="tip-title">使用方法</text>
+    <text class="tip-text">1. 在校园墙网页点击"小程序扫码登录"</text>
+    <text class="tip-text">2. 点击下方"点击扫描二维码"</text>
+    <text class="tip-text">3. 对准网页上的二维码扫描</text>
+  </view>
+
+  <view class="status" wx:if="{{status}}">
+    <text class="status-text">{{status}}</text>
+  </view>
+</view>
