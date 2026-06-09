@@ -9,34 +9,80 @@ Page({
   },
 
   onLoad() {
-    this.loadNotices();
+    this.loadAll();
   },
 
   onShow() {
-    this.loadNotices();
+    this.loadAll();
   },
 
-  loadNotices() {
-    wx.request({
-      url: `${API_BASE}/notices`,
-      success: (res) => {
-        if (res.data && res.data.ok && res.data.data) {
-          // 映射服务器数据到小程序格式
-          const list = res.data.data.map(n => ({
-            id: n.id,
-            title: n.title || '',
-            content: n.content || '',
-            type: n.type || 'system',
-            time: n.createdAt || '',
-            readed: n.readed || false
-          }));
-          this.setData({ notices: list });
-          this.filterNotices();
-        }
-      },
-      fail: () => {
-        this.setData({ notices: [], filteredNotices: [] });
+  loadAll() {
+    // 同时获取公告和通知列表
+    const token = wx.getStorageSync('token');
+    Promise.all([
+      this.fetchAnnouncement(),
+      this.fetchNotices()
+    ]).then(([announcement, noticeList]) => {
+      let merged = [];
+      // 公告作为第一条通知
+      if (announcement) {
+        merged.push({
+          id: 'announcement',
+          title: '📢 ' + (announcement.title || '公告'),
+          content: announcement.content || '',
+          type: 'system',
+          time: announcement.publishedAt || '',
+          readed: false
+        });
       }
+      // 追加通知列表
+      merged = merged.concat(noticeList);
+      this.setData({ notices: merged });
+      this.filterNotices();
+    }).catch(() => {
+      this.setData({ notices: [], filteredNotices: [] });
+    });
+  },
+
+  // 获取公告
+  fetchAnnouncement() {
+    return new Promise((resolve) => {
+      wx.request({
+        url: `${API_BASE}/announcement`,
+        success: (res) => {
+          if (res.data && res.data.ok && res.data.data && res.data.data.title) {
+            resolve(res.data.data);
+          } else {
+            resolve(null);
+          }
+        },
+        fail: () => resolve(null)
+      });
+    });
+  },
+
+  // 获取通知列表
+  fetchNotices() {
+    return new Promise((resolve) => {
+      wx.request({
+        url: `${API_BASE}/notices`,
+        success: (res) => {
+          if (res.data && res.data.ok && res.data.data) {
+            const list = res.data.data.map(n => ({
+              id: n.id,
+              title: n.title || '',
+              content: n.content || '',
+              type: n.type || 'system',
+              time: n.createdAt || '',
+              readed: n.readed || false
+            }));
+            resolve(list);
+          } else {
+            resolve([]);
+          }
+        },
+        fail: () => resolve([])
+      });
     });
   },
 
@@ -45,10 +91,8 @@ Page({
     const tab = this.data.currentTab;
     let filtered = this.data.notices;
     if (tab === 1) {
-      // 未读
       filtered = filtered.filter(n => !n.readed);
     } else if (tab === 2) {
-      // 系统通知
       filtered = filtered.filter(n => n.type === 'system');
     }
     this.setData({ filteredNotices: filtered });
@@ -68,11 +112,12 @@ Page({
     });
     this.setData({ notices });
     this.filterNotices();
-    // 标记已读（接口可能不存在，忽略失败）
-    wx.request({
-      url: `${API_BASE}/notices/${id}/read`,
-      method: 'POST',
-      fail: () => {}
-    });
+    if (id !== 'announcement') {
+      wx.request({
+        url: `${API_BASE}/notices/${id}/read`,
+        method: 'POST',
+        fail: () => {}
+      });
+    }
   }
 });
