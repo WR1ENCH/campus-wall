@@ -295,11 +295,10 @@
       btn.textContent = '生成中...';
 
       try {
-        // 从 localStorage 获取当前登录用户
+        // 从 localStorage 获取当前登录用户（校园墙网页端）
         let userToken = '';
         try {
-          const campusUser = JSON.parse(localStorage.getItem('campus_user') || '{}');
-          if (campusUser.token) userToken = campusUser.token;
+          userToken = localStorage.getItem('campus_user_token') || '';
         } catch(e) {}
 
         let url = 'http://154.37.221.232/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha);
