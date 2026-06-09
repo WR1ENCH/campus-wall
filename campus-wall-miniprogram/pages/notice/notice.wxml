@@ -20,7 +20,7 @@
   </view>
 
   <scroll-view class="notice-list" scroll-y>
-    <block wx:for="{{notices}}" wx:key="id">
+    <block wx:for="{{filteredNotices}}" wx:key="id">
       <view class="notice-item {{item.readed?'':'unread'}}" data-id="{{item.id}}" bindtap="viewDetail" style="animation: slideUp {{index*0.1}}s ease-out">
         <view class="notice-icon">
           <text wx:if="{{item.type==='system'}}">📢</text>
@@ -39,7 +39,7 @@
       </view>
     </block>
 
-    <view class="empty" wx:if="{{notices.length===0}}">
+    <view class="empty" wx:if="{{filteredNotices.length===0}}">
       <text class="empty-icon">📭</text>
       <text class="empty-text">暂无通知</text>
     </view>
