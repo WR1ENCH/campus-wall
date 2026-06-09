@@ -295,7 +295,7 @@
       btn.textContent = '生成中...';
 
       try {
-        const res = await fetch('/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha));
+        const res = await fetch('http://154.37.221.232/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_captchaId) + '&captchaText=' + encodeURIComponent(captcha));
         const data = await res.json();
 
         if (!data.ok) {
