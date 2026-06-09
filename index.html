@@ -2389,8 +2389,8 @@
           return;
         }
         _qrToken = data.qrToken;
-        // 生成二维码图片
-        const qrUrl = `campuswall://login/${_qrToken}`;
+        // 生成二维码 - 使用HTTP URL格式（与featured.html统一）
+        const qrUrl = '/api/user/qrcode/scan?token=' + _qrToken;
         const box = document.getElementById('qrCodeBox');
         box.innerHTML = '';
         try {

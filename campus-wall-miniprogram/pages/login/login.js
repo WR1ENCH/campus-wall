@@ -38,9 +38,14 @@ Page({
   },
 
   async handleScanResult(result) {
-    // 解析 QR 码内容：campuswall://login/xxx 或直接 token
+    // 解析 QR 码内容：支持 HTTP URL 格式和 campuswall:// 格式
     let qrToken = '';
-    if (result.includes('campuswall://login/')) {
+
+    // 优先从 URL 参数中提取 token（兼容 /api/user/qrcode/scan?token=xxx 和 http://.../scan?token=xxx）
+    const urlMatch = result.match(/[?&]token=([^&]+)/);
+    if (urlMatch) {
+      qrToken = urlMatch[1];
+    } else if (result.includes('campuswall://login/')) {
       qrToken = result.split('campuswall://login/')[1];
     } else if (result.startsWith('login/')) {
       qrToken = result.split('login/')[1];
@@ -49,14 +54,8 @@ Page({
     }
 
     if (!qrToken) {
-      // 尝试从完整URL中提取token
-      const urlMatch = result.match(/[?&]token=([^&]+)/);
-      if (urlMatch) {
-        qrToken = urlMatch[1];
-      } else {
-        wx.showToast({ title: '无效二维码', icon: 'none' });
-        return;
-      }
+      wx.showToast({ title: '无效二维码', icon: 'none' });
+      return;
     }
 
     this.setData({ qrToken, status: '⏳ 扫描成功，确认中...' });
