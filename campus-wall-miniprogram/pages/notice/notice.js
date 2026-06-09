@@ -1,5 +1,5 @@
 //pages/notice/notice.js
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://154.37.221.232/api';
 
 Page({
   data: {

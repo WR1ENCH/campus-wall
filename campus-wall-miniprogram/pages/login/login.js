@@ -1,5 +1,5 @@
 //pages/login/login.js
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://154.37.221.232/api';
 
 Page({
   data: {
@@ -35,8 +35,14 @@ Page({
     }
 
     if (!qrToken) {
-      wx.showToast({ title: '无效二维码', icon: 'none' });
-      return;
+      // 尝试从完整URL中提取token
+      const urlMatch = result.match(/[?&]token=([^&]+)/);
+      if (urlMatch) {
+        qrToken = urlMatch[1];
+      } else {
+        wx.showToast({ title: '无效二维码', icon: 'none' });
+        return;
+      }
     }
 
     this.setData({ qrToken, status: '⏳ 扫描成功，确认中...' });
