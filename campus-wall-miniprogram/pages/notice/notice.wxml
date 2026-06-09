@@ -1,27 +1,27 @@
 <!--pages/notice/notice.wxml-->
 <view class="container">
+  <!-- ===== 标题栏 ===== -->
   <view class="header">
     <text class="title">📮 通知中心</text>
   </view>
 
-  <view class="tabs">
+  <!-- ===== Tab 切换 ===== -->
+  <view class="tabs" wx:if="{{!showDetail}}">
     <view class="tab {{currentTab==0?'active':''}}" data-index="0" bindtap="switchTab">
-      <text class="tab-icon">📋</text>
-      <text>全部</text>
+      <text>📋 全部</text>
     </view>
     <view class="tab {{currentTab==1?'active':''}}" data-index="1" bindtap="switchTab">
-      <text class="tab-icon">🔴</text>
-      <text>未读</text>
+      <text>🔴 未读</text>
     </view>
     <view class="tab {{currentTab==2?'active':''}}" data-index="2" bindtap="switchTab">
-      <text class="tab-icon">📢</text>
-      <text>系统</text>
+      <text>📢 系统</text>
     </view>
   </view>
 
-  <scroll-view class="notice-list" scroll-y>
+  <!-- ===== 列表视图 ===== -->
+  <scroll-view class="notice-list" scroll-y wx:if="{{!showDetail}}">
     <block wx:for="{{filteredNotices}}" wx:key="id">
-      <view class="notice-item {{item.readed?'':'unread'}}" data-id="{{item.id}}" bindtap="viewDetail" style="animation: slideUp {{index*0.1}}s ease-out">
+      <view class="notice-item {{item.readed?'':'unread'}}" data-id="{{item.id}}" bindtap="openDetail" data-index="{{index}}">
         <view class="notice-icon">
           <text wx:if="{{item.type==='system'}}">📢</text>
           <text wx:elif="{{item.type==='like'}}">❤️</text>
@@ -32,16 +32,27 @@
         </view>
         <view class="notice-content">
           <text class="notice-title">{{item.title}}</text>
-          <text class="notice-desc">{{item.content}}</text>
           <text class="notice-time">{{item.time}}</text>
         </view>
         <view class="unread-dot" wx:if="{{!item.readed}}"></view>
       </view>
     </block>
-
     <view class="empty" wx:if="{{filteredNotices.length===0}}">
       <text class="empty-icon">📭</text>
       <text class="empty-text">暂无通知</text>
+    </view>
+  </scroll-view>
+
+  <!-- ===== 详情视图 ===== -->
+  <scroll-view class="detail-view" scroll-y wx:if="{{showDetail}}">
+    <view class="detail-header">
+      <text class="detail-back" bindtap="closeDetail">← 返回</text>
+      <text class="detail-title">{{detailItem.title}}</text>
+      <text class="detail-type">{{detailItem.typeLabel}}</text>
+      <text class="detail-time">{{detailItem.time}}</text>
+    </view>
+    <view class="detail-body">
+      <rich-text nodes="{{detailHtml}}" class="markdown-content"></rich-text>
     </view>
   </scroll-view>
 </view>

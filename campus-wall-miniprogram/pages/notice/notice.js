@@ -1,11 +1,69 @@
 //pages/notice/notice.js
 const API_BASE = 'http://154.37.221.232/api';
 
+// 简易 Markdown → HTML 转换器
+function mdToHtml(text) {
+  if (!text) return '';
+  let html = text
+    // 转义 HTML 特殊字符
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // 代码块 (```) - 必须在行内代码之前处理
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    // 行内代码 (`code`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // 图片 ![alt](url)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+    // 链接 [text](url)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    // 加粗 **text**
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // 斜体 *text*
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // 删除线 ~~text~~
+    .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+    // 分割线 --- 或 ***
+    .replace(/^[-*]{3,}\s*$/gm, '<hr>')
+    // 标题 (#### 或 ## 或 #)
+    .replace(/^######\s+(.+)$/gm, '<h6>$1</h6>')
+    .replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>')
+    .replace(/^####\s+(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
+    .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
+    .replace(/^#\s+(.+)$/gm, '<h1>$1</h1>')
+    // 引用 > text
+    .replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>')
+    // 无序列表 - item 或 * item
+    .replace(/^[\s]*[-*+]\s+(.+)$/gm, '<li>$1</li>')
+    // 有序列表 1. item
+    .replace(/^[\s]*\d+\.\s+(.+)$/gm, '<li>$1</li>')
+    // 段落：连续两个换行为新段落
+    .replace(/\n\s*\n/g, '</p><p>')
+    // 换行（非段落分隔的单个换行 -> <br>）
+    .replace(/\n/g, '<br>');
+
+  // 包裹段落
+  if (!html.startsWith('<h') && !html.startsWith('<pre') && !html.startsWith('<blockquote') && !html.startsWith('<hr') && !html.startsWith('<li') && !html.startsWith('<p') && !html.startsWith('<ul') && !html.startsWith('<ol')) {
+    html = '<p>' + html + '</p>';
+  }
+  // 合并连续的 <li> 到 <ul>
+  html = html.replace(/((?:<li>.*?<\/li><br>?)+)/g, '<ul>$1</ul>');
+  // 清除孤立的 <br> 在块级元素内/尾
+  html = html.replace(/<\/(ul|ol|li|h[1-6]|blockquote|pre|hr|p)><br>/g, '</$1>');
+  html = html.replace(/<br><\/(ul|ol|li|h[1-6]|blockquote|pre|hr|p)>/g, '</$1>');
+
+  return html;
+}
+
 Page({
   data: {
     currentTab: 0,
     notices: [],
-    filteredNotices: []
+    filteredNotices: [],
+    showDetail: false,
+    detailItem: {},
+    detailHtml: ''
   },
 
   onLoad() {
@@ -17,27 +75,24 @@ Page({
   },
 
   loadAll() {
-    // 同时获取公告、通知列表和认证信息
     Promise.all([
       this.fetchAnnouncement(),
       this.fetchNotices(),
       this.fetchCertInfo()
     ]).then(([announcement, noticeList, certItems]) => {
       let merged = [];
-      // 公告作为第一条通知
       if (announcement) {
         merged.push({
           id: 'announcement',
           title: '📢 ' + (announcement.title || '公告'),
           content: announcement.content || '',
           type: 'system',
-          time: announcement.publishedAt || '',
+          typeLabel: '公告',
+          time: announcement.publishedAt ? new Date(announcement.publishedAt).toLocaleString('zh-CN') : '',
           readed: false
         });
       }
-      // 追加认证通知
       merged = merged.concat(certItems);
-      // 追加通知列表
       merged = merged.concat(noticeList);
       this.setData({ notices: merged });
       this.filterNotices();
@@ -46,7 +101,6 @@ Page({
     });
   },
 
-  // 获取公告
   fetchAnnouncement() {
     return new Promise((resolve) => {
       wx.request({
@@ -63,7 +117,6 @@ Page({
     });
   },
 
-  // 获取通知列表
   fetchNotices() {
     return new Promise((resolve) => {
       wx.request({
@@ -75,7 +128,8 @@ Page({
               title: n.title || '',
               content: n.content || '',
               type: n.type || 'system',
-              time: n.createdAt || '',
+              typeLabel: n.author || '通知',
+              time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
               readed: n.readed || false
             }));
             resolve(list);
@@ -88,7 +142,6 @@ Page({
     });
   },
 
-  // 获取认证信息（同步同学认证通知）
   fetchCertInfo() {
     return new Promise((resolve) => {
       const token = wx.getStorageSync('token');
@@ -106,7 +159,8 @@ Page({
                 title: '❌ 同学认证被驳回',
                 content: cd.rejectReason,
                 type: 'system',
-                time: cd.rejectedAt || '',
+                typeLabel: '认证',
+                time: cd.rejectedAt ? new Date(cd.rejectedAt).toLocaleString('zh-CN') : '',
                 readed: false
               });
             }
@@ -116,6 +170,7 @@ Page({
                 title: '🎉 同学认证已通过',
                 content: '你的同学认证已通过审核，现在可以使用智学账号登录和找回密码了。',
                 type: 'system',
+                typeLabel: '认证',
                 time: '',
                 readed: false
               });
@@ -128,7 +183,6 @@ Page({
     });
   },
 
-  // 根据当前 Tab 筛选通知
   filterNotices() {
     const tab = this.data.currentTab;
     let filtered = this.data.notices;
@@ -146,20 +200,45 @@ Page({
     this.filterNotices();
   },
 
-  viewDetail(e) {
-    const id = e.currentTarget.dataset.id;
+  // 打开详情
+  openDetail(e) {
+    const idx = e.currentTarget.dataset.index;
+    const item = this.data.filteredNotices[idx];
+    if (!item) return;
+
+    // 标记已读
     const notices = this.data.notices.map(n => {
-      if (n.id === id) n.readed = true;
+      if (n.id === item.id) n.readed = true;
       return n;
     });
     this.setData({ notices });
     this.filterNotices();
-    if (id !== 'announcement') {
+
+    // 转换 Markdown 为 HTML
+    const html = mdToHtml(item.content);
+
+    this.setData({
+      showDetail: true,
+      detailItem: item,
+      detailHtml: html
+    });
+
+    // 通知服务器已读
+    if (item.id && item.id !== 'announcement' && !item.id.startsWith('cert_')) {
       wx.request({
-        url: `${API_BASE}/notices/${id}/read`,
+        url: `${API_BASE}/notices/${item.id}/read`,
         method: 'POST',
         fail: () => {}
       });
     }
+  },
+
+  // 关闭详情，返回列表
+  closeDetail() {
+    this.setData({
+      showDetail: false,
+      detailItem: {},
+      detailHtml: ''
+    });
   }
 });
