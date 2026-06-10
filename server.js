@@ -5181,6 +5181,7 @@ app.post('/api/notice-account/apply', (req, res) => {
   // 验证 pass-key（选填）
   const stored = readPasskey();
   const hasValidPasskey = stored && stored.key && passkey && passkey.trim() === stored.key;
+  const hasPasskeyInput = passkey && passkey.trim().length > 0;
 
   if (hasValidPasskey) {
     // 通行码正确 → 自动通过，直接授予通知发布权限
@@ -5211,6 +5212,9 @@ app.post('/api/notice-account/apply', (req, res) => {
     });
     writeApps(apps);
     res.json({ ok: true, msg: '🎉 通行码验证通过，你已获得通知发布权限！' });
+  } else if (hasPasskeyInput) {
+    // 有通行码但不匹配 → 返回错误
+    res.json({ ok: false, msg: '通行码错误，请确认后重新输入' });
   } else {
     // 无通行码 → 提交申请，等待管理员审核
     apps.push({
