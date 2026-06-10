@@ -3572,6 +3572,16 @@ app.post('/api/bullying-report', (req, res) => {
   if (description.length > 1000) return res.json({ ok: false, msg: '描述最多1000字' });
   if (!anonymous && !contact) return res.json({ ok: false, msg: '实名提交必须填写联系方式' });
 
+  // 尝试获取提交者 userId
+  let reporterUserId = null;
+  try {
+    const token = req.headers['x-user-token'];
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) reporterUserId = session.id;
+    }
+  } catch (e) {}
+
   const reports = readBullying();
 
   // 自我举报 → 自动将受害者姓名加入保护名单
@@ -3595,10 +3605,30 @@ app.post('/api/bullying-report', (req, res) => {
     status: 'pending',
     handledBy: null,
     handledAt: null,
-    handleNote: null
+    handleNote: null,
+    userId: reporterUserId // 存储提交者 userId
   };
   reports.unshift(newReport);
   writeBullying(reports);
+
+  // 发送 T1 通知
+  if (reporterUserId) {
+    try {
+      const notices = readNotices();
+      notices.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        title: '🛡️ 霸凌举报已收到',
+        content: '你的霸凌事件报告已提交给管理员审核。\n\n我们将尽快核实并处理，请保持联系方式畅通。\n\n感谢你对校园安全的关注！',
+        author: '系统',
+        level: 'T1',
+        createdAt: new Date().toISOString()
+      });
+      writeNotices(notices);
+    } catch (e) {
+      console.error('发送霸凌举报通知失败:', e.message);
+    }
+  }
+
   res.json({ ok: true, data: { id: newReport.id } });
 });
 
@@ -3640,9 +3670,28 @@ app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
   reports[idx].status = status;
   reports[idx].handleNote = handleNote || '';
-  reports[idx].handledBy = req.session.admin.nickname || req.session.admin.username;
+  reports[idx].handledBy = req.admin.name || req.admin.id;
   reports[idx].handledAt = new Date().toISOString();
   writeBullying(reports);
+
+  // 确认确有霸凌（resolved）→ 发送 T0 通知
+  if (status === 'resolved' && reports[idx].userId) {
+    try {
+      const notices = readNotices();
+      notices.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        title: '🛡️ 霸凌举报已确认处理',
+        content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
+        author: '系统',
+        level: 'T0',
+        createdAt: new Date().toISOString()
+      });
+      writeNotices(notices);
+    } catch (e) {
+      console.error('发送霸凌处理通知失败:', e.message);
+    }
+  }
+
   res.json({ ok: true });
 });
 

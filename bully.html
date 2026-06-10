@@ -1325,7 +1325,7 @@
 
     fetch('/api/bullying-report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-user-token': (localStorage.getItem(TOKEN_KEY) || '') },
       body: JSON.stringify(body)
     }).then(function(r) { return r.json(); })
       .then(function(json) {
