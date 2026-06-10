@@ -4,6 +4,7 @@ const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
+const db = require('./db');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
@@ -180,52 +181,15 @@ function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function readPosts() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(POSTS_FILE)) {
-      fs.writeFileSync(POSTS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(POSTS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取帖子失败:', e);
-    return [];
-  }
-}
+function readPosts () { return db.readPosts(); }
 
-function writePosts(posts) {
-  try {
-    ensureDir();
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(posts, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入帖子失败:', e);
-  }
-}
+function writePosts (posts) { db.writePosts(posts); }
 
-function readAdmins() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(ADMINS_FILE)) {
-      return []; // 不自动创建，等待首次设置
-    }
-    return JSON.parse(fs.readFileSync(ADMINS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取管理员失败:', e);
-    return [];
-  }
-}
+function readAdmins () { return db.readAdmins(); }
 
 function hasAdmins() { return db.readAdmins().length > 0; }
 
-function writeAdmins(admins) {
-  try {
-    ensureDir();
-    fs.writeFileSync(ADMINS_FILE, JSON.stringify(admins, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入管理员失败:', e);
-  }
-}
+function writeAdmins (admins) { db.writeAdmins(admins); }
 
 // ===== 管理员认证中间件 =====
 function requireAdmin(req, res, next) {
@@ -501,77 +465,20 @@ function parseLocalDateTime(str) {
 }
 
 // ===== 用户数据读写 =====
-function readUsers() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(USERS_FILE)) {
-      fs.writeFileSync(USERS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取用户失败:', e);
-    return [];
-  }
-}
+function readUsers () { return db.readUsers(); }
 
-function writeUsers(users) {
-  try {
-    ensureDir();
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入用户失败:', e);
-  }
-}
+function writeUsers (users) { db.writeUsers(users); }
 
 // ===== 浏览器信任令牌 =====
 const TRUST_TOKENS_FILE = path.join(DATA_DIR, 'trust_tokens.json');
 
-function readTrustTokens() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(TRUST_TOKENS_FILE)) {
-      fs.writeFileSync(TRUST_TOKENS_FILE, '{}', 'utf-8');
-      return {};
-    }
-    return JSON.parse(fs.readFileSync(TRUST_TOKENS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取信任令牌失败:', e);
-    return {};
-  }
-}
+function readTrustTokens () { return db.readTrustTokens(); }
 
-function writeTrustTokens(tokens) {
-  try {
-    ensureDir();
-    fs.writeFileSync(TRUST_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入信任令牌失败:', e);
-  }
-}
+function writeTrustTokens (tokens) { db.writeTrustTokens(tokens); }
 
-function readLogs() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(LOGS_FILE)) {
-      fs.writeFileSync(LOGS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(LOGS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取登录记录失败:', e);
-    return [];
-  }
-}
+function readLogs () { return db.readLogs(); }
 
-function writeLogs(logs) {
-  try {
-    ensureDir();
-    fs.writeFileSync(LOGS_FILE, JSON.stringify(logs, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入登录记录失败:', e);
-  }
-}
+function writeLogs (logs) { db.writeLogs(logs); }
 
 function addLoginLog(type, account, success, ip, ua) {
   const logs = readLogs();
@@ -2628,124 +2535,29 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
 });
 
 // ===== 举报数据读写 =====
-function readReports() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(REPORTS_FILE)) {
-      fs.writeFileSync(REPORTS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取举报数据失败:', e);
-    return [];
-  }
-}
+function readReports () { return db.readReports(); }
 
-function writeReports(reports) {
-  try {
-    ensureDir();
-    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入举报数据失败:', e);
-  }
-}
+function writeReports (reports) { db.writeReports(reports); }
 
 
 
 // ===== 用户反馈读写 =====
-function readFeedbacks() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(FEEDBACK_FILE)) {
-      fs.writeFileSync(FEEDBACK_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取反馈数据失败:', e);
-    return [];
-  }
-}
+function readFeedbacks () { return db.readFeedbacks(); }
 
-function writeFeedbacks(feedbacks) {
-  try {
-    ensureDir();
-    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(feedbacks, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入反馈数据失败:', e);
-  }
-}
+function writeFeedbacks (feedbacks) { db.writeFeedbacks(feedbacks); }
 
 // ===== 霸凌报告读写 =====
-function readBullying() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(BULLYING_FILE)) {
-      fs.writeFileSync(BULLYING_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(BULLYING_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取霸凌报告失败:', e);
-    return [];
-  }
-}
+function readBullying () { return db.readBullying(); }
 
-function writeBullying(data) {
-  try {
-    ensureDir();
-    fs.writeFileSync(BULLYING_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入霸凌报告失败:', e);
-  }
-}
+function writeBullying (data) { db.writeBullying(data); }
 // ===== Credit 数据读写 =====
-function readCreditLogs() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(CREDIT_LOGS_FILE)) {
-      fs.writeFileSync(CREDIT_LOGS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(CREDIT_LOGS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取 Credit 流水失败:', e);
-    return [];
-  }
-}
+function readCreditLogs () { return db.readCreditLogs(); }
 
-function writeCreditLogs(logs) {
-  try {
-    ensureDir();
-    fs.writeFileSync(CREDIT_LOGS_FILE, JSON.stringify(logs, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入 Credit 流水失败:', e);
-  }
-}
+function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
 
 // ===== 卡密数据读写 =====
-function readCreditCards() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(CREDIT_CARDS_FILE)) {
-      fs.writeFileSync(CREDIT_CARDS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(CREDIT_CARDS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取卡密失败:', e);
-    return [];
-  }
-}
-function writeCreditCards(cards) {
-  try {
-    ensureDir();
-    fs.writeFileSync(CREDIT_CARDS_FILE, JSON.stringify(cards, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入卡密失败:', e);
-  }
-}
+function readCreditCards () { return db.readCreditCards(); }
+function writeCreditCards (cards) { db.writeCreditCards(cards); }
 // 生成卡密：CW-XXXX-XXXX-X（含校验码防输错）
 // 字母表排除易混淆的 0/O/1/I
 const CARD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -2801,71 +2613,17 @@ const DISCUSSIONS_FILE = path.join(DATA_DIR, 'discussions.json');
 const DISCUSSION_COMMENTS_FILE = path.join(DATA_DIR, 'discussion_comments.json');
 const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 
-function readAnnouncement() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(ANNOUNCEMENT_FILE)) return null;
-    return JSON.parse(fs.readFileSync(ANNOUNCEMENT_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取公告失败:', e);
-    return null;
-  }
-}
+function readAnnouncement () { return db.readAnnouncement(); }
 
-function writeAnnouncement(data) {
-  try {
-    ensureDir();
-    fs.writeFileSync(ANNOUNCEMENT_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入公告失败:', e);
-  }
-}
+function writeAnnouncement (data) { db.writeAnnouncement(data); }
 
-function readDiscussions() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(DISCUSSIONS_FILE)) {
-      fs.writeFileSync(DISCUSSIONS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(DISCUSSIONS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取讨论话题失败:', e);
-    return [];
-  }
-}
+function readDiscussions () { return db.readDiscussions(); }
 
-function writeDiscussions(discussions) {
-  try {
-    ensureDir();
-    fs.writeFileSync(DISCUSSIONS_FILE, JSON.stringify(discussions, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入讨论话题失败:', e);
-  }
-}
+function writeDiscussions (discussions) { db.writeDiscussions(discussions); }
 
-function readDiscussionComments() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(DISCUSSION_COMMENTS_FILE)) {
-      fs.writeFileSync(DISCUSSION_COMMENTS_FILE, '[]', 'utf-8');
-      return [];
-    }
-    return JSON.parse(fs.readFileSync(DISCUSSION_COMMENTS_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('读取讨论评论失败:', e);
-    return [];
-  }
-}
+function readDiscussionComments () { return db.readDiscussionComments(); }
 
-function writeDiscussionComments(comments) {
-  try {
-    ensureDir();
-    fs.writeFileSync(DISCUSSION_COMMENTS_FILE, JSON.stringify(comments, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('写入讨论评论失败:', e);
-  }
-}
+function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); }
 
 // ===== 公告 API =====
 
@@ -3927,24 +3685,10 @@ app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
 });
 
 // ===== Q&A 问答系统 =====
-function readQAQuestions() {
-  try {
-    if (!fs.existsSync(QA_FILE)) fs.writeFileSync(QA_FILE, '[]', 'utf-8');
-    return JSON.parse(fs.readFileSync(QA_FILE, 'utf-8'));
-  } catch { return []; }
-}
-function writeQAQuestions(data) {
-  try { fs.writeFileSync(QA_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
-}
-function readQAAnswers() {
-  try {
-    if (!fs.existsSync(QA_ANSWERS_FILE)) fs.writeFileSync(QA_ANSWERS_FILE, '[]', 'utf-8');
-    return JSON.parse(fs.readFileSync(QA_ANSWERS_FILE, 'utf-8'));
-  } catch { return []; }
-}
-function writeQAAnswers(data) {
-  try { fs.writeFileSync(QA_ANSWERS_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
-}
+function readQAQuestions () { return db.readQAQuestions(); }
+function writeQAQuestions (data) { db.writeQAQuestions(data); }
+function readQAAnswers () { return db.readQAAnswers(); }
+function writeQAAnswers (data) { db.writeQAAnswers(data); }
 
 // 给用户变更 credit 并记录流水
 function changeCredit(userId, amount, reason) {
@@ -4351,25 +4095,10 @@ const PICKUP_SLOTS = ['00-04', '04-08', '08-12', '12-16', '16-20', '20-23'];
 const BASE_BID = 300;
 const BID_STEP = 50;
 
-function readPickupAuctions() {
-  try {
-    if (!fs.existsSync(PICKUP_AUCTION_FILE)) fs.writeFileSync(PICKUP_AUCTION_FILE, '[]', 'utf-8');
-    return JSON.parse(fs.readFileSync(PICKUP_AUCTION_FILE, 'utf-8'));
-  } catch { return []; }
-}
-function writePickupAuctions(data) {
-  try { fs.writeFileSync(PICKUP_AUCTION_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
-}
-function readPickupReports() {
-  try {
-    ensureDir();
-    if (!fs.existsSync(PICKUP_REPORT_FILE)) fs.writeFileSync(PICKUP_REPORT_FILE, '[]', 'utf-8');
-    return JSON.parse(fs.readFileSync(PICKUP_REPORT_FILE, 'utf-8'));
-  } catch { return []; }
-}
-function writePickupReports(data) {
-  try { fs.writeFileSync(PICKUP_REPORT_FILE, JSON.stringify(data, null, 2), 'utf-8'); } catch {}
-}
+function readPickupAuctions () { return db.readPickupAuctions(); }
+function writePickupAuctions (data) { db.writePickupAuctions(data); }
+function readPickupReports () { return db.readPickupReports(); }
+function writePickupReports (data) { db.writePickupReports(data); }
 
 // 获取或创建今天某个时间槽的拍卖
 function getOrCreateAuction(slot, dateStr) {
@@ -4869,36 +4598,13 @@ function fixCertDataOnStart() {
 const SC_FILE = path.join(DATA_DIR, 'student_council.json');
 const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
 
-function readSC() {
-  try {
-    if (!fs.existsSync(SC_FILE)) return null;
-    return JSON.parse(fs.readFileSync(SC_FILE, 'utf-8'));
-  } catch { return null; }
-}
+function readSC () { return db.readSC(); }
 
-function writeSC(data) {
-  fs.writeFileSync(SC_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+function writeSC (data) { db.writeSC(data); }
 
-function readNotices() {
-  try {
-    if (!fs.existsSync(NOTICES_FILE)) return [];
-    let notices = JSON.parse(fs.readFileSync(NOTICES_FILE, 'utf-8'));
-    // 自动清理 60 天前的通知
-    const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
-    const before = notices.length;
-    notices = notices.filter(n => {
-      const t = new Date(n.createdAt).getTime();
-      return !isNaN(t) && t >= cutoff;
-    });
-    if (notices.length < before) writeNotices(notices);
-    return notices;
-  } catch { return []; }
-}
+function readNotices () { return db.readNotices(); }
 
-function writeNotices(data) {
-  fs.writeFileSync(NOTICES_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+function writeNotices (data) { db.writeNotices(data); }
 
 // 检测是否已初始化
 app.get('/api/student-council/check-init', (req, res) => {
@@ -5204,27 +4910,13 @@ app.put('/api/notices/:id', (req, res) => {
 const APP_FILE = path.join(DATA_DIR, 'notice_applications.json');
 const PASSKEY_FILE = path.join(DATA_DIR, 'notice_passkey.json');
 
-function readPasskey() {
-  try {
-    if (!fs.existsSync(PASSKEY_FILE)) return null;
-    return JSON.parse(fs.readFileSync(PASSKEY_FILE, 'utf-8'));
-  } catch { return null; }
-}
+function readPasskey () { return db.readPasskey(); }
 
-function writePasskey(data) {
-  fs.writeFileSync(PASSKEY_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+function writePasskey (data) { db.writePasskey(data); }
 
-function readApps() {
-  try {
-    if (!fs.existsSync(APP_FILE)) return [];
-    return JSON.parse(fs.readFileSync(APP_FILE, 'utf-8'));
-  } catch { return []; }
-}
+function readApps () { return db.readApps(); }
 
-function writeApps(data) {
-  fs.writeFileSync(APP_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
+function writeApps (data) { db.writeApps(data); }
 
 // 提交申请（公开，需 pass-key）
 app.post('/api/notice-account/apply', (req, res) => {
