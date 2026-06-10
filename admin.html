@@ -3896,8 +3896,8 @@
     const kw = document.getElementById('userSearchInput').value.trim().toLowerCase();
     const filtered = kw
       ? allUsers.filter(u =>
-          u.username.toLowerCase().includes(kw) ||
-          u.nickname.toLowerCase().includes(kw))
+          (u.username||'').toLowerCase().includes(kw) ||
+          (u.nickname||'').toLowerCase().includes(kw))
       : allUsers;
     renderUsers(filtered);
   }
