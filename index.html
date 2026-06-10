@@ -2873,6 +2873,34 @@
           }
         } catch(e) { /* ignore */ }
 
+        // 获取用户个人通知（系统自动发送的专属通知）
+        try {
+          var token = localStorage.getItem('campus_user_token');
+          if (token) {
+            var userNotifRes = await fetch('/api/user/notifications', {
+              headers: { 'x-user-token': token }
+            });
+            var userNotifJson = await userNotifRes.json();
+            if (userNotifJson.ok && userNotifJson.data) {
+              (userNotifJson.data || []).forEach(function(n) {
+                var nid = 'sys_' + n.id;
+                var nu = _notifUnreadCheck(nid);
+                items.push({
+                  id: nid,
+                  icon: n.title.includes('拍卖') ? '🏆' : n.title.includes('霸凌') ? '🛡️' : '📮',
+                  title: n.title,
+                  time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
+                  isNew: nu,
+                  content: n.content || '',
+                  type: '系统通知',
+                  level: n.level || 'T1'
+                });
+                if (nu) unreadCount++;
+              });
+            }
+          }
+        } catch(e) { /* ignore */ }
+
         // 获取认证信息
         var token = localStorage.getItem('campus_user_token');
         if (token) {

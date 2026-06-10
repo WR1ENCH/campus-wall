@@ -3022,7 +3022,8 @@ app.post('/api/posts/:id/report', (req, res) => {
       author: '系统',
       auto: true,
     level: 'T1',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      targetUserId: session.id
     });
     writeNotices(notices);
   } catch (e) {
@@ -3382,7 +3383,8 @@ app.post('/api/bullying-report', (req, res) => {
         auto: true,
     level: 'T1',
         auto: true,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+      targetUserId: reporterUserId
       });
       writeNotices(notices);
     } catch (e) {
@@ -3446,7 +3448,8 @@ app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
         author: '系统',
         auto: true,
     level: 'T0',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+      targetUserId: reports[idx].userId
       });
       writeNotices(notices);
     } catch (e) {
@@ -4374,7 +4377,8 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
             author: '系统',
             auto: true,
     level: 'T0',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+      targetUserId: bid.userId
           });
           writeNotices(notices);
         } else {
@@ -4722,10 +4726,24 @@ app.post('/api/student-council/change-name', (req, res) => {
   res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
+
+// 获取用户个人通知（系统自动发送的专属通知）
+app.get('/api/user/notifications', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: true, data: [] });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: true, data: [] });
+  const notices = readNotices();
+  // 返回 targetUserId 为当前用户的通知
+  const userNotices = notices.filter(n => n.targetUserId === session.id && !n.deleted);
+  userNotices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: userNotices });
+});
+
 // 获取通知列表（公开，过滤已删除）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  const active = notices.filter(n => !n.deleted && n.auto !== true);
+  const active = notices.filter(n => !n.deleted && n.auto !== true && !n.targetUserId);
   const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
