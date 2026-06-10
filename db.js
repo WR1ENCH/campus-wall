@@ -175,16 +175,25 @@ function writePickupReports(data) { dropAndInsert('pickup_reports', data); }
 
 // Student council
 function readSC() {
-  const row = getDb().prepare('SELECT * FROM "student_council" LIMIT 1').get();
-  return row || null;
+  const rows = getDb().prepare('SELECT * FROM "student_council"').all();
+  if (!rows || rows.length === 0) return null;
+  const obj = {};
+  for (const r of rows) {
+    obj[r._key] = r._value;
+  }
+  return obj;
 }
 function writeSC(data) {
   const d = getDb();
   d.exec('DELETE FROM "student_council"');
-  if (!data) return;
-  const cols = Object.keys(data);
-  d.prepare(`INSERT INTO "student_council" (${cols.map(c => '"' + c + '"').join(',')}) VALUES (${cols.map(() => '?').join(',')})`)
-    .run(cols.map(c => data[c]));
+  if (!data || Object.keys(data).length === 0) return;
+  const ins = d.prepare('INSERT INTO "student_council" ("_key", "_value") VALUES (?, ?)');
+  const tx = d.transaction(() => {
+    for (const [k, v] of Object.entries(data)) {
+      ins.run(k, String(v));
+    }
+  });
+  tx();
 }
 
 // Notices
