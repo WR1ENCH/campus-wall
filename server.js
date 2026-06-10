@@ -3020,7 +3020,8 @@ app.post('/api/posts/:id/report', (req, res) => {
       title: '📮 举报已收到',
       content: '你举报的帖子（' + (post.content || '').slice(0, 50) + '...）已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们会尽快处理，感谢你对校园墙环境的维护！',
       author: '系统',
-      level: 'T1',
+      auto: true,
+    level: 'T1',
       createdAt: new Date().toISOString()
     });
     writeNotices(notices);
@@ -3378,7 +3379,9 @@ app.post('/api/bullying-report', (req, res) => {
         title: '🛡️ 霸凌举报已收到',
         content: '你的霸凌事件报告已提交给管理员审核。\n\n我们将尽快核实并处理，请保持联系方式畅通。\n\n感谢你对校园安全的关注！',
         author: '系统',
-        level: 'T1',
+        auto: true,
+    level: 'T1',
+        auto: true,
         createdAt: new Date().toISOString()
       });
       writeNotices(notices);
@@ -3441,7 +3444,8 @@ app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
         title: '🛡️ 霸凌举报已确认处理',
         content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
         author: '系统',
-        level: 'T0',
+        auto: true,
+    level: 'T0',
         createdAt: new Date().toISOString()
       });
       writeNotices(notices);
@@ -4368,7 +4372,8 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
             title: '🏆 拍卖内容已通过审核',
             content: '你在 ' + auction.date + ' ' + slotLabelStr + ' 时段提交的拍卖内容已通过审核，即将在校园墙拍卖栏展示。\n\n📝 展示内容：' + (bid.content || '(未填写)'),
             author: '系统',
-            level: 'T0',
+            auto: true,
+    level: 'T0',
             createdAt: new Date().toISOString()
           });
           writeNotices(notices);
@@ -4720,7 +4725,7 @@ app.post('/api/student-council/change-name', (req, res) => {
 // 获取通知列表（公开，过滤已删除）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  const active = notices.filter(n => !n.deleted);
+  const active = notices.filter(n => !n.deleted && n.auto !== true);
   const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
