@@ -4565,6 +4565,19 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
         found = true;
         if (action === 'approve') {
           auction.bids[bi].reviewStatus = 'approved';
+          // 自动发送 T0 通知
+          const bid = auction.bids[bi];
+          const slotLabelStr = slotLabel(auction.slot);
+          const notices = readNotices();
+          notices.push({
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            title: '🏆 拍卖内容已通过审核',
+            content: '你在 ' + auction.date + ' ' + slotLabelStr + ' 时段提交的拍卖内容已通过审核，即将在校园墙拍卖栏展示。\n\n📝 展示内容：' + (bid.content || '(未填写)'),
+            author: '系统',
+            level: 'T0',
+            createdAt: new Date().toISOString()
+          });
+          writeNotices(notices);
         } else {
           // 拒绝：标记为rejected，退还冻结的credit
           auction.bids[bi].reviewStatus = 'rejected';
