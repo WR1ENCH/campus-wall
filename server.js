@@ -4667,7 +4667,7 @@ app.post('/api/student-council/login', (req, res) => {
 
   // 尝试校园墙用户登录（需 noticePublisher 权限）
   const users = readUsers();
-  const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher === true && u.status !== 'banned');
+  const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher && u.status !== 'banned');
   if (user) {
     if (!verifyPassword(password, user.password)) {
       return res.json({ ok: false, msg: '账号或密码错误' });
