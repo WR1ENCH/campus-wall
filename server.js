@@ -3254,6 +3254,22 @@ app.post('/api/posts/:id/report', (req, res) => {
   }
   writePosts(posts);
 
+  // 举报成功后立即发送 T1 通知
+  try {
+    const notices = readNotices();
+    notices.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      title: '📮 举报已收到',
+      content: '你举报的帖子（' + (post.content || '').slice(0, 50) + '...）已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们会尽快处理，感谢你对校园墙环境的维护！',
+      author: '系统',
+      level: 'T1',
+      createdAt: new Date().toISOString()
+    });
+    writeNotices(notices);
+  } catch (e) {
+    console.error('发送举报通知失败:', e.message);
+  }
+
   res.json({ ok: true, data: { reportCount: post.reportCount, hidden: !!post.hidden } });
 });
 
@@ -5383,5 +5399,4 @@ app.listen(PORT, () => {
   console.log(`  → http://localhost:${PORT}/admin.html`);
   console.log(`\n  🔐 超级管理员账号: wr1Ench / cai091226\n`);
 });
-
 
