@@ -4689,7 +4689,7 @@ app.post('/api/student-council/change-pwd', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
   if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { oldPwd, newPwd } = req.body;
@@ -4713,7 +4713,7 @@ app.post('/api/student-council/change-name', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
   if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { name } = req.body;
@@ -4758,7 +4758,7 @@ app.post('/api/notices', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true);
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
   if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { title, content, author, level, images } = req.body;
@@ -4801,7 +4801,7 @@ app.delete('/api/notices/:id', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     // 检查是否存在该用户
     const userExists = users.find(u => u.id === session.id);
@@ -4829,7 +4829,7 @@ app.post('/api/notices/:id/pin', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     const userExists = users.find(u => u.id === session.id);
     if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
@@ -4861,7 +4861,7 @@ app.post('/api/notices/:id/sync', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     const userExists = users.find(u => u.id === session.id);
     if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
@@ -4890,7 +4890,7 @@ app.put('/api/notices/:id', (req, res) => {
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
-  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher === true && u.status !== 'banned');
+  const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     // 检查是否存在该用户
     const userExists = users.find(u => u.id === session.id);
@@ -5131,7 +5131,7 @@ app.post('/api/admin/notice-passkey', requireAdmin, (req, res) => {
 app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
   const users = readUsers();
   const publishers = users
-    .filter(u => u.noticePublisher === true)
+    .filter(u => u.noticePublisher)
     .map(u => ({
       id: u.id,
       nickname: u.nickname,
