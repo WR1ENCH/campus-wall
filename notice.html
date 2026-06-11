@@ -636,6 +636,10 @@ body {
         loadNotices();
       } else {
         errEl.textContent = json.msg || '\u767B\u5F55\u5931\u8D25';
+        if (json.msg && json.msg.indexOf('验证码') >= 0) {
+          refreshLoginCaptcha();
+          document.getElementById('loginCaptchaInput').value = '';
+        }
       }
     } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
     finally { btn.disabled = false; btn.textContent = '\u767B \u5F55'; }
