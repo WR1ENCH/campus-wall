@@ -651,6 +651,9 @@ body {
     document.getElementById('loginId').value = '';
     document.getElementById('loginPwd').value = '';
     document.getElementById('loginError').textContent = '';
+    document.getElementById('loginCaptchaInput').value = '';
+    checkInit();
+    refreshLoginCaptcha();
   };
 
   // ===== 账号设置 =====
