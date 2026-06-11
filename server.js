@@ -4743,7 +4743,7 @@ app.get('/api/user/notifications', (req, res) => {
 // 获取通知列表（公开，过滤已删除）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  const active = notices.filter(n => !n.deleted && n.auto !== true && !n.targetUserId);
+  const active = notices.filter(n => !n.deleted && !n.auto && !n.targetUserId);
   const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
