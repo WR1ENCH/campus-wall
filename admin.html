@@ -1030,6 +1030,17 @@
         </div>
         <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPublishers()">🔄 刷新</button>
       </div>
+
+      <!-- 添加发布者 -->
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">➕ 添加通知发布者</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="publisherSearchInput" class="toolbar-search" placeholder="搜索用户昵称或账号…" style="flex:1;min-width:180px;" onkeydown="if(event.key==='Enter')searchPublisherUser()">
+          <button class="btn-primary" style="padding:7px 14px;font-size:13px;" onclick="searchPublisherUser()">🔍 搜索</button>
+        </div>
+        <div id="publisherSearchResults" style="margin-top:8px;display:none;"></div>
+      </div>
+
       <div class="admins-table" style="margin-top:4px;">
         <div class="table-header">
           <span>通知发布者列表（使用校园墙账号登录通知页面）</span>
@@ -4944,6 +4955,68 @@
       var json = await res.json();
       if (json.ok) {
         showToast('✅ ' + json.msg, 'success');
+        loadPublishers();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  // 搜索用户并添加为通知发布者
+  async function searchPublisherUser() {
+    var kw = document.getElementById('publisherSearchInput').value.trim();
+    var resultsDiv = document.getElementById('publisherSearchResults');
+    if (!kw) { resultsDiv.style.display = 'none'; return; }
+    resultsDiv.style.display = '';
+    resultsDiv.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-sub);font-size:13px;">搜索中…</div>';
+    try {
+      // 获取所有用户
+      var res = await fetch('/api/admin/users', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) { resultsDiv.innerHTML = '<div style="color:var(--danger);">加载失败</div>'; return; }
+      var users = json.data || [];
+      var kwLower = kw.toLowerCase();
+      var matched = users.filter(function(u) {
+        return (u.nickname && u.nickname.toLowerCase().indexOf(kwLower) >= 0) ||
+               (u.username && u.username.toLowerCase().indexOf(kwLower) >= 0);
+      });
+      if (matched.length === 0) {
+        resultsDiv.innerHTML = '<div style="padding:10px;color:var(--text-sub);font-size:13px;">未找到匹配的用户</div>';
+        return;
+      }
+      var html = '<div style="max-height:200px;overflow-y:auto;">';
+      matched.forEach(function(u) {
+        var already = u.noticePublisher ? true : false;
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);">' +
+          '<span style="font-size:16px;">👤</span>' +
+          '<div style="flex:1;font-size:13px;">' +
+          '<span style="font-weight:600;">' + escHtml(u.nickname || '未知') + '</span>' +
+          '<span style="color:var(--text-sub);margin-left:6px;">@' + escHtml(u.username || '') + '</span>' +
+          (already ? '<span style="color:var(--success);margin-left:6px;font-size:11px;">✅ 已是发布者</span>' : '') +
+          '</div>' +
+          (already ? '' : '<button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="addPublisher(\'' + u.id + '\',\'' + (u.nickname || '').replace(/'/g, '\\\'') + '\')">授予权限</button>') +
+          '</div>';
+      });
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    } catch(e) {
+      resultsDiv.innerHTML = '<div style="color:var(--danger);font-size:13px;">搜索失败</div>';
+    }
+  }
+
+  async function addPublisher(userId, nickname) {
+    if (!confirm('确定授予「' + nickname + '」通知发布权限吗？')) return;
+    try {
+      var res = await fetch('/api/admin/notice-publishers/add', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        document.getElementById('publisherSearchInput').value = '';
+        document.getElementById('publisherSearchResults').style.display = 'none';
         loadPublishers();
       } else {
         showToast('❌ ' + (json.msg || '操作失败'), 'error');

@@ -5142,6 +5142,21 @@ app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
   res.json({ ok: true, data: publishers });
 });
 
+// 添加通知发布者权限
+app.post('/api/admin/notice-publishers/add', requireAdmin, (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.json({ ok: false, msg: '请指定用户ID' });
+  const users = readUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.noticePublisher) return res.json({ ok: false, msg: '该用户已是通知发布者' });
+
+  user.noticePublisher = true;
+  user.noticePublisherAddedAt = new Date().toISOString();
+  writeUsers(users);
+  res.json({ ok: true, msg: '已授予通知发布权限' });
+});
+
 // 移除通知发布者权限
 app.post('/api/admin/notice-publishers/remove', requireAdmin, (req, res) => {
   const { userId } = req.body;
