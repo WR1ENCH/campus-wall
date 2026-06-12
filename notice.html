@@ -397,6 +397,7 @@ body {
           <button type="button" onclick="insertMd('notifContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('notifContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
           <button type="button" onclick="uploadImage('notifContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片">🖼</button>
+          <button type="button" onclick="importMdFile('notifContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="导入 Markdown 文件">📄</button>
           <button type="button" onclick="insertMd('notifContent','\n| 列1 | 列2 |\n| --- | --- |\n| 内容 | 内容 |','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="表格">⊞</button>
           <button type="button" onclick="insertMd('notifContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
           <button type="button" onclick="togglePreview('notifContent')" id="previewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
@@ -502,6 +503,7 @@ body {
           <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
           <button type="button" onclick="uploadImage('editContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片">🖼</button>
+          <button type="button" onclick="importMdFile('editContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="导入 Markdown 文件">📄</button>
           <button type="button" onclick="insertMd('editContent','\n| 列1 | 列2 |\n| --- | --- |\n| 内容 | 内容 |','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="表格">⊞</button>
           <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
           <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
@@ -868,6 +870,45 @@ body {
     reader.readAsDataURL(file);
   };
 
+  var _importMdTarget = null;
+  window.importMdFile = function(textareaId) {
+    _importMdTarget = textareaId;
+    var input = document.getElementById('mdFileInput');
+    input.value = '';
+    input.click();
+  };
+  window.handleMdFile = function(input) {
+    var file = input.files[0];
+    if (!file || !_importMdTarget) return;
+    if (file.size > 1024 * 1024) {
+      showToast('❌ ' + file.name + ' 超过1MB', 'error');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var ta = document.getElementById(_importMdTarget);
+      var start = ta.selectionStart, end = ta.selectionEnd;
+      var content = e.target.result;
+      // 尝试从文件名提取标题（去掉.md扩展名和数字前缀）
+      var fileName = file.name.replace(/\.md$/i, '').replace(/^\d+[\s\.\-_]*/, '');
+      // 如果内容有 h1 标题，用它作为通知标题
+      var titleMatch = content.match(/^#\s+(.+)$/m);
+      var title = titleMatch ? titleMatch[1].trim() : fileName;
+      // 插入内容
+      ta.value = ta.value.substring(0, start) + '\n' + content + '\n' + ta.value.substring(end);
+      ta.focus();
+      // 如果对应的标题输入框为空，自动填入标题
+      var titleInputId = _importMdTarget === 'notifContent' ? 'notifTitle' : 'editTitle';
+      var titleInput = document.getElementById(titleInputId);
+      if (titleInput && !titleInput.value.trim()) {
+        titleInput.value = title;
+      }
+      showToast('✅ 已导入 ' + file.name, 'success');
+      _importMdTarget = null;
+    };
+    reader.readAsText(file);
+  };
+
   window.selectNotifLevel = function(level) {
     _selectedNotifLevel = level;
     document.getElementById('levelT1Label').style.borderColor = level === 'T1' ? 'var(--accent)' : 'var(--border)';
@@ -1200,5 +1241,6 @@ body {
 })();
 </script>
 <input type="file" accept="image/*" style="display:none;" id="imageUploadInput" onchange="handleToolbarImage(this)">
+<input type="file" accept=".md,.markdown,text/markdown" style="display:none;" id="mdFileInput" onchange="handleMdFile(this)">
 </body>
 </html>
