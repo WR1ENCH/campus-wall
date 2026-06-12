@@ -2713,11 +2713,50 @@
       if (!text) return '';
       var html = text
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        // 删除线 ~~text~~
+        .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+        // 下划线 __text__
+        .replace(/__([^_]+)__/g, '<u>$1</u>')
+        // 加粗 **text**
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        // 斜体 *text*
         .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        // 上标 ^text^
+        .replace(/\^([^^]+)\^/g, '<sup>$1</sup>')
+        // 下标 ~text~
+        .replace(/~([^~]+)~/g, '<sub>$1</sub>')
+        // 列表项
+        .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+        // 标题
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // 分隔线
+        .replace(/^---+\s*$/gm, '<hr>')
+        // 引用
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // 代码
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // 表格
+        .replace(/^\|(.+)\|$/gm, function(m, content) {
+          var cells = content.split('|').map(function(c) { return c.trim(); });
+          if (cells.length > 0 && /^[-:\s]+$/.test(cells[0])) return '';
+          return '<tr><td>' + cells.join('</td><td>') + '</td></tr>';
+        })
+        .replace(/((?:<tr>.*?<\/tr>\s*)+)/g, '<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>$1</tbody></table>')
+        .replace(/<td>/g, '<td style="border:1px solid #e5e7eb;padding:8px 10px;">')
+        // 图片和链接
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:6px 0;">')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        // 换行
+        .replace(/\n\n/g, '</p><p>')
         .replace(/\n/g, '<br>');
-      return html;
+      // Wrap consecutive <li> in <ul>
+      html = html.replace(/((?:<li>.*?<\/li>)+)/g, '<ul>$1</ul>');
+      // Wrap standalone <blockquote> in proper block
+      html = html.replace(/<blockquote>/g, '<blockquote style="margin:10px 0;padding:10px 14px;border-left:3px solid #b8860b;background:rgba(0,0,0,0.02);border-radius:0 6px 6px 0;color:#666;">');
+      return '<p>' + html + '</p>';
     }
 
     // 页面加载时检查未读通知，更新 🔔 红点（不弹窗）
