@@ -396,7 +396,7 @@ body {
           <button type="button" onclick="insertMd('notifContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{__code__}</button>
           <button type="button" onclick="insertMd('notifContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('notifContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
-          <button type="button" onclick="insertMd('notifContent','![](',')')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="图片">🖼</button>
+          <button type="button" onclick="uploadImage('notifContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片">🖼</button>
           <button type="button" onclick="insertMd('notifContent','\n| 列1 | 列2 |\n| --- | --- |\n| 内容 | 内容 |','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="表格">⊞</button>
           <button type="button" onclick="insertMd('notifContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
           <button type="button" onclick="togglePreview('notifContent')" id="previewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
@@ -501,7 +501,7 @@ body {
           <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{__code__}</button>
           <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
-          <button type="button" onclick="insertMd('editContent','![](',')')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="图片">🖼</button>
+          <button type="button" onclick="uploadImage('editContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片">🖼</button>
           <button type="button" onclick="insertMd('editContent','\n| 列1 | 列2 |\n| --- | --- |\n| 内容 | 内容 |','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="表格">⊞</button>
           <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
           <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
@@ -839,6 +839,35 @@ body {
     }
   };
 
+  // ===== 图片上传工具 =====
+  var _uploadImageTarget = null;
+  window.uploadImage = function(textareaId) {
+    _uploadImageTarget = textareaId;
+    var input = document.getElementById('imageUploadInput');
+    input.value = '';
+    input.click();
+  };
+  window.handleToolbarImage = function(input) {
+    var file = input.files[0];
+    if (!file || !_uploadImageTarget) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('❌ ' + file.name + ' 超过10MB', 'error');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var ta = document.getElementById(_uploadImageTarget);
+      var start = ta.selectionStart, end = ta.selectionEnd;
+      var imgMarkdown = '\n![](' + e.target.result + ')\n';
+      ta.value = ta.value.substring(0, start) + imgMarkdown + ta.value.substring(end);
+      ta.focus();
+      ta.selectionStart = ta.selectionEnd = start + imgMarkdown.length;
+      showToast('✅ 图片已插入', 'success');
+      _uploadImageTarget = null;
+    };
+    reader.readAsDataURL(file);
+  };
+
   window.selectNotifLevel = function(level) {
     _selectedNotifLevel = level;
     document.getElementById('levelT1Label').style.borderColor = level === 'T1' ? 'var(--accent)' : 'var(--border)';
@@ -1167,8 +1196,8 @@ body {
   } else {
     refreshLoginCaptcha();
     checkInit();
-  }
 })();
 </script>
+<input type="file" accept="image/*" style="display:none;" id="imageUploadInput" onchange="handleToolbarImage(this)">
 </body>
 </html>
