@@ -482,15 +482,22 @@ body {
       <div class="form-group">
         <label for="editContent">内容 <span style="font-weight:400;color:var(--text-sub);">（支持 Markdown）</span></label>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:var(--bg-main);border:1.5px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;">
-          <button type="button" onclick="insertMd('editContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;">B</button>
-          <button type="button" onclick="insertMd('editContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;">I</button>
-          <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;">{"<>"}</button>
-          <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">🔗</button>
-          <button type="button" onclick="insertMd('editContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">•</button>
-          <button type="button" onclick="insertMd('editContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">1.</button>
-          <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">"</button>
-          <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;">—</button>
-          <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;">👁️ 预览</button>
+          <button type="button" onclick="insertMd('editContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
+          <button type="button" onclick="insertMd('editContent','__','__')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;text-decoration:underline;" title="下划线">U</button>
+          <button type="button" onclick="insertMd('editContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;" title="斜体">I</button>
+          <button type="button" onclick="insertMd('editContent','~~','~~')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;text-decoration:line-through;" title="删除线">S</button>
+          <button type="button" onclick="insertMd('editContent','\n# ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="标题">H</button>
+          <button type="button" onclick="insertMd('editContent','~','~')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:11px;" title="下标">x₂</button>
+          <button type="button" onclick="insertMd('editContent','^','^')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:11px;" title="上标">x²</button>
+          <button type="button" onclick="insertMd('editContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="无序列表">•</button>
+          <button type="button" onclick="insertMd('editContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="有序列表">1.</button>
+          <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{__code__}</button>
+          <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
+          <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接">🔗</button>
+          <button type="button" onclick="insertMd('editContent','![](',')')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="图片">🖼</button>
+          <button type="button" onclick="insertMd('editContent','\n| 列1 | 列2 |\n| --- | --- |\n| 内容 | 内容 |','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="表格">⊞</button>
+          <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
+          <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览">👁️ 预览</button>
         </div>
         <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容…（支持 Markdown 格式）" style="min-height:120px;"></textarea>
         <div id="editContentPreview" class="md-preview" style="display:none;"></div>
