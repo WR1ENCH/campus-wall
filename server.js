@@ -4843,6 +4843,19 @@ app.post('/api/notices', (req, res) => {
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
 
+  // 敏感词检测（通知标题+内容一起检查）
+  const combinedText = (title || '') + ' ' + (content || '');
+  const sensitiveWords = checkSensitive(combinedText);
+  const hasSensitive = sensitiveWords.length > 0;
+  if (hasSensitive) {
+    return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
+  }
+  // 霸凌姓名检测
+  const blockedNames = checkBullyingNames(combinedText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
+  }
+
   // 验证图片（base64 data URL，每张≤10MB）
   var validImages = [];
   var maxSize = 10 * 1024 * 1024;
@@ -4976,9 +4989,22 @@ app.put('/api/notices/:id', (req, res) => {
     return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
   }
 
-  const { title, content, author, level, images } = req.body;
+  const { title, content, author, level, images, sensitiveForce } = req.body;
   if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
   if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
+
+  // 敏感词检测（sensitiveForce=true 时跳过检查）
+  const combinedText = (title || '') + ' ' + (content || '');
+  const sensitiveWords = checkSensitive(combinedText);
+  const hasSensitive = sensitiveWords.length > 0;
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
+  }
+  // 霸凌姓名检测（始终阻止，不可强制）
+  const blockedNames = checkBullyingNames(combinedText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
+  }
 
   var maxSize = 10 * 1024 * 1024;
   var validImages = [];
