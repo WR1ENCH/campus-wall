@@ -5176,6 +5176,5 @@ app.listen(PORT, () => {
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);
   console.log(`  → http://localhost:${PORT}/admin.html`);
-  console.log(`\n  🔐 超级管理员账号: wr1Ench / cai091226\n`);
 });
 
