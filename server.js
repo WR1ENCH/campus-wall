@@ -1999,19 +1999,17 @@ app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
   const user = users.find(u => u.id === userId);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 软删除该用户的所有帖子
-  const posts = readPosts();
+  // 物理删除该用户的所有帖子，先保存到 deleted_items
+  let posts = readPosts();
   const now = new Date().toISOString();
   let softDeleted = 0;
   posts.forEach(p => {
     if (!p.deleted && (p.userId === userId || p.author === user.nickname)) {
-      p.deleted = true;
-      p.deletedAt = now;
-      p.deletedBy = 'system';
-      softDeleted++;
       saveDeletedItem('post', p, 'system');
+      softDeleted++;
     }
   });
+  posts = posts.filter(p => !(p.userId === userId || p.author === user.nickname) || p.deleted);
   writePosts(posts);
 
   // 再删除用户账号
@@ -2405,11 +2403,10 @@ app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   if (!isCommentAuthor && !isPostAuthor) {
     return res.json({ ok: false, msg: '无权删除此评论' });
   }
-  comment.deleted = true;
-  comment.deletedAt = new Date().toISOString();
-  comment.deletedBy = userId === comment.userId ? 'user' : 'post_author';
+  saveDeletedItem('comment', comment, userId === comment.userId ? 'user' : 'post_author');
+  post.comments = post.comments.filter(c => c.id !== req.params.commentId);
+  post.commentsCount = post.comments.length;
   writePosts(posts);
-  saveDeletedItem('comment', comment, comment.deletedBy);
   res.json({ ok: true });
 });
 
@@ -2442,11 +2439,10 @@ app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
   posts.forEach(post => {
     const comment = (post.comments || []).find(c => c.id === req.params.commentId);
     if (comment && !comment.deleted) {
-      comment.deleted = true;
-      comment.deletedAt = now;
-      comment.deletedBy = 'admin';
-      found = true;
       saveDeletedItem('comment', comment, 'admin');
+      post.comments = post.comments.filter(c => c.id !== req.params.commentId);
+      post.commentsCount = post.comments.length;
+      found = true;
     }
   });
   if (!found) return res.json({ ok: false, msg: '评论不存在或已被删除' });
@@ -2467,13 +2463,12 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
   posts.forEach(post => {
     (post.comments || []).forEach(c => {
       if (ids.includes(c.id) && !c.deleted) {
-        c.deleted = true;
-        c.deletedAt = now;
-        c.deletedBy = 'admin';
-        deletedCount++;
         saveDeletedItem('comment', c, 'admin');
+        deletedCount++;
       }
     });
+    post.comments = (post.comments || []).filter(c => !ids.includes(c.id) || c.deleted);
+    post.commentsCount = (post.comments || []).length;
   });
   writePosts(posts);
   // 同时删除相关的举报记录
@@ -2489,54 +2484,48 @@ app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.json({ ok: false, msg: '请提供要删除的帖子 ID 列表' });
   }
-  const posts = readPosts();
+  let posts = readPosts();
   let deletedCount = 0;
   posts.forEach(p => {
     if (ids.includes(p.id) && !p.deleted) {
-      p.deleted = true;
-      p.deletedAt = new Date().toISOString();
-      p.deletedBy = 'admin';
-      deletedCount++;
       saveDeletedItem('post', p, 'admin');
+      deletedCount++;
     }
   });
+  posts = posts.filter(p => !ids.includes(p.id) || p.deleted);
   writePosts(posts);
   res.json({ ok: true, deleted: deletedCount });
 });
 
-// 删除帖子（仅管理员）—— 改为软删除
+// 删除帖子（仅管理员）—— 改为物理删除，写入 deleted_items
 app.delete('/api/posts/:id', requireAdmin, (req, res) => {
-  const posts = readPosts();
+  let posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
 
-  post.deleted = true;
-  post.deletedAt = new Date().toISOString();
-  post.deletedBy = 'admin';
-  writePosts(posts);
   saveDeletedItem('post', post, 'admin');
+  posts = posts.filter(p => p.id !== req.params.id);
+  writePosts(posts);
   res.json({ ok: true });
 });
 
-// 用户删除自己发的帖子 —— 改为软删除
+// 用户删除自己发的帖子 —— 物理删除，写入 deleted_items
 app.delete('/api/user/posts/:id', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
-  const posts = readPosts();
+  let posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
   if (post.userId !== session.id) return res.json({ ok: false, msg: '无权删除他人的帖子' });
 
-  post.deleted = true;
-  post.deletedAt = new Date().toISOString();
-  post.deletedBy = 'user';
-  writePosts(posts);
   saveDeletedItem('post', post, 'user');
+  posts = posts.filter(p => p.id !== req.params.id);
+  writePosts(posts);
   res.json({ ok: true });
 });
 
@@ -2767,29 +2756,24 @@ app.put('/api/discussions/:id', requireAdmin, (req, res) => {
   res.json({ ok: true, data: discussions[idx] });
 });
 
-// 删除讨论话题（管理员）—— 改为软删除
+// 删除讨论话题（管理员）—— 物理删除，写入 deleted_items
 app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
-  const discussions = readDiscussions();
+  let discussions = readDiscussions();
   const d = discussions.find(d => d.id === req.params.id);
   if (!d) return res.json({ ok: false, msg: '话题不存在' });
   if (d.deleted) return res.json({ ok: false, msg: '话题已被删除' });
-  const now = new Date().toISOString();
-  d.deleted = true;
-  d.deletedAt = now;
-  d.deletedBy = 'admin';
-  writeDiscussions(discussions);
   saveDeletedItem('discussion', d, 'admin');
+  discussions = discussions.filter(x => x.id !== req.params.id);
+  writeDiscussions(discussions);
 
-  // 同时软删除该话题下的所有评论
-  const comments = readDiscussionComments();
+  // 同时物理删除该话题下的所有评论
+  let comments = readDiscussionComments();
   comments.forEach(c => {
     if (c.discussionId === req.params.id && !c.deleted) {
-      c.deleted = true;
-      c.deletedAt = now;
-      c.deletedBy = 'admin';
       saveDeletedItem('disc_comment', c, 'admin');
     }
   });
+  comments = comments.filter(c => c.discussionId !== req.params.id || c.deleted);
   writeDiscussionComments(comments);
 
   res.json({ ok: true });
@@ -2958,15 +2942,15 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
 
   const now = new Date().toISOString();
   const byWho = isAdmin ? 'admin' : 'user';
-  // 软删除该评论及其所有子回复
+  // 物理删除该评论及其所有子回复，先保存
+  let idsToRemove = [];
   comments.forEach(c => {
     if (c.id === req.params.id || c.parentId === req.params.id) {
-      c.deleted = true;
-      c.deletedAt = now;
-      c.deletedBy = byWho;
       saveDeletedItem('disc_comment', c, byWho);
+      idsToRemove.push(c.id);
     }
   });
+  comments = comments.filter(c => !idsToRemove.includes(c.id));
   writeDiscussionComments(comments);
 
   res.json({ ok: true });
