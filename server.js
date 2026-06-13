@@ -2511,6 +2511,7 @@ app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   post.deletedAt = new Date().toISOString();
   post.deletedBy = 'admin';
   writePosts(posts);
+  saveDeletedItem('post', post, 'admin');
   res.json({ ok: true });
 });
 
@@ -2531,6 +2532,7 @@ app.delete('/api/user/posts/:id', (req, res) => {
   post.deletedAt = new Date().toISOString();
   post.deletedBy = 'user';
   writePosts(posts);
+  saveDeletedItem('post', post, 'user');
   res.json({ ok: true });
 });
 
@@ -3223,93 +3225,39 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   });
 });
 
+// ===== 已删除内容记录辅助函数 =====
+function saveDeletedItem(type, item, deletedBy, extra) {
+  db.addDeletedItem({
+    id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: type,
+    content: typeof item.content === 'string' ? item.content.substring(0, 500) : '',
+    author: item.author || item.nickname || item.createdBy || '未知',
+    userId: item.userId || item.createdBy || null,
+    deletedAt: new Date().toISOString(),
+    deletedBy: deletedBy,
+    extra: extra || ''
+  });
+}
+
 // ===== 管理端：查看已删除内容 =====
 app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
-  const posts = readPosts();
-  const users = readUsers();
-  const discussions = readDiscussions();
-  const discussionComments = readDiscussionComments();
-
-  // 已删除的帖子（含作者信息）
-  const deletedPosts = posts
-    .filter(p => p.deleted)
-    .map(p => {
-      const author = users.find(u => u.id === p.userId);
-      return {
-        id: p.id,
-        content: p.content ? p.content.substring(0, 200) : '',
-        type: p.type || '',
-        author: p.author || (author ? author.nickname : '未知'),
-        userId: p.userId,
-        time: p.time || p.createdAt,
-        deletedAt: p.deletedAt,
-        deletedBy: p.deletedBy,
-        likeCount: (p.likes || []).length || p.likes || 0,
-        commentCount: (p.comments || []).length || p.commentsCount || 0
-      };
-    });
-
-  // 已删除的帖子内评论
-  const deletedPostComments = [];
-  posts.forEach(post => {
-    if (post.deleted) return; // 帖子已删，评论随帖子保留即可
-    (post.comments || []).forEach(c => {
-      if (c.deleted) {
-        deletedPostComments.push({
-          id: c.id,
-          postId: post.id,
-          postContent: (post.content || '').substring(0, 100),
-          content: (c.content || '').substring(0, 200),
-          author: c.author || '未知',
-          userId: c.userId,
-          time: c.time || c.createdAt,
-          deletedAt: c.deletedAt,
-          deletedBy: c.deletedBy
-        });
-      }
-    });
-  });
-
-  // 已删除的讨论话题
-  const deletedDiscussions = discussions
-    .filter(d => d.deleted)
-    .map(d => ({
-      id: d.id,
-      title: d.title || '',
-      createdBy: d.createdBy || '未知',
-      createdAt: d.createdAt,
-      deletedAt: d.deletedAt,
-      deletedBy: d.deletedBy
-    }));
-
-  // 已删除的讨论区评论
-  const deletedDiscComments = discussionComments
-    .filter(c => c.deleted)
-    .map(c => ({
-      id: c.id,
-      discussionId: c.discussionId,
-      content: (c.content || '').substring(0, 200),
-      author: c.author || '未知',
-      userId: c.userId,
-      time: c.createdAt,
-      deletedAt: c.deletedAt,
-      deletedBy: c.deletedBy
-    }));
-
+  const items = db.readDeletedItems();
+  const posts = items.filter(i => i.type === 'post');
+  const comments = items.filter(i => i.type === 'comment');
+  const discussions = items.filter(i => i.type === 'discussion');
+  const discComments = items.filter(i => i.type === 'disc_comment');
   res.json({
     ok: true,
     data: {
-      posts: deletedPosts,
-      postComments: deletedPostComments,
-      discussions: deletedDiscussions,
-      discussionComments: deletedDiscComments,
-      summary: {
-        totalDeleted: deletedPosts.length + deletedPostComments.length + deletedDiscussions.length + deletedDiscComments.length
-      }
+      posts: posts.reverse(),
+      postComments: comments.reverse(),
+      discussions: discussions.reverse(),
+      discussionComments: discComments.reverse()
     }
   });
 });
 
+// ===== 平台霸凌举报 =====
 // ===== 在线用户统计 =====
 const onlineUsers = new Map(); // userId -> lastHeartbeat (timestamp)
 const ONLINE_TIMEOUT = 120000; // 2 分钟无心跳视为离线

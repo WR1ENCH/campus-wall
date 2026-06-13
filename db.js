@@ -16,13 +16,21 @@ function getDb() {
   return db;
 }
 
-// ===== 自动迁移：新增列 =====
+// ===== 自动迁移：新增列和表 =====
 function migrate() {
-  const tables = [
+  // 创建 deleted_items 表（如果不存在）
+  db.exec(`CREATE TABLE IF NOT EXISTS "deleted_items" (
+    "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" TEXT, "type" TEXT, "content" TEXT,
+    "author" TEXT, "userId" TEXT,
+    "deletedAt" TEXT, "deletedBy" TEXT,
+    "extra" TEXT
+  )`);
+  // 已有表的列迁移
+  const tableMigrations = [
     { name: 'posts', columns: ['images'] },
   ];
-  for (const t of tables) {
-    // 获取已有列名
+  for (const t of tableMigrations) {
     let existingCols = [];
     try {
       const colInfo = db.prepare(`PRAGMA table_info("${t.name}")`).all();
@@ -255,6 +263,15 @@ function writePasskey(data) {
 function readApps() { return all('notice_applications'); }
 function writeApps(data) { dropAndInsert('notice_applications', data); }
 
+// ===== 已删除内容记录 =====
+function readDeletedItems() { return all('deleted_items'); }
+function writeDeletedItems(data) { dropAndInsert('deleted_items', data); }
+function addDeletedItem(item) {
+  const items = all('deleted_items');
+  items.push(item);
+  dropAndInsert('deleted_items', items);
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -278,4 +295,5 @@ module.exports = {
   readNotices, writeNotices,
   readPasskey, writePasskey,
   readApps, writeApps,
+  readDeletedItems, writeDeletedItems, addDeletedItem,
 };
