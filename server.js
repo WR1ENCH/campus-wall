@@ -2136,7 +2136,7 @@ app.get('/api/posts/:id', (req, res) => {
 
   // 发布新帖子
 app.post('/api/posts', (req, res) => {
-  const { type, content, avatar, author, userId, captchaId, captchaText, sensitiveForce } = req.body;
+  const { type, content, avatar, author, userId, captchaId, captchaText, sensitiveForce, images } = req.body;
 
   
 // 发帖频率检测（5分钟内最多3篇，超出需验证码）
@@ -2203,6 +2203,17 @@ if (!content || !content.trim()) {
     }
   }
 
+  // 验证图片（base64 data URL，每张≤2MB，最多4张）
+  var validImages = [];
+  var maxImageSize = 2 * 1024 * 1024;
+  if (Array.isArray(images)) {
+    images.forEach(function(img) {
+      if (typeof img === 'string' && img.startsWith('data:') && img.length <= maxImageSize && validImages.length < 4) {
+        validImages.push(img);
+      }
+    });
+  }
+
   const newPost = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type,
@@ -2218,7 +2229,8 @@ if (!content || !content.trim()) {
     rotate: (Math.random() - 0.5) * 8,
     zIndex: Math.floor(Math.random() * 5) + 1,
     authorAdminRole: authorAdminRole,
-    authorBindAdminId: authorBindAdminId
+    authorBindAdminId: authorBindAdminId,
+    images: validImages.length > 0 ? validImages : undefined
   };
 
   posts.unshift(newPost);

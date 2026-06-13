@@ -1460,6 +1460,14 @@
       <h3>📝 写便利贴</h3>
       <textarea id="noteInput" placeholder="在这里写点什么..."></textarea>
       <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/400</div>
+      <!-- 图片上传 -->
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;font-weight:600;color:#7a5a2a;display:block;margin-bottom:4px;">🖼 附图（最多4张，每张≤2MB）</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="postImgList">
+          <label for="postImgInput" style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:2px;border:2px dashed rgba(90,74,0,0.25);background:rgba(255,255,255,0.3);cursor:pointer;font-size:24px;color:rgba(90,74,0,0.4);">+</label>
+          <input id="postImgInput" type="file" accept="image/*" style="display:none;" onchange="addPostImage(this)">
+        </div>
+      </div>
       <div class="modal-tags">
         <button class="modal-tag t-daily active" data-tag="日常" onclick="selectTag(this)">💬 日常</button>
         <button class="modal-tag t-love" data-tag="表白" onclick="selectTag(this)">💕 表白</button>
@@ -3232,6 +3240,7 @@
     let posts = [];
     let currentTag = '日常';
     let currentFilter = '全部';
+    let postImages = []; // 发帖附图，最多4张
 
     // ===== API 调用 =====
     async function fetchPosts() {
@@ -3268,7 +3277,7 @@
         const res = await fetch(API + '/api/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce })
+          body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages })
         });
         const json = await res.json();
         if (json.ok) {
@@ -3978,6 +3987,40 @@
       el.style.color = count > 400 ? '#d32f2f' : 'inherit';
     });
 
+    // ===== 发帖附图 =====
+    function addPostImage(input) {
+      if (postImages.length >= 4) { showToast('⚠️ 最多4张图片'); input.value = ''; return; }
+      var file = input.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { showToast('⚠️ 图片不超过2MB'); input.value = ''; return; }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        postImages.push(e.target.result);
+        renderPostImages();
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+
+    function removePostImage(idx) {
+      postImages.splice(idx, 1);
+      renderPostImages();
+    }
+
+    function renderPostImages() {
+      var container = document.getElementById('postImgList');
+      var html = '';
+      postImages.forEach(function(src, idx) {
+        html += '<div style="position:relative;display:inline-block;">' +
+          '<img src="' + src + '" style="height:60px;width:60px;object-fit:cover;border-radius:2px;border:1px solid rgba(90,74,0,0.15);">' +
+          '<button onclick="removePostImage(' + idx + ')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;border:none;background:#e04;color:#fff;font-size:11px;cursor:pointer;line-height:18px;text-align:center;padding:0;">&times;</button></div>';
+      });
+      if (postImages.length < 4) {
+        html += '<label for="postImgInput" style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:2px;border:2px dashed rgba(90,74,0,0.25);background:rgba(255,255,255,0.3);cursor:pointer;font-size:24px;color:rgba(90,74,0,0.4);">+</label>';
+      }
+      container.innerHTML = html;
+    }
+
     async function submitNote() {
       const input = document.getElementById('noteInput');
       const content = input.value.trim();
@@ -3993,6 +4036,8 @@
         posts.unshift(newPost);
         _justPostedId = newPost.id;  // 记录刚发的帖子ID
         input.value = '';
+        postImages = [];
+        renderPostImages();
         closeModal();
         renderNotes(currentFilter);
         showToast('📌 便利贴已贴上！');
