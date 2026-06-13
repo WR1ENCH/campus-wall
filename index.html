@@ -1466,7 +1466,7 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;" id="postImgList">
           <label for="postImgInput" style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:2px;border:2px dashed rgba(90,74,0,0.25);background:rgba(255,255,255,0.3);cursor:pointer;font-size:24px;color:rgba(90,74,0,0.4);">+</label>
         </div>
-        <input id="postImgInput" type="file" accept="image/*" style="display:none;" onchange="addPostImage(this)">
+        <input id="postImgInput" type="file" accept="image/*" style="display:none;" onchange="addPostImage(this)" aria-label="上传图片">
       </div>
       <div class="modal-tags">
         <button class="modal-tag t-daily active" data-tag="日常" onclick="selectTag(this)">💬 日常</button>
@@ -3285,7 +3285,7 @@
         }
         if (json.needCaptcha) {
           // 发帖频率过高 → 弹出验证码弹窗
-          pendingPostData = { type, content, sensitiveForce };
+          pendingPostData = { type, content, sensitiveForce, images: postImages.slice() };
           showPostCaptchaModal();
           return null;
         }
@@ -3360,7 +3360,7 @@
         hidePostCaptchaModal();
         return;
       }
-      const { type, content, sensitiveForce } = pendingPostData;
+      const { type, content, sensitiveForce, images } = pendingPostData;
       const captchaId = localStorage.getItem('post_captcha_id');
       try {
         const res = await fetch(API + '/api/posts', {
@@ -3372,6 +3372,7 @@
             author: currentUser.nickname,
             userId: currentUser.id,
             sensitiveForce,
+            images: images || [],
             captchaId,
             captchaText
           })
