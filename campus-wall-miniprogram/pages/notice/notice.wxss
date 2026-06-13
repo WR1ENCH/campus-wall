@@ -1,16 +1,31 @@
-/*pages/notice/notice.wxss*/
+/*pages/notice/notice.wxss — 已适配屏幕尺寸 (flex布局) */
 .container {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
   background-color: #c4a882;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
-    repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
-    repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
-  background-size: 240px 120px;
+    repeating-linear-gradient(0deg,
+      transparent 0%, transparent 49.167%,
+      rgba(0,0,0,0.12) 49.167%, rgba(0,0,0,0.12) 50.833%,
+      transparent 50.833%, transparent 100%),
+    repeating-linear-gradient(90deg,
+      transparent 0%, transparent 49.583%,
+      rgba(0,0,0,0.12) 49.583%, rgba(0,0,0,0.12) 50.417%,
+      transparent 50.417%, transparent 100%),
+    repeating-linear-gradient(0deg,
+      rgba(180,140,100,0.3) 0%,
+      rgba(200,160,120,0.1) 25%,
+      rgba(170,130,90,0.2) 50%,
+      rgba(190,150,110,0.15) 75%,
+      rgba(175,135,95,0.25) 100%);
+  background-size: 480rpx 240rpx;
   padding: 20rpx;
 }
 
 .header {
+  flex-shrink: 0;
   padding: 30rpx 20rpx;
 }
 
@@ -22,6 +37,7 @@
 }
 
 .tabs {
+  flex-shrink: 0;
   display: flex;
   background: #f5f0e0;
   border-radius: 16rpx;
@@ -51,7 +67,8 @@
 }
 
 .notice-list {
-  height: calc(100vh - 280rpx);
+  flex: 1;
+  min-height: 0;
 }
 
 .notice-item {
@@ -103,7 +120,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 420rpx;
+  width: 100%;
 }
 
 .notice-time {
@@ -144,10 +161,13 @@
 
 /* 详情视图 */
 .detail-view {
-  height: calc(100vh - 180rpx);
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
   background: #fff9e6;
   border-radius: 20rpx;
   padding: 30rpx;
+  padding-bottom: 40rpx;
   animation: fadeIn 0.3s ease;
 }
 
@@ -197,6 +217,9 @@
   line-height: 1.8;
   font-size: 28rpx;
   color: #5a3d00;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 /* Markdown 渲染样式覆盖 rich-text 内部 */
@@ -205,6 +228,8 @@
   line-height: 1.8;
   font-size: 28rpx;
   color: #5a3d00;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 @keyframes slideUp {

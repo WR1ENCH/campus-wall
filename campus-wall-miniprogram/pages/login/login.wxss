@@ -1,12 +1,23 @@
-/*pages/login/login.wxss*/
+/*pages/login/login.wxss — 已适配屏幕尺寸 */
 .container {
   min-height: 100vh;
   background-color: #c4a882;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
-    repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
-    repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
-  background-size: 240px 120px;
+    repeating-linear-gradient(0deg,
+      transparent 0%, transparent 49.167%,
+      rgba(0,0,0,0.12) 49.167%, rgba(0,0,0,0.12) 50.833%,
+      transparent 50.833%, transparent 100%),
+    repeating-linear-gradient(90deg,
+      transparent 0%, transparent 49.583%,
+      rgba(0,0,0,0.12) 49.583%, rgba(0,0,0,0.12) 50.417%,
+      transparent 50.417%, transparent 100%),
+    repeating-linear-gradient(0deg,
+      rgba(180,140,100,0.3) 0%,
+      rgba(200,160,120,0.1) 25%,
+      rgba(170,130,90,0.2) 50%,
+      rgba(190,150,110,0.15) 75%,
+      rgba(175,135,95,0.25) 100%);
+  background-size: 480rpx 240rpx;
   padding: 20rpx;
 }
 

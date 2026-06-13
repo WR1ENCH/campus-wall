@@ -2009,6 +2009,7 @@ app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
       p.deletedAt = now;
       p.deletedBy = 'system';
       softDeleted++;
+      saveDeletedItem('post', p, 'system');
     }
   });
   writePosts(posts);
@@ -2407,8 +2408,8 @@ app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   comment.deleted = true;
   comment.deletedAt = new Date().toISOString();
   comment.deletedBy = userId === comment.userId ? 'user' : 'post_author';
-  // 不减少 commentsCount，保留计数
   writePosts(posts);
+  saveDeletedItem('comment', comment, comment.deletedBy);
   res.json({ ok: true });
 });
 
@@ -2445,6 +2446,7 @@ app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
       comment.deletedAt = now;
       comment.deletedBy = 'admin';
       found = true;
+      saveDeletedItem('comment', comment, 'admin');
     }
   });
   if (!found) return res.json({ ok: false, msg: '评论不存在或已被删除' });
@@ -2469,6 +2471,7 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
         c.deletedAt = now;
         c.deletedBy = 'admin';
         deletedCount++;
+        saveDeletedItem('comment', c, 'admin');
       }
     });
   });
@@ -2494,6 +2497,7 @@ app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
       p.deletedAt = new Date().toISOString();
       p.deletedBy = 'admin';
       deletedCount++;
+      saveDeletedItem('post', p, 'admin');
     }
   });
   writePosts(posts);
@@ -2774,6 +2778,7 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   d.deletedAt = now;
   d.deletedBy = 'admin';
   writeDiscussions(discussions);
+  saveDeletedItem('discussion', d, 'admin');
 
   // 同时软删除该话题下的所有评论
   const comments = readDiscussionComments();
@@ -2782,6 +2787,7 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
       c.deleted = true;
       c.deletedAt = now;
       c.deletedBy = 'admin';
+      saveDeletedItem('disc_comment', c, 'admin');
     }
   });
   writeDiscussionComments(comments);
@@ -2958,6 +2964,7 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
       c.deleted = true;
       c.deletedAt = now;
       c.deletedBy = byWho;
+      saveDeletedItem('disc_comment', c, byWho);
     }
   });
   writeDiscussionComments(comments);

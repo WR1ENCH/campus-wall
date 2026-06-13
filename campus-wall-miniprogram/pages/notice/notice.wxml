@@ -44,7 +44,7 @@
   </scroll-view>
 
   <!-- ===== 详情视图 ===== -->
-  <scroll-view class="detail-view" scroll-y wx:if="{{showDetail}}">
+  <scroll-view class="detail-view" scroll-y enhanced bounces="{{false}}" show-scrollbar="{{false}}" wx:if="{{showDetail}}">
     <view class="detail-header">
       <text class="detail-back" bindtap="closeDetail">← 返回</text>
       <text class="detail-title">{{detailItem.title}}</text>

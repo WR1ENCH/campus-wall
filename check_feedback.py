@@ -1,0 +1,10 @@
+import paramiko, io, sys
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+c = paramiko.SSHClient()
+c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+c.connect('154.37.221.232', username='root', password='GAsYrIBjX8vWMCw6', timeout=15)
+si, so, se = c.exec_command('cat /www/wwwroot/campus-wall/data/feedbacks.json', timeout=5)
+print('feedbacks.json:', so.read().decode('utf-8', errors='replace')[:200])
+si, so, se = c.exec_command('cat /www/wwwroot/campus-wall/data/sensitive_custom.json', timeout=5)
+print('sensitive_custom.json:', so.read().decode('utf-8', errors='replace')[:200])
+c.close()

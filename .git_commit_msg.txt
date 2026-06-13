@@ -1,8 +1,7 @@
-fix: 恢复index.html原样，移除废弃的小程序扫码登录 
+feat: 小程序通知同步网页端公告 
  
-- 删除index.html中的扫码按钮、二维码弹窗和相关JS 
-- 删除 assets/qrcode.min.js 
-- 小程序login.js已支持从HTTP URL中提取token 
-- 所有改动仅针对featured.html和mini-program 
+- 修复notice.js数据格式映射(ok-success, data-notices) 
+- 实现Tab筛选功能(全部/未读/系统) 
+- 通知列表同步服务器公告数据 
  
 Co-Authored-By: AtomCode (deepseek-v4-flash) <noreply@atomgit.com> 

@@ -17,8 +17,8 @@
   </view>
 
   <view class="manual-input-box">
-    <text class="tip-title" style="margin-bottom:8px;">✏️ 或者手动输入令牌</text>
-    <view style="display:flex;gap:8px;align-items:center;">
+    <text class="tip-title" style="margin-bottom:16rpx;">✏️ 或者手动输入令牌</text>
+    <view style="display:flex;gap:16rpx;align-items:center;">
       <input class="manual-input" id="manualTokenInput" placeholder="粘贴 campuswall://login/xxx 或直接输入 token" bindinput="onManualInput" />
       <button class="manual-btn" bindtap="submitManualToken">确认</button>
     </view>

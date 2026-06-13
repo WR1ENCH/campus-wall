@@ -183,9 +183,9 @@ Page({
     });
   },
 
-  filterNotices() {
+  filterNotices(notices) {
     const tab = this.data.currentTab;
-    let filtered = this.data.notices;
+    let filtered = notices || this.data.notices;
     if (tab === 1) {
       filtered = filtered.filter(n => !n.readed);
     } else if (tab === 2) {
@@ -212,7 +212,8 @@ Page({
       return n;
     });
     this.setData({ notices });
-    this.filterNotices();
+    // 传已更新的数组，避免 setData 异步导致读到旧数据
+    this.filterNotices(notices);
 
     // 转换 Markdown 为 HTML
     const html = mdToHtml(item.content);
@@ -240,5 +241,7 @@ Page({
       detailItem: {},
       detailHtml: ''
     });
+    // 重新过滤列表（刚标记已读的记录应从"未读"标签中消失）
+    this.filterNotices();
   }
 });

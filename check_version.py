@@ -1,0 +1,12 @@
+import paramiko, io, sys
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+c = paramiko.SSHClient()
+c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+c.connect('154.37.221.232', username='root', password='GAsYrIBjX8vWMCw6', timeout=15)
+si, so, se = c.exec_command('cd /www/wwwroot/campus-wall && git log --oneline -1', timeout=10)
+print('Git:', so.read().decode('utf-8', errors='replace').strip())
+si, so, se = c.exec_command("grep -c 'targetUserId' /www/wwwroot/campus-wall/server.js", timeout=10)
+print('targetUserId count:', so.read().decode('utf-8', errors='replace').strip())
+si, so, se = c.exec_command("grep -c 'api/user/notifications' /www/wwwroot/campus-wall/server.js", timeout=10)
+print('user/notifications:', so.read().decode('utf-8', errors='replace').strip())
+c.close()
