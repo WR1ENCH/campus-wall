@@ -4679,6 +4679,46 @@ app.post('/api/student-council/login', (req, res) => {
   return res.json({ ok: false, msg: '账号或密码错误' });
 });
 
+// ===== 管理员管理学生会账号 =====
+
+// 获取学生会账号信息（仅管理员）
+app.get('/api/admin/student-council', requireAdmin, (req, res) => {
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
+  res.json({
+    ok: true,
+    data: {
+      id: sc.id,
+      name: sc.name,
+      createdAt: sc.createdAt
+    }
+  });
+});
+
+// 重置学生会密码（仅管理员）
+app.post('/api/admin/student-council/reset-pwd', requireAdmin, (req, res) => {
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    return res.json({ ok: false, msg: '密码至少 6 位' });
+  }
+  sc.password = hashPassword(newPassword);
+  writeSC(sc);
+  res.json({ ok: true, msg: '学生会密码已重置' });
+});
+
+// 修改学生会名称（仅管理员）
+app.post('/api/admin/student-council/change-name', requireAdmin, (req, res) => {
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.json({ ok: false, msg: '请输入名称' });
+  sc.name = name.trim();
+  writeSC(sc);
+  res.json({ ok: true, msg: '学生会名称已修改', data: { name: sc.name } });
+});
+
 // 修改密码
 app.post('/api/student-council/change-pwd', (req, res) => {
   const token = req.headers['x-sc-token'];
@@ -5127,18 +5167,32 @@ app.post('/api/admin/notice-passkey', requireAdmin, (req, res) => {
 });
 
 // ===== 通知发布者管理（仅管理员） =====
-// 获取所有通知发布者
+// 获取所有通知发布者（含更多统计信息）
 app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
   const users = readUsers();
+  const notices = readNotices();
   const publishers = users
     .filter(u => u.noticePublisher)
-    .map(u => ({
-      id: u.id,
-      nickname: u.nickname,
-      avatar: u.avatar,
-      createdAt: u.noticePublisherAddedAt || u.createdAt || '',
-      appsCount: (readApps().filter(a => a.userId === u.id && a.status === 'approved').length)
-    }));
+    .map(u => {
+      // 统计该发布者的通知数（按 author 昵称匹配）
+      const userNotices = notices.filter(n =>
+        !n.deleted && !n.auto && !n.targetUserId &&
+        (n.author === u.nickname || n.author === u.username)
+      );
+      const lastNotice = userNotices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      return {
+        id: u.id,
+        username: u.username,
+        nickname: u.nickname,
+        avatar: u.avatar,
+        status: u.status || 'active',
+        createdAt: u.noticePublisherAddedAt || u.createdAt || '',
+        appsCount: (readApps().filter(a => a.userId === u.id && a.status === 'approved').length),
+        noticeCount: userNotices.length,
+        lastNoticeAt: lastNotice ? lastNotice.createdAt : null,
+        lastNoticeTitle: lastNotice ? lastNotice.title : null
+      };
+    });
   res.json({ ok: true, data: publishers });
 });
 
@@ -5169,6 +5223,28 @@ app.post('/api/admin/notice-publishers/remove', requireAdmin, (req, res) => {
   user.noticePublisher = false;
   writeUsers(users);
   res.json({ ok: true, msg: '已移除发布权限' });
+});
+
+// ===== 通知账号概览统计 =====
+app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const notices = readNotices();
+  const apps = readApps();
+
+  const publishers = users.filter(u => u.noticePublisher);
+  const activePublishers = publishers.filter(u => u.status !== 'banned');
+  const totalNotices = notices.filter(n => !n.deleted && !n.auto && !n.targetUserId).length;
+  const pendingApps = apps.filter(a => a.status === 'pending').length;
+
+  res.json({
+    ok: true,
+    data: {
+      totalPublishers: publishers.length,
+      activePublishers: activePublishers.length,
+      totalNotices,
+      pendingApps
+    }
+  });
 });
 
 app.listen(PORT, () => {

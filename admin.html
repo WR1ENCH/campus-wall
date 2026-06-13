@@ -743,13 +743,9 @@
     <!-- 通知管理 -->
     <div class="nav-section">
       <div class="nav-label">通知管理</div>
-      <div class="nav-item" onclick="showPage('noticeApps', this)">
-        <span class="nav-icon">📨</span>
-        <span>通知账号申请</span>
-      </div>
-      <div class="nav-item" onclick="showPage('noticePublishers', this)">
+      <div class="nav-item" onclick="showPage('noticeAccounts', this)">
         <span class="nav-icon">📢</span>
-        <span>通知发布者</span>
+        <span>通知账号管理</span>
       </div>
     </div>
 
@@ -980,19 +976,49 @@
       </div>
     </div>
 
-    <!-- 通知账号申请审核 -->
-    <div class="page" id="page-noticeApps" style="display:none;">
-      <div class="post-toolbar">
-        <div style="flex:1;">
-          <span style="font-size:14px;color:var(--text-sub);">
-            待审核 <strong id="noticeAppCount">0</strong> 条
-          </span>
+    <!-- 通知账号管理（统一页面） -->
+    <div class="page" id="page-noticeAccounts" style="display:none;">
+      <!-- 概览统计卡片 -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;" id="noticeAccountStats">
+        <div class="stat-card" style="text-align:center;padding:16px 10px;">
+          <div style="font-size:26px;font-weight:700;" id="statTotalPublishers">-</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">📢 发布者总数</div>
         </div>
-        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadNoticeApps()">🔄 刷新</button>
+        <div class="stat-card" style="text-align:center;padding:16px 10px;">
+          <div style="font-size:26px;font-weight:700;color:var(--success);" id="statActivePublishers">-</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">✅ 活跃发布者</div>
+        </div>
+        <div class="stat-card" style="text-align:center;padding:16px 10px;">
+          <div style="font-size:26px;font-weight:700;color:var(--primary);" id="statTotalNotices">-</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">📰 通知总数</div>
+        </div>
+        <div class="stat-card" style="text-align:center;padding:16px 10px;">
+          <div style="font-size:26px;font-weight:700;color:var(--warning);" id="statPendingApps">-</div>
+          <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">⏳ 待审核申请</div>
+        </div>
       </div>
 
-      <!-- Pass-Key 管理卡片 -->
-      <div style="background:var(--card-bg);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);">
+      <!-- 工具条 -->
+      <div class="post-toolbar">
+        <div style="display:flex;gap:10px;align-items:center;flex:1;flex-wrap:wrap;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            共 <strong id="publisherCount">0</strong> 位发布者
+          </span>
+          <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadNoticeAccounts()">🔄 刷新</button>
+          <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="showPage('noticeAccounts');loadNoticePasskey()">🔑 通行码</button>
+          <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="showNoticeAppsList()">📨 申请列表</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="publisherSearchInput" class="toolbar-search" placeholder="搜索用户昵称…" style="min-width:160px;" onkeydown="if(event.key==='Enter')searchPublisherUser()">
+          <button class="btn-primary" style="padding:7px 14px;font-size:13px;" onclick="searchPublisherUser()">🔍 添加</button>
+        </div>
+      </div>
+
+      <!-- 搜索结果 -->
+      <div id="publisherSearchResults" style="margin-bottom:10px;display:none;"></div>
+
+      <!-- 通行码卡片（可折叠） -->
+      <div id="passkeyCard" style="background:var(--card-bg);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
           <div>
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">🔑 通行码管理</div>
@@ -1004,44 +1030,28 @@
           <div style="display:flex;gap:8px;flex-shrink:0;">
             <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="generatePasskey()">🔄 生成新码</button>
             <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="clearPasskey()">⏹️ 暂停申请</button>
+            <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="document.getElementById('passkeyCard').style.display='none'">✕ 关闭</button>
           </div>
         </div>
       </div>
 
-      <div class="admins-table" style="margin-top:4px;">
-        <div class="table-header">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span>通知发布账号申请</span>
+      <!-- 申请列表（可折叠） -->
+      <div id="appsListCard" style="background:var(--card-bg);border-radius:var(--radius);margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);">
+          <span style="font-size:14px;font-weight:600;">📨 通知账号申请</span>
+          <div style="display:flex;gap:8px;">
+            <span style="font-size:12px;color:var(--text-sub);">待审核 <strong id="noticeAppCount">0</strong> 条</span>
+            <button class="btn-cancel" style="font-size:11px;padding:3px 8px;" onclick="loadNoticeAppsList()">🔄 刷新</button>
+            <button class="btn-cancel" style="font-size:11px;padding:3px 8px;" onclick="document.getElementById('appsListCard').style.display='none'">✕ 关闭</button>
           </div>
         </div>
-        <div id="noticeAppsBody">
-          <div class="loading"><div class="spinner"></div>加载中…</div>
+        <div id="noticeAppsBody" style="max-height:400px;overflow-y:auto;">
+          <div class="loading" style="padding:20px;"><div class="spinner"></div>加载中…</div>
         </div>
       </div>
-    </div>
 
-    <!-- 通知发布者管理 -->
-    <div class="page" id="page-noticePublishers" style="display:none;">
-      <div class="post-toolbar">
-        <div style="flex:1;">
-          <span style="font-size:14px;color:var(--text-sub);">
-            共 <strong id="publisherCount">0</strong> 位发布者
-          </span>
-        </div>
-        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPublishers()">🔄 刷新</button>
-      </div>
-
-      <!-- 添加发布者 -->
-      <div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);">
-        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">➕ 添加通知发布者</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="text" id="publisherSearchInput" class="toolbar-search" placeholder="搜索用户昵称或账号…" style="flex:1;min-width:180px;" onkeydown="if(event.key==='Enter')searchPublisherUser()">
-          <button class="btn-primary" style="padding:7px 14px;font-size:13px;" onclick="searchPublisherUser()">🔍 搜索</button>
-        </div>
-        <div id="publisherSearchResults" style="margin-top:8px;display:none;"></div>
-      </div>
-
-      <div class="admins-table" style="margin-top:4px;">
+      <!-- 发布者列表 -->
+      <div class="admins-table">
         <div class="table-header">
           <span>通知发布者列表（使用校园墙账号登录通知页面）</span>
         </div>
@@ -1049,6 +1059,41 @@
           <div class="loading"><div class="spinner"></div>加载中…</div>
         </div>
       </div>
+    </div>
+
+    <!-- 学生会账号管理卡片 -->
+    <div class="admins-table" style="margin-top:16px;">
+      <div class="table-header" style="grid-template-columns:1fr auto;">
+        <span>🏛️ 学生会账号管理</span>
+        <span style="font-size:12px;color:var(--text-sub);">用于登录 <code>notice.html</code> 发布通知</span>
+      </div>
+      <div id="scAccountBody" style="padding:16px;">
+        <div class="loading"><div class="spinner"></div>加载中…</div>
+      </div>
+    </div>
+
+    <!-- 学生会密码重置弹窗 -->
+    <div class="modal-overlay" id="scResetPwdModal" onclick="if(event.target===this)closeScResetPwdModal()">
+      <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+          <h3>🔑 重置学生会密码</h3>
+          <button class="modal-close" onclick="closeScResetPwdModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-field">
+            <label class="form-label" for="scNewPwdInput">新密码 <span style="color:var(--danger);">*</span></label>
+            <input type="text" id="scNewPwdInput" class="form-input" placeholder="至少 6 位" maxlength="30">
+            <div class="form-hint">重置后请通知学生会使用新密码登录</div>
+          </div>
+          <div id="scResetPwdError" style="color:var(--danger);font-size:13px;min-height:20px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="closeScResetPwdModal()">取消</button>
+          <button class="btn-primary" id="scResetPwdBtn" onclick="submitScResetPwd()">确认重置</button>
+        </div>
+      </div>
+    </div>
+
     </div>
 
     <!-- 同学认证审核页 -->
@@ -3463,8 +3508,7 @@
     if (id === 'creditcards') { loadCards(); }
     if (id === 'creditadmin') { loadCreditOverview(); }
     if (id === 'deleted') { loadDeletedContent(); }
-    if (id === 'noticeApps') { loadNoticeApps(); }
-    if (id === 'noticePublishers') { loadPublishers(); }
+    if (id === 'noticeAccounts') { loadNoticeAccounts(); }
   }
 
   function refreshCurrent() {
@@ -4788,75 +4832,230 @@
     body.innerHTML = html;
   }
 
-  // ===== 通知账号申请管理 =====
+  // ===== 通知账号管理（统一管理） =====
   var _pendingApproveId = null;
 
-  async function loadNoticeApps() {
-    var body = document.getElementById('noticeAppsBody');
+  async function loadNoticeAccounts() {
+    // 加载概览统计
+    loadNoticeAccountStats();
+    // 加载发布者列表
+    loadPublishers();
+  }
+
+  // 加载概览统计
+  async function loadNoticeAccountStats() {
+    try {
+      var res = await fetch('/api/admin/notice-account-stats', { headers: authHeaders() });
+      var json = await res.json();
+      if (json.ok && json.data) {
+        document.getElementById('statTotalPublishers').textContent = json.data.totalPublishers;
+        document.getElementById('statActivePublishers').textContent = json.data.activePublishers;
+        document.getElementById('statTotalNotices').textContent = json.data.totalNotices;
+        document.getElementById('statPendingApps').textContent = json.data.pendingApps;
+      }
+    } catch(e) {}
+  }
+
+  // 加载通行码信息
+  async function loadNoticePasskey() {
+    document.getElementById('passkeyCard').style.display = '';
+    try {
+      var pkRes = await fetch('/api/admin/notice-passkey', { headers: authHeaders() });
+      var pkJson = await pkRes.json();
+      if (pkJson.ok && pkJson.data) {
+        var el = document.getElementById('currentPasskey');
+        if (el) {
+          el.textContent = pkJson.data.hasKey ? pkJson.data.key : '-';
+          el.style.color = pkJson.data.hasKey ? 'var(--text)' : 'var(--text-sub)';
+        }
+        var ctEl = document.getElementById('passkeyCreatedAt');
+        if (ctEl) {
+          ctEl.textContent = pkJson.data.createdAt ? '生成于 ' + new Date(pkJson.data.createdAt).toLocaleString('zh-CN') : '';
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 加载发布者列表
+  async function loadPublishers() {
+    var body = document.getElementById('publishersBody');
     body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
     try {
-      // 加载通行码信息
-      try {
-        var pkRes = await fetch('/api/admin/notice-passkey', { headers: authHeaders() });
-        var pkJson = await pkRes.json();
-        if (pkJson.ok && pkJson.data) {
-          var el = document.getElementById('currentPasskey');
-          if (el) {
-            el.textContent = pkJson.data.hasKey ? pkJson.data.key : '-';
-            el.style.color = pkJson.data.hasKey ? 'var(--text)' : 'var(--text-sub)';
-          }
-          var ctEl = document.getElementById('passkeyCreatedAt');
-          if (ctEl) {
-            ctEl.textContent = pkJson.data.createdAt ? '生成于 ' + new Date(pkJson.data.createdAt).toLocaleString('zh-CN') : '';
-          }
-        }
-      } catch(e) {}
-
-      var res = await fetch('/api/admin/notice-applications', { headers: authHeaders() });
+      var res = await fetch('/api/admin/notice-publishers', { headers: authHeaders() });
       var json = await res.json();
       if (!json.ok) { body.innerHTML = '<div class="error">' + (json.msg || '加载失败') + '</div>'; return; }
+      var data = json.data || [];
+      document.getElementById('publisherCount').textContent = data.length;
+      if (data.length === 0) {
+        body.innerHTML = '<div class="empty">暂无通知发布者，在上方搜索用户并添加</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(u) {
+        var avatarHtml = u.avatar && u.avatar.startsWith('data:') ? avatarImg(u.avatar, 36, 36) : (u.nickname?.charAt(0) || '👤');
+        var addedAt = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '-';
+        var statusBadge = u.status === 'banned'
+          ? '<span style="color:#dc2626;font-size:11px;font-weight:600;">🔴 已封禁</span>'
+          : '<span style="color:#16a34a;font-size:11px;font-weight:600;">🟢 正常</span>';
+        var lastNoticeStr = u.lastNoticeAt
+          ? '<span style="font-size:11px;color:var(--text-sub);">最后发布：' + new Date(u.lastNoticeAt).toLocaleString('zh-CN') + '</span>'
+          : '<span style="font-size:11px;color:var(--text-sub);">暂未发布通知</span>';
+        html += '<div class="user-card" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">' +
+          '<div class="user-avatar" style="width:36px;height:36px;font-size:16px;overflow:hidden;">' + avatarHtml + '</div>' +
+          '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:14px;">' + escHtml(u.nickname || '未知') +
+          ' <span style="font-size:11px;color:var(--text-sub);font-weight:400;">@' + escHtml(u.username || '') + '</span>' +
+          ' ' + statusBadge +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text-sub);display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;">' +
+          '📅 ' + addedAt +
+          ' · 📰 已发布 <strong>' + (u.noticeCount || 0) + '</strong> 条' +
+          ' · ' + lastNoticeStr +
+          '</div></div>' +
+          '<button class="btn-danger" style="font-size:12px;padding:6px 12px;" onclick="removePublisher(\'' + u.id + '\', \'' + (u.nickname || '').replace(/'/g, "\\'") + '\')">移除权限</button></div>';
+      });
+      body.innerHTML = html;
+    } catch(e) {
+      body.innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+    }
+  }
+
+  async function removePublisher(userId, nickname) {
+    if (!confirm('确定移除「' + nickname + '」的通知发布权限吗？')) return;
+    try {
+      var res = await fetch('/api/admin/notice-publishers/remove', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadNoticeAccounts();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  // 搜索用户并添加为通知发布者
+  async function searchPublisherUser() {
+    var kw = document.getElementById('publisherSearchInput').value.trim();
+    var resultsDiv = document.getElementById('publisherSearchResults');
+    if (!kw) { resultsDiv.style.display = 'none'; return; }
+    resultsDiv.style.display = '';
+    resultsDiv.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-sub);font-size:13px;">搜索中…</div>';
+    try {
+      var res = await fetch('/api/admin/users', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) { resultsDiv.innerHTML = '<div style="color:var(--danger);">加载失败</div>'; return; }
+      var users = json.data || [];
+      var kwLower = kw.toLowerCase();
+      var matched = users.filter(function(u) {
+        return (u.nickname && u.nickname.toLowerCase().indexOf(kwLower) >= 0) ||
+               (u.username && u.username.toLowerCase().indexOf(kwLower) >= 0);
+      });
+      if (matched.length === 0) {
+        resultsDiv.innerHTML = '<div style="padding:10px;color:var(--text-sub);font-size:13px;">未找到匹配的用户</div>';
+        return;
+      }
+      var html = '<div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--card-bg);">';
+      matched.forEach(function(u) {
+        var already = u.noticePublisher ? true : false;
+        var statusBadge = u.status === 'banned' ? '<span style="color:#dc2626;font-size:11px;">🔴</span>' : '';
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);">' +
+          '<span style="font-size:16px;">👤</span>' +
+          '<div style="flex:1;font-size:13px;">' +
+          '<span style="font-weight:600;">' + escHtml(u.nickname || '未知') + '</span>' +
+          ' <span style="color:var(--text-sub);">@' + escHtml(u.username || '') + '</span>' +
+          ' ' + statusBadge +
+          (already ? '<span style="color:var(--success);margin-left:6px;font-size:11px;">✅ 已是发布者</span>' : '') +
+          '</div>' +
+          (already ? '' : '<button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="addPublisher(\'' + u.id + '\',\'' + (u.nickname || '').replace(/'/g, '\\\'') + '\')">授予权限</button>') +
+          '</div>';
+      });
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    } catch(e) {
+      resultsDiv.innerHTML = '<div style="color:var(--danger);font-size:13px;">搜索失败</div>';
+    }
+  }
+
+  async function addPublisher(userId, nickname) {
+    if (!confirm('确定授予「' + nickname + '」通知发布权限吗？')) return;
+    try {
+      var res = await fetch('/api/admin/notice-publishers/add', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        document.getElementById('publisherSearchInput').value = '';
+        document.getElementById('publisherSearchResults').style.display = 'none';
+        loadNoticeAccounts();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  // 显示申请列表（可折叠）
+  async function showNoticeAppsList() {
+    document.getElementById('appsListCard').style.display = '';
+    loadNoticeAppsList();
+  }
+
+  async function loadNoticeAppsList() {
+    var body = document.getElementById('noticeAppsBody');
+    body.innerHTML = '<div class="loading" style="padding:20px;"><div class="spinner"></div>加载中…</div>';
+    try {
+      var res = await fetch('/api/admin/notice-applications', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) { body.innerHTML = '<div class="error" style="padding:20px;">' + (json.msg || '加载失败') + '</div>'; return; }
       var data = json.data || [];
       var pending = data.filter(function(a) { return a.status === 'pending'; });
       document.getElementById('noticeAppCount').textContent = pending.length;
       if (data.length === 0) {
-        body.innerHTML = '<div class="empty">暂无申请</div>';
+        body.innerHTML = '<div class="empty" style="padding:30px;">暂无申请记录</div>';
         return;
       }
       var html = '';
       data.forEach(function(a) {
         var time = a.createdAt ? new Date(a.createdAt).toLocaleString('zh-CN') : '-';
         var statusHtml = a.status === 'pending'
-          ? '<span style=\"color:#d97706;font-weight:600;\">⏳ 待审核</span>'
+          ? '<span style="color:#d97706;font-weight:600;">⏳ 待审核</span>'
           : a.status === 'approved'
-            ? '<span style=\"color:#16a34a;font-weight:600;\">✅ 已通过</span>'
-            : '<span style=\"color:#dc2626;font-weight:600;\">❌ 已拒绝</span>';
+            ? '<span style="color:#16a34a;font-weight:600;">✅ 已通过</span>'
+            : '<span style="color:#dc2626;font-weight:600;">❌ 已拒绝</span>';
         var reviewTime = a.reviewedAt ? new Date(a.reviewedAt).toLocaleString('zh-CN') : '';
-        html += '<div class="user-card" style=\"padding:16px;border-bottom:1px solid var(--border);\">' +
-          '<div style=\"display:flex;justify-content:space-between;align-items:flex-start;gap:10px;\">' +
-          '<div style=\"flex:1;\">' +
-          '<div style=\"font-weight:600;font-size:14px;margin-bottom:2px;\">👤 ' + escHtml(a.name || '') + '</div>' +
-          (a.userNickname ? '<div style=\"font-size:11px;color:var(--text-sub);margin-bottom:4px;\">🏷️ 校园墙用户：' + escHtml(a.userNickname) + '</div>' : '') +
-          '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:6px;\">' +
+        html += '<div class="user-card" style="padding:14px 16px;border-bottom:1px solid var(--border);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
+          '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:14px;margin-bottom:2px;">👤 ' + escHtml(a.name || '') + '</div>' +
+          (a.userNickname ? '<div style="font-size:11px;color:var(--text-sub);margin-bottom:4px;">🏷️ 校园墙用户：' + escHtml(a.userNickname) + '</div>' : '') +
+          '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">' +
           '📂 ' + escHtml(a.department || '') + ' · 📞 ' + escHtml(a.contact || '') +
           '</div>' +
-          '<div style=\"font-size:13px;color:var(--text-sub);margin-bottom:6px;padding:8px;background:var(--bg-main);border-radius:8px;\">' +
+          '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;padding:6px 8px;background:var(--bg-main);border-radius:6px;">' +
           '💬 ' + escHtml(a.reason || '') +
           '</div>' +
-          '<div style=\"font-size:12px;color:var(--text-sub);\">' +
+          '<div style="font-size:11px;color:var(--text-sub);">' +
           '📅 ' + time + ' · ' + statusHtml +
-          (a.reviewedAt ? ' · 审核时间：' + reviewTime : '') +
+          (a.reviewedAt ? ' · 审核：' + reviewTime : '') +
           (a.accountId ? ' · 账号：<code>' + escHtml(a.accountId) + '</code>' : '') +
           '</div></div>' +
           (a.status === 'pending'
-            ? '<div style=\"display:flex;gap:6px;flex-shrink:0;\">' +
-              '<button class=\"btn-primary\" style=\"font-size:12px;padding:6px 12px;\" onclick=\"openApproveAppModal(\'' + a.id + '\')\">✅ 通过</button>' +
-              '<button class=\"btn-danger\" style=\"font-size:12px;padding:6px 12px;\" onclick=\"rejectApp(\'' + a.id + '\')\">❌ 拒绝</button></div>'
+            ? '<div style="display:flex;gap:6px;flex-shrink:0;align-items:flex-start;">' +
+              '<button class="btn-primary" style="font-size:11px;padding:5px 10px;" onclick="openApproveAppModal(\'' + a.id + '\')">✅ 通过</button>' +
+              '<button class="btn-danger" style="font-size:11px;padding:5px 10px;" onclick="rejectApp(\'' + a.id + '\')">❌ 拒绝</button></div>'
             : '') +
           '</div></div>';
       });
       body.innerHTML = html;
     } catch(e) {
-      body.innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+      body.innerHTML = '<div class="error" style="padding:20px;">加载失败：' + e.message + '</div>';
     }
   }
 
@@ -4886,7 +5085,8 @@
       if (json.ok) {
         closeApproveAppModal();
         showToast('✅ ' + json.msg, 'success');
-        loadNoticeApps();
+        loadNoticeAppsList();
+        loadNoticeAccounts();
       } else {
         alert('操作失败：' + (json.msg || '未知错误'));
       }
@@ -4906,118 +5106,8 @@
       var json = await res.json();
       if (json.ok) {
         showToast('✅ ' + json.msg, 'success');
-        loadNoticeApps();
-      } else {
-        showToast('❌ ' + (json.msg || '操作失败'), 'error');
-      }
-    } catch(e) { showToast('❌ 网络错误', 'error'); }
-  }
-
-  // ===== 通知发布者管理 =====
-  async function loadPublishers() {
-    var body = document.getElementById('publishersBody');
-    body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
-    try {
-      var res = await fetch('/api/admin/notice-publishers', { headers: authHeaders() });
-      var json = await res.json();
-      if (!json.ok) { body.innerHTML = '<div class="error">' + (json.msg || '加载失败') + '</div>'; return; }
-      var data = json.data || [];
-      document.getElementById('publisherCount').textContent = data.length;
-      if (data.length === 0) {
-        body.innerHTML = '<div class="empty">暂无通知发布者</div>';
-        return;
-      }
-      var html = '';
-      data.forEach(function(u) {
-        var avatarHtml = u.avatar && u.avatar.startsWith('data:') ? avatarImg(u.avatar, 36, 36) : (u.nickname?.charAt(0) || '👤');
-        var addedAt = u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '-';
-        html += '<div class="user-card" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">' +
-          '<div class="user-avatar" style="width:36px;height:36px;font-size:16px;overflow:hidden;">' + avatarHtml + '</div>' +
-          '<div style="flex:1;">' +
-          '<div style="font-weight:600;font-size:14px;">' + escHtml(u.nickname || '未知') + '</div>' +
-          '<div style="font-size:12px;color:var(--text-sub);">授予时间：' + addedAt + ' · 已发布 ' + (u.appsCount || 0) + ' 条</div></div>' +
-          '<button class="btn-danger" style="font-size:12px;padding:6px 12px;" onclick="removePublisher(\'' + u.id + '\', \'' + (u.nickname || '').replace(/'/g, "\\'") + '\')">移除权限</button></div>';
-      });
-      body.innerHTML = html;
-    } catch(e) {
-      body.innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
-    }
-  }
-
-  async function removePublisher(userId, nickname) {
-    if (!confirm('确定移除「' + nickname + '」的通知发布权限吗？')) return;
-    try {
-      var res = await fetch('/api/admin/notice-publishers/remove', {
-        method: 'POST',
-        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      });
-      var json = await res.json();
-      if (json.ok) {
-        showToast('✅ ' + json.msg, 'success');
-        loadPublishers();
-      } else {
-        showToast('❌ ' + (json.msg || '操作失败'), 'error');
-      }
-    } catch(e) { showToast('❌ 网络错误', 'error'); }
-  }
-
-  // 搜索用户并添加为通知发布者
-  async function searchPublisherUser() {
-    var kw = document.getElementById('publisherSearchInput').value.trim();
-    var resultsDiv = document.getElementById('publisherSearchResults');
-    if (!kw) { resultsDiv.style.display = 'none'; return; }
-    resultsDiv.style.display = '';
-    resultsDiv.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-sub);font-size:13px;">搜索中…</div>';
-    try {
-      // 获取所有用户
-      var res = await fetch('/api/admin/users', { headers: authHeaders() });
-      var json = await res.json();
-      if (!json.ok) { resultsDiv.innerHTML = '<div style="color:var(--danger);">加载失败</div>'; return; }
-      var users = json.data || [];
-      var kwLower = kw.toLowerCase();
-      var matched = users.filter(function(u) {
-        return (u.nickname && u.nickname.toLowerCase().indexOf(kwLower) >= 0) ||
-               (u.username && u.username.toLowerCase().indexOf(kwLower) >= 0);
-      });
-      if (matched.length === 0) {
-        resultsDiv.innerHTML = '<div style="padding:10px;color:var(--text-sub);font-size:13px;">未找到匹配的用户</div>';
-        return;
-      }
-      var html = '<div style="max-height:200px;overflow-y:auto;">';
-      matched.forEach(function(u) {
-        var already = u.noticePublisher ? true : false;
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border);">' +
-          '<span style="font-size:16px;">👤</span>' +
-          '<div style="flex:1;font-size:13px;">' +
-          '<span style="font-weight:600;">' + escHtml(u.nickname || '未知') + '</span>' +
-          '<span style="color:var(--text-sub);margin-left:6px;">@' + escHtml(u.username || '') + '</span>' +
-          (already ? '<span style="color:var(--success);margin-left:6px;font-size:11px;">✅ 已是发布者</span>' : '') +
-          '</div>' +
-          (already ? '' : '<button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="addPublisher(\'' + u.id + '\',\'' + (u.nickname || '').replace(/'/g, '\\\'') + '\')">授予权限</button>') +
-          '</div>';
-      });
-      html += '</div>';
-      resultsDiv.innerHTML = html;
-    } catch(e) {
-      resultsDiv.innerHTML = '<div style="color:var(--danger);font-size:13px;">搜索失败</div>';
-    }
-  }
-
-  async function addPublisher(userId, nickname) {
-    if (!confirm('确定授予「' + nickname + '」通知发布权限吗？')) return;
-    try {
-      var res = await fetch('/api/admin/notice-publishers/add', {
-        method: 'POST',
-        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      });
-      var json = await res.json();
-      if (json.ok) {
-        showToast('✅ ' + json.msg, 'success');
-        document.getElementById('publisherSearchInput').value = '';
-        document.getElementById('publisherSearchResults').style.display = 'none';
-        loadPublishers();
+        loadNoticeAppsList();
+        loadNoticeAccounts();
       } else {
         showToast('❌ ' + (json.msg || '操作失败'), 'error');
       }
@@ -5037,7 +5127,8 @@
       var json = await res.json();
       if (json.ok) {
         showToast('✅ 新通行码：' + json.data.key, 'success');
-        loadNoticeApps();
+        loadNoticePasskey();
+        loadNoticeAccounts();
       } else {
         showToast('❌ ' + (json.msg || '操作失败'), 'error');
       }
@@ -5055,11 +5146,112 @@
       var json = await res.json();
       if (json.ok) {
         showToast('✅ ' + json.msg, 'success');
-        loadNoticeApps();
+        loadNoticePasskey();
+        loadNoticeAccounts();
       } else {
         showToast('❌ ' + (json.msg || '操作失败'), 'error');
       }
     } catch(e) { showToast('❌ 网络错误', 'error'); }
+  };
+
+  // ===== 学生会账号管理 =====
+  // 加载学生会账号信息
+  async function loadSCAccount() {
+    var body = document.getElementById('scAccountBody');
+    if (!body) return;
+    body.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+    try {
+      var res = await fetch('/api/admin/student-council', { headers: authHeaders() });
+      var json = await res.json();
+      if (!json.ok) {
+        body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);">' +
+          '<div style="font-size:28px;margin-bottom:8px;">🏛️</div>' +
+          '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;">学生会账号未初始化</div>' +
+          '<div style="font-size:12px;">请通过 <code>notice.html</code> 页面创建学生会账号</div></div>';
+        return;
+      }
+      var sc = json.data;
+      var createdTime = sc.createdAt ? new Date(sc.createdAt).toLocaleString('zh-CN') : '-';
+      body.innerHTML =
+        '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+          '<div style="font-size:36px;flex-shrink:0;">🏛️</div>' +
+          '<div style="flex:1;min-width:180px;">' +
+            '<div style="font-weight:600;font-size:16px;">' + escHtml(sc.name) + '</div>' +
+            '<div style="font-size:13px;color:var(--text-sub);margin-top:2px;">' +
+              '账号：' + escHtml(sc.id) +
+              ' · 创建时间：' + createdTime +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-shrink:0;">' +
+            '<button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="openScResetPwdModal()">🔑 重置密码</button>' +
+            '<button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="openScChangeName()">✏️ 修改名称</button>' +
+          '</div>' +
+        '</div>';
+    } catch(e) {
+      body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-sub);font-size:13px;">加载失败</div>';
+    }
+  }
+
+  // 打开重置密码弹窗
+  function openScResetPwdModal() {
+    document.getElementById('scNewPwdInput').value = '';
+    document.getElementById('scResetPwdError').textContent = '';
+    document.getElementById('scResetPwdModal').classList.add('show');
+    document.getElementById('scNewPwdInput').focus();
+  }
+
+  function closeScResetPwdModal() {
+    document.getElementById('scResetPwdModal').classList.remove('show');
+  }
+
+  async function submitScResetPwd() {
+    var pwd = document.getElementById('scNewPwdInput').value.trim();
+    var errEl = document.getElementById('scResetPwdError');
+    var btn = document.getElementById('scResetPwdBtn');
+    if (!pwd || pwd.length < 6) { errEl.textContent = '密码至少 6 位'; return; }
+    btn.disabled = true; btn.textContent = '重置中…';
+    try {
+      var res = await fetch('/api/admin/student-council/reset-pwd', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: pwd })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        closeScResetPwdModal();
+        showToast('✅ ' + json.msg, 'success');
+      } else {
+        errEl.textContent = json.msg || '操作失败';
+      }
+    } catch(e) { errEl.textContent = '网络错误'; }
+    finally { btn.disabled = false; btn.textContent = '确认重置'; }
+  }
+
+  // 修改名称（prompt 方式）
+  async function openScChangeName() {
+    var newName = prompt('请输入新的学生会名称：');
+    if (!newName || !newName.trim()) return;
+    try {
+      var res = await fetch('/api/admin/student-council/change-name', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        loadSCAccount();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) { showToast('❌ 网络错误', 'error'); }
+  }
+
+  // 在加载发布者列表时同时加载学生会账号
+  var _origLoadNoticeAccounts = loadNoticeAccounts;
+  loadNoticeAccounts = function() {
+    _origLoadNoticeAccounts();
+    loadSCAccount();
   };
 
   // ===== 启动 =====
