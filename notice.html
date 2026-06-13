@@ -236,6 +236,7 @@ body {
   width: min(92vw, 520px); max-height: 90vh;
   box-shadow: 0 8px 40px rgba(0,0,0,0.15);
   animation: modalIn 0.3s ease;
+  display: flex; flex-direction: column;
   overflow: hidden;
 }
 
@@ -244,22 +245,31 @@ body {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .modal-header h3 { font-size: 17px; font-weight: 600; }
 .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-sub); padding: 0; line-height: 1; }
 .modal-close:hover { color: var(--text); }
-.modal-body { padding: 20px 24px; }
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; min-height: 0; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 .form-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
 .form-input:focus { border-color: var(--accent); }
 .form-textarea { min-height: 120px; resize: vertical; }
 .form-error { color: #dc2626; font-size: 13px; margin-top: 4px; }
-.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
 .btn-cancel { padding: 9px 18px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-sub); font-size: 14px; cursor: pointer; font-family: inherit; }
 .btn-submit { padding: 9px 20px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-submit:hover { background: var(--accent-light); }
 .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 移动端：发布/取消按钮全宽，更易点击 */
+@media (max-width: 600px) {
+  .form-actions { padding: 12px 16px; gap: 8px; }
+  .form-actions .btn-cancel,
+  .form-actions .btn-submit { flex: 1; text-align: center; padding: 11px 10px; font-size: 15px; }
+  .modal-header { padding: 14px 16px; }
+  .modal-header h3 { font-size: 16px; }
+  .modal-body { padding: 16px; }
+}
 
 /* ===== Toast ===== */
 .toast {
@@ -425,10 +435,10 @@ body {
         </div>
       </div>
       <div class="form-error" id="publishError"></div>
-      <div class="form-actions">
-        <button class="btn-cancel" onclick="closePublishModal()">取消</button>
-        <button class="btn-submit" id="publishBtn" onclick="doPublish()">&#x1F4E2; 发布</button>
-      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closePublishModal()">取消</button>
+      <button class="btn-submit" id="publishBtn" onclick="doPublish()">&#x1F4E2; 发布</button>
     </div>
   </div>
 </div>
