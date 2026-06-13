@@ -3510,7 +3510,7 @@
                onclick="openNoteDetail('${post.id}')">
             ${pinHtml}
             <div class="note-type">${cfg.emoji} ${post.type}</div>
-            <div class="note-content">${post.content}</div>
+            <div class="note-content">${renderPostContent(post)}</div>
             <div class="note-footer" onclick="event.stopPropagation()">
               <div class="note-author">
                 ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
@@ -5237,6 +5237,18 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
     }
 
+    // 渲染帖子内容，将 #话题 转为可点击链接
+    function renderPostContent(post) {
+      var content = post.content || '';
+      if (post.discussionId && content.startsWith('#')) {
+        var spaceIdx = content.indexOf(' ');
+        var topicPart = spaceIdx > 0 ? content.substring(0, spaceIdx) : content;
+        var restPart = spaceIdx > 0 ? content.substring(spaceIdx) : '';
+        return '<span style="cursor:pointer;color:#2563eb;text-decoration:underline;" onclick="event.stopPropagation();openDiscussionTopic(\'' + post.discussionId + '\')">' + escHtml(topicPart) + '</span>' + escHtml(restPart);
+      }
+      return escHtml(content);
+    }
+
     function formatQATime(iso) {
       if (!iso) return '';
       const d = new Date(iso);
@@ -5591,6 +5603,14 @@
       overlay.style.display = 'flex';
       showDiscussionTopics();
       loadDiscussions();
+    }
+
+    // 从校园墙帖子点击 #话题 打开对应讨论
+    function openDiscussionTopic(id) {
+      openDiscussionModal();
+      setTimeout(function() {
+        showDiscussion(id);
+      }, 300);
     }
 
     function closeDiscussionModal() {

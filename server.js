@@ -2900,6 +2900,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       type: '日常',
       content: wallContent,
+      discussionId: req.params.id,
       avatar: user.avatar || '🙈',
       author: session.nickname || '匿名',
       userId: session.id,
