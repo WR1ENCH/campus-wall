@@ -11,8 +11,34 @@ function getDb() {
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
+    migrate();
   }
   return db;
+}
+
+// ===== 自动迁移：新增列 =====
+function migrate() {
+  const tables = [
+    { name: 'posts', columns: ['images'] },
+  ];
+  for (const t of tables) {
+    // 获取已有列名
+    let existingCols = [];
+    try {
+      const colInfo = db.prepare(`PRAGMA table_info("${t.name}")`).all();
+      existingCols = colInfo.map(r => r.name);
+    } catch { continue; }
+    for (const col of t.columns) {
+      if (!existingCols.includes(col)) {
+        try {
+          db.exec(`ALTER TABLE "${t.name}" ADD COLUMN "${col}" TEXT`);
+          console.log(`[db.js] ✅ 已添加列 ${t.name}.${col}`);
+        } catch (e) {
+          console.warn(`[db.js] ⚠️ 添加列 ${t.name}.${col} 失败:`, e.message);
+        }
+      }
+    }
+  }
 }
 
 // ---- helpers ----
