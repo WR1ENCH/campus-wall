@@ -106,6 +106,43 @@ function decryptCert(cipherText) {
   }
 }
 
+// ===== Token 签名（HMAC-SHA256，防伪造）=====
+const TOKEN_SECRET = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
+
+/**
+ * 签名 Token：base64(payload).base64(hmac)
+ * @param {object} payload - 要签入的用户信息
+ * @returns {string} 签名后的 token 字符串
+ */
+function signToken(payload) {
+  const data = Buffer.from(JSON.stringify(payload)).toString('base64');
+  const hmac = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64');
+  return data + '.' + hmac;
+}
+
+/**
+ * 验证签名 Token 并返回 payload
+ * @param {string} token - 签名字符串
+ * @returns {object|null} 验证通过返回 payload，否则返回 null
+ */
+function verifySignedToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [data, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64');
+  // timingSafeEqual 防止时序攻击
+  const sigBuf = Buffer.from(sig, 'base64');
+  const expBuf = Buffer.from(expectedSig, 'base64');
+  if (sigBuf.length !== expBuf.length) return null;
+  if (!crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+  try {
+    return JSON.parse(Buffer.from(data, 'base64').toString());
+  } catch {
+    return null;
+  }
+}
+
 const app = express();
 app.set('trust proxy', true); // 信任代理，从 X-Forwarded-For 读取真实客户端IP
 const PORT = 3000;
@@ -195,20 +232,16 @@ function writeAdmins (admins) { db.writeAdmins(admins); }
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'];
   if (!token) return res.json({ ok: false, msg: '未登录，请先登录', code: 'NOT_LOGIN' });
-  try {
-    const session = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (!session.id || !session.loginAt) {
-      return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
-    }
-    // token 有效期 24 小时
-    if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
-      return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
-    }
-    req.admin = session;
-    next();
-  } catch {
+  const session = verifySignedToken(token);
+  if (!session || !session.id || !session.loginAt) {
     return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
   }
+  // token 有效期 24 小时
+  if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
+    return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+  }
+  req.admin = session;
+  next();
 }
 
 function requireSuper(req, res, next) {
@@ -218,14 +251,14 @@ function requireSuper(req, res, next) {
   next();
 }
 
-// 生成 token
+// 生成 token（含 HMAC 签名）
 function makeToken(admin) {
-  return Buffer.from(JSON.stringify({
+  return signToken({
     id: admin.id,
     name: admin.name,
     role: admin.role,
     loginAt: Date.now()
-  })).toString('base64');
+  });
 }
 
 // ===== 初始化接口 =====
@@ -495,25 +528,21 @@ function addLoginLog(type, account, success, ip, ua) {
   writeLogs(logs);
 }
 
-// 生成用户 token
+// 生成用户 token（含 HMAC 签名）
 function makeUserToken(user) {
-  return Buffer.from(JSON.stringify({
+  return signToken({
     id: user.id,
     nickname: user.nickname,
     loginAt: Date.now()
-  })).toString('base64');
+  });
 }
 
-// 验证用户 token
+// 验证用户 token（含签名校验）
 function verifyUserToken(token) {
-  try {
-    const session = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (!session.id || !session.loginAt) return null;
-    if (Date.now() - session.loginAt > 7 * 24 * 3600 * 1000) return null; // 7天有效期
-    return session;
-  } catch {
-    return null;
-  }
+  const session = verifySignedToken(token);
+  if (!session || !session.id || !session.loginAt) return null;
+  if (Date.now() - session.loginAt > 7 * 24 * 3600 * 1000) return null; // 7天有效期
+  return session;
 }
 
 // ===== 人机验证（SVG 验证码）=====
@@ -2340,7 +2369,8 @@ app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
 // 删除评论（评论作者或帖子作者可删）—— 改为软删除
 app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   const userId = req.headers['x-user-token'] ? (() => {
-    try { return JSON.parse(Buffer.from(req.headers['x-user-token'].split('.')[1], 'base64').toString()).id; } catch { return null; }
+    const s = verifySignedToken(req.headers['x-user-token']);
+    return s ? s.id : null;
   })() : null;
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.postId);
@@ -2868,10 +2898,9 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
   let userId = null;
 
   if (adminToken) {
-    try {
-      const session = JSON.parse(Buffer.from(adminToken, 'base64').toString());
+    if (verifySignedToken(adminToken)) {
       isAdmin = true;
-    } catch {}
+    }
   }
 
   if (token) {
@@ -4661,7 +4690,7 @@ app.post('/api/student-council/login', (req, res) => {
   if (sc && sc.id === id) {
     if (!verifyPassword(password, sc.password))
       return res.json({ ok: false, msg: '账号或密码错误' });
-    const token = Buffer.from(JSON.stringify({ id: sc.id, loginAt: Date.now() })).toString('base64');
+    const token = signToken({ id: sc.id, loginAt: Date.now() });
     return res.json({ ok: true, data: { token, name: sc.name, type: 'sc' } });
   }
 
@@ -4672,7 +4701,7 @@ app.post('/api/student-council/login', (req, res) => {
     if (!verifyPassword(password, user.password)) {
       return res.json({ ok: false, msg: '账号或密码错误' });
     }
-    const token = Buffer.from(JSON.stringify({ id: user.id, loginAt: Date.now() })).toString('base64');
+    const token = signToken({ id: user.id, loginAt: Date.now() });
     return res.json({ ok: true, data: { token, name: user.nickname, type: 'user' } });
   }
 
@@ -4723,8 +4752,8 @@ app.post('/api/admin/student-council/change-name', requireAdmin, (req, res) => {
 app.post('/api/student-council/change-pwd', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '未登录' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
   const users = readUsers();
@@ -4747,8 +4776,8 @@ app.post('/api/student-council/change-pwd', (req, res) => {
 app.post('/api/student-council/change-name', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '未登录' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
   const users = readUsers();
@@ -4762,7 +4791,7 @@ app.post('/api/student-council/change-name', (req, res) => {
   sc.name = name.trim();
   writeSC(sc);
   // 返回新 token 和新名称
-  const newToken = Buffer.from(JSON.stringify({ id: sc.id, loginAt: Date.now() })).toString('base64');
+  const newToken = signToken({ id: sc.id, loginAt: Date.now() });
   res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
@@ -4792,8 +4821,8 @@ app.get('/api/notices', (req, res) => {
 app.post('/api/notices', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
   const users = readUsers();
@@ -4834,8 +4863,8 @@ app.post('/api/notices', (req, res) => {
 app.delete('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
   // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
@@ -4864,8 +4893,8 @@ app.delete('/api/notices/:id', (req, res) => {
 app.post('/api/notices/:id/pin', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
@@ -4896,8 +4925,8 @@ app.post('/api/notices/:id/pin', (req, res) => {
 app.post('/api/notices/:id/sync', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
@@ -4924,8 +4953,8 @@ app.post('/api/notices/:id/sync', (req, res) => {
 app.put('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  let session;
-  try { session = JSON.parse(Buffer.from(token, 'base64').toString()); } catch { return res.json({ ok: false, msg: '登录已过期' }); }
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   // 验证：学生会账号 或 校园墙通知发布者
   const sc = readSC();
   const users = readUsers();
