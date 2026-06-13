@@ -128,6 +128,15 @@ function signToken(payload) {
 function verifySignedToken(token) {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
+  // 旧格式（无签名）：兼容降级，记录警告
+  if (parts.length === 1) {
+    console.warn('[token] ⚠️ 检测到旧格式 token（无签名），建议用户重新登录获取新 token');
+    try {
+      return JSON.parse(Buffer.from(token, 'base64').toString());
+    } catch {
+      return null;
+    }
+  }
   if (parts.length !== 2) return null;
   const [data, sig] = parts;
   const expectedSig = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64');
