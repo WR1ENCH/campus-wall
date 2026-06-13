@@ -2972,7 +2972,7 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
   let idsToRemove = [];
   comments.forEach(c => {
     if (c.id === req.params.id || c.parentId === req.params.id) {
-      saveDeletedItem('disc_comment', c, byWho);
+      try { saveDeletedItem('disc_comment', c, byWho); } catch(e) { console.warn('[delete] saveDeletedItem failed:', e.message); }
       idsToRemove.push(c.id);
     }
   });
