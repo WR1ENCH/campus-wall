@@ -261,14 +261,30 @@ body {
 .btn-submit { padding: 9px 20px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-submit:hover { background: var(--accent-light); }
 .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-/* 移动端：发布/取消按钮全宽，更易点击 */
+/* 移动端：发布/取消按钮全宽，更易点击；弹窗全屏 */
 @media (max-width: 600px) {
+  .modal-overlay.show { align-items: stretch; padding: 0; }
+  .modal-overlay.show .modal-box {
+    width: 100vw !important; max-height: 100vh; height: 100vh;
+    border-radius: 0;
+  }
   .form-actions { padding: 12px 16px; gap: 8px; }
   .form-actions .btn-cancel,
   .form-actions .btn-submit { flex: 1; text-align: center; padding: 11px 10px; font-size: 15px; }
   .modal-header { padding: 14px 16px; }
   .modal-header h3 { font-size: 16px; }
   .modal-body { padding: 16px; }
+  /* 编辑弹窗底部按钮栏移动端适配 */
+  .edit-footer {
+    flex-wrap: wrap; gap: 8px; padding: 10px 14px;
+  }
+  .edit-footer > div:first-child {
+    order: 2; width: 100%; justify-content: center;
+  }
+  .edit-footer > div:last-child {
+    order: 1; width: 100%; justify-content: center;
+  }
+  .edit-footer button { font-size: 13px; padding: 8px 12px; }
 }
 
 /* ===== Toast ===== */
@@ -537,7 +553,7 @@ body {
       <div class="form-error" id="editError"></div>
     </div>
     <!-- 底部按钮栏 -->
-    <div style="background:#f5f5f5;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e5e5e5;">
+    <div class="edit-footer" style="background:#f5f5f5;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e5e5e5;">
       <div style="display:flex;gap:8px;">
         <button onclick="doSyncNotice()" id="syncBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;">🔄 同步</button>
         <button onclick="doPinNotice()" id="pinBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;">📌 置顶</button>
