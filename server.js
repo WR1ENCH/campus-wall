@@ -3216,6 +3216,102 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   });
 });
 
+// ===== 启动时清理旧的软删除数据（迁移到 deleted_items 并从原表移除）=====
+function cleanupOldDeletedData() {
+  var cleaned = 0;
+
+  // 清理帖子
+  var posts = readPosts();
+  var oldDeleted = posts.filter(function(p) { return p.deleted; });
+  if (oldDeleted.length > 0) {
+    oldDeleted.forEach(function(p) {
+      db.addDeletedItem({
+        id: p.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        type: 'post',
+        content: typeof p.content === 'string' ? p.content.substring(0, 500) : '',
+        author: p.author || '未知',
+        userId: p.userId || null,
+        deletedAt: p.deletedAt || p.time || new Date().toISOString(),
+        deletedBy: p.deletedBy || 'system',
+        extra: ''
+      });
+    });
+    posts = posts.filter(function(p) { return !p.deleted; });
+    writePosts(posts);
+    cleaned += oldDeleted.length;
+  }
+
+  // 清理帖子内的评论
+  var commentCount = 0;
+  posts.forEach(function(post) {
+    var oldComments = (post.comments || []).filter(function(c) { return c.deleted; });
+    if (oldComments.length > 0) {
+      oldComments.forEach(function(c) {
+        db.addDeletedItem({
+          id: c.id,
+          type: 'comment',
+          content: typeof c.content === 'string' ? c.content.substring(0, 500) : '',
+          author: c.author || '未知',
+          userId: c.userId || null,
+          deletedAt: c.deletedAt || c.time || new Date().toISOString(),
+          deletedBy: c.deletedBy || 'system',
+          extra: ''
+        });
+      });
+      post.comments = (post.comments || []).filter(function(c) { return !c.deleted; });
+      post.commentsCount = (post.comments || []).length;
+      commentCount += oldComments.length;
+    }
+  });
+  if (commentCount > 0) { writePosts(posts); cleaned += commentCount; }
+
+  // 清理讨论
+  var discussions = readDiscussions();
+  var oldDiscussions = discussions.filter(function(d) { return d.deleted; });
+  if (oldDiscussions.length > 0) {
+    oldDiscussions.forEach(function(d) {
+      db.addDeletedItem({
+        id: d.id,
+        type: 'discussion',
+        content: d.title || '',
+        author: d.createdBy || '未知',
+        userId: d.createdBy || null,
+        deletedAt: d.deletedAt || d.createdAt || new Date().toISOString(),
+        deletedBy: d.deletedBy || 'system',
+        extra: ''
+      });
+    });
+    discussions = discussions.filter(function(d) { return !d.deleted; });
+    writeDiscussions(discussions);
+    cleaned += oldDiscussions.length;
+  }
+
+  // 清理讨论评论
+  var discComments = readDiscussionComments();
+  var oldDiscComments = discComments.filter(function(c) { return c.deleted; });
+  if (oldDiscComments.length > 0) {
+    oldDiscComments.forEach(function(c) {
+      db.addDeletedItem({
+        id: c.id,
+        type: 'disc_comment',
+        content: typeof c.content === 'string' ? c.content.substring(0, 500) : '',
+        author: c.author || '未知',
+        userId: c.userId || null,
+        deletedAt: c.deletedAt || c.createdAt || new Date().toISOString(),
+        deletedBy: c.deletedBy || 'system',
+        extra: ''
+      });
+    });
+    discComments = discComments.filter(function(c) { return !c.deleted; });
+    writeDiscussionComments(discComments);
+    cleaned += oldDiscComments.length;
+  }
+
+  if (cleaned > 0) {
+    console.log('[cleanup] ✅ 已迁移 ' + cleaned + ' 条旧软删除数据到 deleted_items 表');
+  }
+}
+
 // ===== 已删除内容记录辅助函数 =====
 function saveDeletedItem(type, item, deletedBy, extra) {
   db.addDeletedItem({
@@ -5264,6 +5360,7 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
 
 app.listen(PORT, () => {
   fixCertDataOnStart();
+  cleanupOldDeletedData();
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);
   console.log(`  → http://localhost:${PORT}/admin.html`);
