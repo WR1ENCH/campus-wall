@@ -2890,6 +2890,31 @@ app.post('/api/discussions/:id/comments', (req, res) => {
     writeReports(reports);
   }
 
+  // 同步到校园墙（如果用户勾选了）
+  const syncToWall = req.body.syncToWall === true;
+  if (syncToWall) {
+    const posts = readPosts();
+    const topicTitle = discussion.title || '讨论';
+    const wallContent = '#' + topicTitle + ' ' + content.trim();
+    posts.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: '日常',
+      content: wallContent,
+      avatar: user.avatar || '🙈',
+      author: session.nickname || '匿名',
+      userId: session.id,
+      time: new Date().toISOString(),
+      likes: 0,
+      comments: 0,
+      commentsCount: 0,
+      liked: false,
+      rotate: (Math.random() - 0.5) * 8,
+      zIndex: Math.floor(Math.random() * 5) + 1,
+      images: undefined
+    });
+    writePosts(posts);
+  }
+
   // 更新话题评论数
   discussion.commentCount = (discussion.commentCount || 0) + 1;
   writeDiscussions(discussions);
