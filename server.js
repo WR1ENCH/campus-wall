@@ -2928,58 +2928,62 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   });
 });
 
-// 删除讨论评论（发送者或管理员可删）—— 改为软删除
+// 删除讨论评论（发送者或管理员可删）
 app.delete('/api/discussions/comments/:id', (req, res) => {
-  const token = req.headers['x-user-token'];
-  const adminToken = req.headers['x-admin-token'];
+  try {
+    const token = req.headers['x-user-token'];
+    const adminToken = req.headers['x-admin-token'];
 
-  let isAdmin = false;
-  let userId = null;
+    let isAdmin = false;
+    let userId = null;
 
-  if (adminToken) {
-    if (verifySignedToken(adminToken)) {
-      isAdmin = true;
+    if (adminToken) {
+      if (verifySignedToken(adminToken)) {
+        isAdmin = true;
+      }
     }
-  }
 
-  if (token) {
-    const session = verifyUserToken(token);
-    if (session) userId = session.id;
-  }
-
-  if (!isAdmin && !userId) {
-    return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-  }
-
-  const comments = readDiscussionComments();
-  const comment = comments.find(c => c.id === req.params.id);
-  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
-  if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
-
-  // 检查权限：评论作者、回复作者、管理员
-  const isAuthor = userId && comment.userId && userId === comment.userId;
-  const isParentAuthor = userId && comment.parentId
-    ? (() => { const parent = comments.find(c => c.id === comment.parentId); return parent && parent.userId && parent.userId === userId; })()
-    : false;
-
-  if (!isAdmin && !isAuthor && !isParentAuthor) {
-    return res.json({ ok: false, msg: '无权删除此评论' });
-  }
-
-  const now = new Date().toISOString();
-  const byWho = isAdmin ? 'admin' : 'user';
-  // 物理删除该评论及其所有子回复，先保存
-  let idsToRemove = [];
-  comments.forEach(c => {
-    if (c.id === req.params.id || c.parentId === req.params.id) {
-      try { saveDeletedItem('disc_comment', c, byWho); } catch(e) { console.warn('[delete] saveDeletedItem failed:', e.message); }
-      idsToRemove.push(c.id);
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) userId = session.id;
     }
-  });
-  comments = comments.filter(c => !idsToRemove.includes(c.id));
-  writeDiscussionComments(comments);
 
-  res.json({ ok: true });
+    if (!isAdmin && !userId) {
+      return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    }
+
+    const comments = readDiscussionComments();
+    const comment = comments.find(c => c.id === req.params.id);
+    if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+    if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
+
+    // 检查权限：评论作者、回复作者、管理员
+    const isAuthor = userId && comment.userId && userId === comment.userId;
+    const isParentAuthor = userId && comment.parentId
+      ? (() => { const parent = comments.find(c => c.id === comment.parentId); return parent && parent.userId && parent.userId === userId; })()
+      : false;
+
+    if (!isAdmin && !isAuthor && !isParentAuthor) {
+      return res.json({ ok: false, msg: '无权删除此评论' });
+    }
+
+    const byWho = isAdmin ? 'admin' : 'user';
+    // 物理删除该评论及其所有子回复，先保存
+    let idsToRemove = [];
+    comments.forEach(c => {
+      if (c.id === req.params.id || c.parentId === req.params.id) {
+        try { saveDeletedItem('disc_comment', c, byWho); } catch(e) { console.warn('[delete] saveDeletedItem failed:', e.message); }
+        idsToRemove.push(c.id);
+      }
+    });
+    const filtered = comments.filter(c => !idsToRemove.includes(c.id));
+    writeDiscussionComments(filtered);
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[delete-disc-comment] 500:', e.message, e.stack);
+    res.json({ ok: false, msg: '服务器错误: ' + e.message });
+  }
 });
 
 // 举报讨论评论
