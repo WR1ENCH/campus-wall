@@ -9,7 +9,7 @@ const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
 
-// ===== 璇诲彇鏈湴 git 鐗堟湰鍙?=====
+// ===== 读取本地 git 版本号 =====
 let cachedGitSha = 'dev';
 let cachedCommitMsg = '';
 try {
@@ -22,7 +22,7 @@ try {
   cachedGitSha = 'dev';
 }
 
-// ===== 宕╂簝淇濇姢 =====
+// ===== 崩溃保护 =====
 process.on('uncaughtException', (err) => {
   console.error('[CRASH] Uncaught Exception:', err.message, err.stack);
 });
@@ -30,23 +30,24 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('[CRASH] Unhandled Rejection:', reason);
 });
 
-// 鏅哄缃戣嚜鍔ㄧ櫥褰曟ā鍧楋紙闇€ Playwright / Chromium锛?let loginZhixue = null;
+// 智学网自动登录模块（需 Playwright / Chromium）
+let loginZhixue = null;
 try {
   const zhixueModule = require('./zhixue');
   loginZhixue = zhixueModule.loginZhixue;
-  console.log('[zhixue] 鏅哄缃戞ā鍧楀姞杞芥垚鍔?);
+  console.log('[zhixue] 智学网模块加载成功');
 } catch (e) {
-  console.warn('[zhixue] 鏅哄缃戞ā鍧楁湭鍔犺浇锛堢己澶?Playwright 鎴?zhixue.js锛夛細', e.message);
+  console.warn('[zhixue] 智学网模块未加载（缺失 Playwright 或 zhixue.js）：', e.message);
 }
 
-// ===== 瀵嗙爜鍝堝笇宸ュ叿锛圫HA-256 + 闅忔満鐩愶紝鏃犻渶澶栭儴渚濊禆锛?====
+// ===== 密码哈希工具（SHA-256 + 随机盐，无需外部依赖）=====
 const SALT_LEN = 16;
-const ITERATIONS = 100000; // PBKDF2 杩唬娆℃暟锛岄槻鏆村姏
+const ITERATIONS = 100000; // PBKDF2 迭代次数，防暴力
 
 /**
- * 鐢熸垚瀵嗙爜鍝堝笇
- * @param {string} password 鏄庢枃瀵嗙爜
- * @returns {string} salt:hash 鏍煎紡鐨勫搱甯屼覆
+ * 生成密码哈希
+ * @param {string} password 明文密码
+ * @returns {string} salt:hash 格式的哈希串
  */
 function hashPassword(password) {
   const salt = crypto.randomBytes(SALT_LEN).toString('hex');
@@ -55,8 +56,10 @@ function hashPassword(password) {
 }
 
 /**
- * 楠岃瘉瀵嗙爜
- * @param {string} password 鐢ㄦ埛杈撳叆鐨勬槑鏂囧瘑鐮? * @param {string} storedHash 瀛樺偍鐨?salt:hash 涓? * @returns {boolean}
+ * 验证密码
+ * @param {string} password 用户输入的明文密码
+ * @param {string} storedHash 存储的 salt:hash 串
+ * @returns {boolean}
  */
 function verifyPassword(password, storedHash) {
   if (!storedHash || !storedHash.includes(':')) return false;
@@ -66,8 +69,9 @@ function verifyPassword(password, storedHash) {
 }
 
 /**
- * 鑾峰彇瀹夊叏鐨勫悓瀛﹁璇佸睍绀虹姸鎬侊紙宸插簾寮冣€斺€旂粺涓€浣跨敤 getSafeCertStatus锛? * 鏍￠獙锛歛pproved 蹇呴』鏈夊鏍歌褰曪紙zhixueReviewedBy锛夛紝鍚﹀垯闄嶇骇
- * @param {object} user 鐢ㄦ埛瀵硅薄
+ * 获取安全的同学认证展示状态（已废弃——统一使用 getSafeCertStatus）
+ * 校验：approved 必须有审核记录（zhixueReviewedBy），否则降级
+ * @param {object} user 用户对象
  * @returns {string|null} 'approved' | 'pending' | 'rejected' | null
  */
 function getDisplayZhixueStatus(user) {
@@ -78,19 +82,22 @@ function getDisplayZhixueStatus(user) {
   return status;
 }
 
-// ===== 瀹炲悕淇℃伅瀵圭О鍔犲瘑锛圓ES-256-CBC锛?====
-// 瀵嗛挜蹇呴』閫氳繃鐜鍙橀噺 CERT_ENC_SECRET 璁剧疆锛?4浣?hex 鍗?32 瀛楄妭锛?// 鏈缃椂姣忔鍚姩闅忔満鐢熸垚锛岄噸鍚悗宸插姞瀵嗙殑瀹炲悕鏁版嵁灏嗘棤娉曡В瀵?if (!process.env.CERT_ENC_SECRET) {
-  console.error('[SECURITY] 鈿狅笍 鏈缃幆澧冨彉閲?CERT_ENC_SECRET锛屽凡浣跨敤闅忔満瀵嗛挜鍚姩銆?);
-  console.error('[SECURITY]    閲嶅惎鍚庡凡鍔犲瘑鐨勫疄鍚嶆暟鎹皢鏃犳硶瑙ｅ瘑锛佽鍦?.env 涓厤缃?CERT_ENC_SECRET銆?);
-  console.error('[SECURITY]    鐢熸垚瀵嗛挜: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+// ===== 实名信息对称加密（AES-256-CBC）=====
+// 密钥必须通过环境变量 CERT_ENC_SECRET 设置（64位 hex 即 32 字节）
+// 未设置时每次启动随机生成，重启后已加密的实名数据将无法解密
+if (!process.env.CERT_ENC_SECRET) {
+  console.error('[SECURITY] ⚠️ 未设置环境变量 CERT_ENC_SECRET，已使用随机密钥启动。');
+  console.error('[SECURITY]    重启后已加密的实名数据将无法解密！请在 .env 中配置 CERT_ENC_SECRET。');
+  console.error('[SECURITY]    生成密钥: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
 }
 const CERT_ENC_KEY = crypto.createHash('sha256')
   .update(process.env.CERT_ENC_SECRET || crypto.randomBytes(32).toString('hex'))
   .digest();
 
 /**
- * 鍔犲瘑瀹炲悕淇℃伅
- * @param {string} plainText 鏄庢枃锛堝鍚?鐝骇锛? * @returns {string} iv:ciphertext (hex)
+ * 加密实名信息
+ * @param {string} plainText 明文（姓名/班级）
+ * @returns {string} iv:ciphertext (hex)
  */
 function encryptCert(plainText) {
   if (!plainText) return null;
@@ -101,7 +108,7 @@ function encryptCert(plainText) {
 }
 
 /**
- * 瑙ｅ瘑瀹炲悕淇℃伅
+ * 解密实名信息
  * @param {string} cipherText iv:ciphertext (hex)
  * @returns {string|null}
  */
@@ -118,13 +125,14 @@ function decryptCert(cipherText) {
   }
 }
 
-// ===== Token 绛惧悕锛圚MAC-SHA256锛岄槻浼€狅級=====
+// ===== Token 签名（HMAC-SHA256，防伪造）=====
 const TOKEN_SECRET = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
 
 /**
- * 绛惧悕 Token锛歜ase64(payload).base64(hmac)
- * @param {object} payload - 瑕佺鍏ョ殑鐢ㄦ埛淇℃伅
- * @returns {string} 绛惧悕鍚庣殑 token 瀛楃涓? */
+ * 签名 Token：base64(payload).base64(hmac)
+ * @param {object} payload - 要签入的用户信息
+ * @returns {string} 签名后的 token 字符串
+ */
 function signToken(payload) {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64');
   const hmac = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64');
@@ -132,15 +140,16 @@ function signToken(payload) {
 }
 
 /**
- * 楠岃瘉绛惧悕 Token 骞惰繑鍥?payload
- * @param {string} token - 绛惧悕瀛楃涓? * @returns {object|null} 楠岃瘉閫氳繃杩斿洖 payload锛屽惁鍒欒繑鍥?null
+ * 验证签名 Token 并返回 payload
+ * @param {string} token - 签名字符串
+ * @returns {object|null} 验证通过返回 payload，否则返回 null
  */
 function verifySignedToken(token) {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
-  // 鏃ф牸寮忥紙鏃犵鍚嶏級锛氬吋瀹归檷绾э紝璁板綍璀﹀憡
+  // 旧格式（无签名）：兼容降级，记录警告
   if (parts.length === 1) {
-    console.warn('[token] 鈿狅笍 妫€娴嬪埌鏃ф牸寮?token锛堟棤绛惧悕锛夛紝寤鸿鐢ㄦ埛閲嶆柊鐧诲綍鑾峰彇鏂?token');
+    console.warn('[token] ⚠️ 检测到旧格式 token（无签名），建议用户重新登录获取新 token');
     try {
       return JSON.parse(Buffer.from(token, 'base64').toString());
     } catch {
@@ -150,7 +159,7 @@ function verifySignedToken(token) {
   if (parts.length !== 2) return null;
   const [data, sig] = parts;
   const expectedSig = crypto.createHmac('sha256', TOKEN_SECRET).update(data).digest('base64');
-  // timingSafeEqual 闃叉鏃跺簭鏀诲嚮
+  // timingSafeEqual 防止时序攻击
   const sigBuf = Buffer.from(sig, 'base64');
   const expBuf = Buffer.from(expectedSig, 'base64');
   if (sigBuf.length !== expBuf.length) return null;
@@ -163,7 +172,7 @@ function verifySignedToken(token) {
 }
 
 const app = express();
-app.set('trust proxy', true); // 淇′换浠ｇ悊锛屼粠 X-Forwarded-For 璇诲彇鐪熷疄瀹㈡埛绔疘P
+app.set('trust proxy', true); // 信任代理，从 X-Forwarded-For 读取真实客户端IP
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const POSTS_FILE = path.join(DATA_DIR, 'posts.json');
@@ -181,16 +190,18 @@ const QA_ANSWERS_FILE = path.join(DATA_DIR, 'qa_answers.json');
 const PICKUP_AUCTION_FILE = path.join(DATA_DIR, 'pickup_auctions.json');
 const PICKUP_REPORT_FILE = path.join(DATA_DIR, 'pickup_reports.json');
 
-// 鑾峰彇鐪熷疄瀹㈡埛绔疘P锛堟敮鎸佸弽鍚戜唬鐞?WAF绌块€忥級
+// 获取真实客户端IP（支持反向代理/WAF穿透）
 function getClientIP(req) {
   return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || req.socket.remoteAddress || '-';
 }
 
-// 涓棿浠?app.use(cors());
+// 中间件
+app.use(cors());
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 
-// 鍏ㄥ眬杈撳叆杩囨护锛氱姝㈢壒娈婂瓧绗︼紙瀵?JSON body 鍜?URL query 鐢熸晥锛?const SPECIAL_CHAR_REGEX = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
+// 全局输入过滤：禁止特殊字符（对 JSON body 和 URL query 生效）
+const SPECIAL_CHAR_REGEX = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
 function sanitizeString(val) {
   if (typeof val === 'string') return val.replace(/[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/g, '');
   if (Array.isArray(val)) return val.map(sanitizeString);
@@ -203,7 +214,8 @@ function sanitizeString(val) {
 }
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
-    // 鎺掗櫎鍖呭惈 base64銆佸瘜鏂囨湰/Markdown 鎴栫壒娈婃牸寮忕殑瀛楁涓嶈繃婊?    // 鈿狅笍 PoW 瀛楁宸茬Щ闄?鈥?鏈嶅姟绔湭瀹炵幇瀹為檯 PoW 鏍￠獙锛岃繖浜涘瓧娈垫棤瀹夊叏鎰忎箟
+    // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
+    // ⚠️ PoW 字段已移除 — 服务端未实现实际 PoW 校验，这些字段无安全意义
     const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
@@ -224,10 +236,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(__dirname)); // 闈欐€佹枃浠舵湇鍔?app.use(checkMaintenance); // 缁存姢鐘舵€佹鏌?
-const CONTENT_MAX_LENGTH = 50; // 甯栧瓙/璇勮瀛楁暟涓婇檺
+app.use(express.static(__dirname)); // 静态文件服务
+app.use(checkMaintenance); // 维护状态检查
 
-// ===== 鏁版嵁璇诲啓 =====
+const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
+
+// ===== 数据读写 =====
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -254,17 +268,17 @@ function hasAdmins() { return db.readAdmins().length > 0; }
 
 function writeAdmins (admins) { db.writeAdmins(admins); }
 
-// ===== 绠＄悊鍛樿璇佷腑闂翠欢 =====
+// ===== 管理员认证中间件 =====
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰曪紝璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录，请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
   if (!session || !session.id || !session.loginAt) {
-    return res.json({ ok: false, msg: '鐧诲綍淇℃伅鏃犳晥', code: 'INVALID_TOKEN' });
+    return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
   }
-  // token 鏈夋晥鏈?24 灏忔椂
+  // token 有效期 24 小时
   if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
-    return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈燂紝璇烽噸鏂扮櫥褰?, code: 'TOKEN_EXPIRED' });
+    return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
   }
   req.admin = session;
   next();
@@ -272,35 +286,39 @@ function requireAdmin(req, res, next) {
 
 function requireSuper(req, res, next) {
   if (req.admin.role !== 'super') {
-    return res.json({ ok: false, msg: '鏉冮檺涓嶈冻锛屼粎瓒呯骇绠＄悊鍛樺彲鐢?, code: 'FORBIDDEN' });
+    return res.json({ ok: false, msg: '权限不足，仅超级管理员可用', code: 'FORBIDDEN' });
   }
   next();
 }
 
-// 缁存姢鐘舵€佹鏌ヤ腑闂翠欢锛堣烦杩囩鐞嗗悗鍙扮浉鍏宠矾寰勶級
+// 维护状态检查中间件（跳过管理后台相关路径）
 function checkMaintenance(req, res, next) {
   const path = req.path;
-  // 鏀捐绠＄悊鍚庡彴銆侀潤鎬佹枃浠躲€丄PI 璺緞
+  // 放行管理后台、静态文件、API 路径
   if (path.startsWith('/api/admin/') || path === '/admin.html' || path === '/maintenance.html' || path === '/' || path.startsWith('/assets/')) {
     return next();
   }
-  // 鏀捐绠＄悊鍛樼浉鍏冲叾浠栬矾寰?  if (path.startsWith('/api/admin')) return next();
+  // 放行管理员相关其他路径
+  if (path.startsWith('/api/admin')) return next();
   
   try {
     const data = readMaintenance();
     if (data && data.enabled === true) {
-      // 濡傛灉鏄?HTML 椤甸潰璇锋眰锛岄噸瀹氬悜鍒扮淮鎶ら〉闈?      if (req.accepts('html')) {
+      // 如果是 HTML 页面请求，重定向到维护页面
+      if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
-      // API 璇锋眰杩斿洖閿欒
-      return res.json({ ok: false, msg: '绯荤粺缁存姢涓紝鏆傛椂鏃犳硶璁块棶', code: 'MAINTENANCE' });
+      // API 请求返回错误
+      return res.json({ ok: false, msg: '系统维护中，暂时无法访问', code: 'MAINTENANCE' });
     }
   } catch (e) {
-    // 鏂囦欢涓嶅瓨鍦ㄧ瓑锛屾甯告斁琛?  }
+    // 文件不存在等，正常放行
+  }
   next();
 }
 
-// 鐢熸垚 token锛堝惈 HMAC 绛惧悕锛?function makeToken(admin) {
+// 生成 token（含 HMAC 签名）
+function makeToken(admin) {
   return signToken({
     id: admin.id,
     name: admin.name,
@@ -309,34 +327,39 @@ function checkMaintenance(req, res, next) {
   });
 }
 
-// ===== 鍒濆鍖栨帴鍙?=====
+// ===== 初始化接口 =====
 
-// 妫€鏌ユ槸鍚﹂渶瑕佸垵濮嬪寲锛堟槸鍚﹀瓨鍦ㄧ鐞嗗憳锛?app.get('/api/admin/check-init', (req, res) => {
+// 检查是否需要初始化（是否存在管理员）
+app.get('/api/admin/check-init', (req, res) => {
   res.json({ ok: true, data: { needInit: !hasAdmins() } });
 });
 
-// 鍒涘缓棣栦釜绠＄悊鍛橈紙浠呭湪娌℃湁浠讳綍绠＄悊鍛樻椂鍙敤锛?app.post('/api/admin/init', (req, res) => {
-  // 濡傛灉宸叉湁绠＄悊鍛橈紝鎷掔粷鍒濆鍖?  if (hasAdmins()) {
-    return res.json({ ok: false, msg: '绯荤粺宸插垵濮嬪寲锛岃鐩存帴鐧诲綍', code: 'ALREADY_INIT' });
+// 创建首个管理员（仅在没有任何管理员时可用）
+app.post('/api/admin/init', (req, res) => {
+  // 如果已有管理员，拒绝初始化
+  if (hasAdmins()) {
+    return res.json({ ok: false, msg: '系统已初始化，请直接登录', code: 'ALREADY_INIT' });
   }
 
   const { id, password, name } = req.body;
 
-  // 楠岃瘉璐﹀彿鏍煎紡锛?-20浣嶅瓧姣嶃€佹暟瀛椼€佷笅鍒掔嚎锛?  if (!id || !/^[a-zA-Z0-9_]{3,20}$/.test(id)) {
-    return res.json({ ok: false, msg: '璐﹀彿鏍煎紡锛?-20浣嶅瓧姣嶃€佹暟瀛椼€佷笅鍒掔嚎', code: 'INVALID_ID' });
+  // 验证账号格式（3-20位字母、数字、下划线）
+  if (!id || !/^[a-zA-Z0-9_]{3,20}$/.test(id)) {
+    return res.json({ ok: false, msg: '账号格式：3-20位字母、数字、下划线', code: 'INVALID_ID' });
   }
 
-  // 楠岃瘉瀵嗙爜锛堣嚦灏?浣嶏級
+  // 验证密码（至少6位）
   if (!password || password.length < 6) {
-    return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯6浣?, code: 'INVALID_PWD' });
+    return res.json({ ok: false, msg: '密码至少6位', code: 'INVALID_PWD' });
   }
 
-  // 楠岃瘉鏄电О
+  // 验证昵称
   if (!name || name.trim().length === 0) {
-    return res.json({ ok: false, msg: '璇疯緭鍏ョ鐞嗗憳鏄电О', code: 'INVALID_NAME' });
+    return res.json({ ok: false, msg: '请输入管理员昵称', code: 'INVALID_NAME' });
   }
 
-  // 鍒涘缓棣栦釜瓒呯骇绠＄悊鍛?  const newAdmin = {
+  // 创建首个超级管理员
+  const newAdmin = {
     id: id.trim(),
     password: hashPassword(password),
     name: name.trim(),
@@ -346,7 +369,7 @@ function checkMaintenance(req, res, next) {
 
   writeAdmins([newAdmin]);
 
-  console.log(`鉁?棣栦釜绠＄悊鍛樺凡鍒涘缓: ${id}`);
+  console.log(`✅ 首个管理员已创建: ${id}`);
 
   res.json({
     ok: true,
@@ -359,9 +382,9 @@ function checkMaintenance(req, res, next) {
   });
 });
 
-// ===== 绠＄悊鍛?API =====
+// ===== 管理员 API =====
 
-// 鐧诲綍
+// 登录
 app.post('/api/admin/login', (req, res) => {
   const { id, password } = req.body;
   const ip = getClientIP(req);
@@ -369,14 +392,14 @@ app.post('/api/admin/login', (req, res) => {
 
   if (!id || !password) {
     addLoginLog('admin', null, false, ip, ua);
-    return res.json({ ok: false, msg: '璇疯緭鍏ヨ处鍙峰拰瀵嗙爜' });
+    return res.json({ ok: false, msg: '请输入账号和密码' });
   }
 
   const admins = readAdmins();
   const admin = admins.find(a => a.id === id);
   if (!admin || !verifyPassword(password, admin.password)) {
     addLoginLog('admin', id, false, ip, ua);
-    return res.json({ ok: false, msg: '璐﹀彿鎴栧瘑鐮侀敊璇? });
+    return res.json({ ok: false, msg: '账号或密码错误' });
   }
 
   addLoginLog('admin', admin.name, true, ip, ua);
@@ -391,41 +414,44 @@ app.post('/api/admin/login', (req, res) => {
   });
 });
 
-// 淇敼瀵嗙爜锛堥渶杈撳叆鏃у瘑鐮佺‘璁わ級
+// 修改密码（需输入旧密码确认）
 app.post('/api/admin/change-pwd', requireAdmin, (req, res) => {
   const { oldPwd, newPwd } = req.body;
-  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '璇峰～鍐欏畬鏁? });
-  if (newPwd.length < 6) return res.json({ ok: false, msg: '鏂板瘑鐮佽嚦灏?浣? });
+  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '请填写完整' });
+  if (newPwd.length < 6) return res.json({ ok: false, msg: '新密码至少6位' });
 
   const admins = readAdmins();
   const idx = admins.findIndex(a => a.id === req.admin.id);
-  if (idx === -1) return res.json({ ok: false, msg: '绠＄悊鍛樹笉瀛樺湪' });
+  if (idx === -1) return res.json({ ok: false, msg: '管理员不存在' });
 
-  // 楠岃瘉鏃у瘑鐮?  if (!verifyPassword(oldPwd, admins[idx].password)) {
-    return res.json({ ok: false, msg: '鏃у瘑鐮侀敊璇? });
+  // 验证旧密码
+  if (!verifyPassword(oldPwd, admins[idx].password)) {
+    return res.json({ ok: false, msg: '旧密码错误' });
   }
 
-  // 鏇存柊瀵嗙爜
+  // 更新密码
   admins[idx].password = hashPassword(newPwd);
   writeAdmins(admins);
 
-  res.json({ ok: true, msg: '瀵嗙爜淇敼鎴愬姛锛岃閲嶆柊鐧诲綍' });
+  res.json({ ok: true, msg: '密码修改成功，请重新登录' });
 });
 
-// 楠岃瘉褰撳墠鐧诲綍鐘舵€?app.get('/api/admin/me', requireAdmin, (req, res) => {
+// 验证当前登录状态
+app.get('/api/admin/me', requireAdmin, (req, res) => {
   const admins = readAdmins();
   const admin = admins.find(a => a.id === req.admin.id);
-  if (!admin) return res.json({ ok: false, msg: '绠＄悊鍛樹笉瀛樺湪', code: 'NOT_FOUND' });
+  if (!admin) return res.json({ ok: false, msg: '管理员不存在', code: 'NOT_FOUND' });
   res.json({ ok: true, data: { id: admin.id, name: admin.name, role: admin.role } });
 });
 
-// 鑾峰彇鐧诲綍璁板綍
+// 获取登录记录
 app.get('/api/admin/login-logs', requireAdmin, (req, res) => {
   const logs = readLogs();
   res.json({ ok: true, data: logs });
 });
 
-// 鑾峰彇绠＄悊鍛樺垪琛紙浠呰秴绾х鐞嗗憳锛?app.get('/api/admin/list', requireAdmin, requireSuper, (req, res) => {
+// 获取管理员列表（仅超级管理员）
+app.get('/api/admin/list', requireAdmin, requireSuper, (req, res) => {
   const admins = readAdmins();
   res.json({
     ok: true,
@@ -438,24 +464,25 @@ app.get('/api/admin/login-logs', requireAdmin, (req, res) => {
   });
 });
 
-// 娣诲姞绠＄悊鍛橈紙浠呰秴绾х鐞嗗憳锛?app.post('/api/admin/add', requireAdmin, requireSuper, (req, res) => {
+// 添加管理员（仅超级管理员）
+app.post('/api/admin/add', requireAdmin, requireSuper, (req, res) => {
   const { id, password, name, role } = req.body;
   if (!id || !password || !name) {
-    return res.json({ ok: false, msg: '璐﹀彿銆佸瘑鐮併€佹樀绉板潎涓哄繀濉」' });
+    return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
   }
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(id)) {
-    return res.json({ ok: false, msg: '璐﹀彿浠呮敮鎸?3-20 浣嶅瓧姣嶃€佹暟瀛椼€佷笅鍒掔嚎' });
+    return res.json({ ok: false, msg: '账号仅支持 3-20 位字母、数字、下划线' });
   }
   if (password.length < 6) {
-    return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯 6 浣? });
+    return res.json({ ok: false, msg: '密码至少 6 位' });
   }
   if (!['super', 'admin'].includes(role)) {
-    return res.json({ ok: false, msg: '瑙掕壊浠呮敮鎸?super锛堟渶楂樼鐞嗗憳锛夋垨 admin锛堢鐞嗗憳锛? });
+    return res.json({ ok: false, msg: '角色仅支持 super（最高管理员）或 admin（管理员）' });
   }
 
   const admins = readAdmins();
   if (admins.find(a => a.id === id)) {
-    return res.json({ ok: false, msg: '璐﹀彿宸插瓨鍦? });
+    return res.json({ ok: false, msg: '账号已存在' });
   }
 
   admins.push({
@@ -469,42 +496,43 @@ app.get('/api/admin/login-logs', requireAdmin, (req, res) => {
   res.json({ ok: true, data: { id, name, role, createdAt: new Date().toISOString() } });
 });
 
-// 鍒犻櫎绠＄悊鍛橈紙浠呰秴绾х鐞嗗憳锛屼笉鑳藉垹闄よ嚜宸憋級
+// 删除管理员（仅超级管理员，不能删除自己）
 app.delete('/api/admin/:id', requireAdmin, requireSuper, (req, res) => {
   const { id } = req.params;
   if (id === 'wr1Ench') {
-    return res.json({ ok: false, msg: '绂佹鍒犻櫎鏈€楂樼鐞嗗憳璐﹀彿' });
+    return res.json({ ok: false, msg: '禁止删除最高管理员账号' });
   }
   if (id === req.admin.id) {
-    return res.json({ ok: false, msg: '涓嶈兘鍒犻櫎鑷繁' });
+    return res.json({ ok: false, msg: '不能删除自己' });
   }
 
   let admins = readAdmins();
   const before = admins.length;
   admins = admins.filter(a => a.id !== id);
   if (admins.length === before) {
-    return res.json({ ok: false, msg: '绠＄悊鍛樹笉瀛樺湪' });
+    return res.json({ ok: false, msg: '管理员不存在' });
   }
   writeAdmins(admins);
   res.json({ ok: true });
 });
 
-// 淇敼绠＄悊鍛樹俊鎭紙浠呰秴绾х鐞嗗憳锛?app.put('/api/admin/:id', requireAdmin, requireSuper, (req, res) => {
+// 修改管理员信息（仅超级管理员）
+app.put('/api/admin/:id', requireAdmin, requireSuper, (req, res) => {
   const { id } = req.params;
   const { password, name, role } = req.body;
 
   const admins = readAdmins();
   const admin = admins.find(a => a.id === id);
-  if (!admin) return res.json({ ok: false, msg: '绠＄悊鍛樹笉瀛樺湪' });
+  if (!admin) return res.json({ ok: false, msg: '管理员不存在' });
 
   if (password !== undefined) {
-    if (password.length < 6) return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯 6 浣? });
+    if (password.length < 6) return res.json({ ok: false, msg: '密码至少 6 位' });
     admin.password = hashPassword(password);
   }
   if (name !== undefined) admin.name = name;
   if (role !== undefined) {
-    if (!['super', 'admin'].includes(role)) return res.json({ ok: false, msg: '瑙掕壊鏃犳晥' });
-    if (id === 'wr1Ench' && role !== 'super') return res.json({ ok: false, msg: '绂佹淇敼鏈€楂樼鐞嗗憳瑙掕壊' });
+    if (!['super', 'admin'].includes(role)) return res.json({ ok: false, msg: '角色无效' });
+    if (id === 'wr1Ench' && role !== 'super') return res.json({ ok: false, msg: '禁止修改最高管理员角色' });
     admin.role = role;
   }
 
@@ -512,20 +540,22 @@ app.delete('/api/admin/:id', requireAdmin, requireSuper, (req, res) => {
   res.json({ ok: true, data: { id: admin.id, name: admin.name, role: admin.role } });
 });
 
-// ===== 閫氱敤宸ュ叿鍑芥暟 =====
+// ===== 通用工具函数 =====
 function hasSpecialChars(str) {
   return /[<>\"'&]/.test(str);
 }
 
-// 瑙ｆ瀽 datetime-local 鏍煎紡锛堟敮鎸?YYYY-MM-DDTHH:mm 鎴?YYYY-MM-DDTHHmm锛?function parseLocalDateTime(str) {
+// 解析 datetime-local 格式（支持 YYYY-MM-DDTHH:mm 或 YYYY-MM-DDTHHmm）
+function parseLocalDateTime(str) {
   if (!str) return null;
-  // 鏀寔鏍囧噯鏍煎紡 YYYY-MM-DDTHH:mm 鍜岄潪鏍囧噯鏍煎紡 YYYY-MM-DDTHHmm
+  // 支持标准格式 YYYY-MM-DDTHH:mm 和非标准格式 YYYY-MM-DDTHHmm
   let match = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
   if (match) {
     const [, year, month, day, hour, minute] = match;
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
   }
-  // 鍏煎娌℃湁鍐掑彿鐨勬牸寮?  match = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})$/);
+  // 兼容没有冒号的格式
+  match = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})$/);
   if (match) {
     const [, year, month, day, hour, minute] = match;
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute));
@@ -533,12 +563,12 @@ function hasSpecialChars(str) {
   return null;
 }
 
-// ===== 鐢ㄦ埛鏁版嵁璇诲啓 =====
+// ===== 用户数据读写 =====
 function readUsers () { return db.readUsers(); }
 
 function writeUsers (users) { db.writeUsers(users); }
 
-// ===== 娴忚鍣ㄤ俊浠讳护鐗?=====
+// ===== 浏览器信任令牌 =====
 const TRUST_TOKENS_FILE = path.join(DATA_DIR, 'trust_tokens.json');
 
 function readTrustTokens () { return db.readTrustTokens(); }
@@ -554,7 +584,7 @@ function addLoginLog(type, account, success, ip, ua) {
   logs.unshift({
     id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
     type,
-    account: account || '鏈櫥褰曠敤鎴?,
+    account: account || '未登录用户',
     success,
     ip: ip || '-',
     ua: ua || '-',
@@ -564,7 +594,8 @@ function addLoginLog(type, account, success, ip, ua) {
   writeLogs(logs);
 }
 
-// 鐢熸垚鐢ㄦ埛 token锛堝惈 HMAC 绛惧悕锛?function makeUserToken(user) {
+// 生成用户 token（含 HMAC 签名）
+function makeUserToken(user) {
   return signToken({
     id: user.id,
     nickname: user.nickname,
@@ -572,16 +603,17 @@ function addLoginLog(type, account, success, ip, ua) {
   });
 }
 
-// 楠岃瘉鐢ㄦ埛 token锛堝惈绛惧悕鏍￠獙锛?function verifyUserToken(token) {
+// 验证用户 token（含签名校验）
+function verifyUserToken(token) {
   const session = verifySignedToken(token);
   if (!session || !session.id || !session.loginAt) return null;
-  if (Date.now() - session.loginAt > 7 * 24 * 3600 * 1000) return null; // 7澶╂湁鏁堟湡
+  if (Date.now() - session.loginAt > 7 * 24 * 3600 * 1000) return null; // 7天有效期
   return session;
 }
 
-// ===== 浜烘満楠岃瘉锛圫VG 楠岃瘉鐮侊級=====
+// ===== 人机验证（SVG 验证码）=====
 const captchaStore = new Map();
-// 鍙戝笘棰戠巼闄愬埗锛?鍒嗛挓鍐呮渶澶氬彂3绡囷紝瓒呭嚭闇€楠岃瘉鐮侊級
+// 发帖频率限制（5分钟内最多发3篇，超出需验证码）
 const postRateLimit = new Map();
 setInterval(() => {
   const now = Date.now();
@@ -595,14 +627,15 @@ setInterval(() => {
   }
 }, 60000);
 
-// 姣忓垎閽熸竻鐞嗚繃鏈熼獙璇佺爜锛?鍒嗛挓瓒呮椂锛?setInterval(() => {
+// 每分钟清理过期验证码（5分钟超时）
+setInterval(() => {
   const now = Date.now();
   for (const [id, entry] of captchaStore) {
     if (now - entry.t > 300000) captchaStore.delete(id);
   }
 }, 60000);
 
-// 姣忓ぉ娓呯悊瓒呰繃60澶╃殑宸插垹闄ら€氱煡
+// 每天清理超过60天的已删除通知
 setInterval(() => {
   const notices = readNotices();
   const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
@@ -614,42 +647,45 @@ setInterval(() => {
   });
   if (remaining.length !== notices.length) {
     writeNotices(remaining);
-    console.log('[閫氱煡娓呯悊] 宸叉竻鐞嗚秴杩?0澶╃殑宸插垹闄ら€氱煡');
+    console.log('[通知清理] 已清理超过60天的已删除通知');
   }
 }, 60 * 60 * 1000);
 
-// 鐢熸垚楠岃瘉鐮?app.get('/api/captcha', (req, res) => {
+// 生成验证码
+app.get('/api/captcha', (req, res) => {
   const captcha = svgCaptcha.create({ fontSize: 50, width: 150, height: 50, noise: 2 });
   const id = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   captchaStore.set(id, { text: captcha.text.toLowerCase(), t: Date.now() });
   res.json({ ok: true, data: { id, svg: captcha.data } });
 });
 
-// ===== 鐢ㄦ埛 API =====
+// ===== 用户 API =====
 
-// 娉ㄥ唽
+// 注册
 app.post('/api/user/register', (req, res) => {
   const { username, password, nickname, captchaId, captchaText } = req.body;
   if (!username || !password || !nickname) {
-    return res.json({ ok: false, msg: '璐﹀彿銆佸瘑鐮併€佹樀绉板潎涓哄繀濉」' });
+    return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
   }
-  // 楠岃瘉鐮佹牎楠?  const entry = captchaStore.get(captchaId);
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
   if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-    return res.json({ ok: false, msg: '楠岃瘉鐮侀敊璇? });
+    return res.json({ ok: false, msg: '验证码错误' });
   }
-  captchaStore.delete(captchaId); // 涓€娆℃€т娇鐢?  if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
-    return res.json({ ok: false, msg: '璐﹀彿闇€ 3-16 浣嶅瓧姣嶃€佹暟瀛椼€佷笅鍒掔嚎' });
+  captchaStore.delete(captchaId); // 一次性使用
+  if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+    return res.json({ ok: false, msg: '账号需 3-16 位字母、数字、下划线' });
   }
   if (password.length < 6) {
-    return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯 6 浣? });
+    return res.json({ ok: false, msg: '密码至少 6 位' });
   }
   if (nickname.length < 2 || nickname.length > 12) {
-    return res.json({ ok: false, msg: '鏄电О闇€ 2-12 涓瓧绗? });
+    return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
   }
 
   const users = readUsers();
   if (users.find(u => u.username === username)) {
-    return res.json({ ok: false, msg: '璐﹀彿宸茶娉ㄥ唽' });
+    return res.json({ ok: false, msg: '账号已被注册' });
   }
 
   const ip = getClientIP(req);
@@ -677,12 +713,12 @@ app.post('/api/user/register', (req, res) => {
       username: newUser.username,
       nickname: newUser.nickname,
       avatar: newUser.avatar,
-      zhixueStatus: null // 鏂扮敤鎴锋湭璁よ瘉
+      zhixueStatus: null // 新用户未认证
     }
   });
 });
 
-// 鐧诲綍
+// 登录
 app.post('/api/user/login', (req, res) => {
   const { username, password, captchaId, captchaText } = req.body;
   const ip = getClientIP(req);
@@ -690,20 +726,23 @@ app.post('/api/user/login', (req, res) => {
 
   if (!username || !password) {
     addLoginLog('user', null, false, ip, ua);
-    return res.json({ ok: false, msg: '璇疯緭鍏ヨ处鍙峰拰瀵嗙爜' });
+    return res.json({ ok: false, msg: '请输入账号和密码' });
   }
-  // 楠岃瘉鐮佹牎楠?  const entry = captchaStore.get(captchaId);
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
   if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-    return res.json({ ok: false, msg: '楠岃瘉鐮侀敊璇? });
+    return res.json({ ok: false, msg: '验证码错误' });
   }
-  captchaStore.delete(captchaId); // 涓€娆℃€т娇鐢?
+  captchaStore.delete(captchaId); // 一次性使用
+
   const users = readUsers();
   const user = users.find(u => u.username === username);
   if (!user || !verifyPassword(password, user.password)) {
     addLoginLog('user', username, false, ip, ua);
-    return res.json({ ok: false, msg: '璐﹀彿鎴栧瘑鐮侀敊璇? });
+    return res.json({ ok: false, msg: '账号或密码错误' });
   }
-  // 鑷姩瑙ｅ皝锛氬鏋?banUntil 宸茶繃鏈?  if (user.status === 'banned' && user.banUntil) {
+  // 自动解封：如果 banUntil 已过期
+  if (user.status === 'banned' && user.banUntil) {
     if (new Date(user.banUntil) <= new Date()) {
       user.status = 'active';
       user.banUntil = null;
@@ -733,37 +772,40 @@ app.post('/api/user/login', (req, res) => {
   });
 });
 
-// 鏅哄缃戣处鍙风櫥褰曪紙閫氳繃宸茶璇佺殑鏅哄璐﹀彿鐧诲綍鏍″洯澧欙級
+// 智学网账号登录（通过已认证的智学账号登录校园墙）
 app.post('/api/user/zhixue-login', (req, res) => {
   const { zhixueUsername, password, captchaId, captchaText } = req.body;
   const ip = getClientIP(req);
   const ua = req.headers['user-agent'] || '-';
 
-  // 楠岃瘉鐮佹牎楠?  const entry = captchaStore.get(captchaId);
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
   if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-    return res.json({ ok: false, msg: '楠岃瘉鐮侀敊璇? });
+    return res.json({ ok: false, msg: '验证码错误' });
   }
-  captchaStore.delete(captchaId); // 涓€娆℃€т娇鐢?
+  captchaStore.delete(captchaId); // 一次性使用
+
   if (!zhixueUsername || !password) {
     addLoginLog('user', null, false, ip, ua);
-    return res.json({ ok: false, msg: '璇疯緭鍏ョ粦瀹氱殑鏅哄缃戣处鍙峰拰瀵嗙爜' });
+    return res.json({ ok: false, msg: '请输入绑定的智学网账号和密码' });
   }
 
   const users = readUsers();
   let user = users.find(u => u.zhixueUsername === zhixueUsername && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
-  // 闃插尽锛歛pproved 蹇呴』鏈夊鏍歌褰?  if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
-    console.warn('[zhixue-login] 鐢ㄦ埛', user.id, '鐘舵€佷负 approved 浣嗙己灏戝鏍歌褰曪紝鎷掔粷鐧诲綍');
+  // 防御：approved 必须有审核记录
+  if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
+    console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
     user = null;
   }
   if (!user) {
     addLoginLog('user', zhixueUsername, false, ip, ua);
-    return res.json({ ok: false, msg: '褰撳墠璐﹀彿鍙兘閿欒鎴栬€呮湭缁戝畾鏍″洯澧欒处鍙? });
+    return res.json({ ok: false, msg: '当前账号可能错误或者未绑定校园墙账号' });
   }
   if (!verifyPassword(password, user.password)) {
     addLoginLog('user', zhixueUsername, false, ip, ua);
-    return res.json({ ok: false, msg: '褰撳墠瀵嗙爜閿欒' });
+    return res.json({ ok: false, msg: '当前密码错误' });
   }
-  // 鑷姩瑙ｅ皝
+  // 自动解封
   if (user.status === 'banned' && user.banUntil) {
     if (new Date(user.banUntil) <= new Date()) {
       user.status = 'active';
@@ -795,63 +837,66 @@ app.post('/api/user/zhixue-login', (req, res) => {
 });
 ;
 
-// ===== 娴忚鍣ㄤ俊浠昏嚜鍔ㄧ櫥褰?=====
-// 淇′换姝ゆ祻瑙堝櫒锛氱櫥褰曟垚鍔熷悗瀹㈡埛绔敓鎴?trustToken锛岃皟鐢ㄦ鎺ュ彛鐧昏
+// ===== 浏览器信任自动登录 =====
+// 信任此浏览器：登录成功后客户端生成 trustToken，调用此接口登记
 app.post('/api/user/trust-browser', (req, res) => {
   const auth = verifyUserToken(req.headers['x-user-token']);
-  if (!auth) return res.json({ ok: false, msg: '鏈櫥褰? });
+  if (!auth) return res.json({ ok: false, msg: '未登录' });
   const { trustToken } = req.body;
-  if (!trustToken) return res.json({ ok: false, msg: '缂哄皯淇′换浠ょ墝' });
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
   const users = readUsers();
   const user = users.find(u => u.id === auth.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
   const tokens = readTrustTokens();
   tokens[trustToken] = { userId: user.id, createdAt: Date.now(), lastUsedAt: Date.now() };
   writeTrustTokens(tokens);
   res.json({ ok: true });
 });
 
-// 鑷姩鐧诲綍锛氶〉闈㈠姞杞芥椂妫€鏌?trustToken 鏄惁鏈夋晥
+// 自动登录：页面加载时检查 trustToken 是否有效
 app.post('/api/user/auto-login', (req, res) => {
   const { trustToken } = req.body;
-  if (!trustToken) return res.json({ ok: false, msg: '缂哄皯淇′换浠ょ墝' });
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
   const tokens = readTrustTokens();
   const entry = tokens[trustToken];
-  if (!entry) return res.json({ ok: false, msg: '浠ょ墝鏃犳晥鎴栧凡鎾ら攢' });
+  if (!entry) return res.json({ ok: false, msg: '令牌无效或已撤销' });
   const users = readUsers();
   const user = users.find(u => u.id === entry.userId);
-  if (!user) { delete tokens[trustToken]; writeTrustTokens(tokens); return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? }); }
+  if (!user) { delete tokens[trustToken]; writeTrustTokens(tokens); return res.json({ ok: false, msg: '用户不存在' }); }
   if (user.status === 'banned') {
-    return res.json({ ok: false, msg: '璇ヨ处鍙峰凡琚皝绂?, banned: true });
+    return res.json({ ok: false, msg: '该账号已被封禁', banned: true });
   }
   entry.lastUsedAt = Date.now();
   writeTrustTokens(tokens);
   res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user) } });
 });
 
-// 鎾ら攢淇′换锛堢敤鎴烽€€鍑烘椂娓呴櫎锛?app.post('/api/user/revoke-trust', (req, res) => {
+// 撤销信任（用户退出时清除）
+app.post('/api/user/revoke-trust', (req, res) => {
   const { trustToken } = req.body;
-  if (!trustToken) return res.json({ ok: false, msg: '缂哄皯淇′换浠ょ墝' });
+  if (!trustToken) return res.json({ ok: false, msg: '缺少信任令牌' });
   const tokens = readTrustTokens();
   delete tokens[trustToken];
   writeTrustTokens(tokens);
   res.json({ ok: true });
 });
 
-// ===== 浜岀淮鐮佺櫥褰?=====
+// ===== 二维码登录 =====
 const qrCodeStore = new Map();
-const QR_CODE_TTL = 5 * 60 * 1000; // 5鍒嗛挓鏈夋晥鏈?
-// 鍚姩鏃舵仮澶嶅凡鎸佷箙鍖栫殑浜岀淮鐮?try {
+const QR_CODE_TTL = 5 * 60 * 1000; // 5分钟有效期
+
+// 启动时恢复已持久化的二维码
+try {
   const fs = require('fs');
   const qrDbPath = require('path').join(__dirname, 'data', 'qrcodes.json');
   if (fs.existsSync(qrDbPath)) {
     const raw = fs.readFileSync(qrDbPath, 'utf8');
     const arr = JSON.parse(raw);
     arr.forEach(entry => qrCodeStore.set(entry.token, entry.data));
-    console.log('[qrcode] 宸叉仮澶?' + qrCodeStore.size + ' 涓簩缁寸爜浠ょ墝');
+    console.log('[qrcode] 已恢复 ' + qrCodeStore.size + ' 个二维码令牌');
   }
 } catch(e) {
-  console.warn('[qrcode] 鎭㈠澶辫触锛堥娆¤繍琛屽彲蹇界暐锛?', e.message);
+  console.warn('[qrcode] 恢复失败（首次运行可忽略）:', e.message);
 }
 
 function persistQrCodes() {
@@ -864,11 +909,11 @@ function persistQrCodes() {
     }
     fs.writeFileSync(qrDbPath, JSON.stringify(arr, null, 2), 'utf8');
   } catch(e) {
-    console.warn('[qrcode] 鎸佷箙鍖栧け璐?', e.message);
+    console.warn('[qrcode] 持久化失败:', e.message);
   }
 }
 
-// 鐢熸垚浜岀淮鐮侊紙缃戦〉绔皟鐢級
+// 生成二维码（网页端调用）
 app.get('/api/user/qrcode/generate', (req, res) => {
   const { userToken } = req.query;
   let linkedUser = null;
@@ -889,44 +934,46 @@ app.get('/api/user/qrcode/generate', (req, res) => {
   });
   persistQrCodes();
   cleanupQrCodes();
-  console.log('[qrcode] 鐢熸垚浜岀淮鐮?token=' + qrToken.slice(0,12) + '... linked=' + (linkedUser ? linkedUser.nickname : '鏃?) + ' store_size=' + qrCodeStore.size);
+  console.log('[qrcode] 生成二维码 token=' + qrToken.slice(0,12) + '... linked=' + (linkedUser ? linkedUser.nickname : '无') + ' store_size=' + qrCodeStore.size);
   res.json({ ok: true, qrToken, expiresIn: QR_CODE_TTL });
 });
 
-// 灏忕▼搴忔壂鐮侊紙鎵弿浜岀淮鐮侊級鈫?鑷姩纭鐧诲綍
+// 小程序扫码（扫描二维码）→ 自动确认登录
 app.get('/api/user/qrcode/scan', (req, res) => {
   const { token } = req.query;
   const qr = qrCodeStore.get(token);
-  console.log('[qrcode] 鎵爜 token=' + (token ? token.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' store_size=' + qrCodeStore.size);
-  if (!token) return res.json({ ok: false, msg: '缂哄皯浜岀淮鐮佷护鐗? });
-  if (!qr) return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+  console.log('[qrcode] 扫码 token=' + (token ? token.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' store_size=' + qrCodeStore.size);
+  if (!token) return res.json({ ok: false, msg: '缺少二维码令牌' });
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
   if (Date.now() - qr.createdAt > QR_CODE_TTL) {
     qr.status = 'expired';
     persistQrCodes();
-    return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+    return res.json({ ok: false, msg: '二维码已失效' });
   }
-  // 鐢熸垚鐢ㄦ埛浼氳瘽
+  // 生成用户会话
   let sessionUser;
   if (qr.linkedUser) {
-    // 鏈夊叧鑱旂敤鎴凤細浣跨敤璇ョ敤鎴风殑淇℃伅
+    // 有关联用户：使用该用户的信息
     sessionUser = {
       id: qr.linkedUser.id,
       nickname: qr.linkedUser.nickname,
-      avatar: qr.linkedUser.avatar || '馃檵',
+      avatar: qr.linkedUser.avatar || '🙋',
       token: makeUserToken(qr.linkedUser),
       username: qr.linkedUser.username || ''
     };
-    // 鏇存柊璇ョ敤鎴风殑 token锛堝埛鏂版湁鏁堟湡锛?    const allUsers = readUsers();
+    // 更新该用户的 token（刷新有效期）
+    const allUsers = readUsers();
     const idx = allUsers.findIndex(u => u.id === qr.linkedUser.id);
     if (idx >= 0) {
       allUsers[idx].token = sessionUser.token;
       writeUsers(allUsers);
     }
   } else {
-    // 鏃犲叧鑱旂敤鎴凤細鍒涘缓鏂扮敤鎴?    sessionUser = {
+    // 无关联用户：创建新用户
+    sessionUser = {
       id: 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-      nickname: '鐢ㄦ埛' + Math.random().toString(36).slice(2, 6).toUpperCase(),
-      avatar: '馃檵',
+      nickname: '用户' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+      avatar: '🙋',
       token: crypto.randomBytes(24).toString('hex')
     };
     const allUsers = readUsers();
@@ -943,23 +990,24 @@ app.get('/api/user/qrcode/scan', (req, res) => {
   qr.status = 'confirmed';
   qr.sessionUser = sessionUser;
   persistQrCodes();
-  console.log('[qrcode] 鎵爜鎴愬姛', sessionUser.nickname, 'token=' + sessionUser.token.slice(0,12) + '...');
+  console.log('[qrcode] 扫码成功', sessionUser.nickname, 'token=' + sessionUser.token.slice(0,12) + '...');
   res.json({ ok: true, scanned: true });
 });
 
-// 灏忕▼搴忔煡璇㈢姸鎬?app.get('/api/user/qrcode/status', (req, res) => {
+// 小程序查询状态
+app.get('/api/user/qrcode/status', (req, res) => {
   const { qrToken } = req.query;
   const qr = qrCodeStore.get(qrToken);
-  console.log('[qrcode] 鐘舵€佹煡璇?token=' + (qrToken ? qrToken.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' status=' + (qr ? qr.status : 'N/A'));
-  if (!qrToken) return res.json({ ok: false, msg: '缂哄皯浜岀淮鐮佷护鐗? });
-  if (!qr) return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+  console.log('[qrcode] 状态查询 token=' + (qrToken ? qrToken.slice(0,12) + '...' : 'MISSING') + ' found=' + !!qr + ' status=' + (qr ? qr.status : 'N/A'));
+  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
   if (Date.now() - qr.createdAt > QR_CODE_TTL) {
     qr.status = 'expired';
     persistQrCodes();
-    return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+    return res.json({ ok: false, msg: '二维码已失效' });
   }
   if (qr.status === 'confirmed') {
-    // 杩斿洖鐢ㄦ埛淇℃伅缁欏皬绋嬪簭
+    // 返回用户信息给小程序
     if (qr.sessionUser) {
       qrCodeStore.delete(qrToken);
       persistQrCodes();
@@ -979,25 +1027,27 @@ app.get('/api/user/qrcode/scan', (req, res) => {
   res.json({ ok: true, pending: true });
 });
 
-// 灏忕▼搴忕‘璁ょ櫥褰?app.post('/api/user/qrcode/confirm', (req, res) => {
+// 小程序确认登录
+app.post('/api/user/qrcode/confirm', (req, res) => {
   const { qrToken, userId } = req.body;
-  if (!qrToken) return res.json({ ok: false, msg: '缂哄皯浜岀淮鐮佷护鐗? });
+  if (!qrToken) return res.json({ ok: false, msg: '缺少二维码令牌' });
   const qr = qrCodeStore.get(qrToken);
-  if (!qr) return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+  if (!qr) return res.json({ ok: false, msg: '二维码已失效' });
   if (Date.now() - qr.createdAt > QR_CODE_TTL) {
     qr.status = 'expired';
-    return res.json({ ok: false, msg: '浜岀淮鐮佸凡澶辨晥' });
+    return res.json({ ok: false, msg: '二维码已失效' });
   }
-  if (qr.status !== 'scanned') return res.json({ ok: false, msg: '绛夊緟鎵爜纭' });
+  if (qr.status !== 'scanned') return res.json({ ok: false, msg: '等待扫码确认' });
   const users = readUsers();
   const user = users.find(u => u.id === userId);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
   qr.status = 'confirmed';
   qr.userId = user.id;
   res.json({ ok: true });
 });
 
-// 娓呯悊杩囨湡浜岀淮鐮?function cleanupQrCodes() {
+// 清理过期二维码
+function cleanupQrCodes() {
   const now = Date.now();
   let changed = false;
   for (const [token, qr] of qrCodeStore) {
@@ -1011,56 +1061,58 @@ app.get('/api/user/qrcode/scan', (req, res) => {
 }
 setInterval(cleanupQrCodes, 60000);
 
-// 鎵惧洖瀵嗙爜锛堥€氳繃宸茶璇佺殑鏅哄缃戣处鍙凤級
+// 找回密码（通过已认证的智学网账号）
 app.post('/api/user/forgot-password', (req, res) => {
   const { zhixueUsername, newPassword, confirmPassword } = req.body;
 
   if (!zhixueUsername) {
-    return res.json({ ok: false, msg: '璇疯緭鍏ョ粦瀹氱殑鏅哄缃戣处鍙? });
+    return res.json({ ok: false, msg: '请输入绑定的智学网账号' });
   }
   if (!newPassword || newPassword.length < 6) {
-    return res.json({ ok: false, msg: '鏂板瘑鐮佽嚦灏?6 浣? });
+    return res.json({ ok: false, msg: '新密码至少 6 位' });
   }
   if (newPassword !== confirmPassword) {
-    return res.json({ ok: false, msg: '涓ゆ杈撳叆鐨勬柊瀵嗙爜涓嶄竴鑷? });
+    return res.json({ ok: false, msg: '两次输入的新密码不一致' });
   }
 
   const users = readUsers();
   const userIndex = users.findIndex(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
   if (userIndex === -1) {
-    return res.json({ ok: false, msg: '璇ユ櫤瀛︾綉璐﹀彿鏈璇佹垨涓嶅瓨鍦? });
+    return res.json({ ok: false, msg: '该智学网账号未认证或不存在' });
   }
 
   users[userIndex].password = hashPassword(newPassword);
   writeUsers(users);
 
-  res.json({ ok: true, msg: '瀵嗙爜閲嶇疆鎴愬姛锛岃浣跨敤鏂板瘑鐮佺櫥褰? });
+  res.json({ ok: true, msg: '密码重置成功，请使用新密码登录' });
 });
 
-// 楠岃瘉褰撳墠鐢ㄦ埛鐧诲綍鐘舵€?app.get('/api/user/me', (req, res) => {
+// 验证当前用户登录状态
+app.get('/api/user/me', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
 });
 
-// ===== 绛惧埌 =====
-const CHECKIN_REWARD = 100; // 姣忔棩绛惧埌濂栧姳 100 Credit
+// ===== 签到 =====
+const CHECKIN_REWARD = 100; // 每日签到奖励 100 Credit
 
-// 鑾峰彇绛惧埌鐘舵€?app.get('/api/user/checkin-status', (req, res) => {
+// 获取签到状态
+app.get('/api/user/checkin-status', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
   const today = new Date().toISOString().slice(0, 10);
   res.json({
@@ -1073,42 +1125,44 @@ const CHECKIN_REWARD = 100; // 姣忔棩绛惧埌濂栧姳 100 Credit
   });
 });
 
-// 绛惧埌
+// 签到
 app.post('/api/user/checkin', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const users = readUsers();
   const idx = users.findIndex(u => u.id === session.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   const user = users[idx];
   const today = new Date().toISOString().slice(0, 10);
 
-  // 浠婂ぉ宸茬鍒?  if (user.lastCheckinDate === today) {
-    return res.json({ ok: false, msg: '浠婂ぉ宸茬鍒帮紝鏄庡ぉ鍐嶆潵鍚? });
+  // 今天已签到
+  if (user.lastCheckinDate === today) {
+    return res.json({ ok: false, msg: '今天已签到，明天再来吧' });
   }
 
-  // 鍒ゆ柇鏄惁杩炵画绛惧埌
+  // 判断是否连续签到
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   if (user.lastCheckinDate === yesterday) {
     user.checkinStreak = (user.checkinStreak || 0) + 1;
   } else {
-    user.checkinStreak = 1; // 鏂锛岄噸鏂板紑濮?  }
+    user.checkinStreak = 1; // 断签，重新开始
+  }
 
   user.lastCheckinDate = today;
   user.credit = (user.credit || 0) + CHECKIN_REWARD;
   writeUsers(users);
 
-  // 璁板綍娴佹按
+  // 记录流水
   const logs = readCreditLogs();
   logs.push({
     id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId: session.id,
     amount: CHECKIN_REWARD,
-    reason: '姣忔棩绛惧埌锛堣繛缁?' + user.checkinStreak + ' 澶╋級',
+    reason: '每日签到（连续 ' + user.checkinStreak + ' 天）',
     createdAt: new Date().toISOString()
   });
   writeCreditLogs(logs);
@@ -1123,26 +1177,28 @@ app.post('/api/user/checkin', (req, res) => {
   });
 });
 
-// 鑾峰彇褰撳墠鐢ㄦ埛鐨?Credit 娴佹按
+// 获取当前用户的 Credit 流水
 app.get('/api/user/credit-logs', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const logs = readCreditLogs();
   const userLogs = logs.filter(l => l.userId === session.id).reverse();
   res.json({ ok: true, data: userLogs });
 });
 
-// 鍏戞崲鍗″瘑锛堝惈棰戠巼闄愬埗锛?const redeemRateLimit = new Map();
+// 兑换卡密（含频率限制）
+const redeemRateLimit = new Map();
 app.post('/api/user/redeem-credit', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
-  // 棰戠巼闄愬埗锛氭瘡浜烘瘡鍒嗛挓鏈€澶?5 娆?  const now = Date.now();
+  // 频率限制：每人每分钟最多 5 次
+  const now = Date.now();
   const rlKey = session.id;
   let rl = redeemRateLimit.get(rlKey);
   if (!rl || now - rl.window > 60000) {
@@ -1150,45 +1206,48 @@ app.post('/api/user/redeem-credit', (req, res) => {
     redeemRateLimit.set(rlKey, rl);
   }
   rl.count++;
-  if (rl.count > 5) return res.json({ ok: false, msg: '鎿嶄綔澶绻侊紝璇风◢鍚庡啀璇? });
+  if (rl.count > 5) return res.json({ ok: false, msg: '操作太频繁，请稍后再试' });
 
   const { code } = req.body;
-  if (!code || !code.trim()) return res.json({ ok: false, msg: '璇疯緭鍏ュ崱瀵? });
+  if (!code || !code.trim()) return res.json({ ok: false, msg: '请输入卡密' });
 
   const cleanCode = code.trim().toUpperCase();
-  // 鏍煎紡楠岃瘉锛欳W-XXXX-XXXX-X锛?2浣嶅瓧姣嶆暟瀛?4涓垎闅旂锛?  if (!/^CW-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(cleanCode)) {
-    return res.json({ ok: false, msg: '鍗″瘑鏍煎紡涓嶆纭? });
+  // 格式验证：CW-XXXX-XXXX-X（12位字母数字+4个分隔符）
+  if (!/^CW-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(cleanCode)) {
+    return res.json({ ok: false, msg: '卡密格式不正确' });
   }
-  // 鏍￠獙鐮侀獙璇侊紙Luhn mod N锛?  const codePart = cleanCode.replace(/-/g, '').slice(2); // 鍘绘帀 "CW-" 鍓嶇紑
+  // 校验码验证（Luhn mod N）
+  const codePart = cleanCode.replace(/-/g, '').slice(2); // 去掉 "CW-" 前缀
   if (!luhnModN(codePart)) {
-    return res.json({ ok: false, msg: '鍗″瘑鏃犳晥锛堟牎楠岀爜涓嶅尮閰嶏級' });
+    return res.json({ ok: false, msg: '卡密无效（校验码不匹配）' });
   }
 
   const cards = readCreditCards();
   const card = cards.find(c => c.code === cleanCode);
 
-  if (!card) return res.json({ ok: false, msg: '鍗″瘑涓嶅瓨鍦? });
-  if (card.status !== 'unused') return res.json({ ok: false, msg: '璇ュ崱瀵嗗凡琚娇鐢? });
+  if (!card) return res.json({ ok: false, msg: '卡密不存在' });
+  if (card.status !== 'unused') return res.json({ ok: false, msg: '该卡密已被使用' });
 
-  // 鏇存柊鍗″瘑鐘舵€?  card.status = 'used';
+  // 更新卡密状态
+  card.status = 'used';
   card.usedBy = session.id;
   card.usedAt = new Date().toISOString();
   writeCreditCards(cards);
 
-  // 缁欑敤鎴峰姞 credit
+  // 给用户加 credit
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   users[userIndex].credit = (users[userIndex].credit || 0) + card.value;
   writeUsers(users);
 
-  // 璁板綍娴佹按
+  // 记录流水
   const logs = readCreditLogs();
   logs.push({
     id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId: session.id,
     amount: card.value,
-    reason: '鍗″瘑鍏戞崲锛? + cleanCode,
+    reason: '卡密兑换：' + cleanCode,
     createdAt: new Date().toISOString()
   });
   writeCreditLogs(logs);
@@ -1196,56 +1255,60 @@ app.post('/api/user/redeem-credit', (req, res) => {
   res.json({ ok: true, data: { value: card.value, balance: users[userIndex].credit } });
 });
 
-// 鏇存柊褰撳墠鐢ㄦ埛璧勬枡锛堟樀绉般€佸ご鍍忥級
+// 更新当前用户资料（昵称、头像）
 app.patch('/api/user/me', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   const user = users[userIndex];
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
   const { nickname, avatar } = req.body;
   let updated = false;
 
-  // 鏇存柊鏄电О
+  // 更新昵称
   if (nickname !== undefined) {
     if (nickname.length < 2 || nickname.length > 12) {
-      return res.json({ ok: false, msg: '鏄电О闇€ 2-12 涓瓧绗? });
+      return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
     }
     user.nickname = nickname;
     updated = true;
   }
 
-  // 鏇存柊澶村儚锛坆ase64 data URL锛?  if (avatar !== undefined) {
-    // 楠岃瘉澶村儚鏍煎紡鍜屽ぇ灏?    if (typeof avatar !== 'string') {
-      return res.json({ ok: false, msg: '澶村儚鏁版嵁鏍煎紡閿欒' });
+  // 更新头像（base64 data URL）
+  if (avatar !== undefined) {
+    // 验证头像格式和大小
+    if (typeof avatar !== 'string') {
+      return res.json({ ok: false, msg: '头像数据格式错误' });
     }
-    // 妫€鏌ユ槸鍚︿负鍥剧墖 data URL
+    // 检查是否为图片 data URL
     if (!/^data:image\/.*;base64,/.test(avatar)) {
-      return res.json({ ok: false, msg: '澶村儚浠呮敮鎸佸浘鐗囨牸寮? });
+      return res.json({ ok: false, msg: '头像仅支持图片格式' });
     }
     const base64Data = avatar.split(',')[1];
     if (!base64Data) {
-      return res.json({ ok: false, msg: '澶村儚鏁版嵁涓嶅畬鏁? });
+      return res.json({ ok: false, msg: '头像数据不完整' });
     }
-    // 璁＄畻 base64 鏁版嵁澶у皬锛堢害绛変簬鍘熸枃浠剁殑 4/3锛?    if (base64Data.length > 700000) { // 瀵瑰簲绾?500KB 鐨?JPG 鏂囦欢
-      return res.json({ ok: false, msg: '澶村儚鍥剧墖澶ぇ锛岃鍘嬬缉鍒?500KB 浠ュ唴' });
+    // 计算 base64 数据大小（约等于原文件的 4/3）
+    if (base64Data.length > 700000) { // 对应约 500KB 的 JPG 文件
+      return res.json({ ok: false, msg: '头像图片太大，请压缩到 500KB 以内' });
     }
-    // 鍙€夛細楠岃瘉 base64 鏈夋晥鎬?    try {
+    // 可选：验证 base64 有效性
+    try {
       Buffer.from(base64Data, 'base64');
     } catch (e) {
-      return res.json({ ok: false, msg: '澶村儚鏁版嵁鏍煎紡鏃犳晥' });
+      return res.json({ ok: false, msg: '头像数据格式无效' });
     }
     user.avatar = avatar;
     updated = true;
   }
 
   if (!updated) {
-    return res.json({ ok: false, msg: '鏈彁渚涘彲鏇存柊鐨勫瓧娈? });
+    return res.json({ ok: false, msg: '未提供可更新的字段' });
   }
 
   users[userIndex] = user;
@@ -1253,34 +1316,36 @@ app.patch('/api/user/me', (req, res) => {
   res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar } });
 });
 
-// 缁戝畾绠＄悊鍛樿处鍙?app.post('/api/user/bind-admin', (req, res) => {
+// 绑定管理员账号
+app.post('/api/user/bind-admin', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   const user = users[userIndex];
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
   const { password, adminId, adminPassword } = req.body;
   if (!password || !adminId || !adminPassword) {
-    return res.json({ ok: false, msg: '璇峰～鍐欏畬鏁翠俊鎭? });
+    return res.json({ ok: false, msg: '请填写完整信息' });
   }
 
-  // 楠岃瘉鐢ㄦ埛瀵嗙爜
+  // 验证用户密码
   if (!verifyPassword(password, user.password)) {
-    return res.json({ ok: false, msg: '璐﹀彿瀵嗙爜閿欒锛岀粦瀹氬け璐? });
+    return res.json({ ok: false, msg: '账号密码错误，绑定失败' });
   }
 
-  // 鏌ユ壘绠＄悊鍛樿处鍙?  const admins = readAdmins();
+  // 查找管理员账号
+  const admins = readAdmins();
   const admin = admins.find(a => a.id === adminId);
   if (!admin || !verifyPassword(adminPassword, admin.password)) {
-    return res.json({ ok: false, msg: '绠＄悊鍛樿处鍙锋垨瀵嗙爜閿欒锛岀粦瀹氬け璐? });
+    return res.json({ ok: false, msg: '管理员账号或密码错误，绑定失败' });
   }
 
-  // 缁戝畾
+  // 绑定
   users[userIndex].bindAdminId = admin.id;
   users[userIndex].bindAdminRole = admin.role;
   writeUsers(users);
@@ -1288,14 +1353,15 @@ app.patch('/api/user/me', (req, res) => {
   res.json({ ok: true, data: { bindAdminId: admin.id, bindAdminRole: admin.role } });
 });
 
-// 瑙ｇ粦绠＄悊鍛樿处鍙?app.delete('/api/user/bind-admin', (req, res) => {
+// 解绑管理员账号
+app.delete('/api/user/bind-admin', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   users[userIndex].bindAdminId = null;
   users[userIndex].bindAdminRole = null;
@@ -1304,38 +1370,40 @@ app.patch('/api/user/me', (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 鍚屽璁よ瘉 =====
+// ===== 同学认证 =====
 
-// 鎻愪氦鍚屽璁よ瘉锛堟櫤瀛﹁璇?鎴?鎵嬪姩璁よ瘉锛?app.post('/api/user/bind-zhixue', (req, res) => {
+// 提交同学认证（智学认证 或 手动认证）
+app.post('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
-  // 濡傛灉鐘舵€佹槸宸茶璇侊紝闇€瑕佸厛瑙ｉ櫎鎵嶈兘閲嶆柊鎻愪氦
+  // 如果状态是已认证，需要先解除才能重新提交
   if (users[userIndex].zhixueStatus === 'approved') {
-    return res.json({ ok: false, msg: '璐﹀彿宸茶璇侊紝濡傞渶淇敼璇疯仈绯荤鐞嗗憳' });
+    return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
   }
 
   const { type } = req.body;
 
   if (type === 'zhixue') {
-    // 鏅哄璁よ瘉锛氳处鍙?+ 瀵嗙爜
+    // 智学认证：账号 + 密码
     const { zhixueUsername, zhixuePassword } = req.body;
-    if (!zhixueUsername) return res.json({ ok: false, msg: '璇峰～鍐欑粦瀹氱殑鏅哄缃戣处鍙? });
-    if (!zhixuePassword) return res.json({ ok: false, msg: '璇峰～鍐欐櫤瀛︾綉瀵嗙爜' });
+    if (!zhixueUsername) return res.json({ ok: false, msg: '请填写绑定的智学网账号' });
+    if (!zhixuePassword) return res.json({ ok: false, msg: '请填写智学网密码' });
 
-    // 鍞竴鎬ф鏌ワ細宸茶璇侊紙approved锛夌殑鏅哄璐﹀彿涓嶅厑璁歌鍏朵粬鏍″洯澧欒处鍙烽噸澶嶇粦瀹?    const existingUser = users.find(u =>
+    // 唯一性检查：已认证（approved）的智学账号不允许被其他校园墙账号重复绑定
+    const existingUser = users.find(u =>
       u.zhixueUsername === zhixueUsername &&
       u.zhixueStatus === 'approved' &&
       u.id !== users[userIndex].id
     );
     if (existingUser) {
-      return res.json({ ok: false, msg: '璇ユ櫤瀛︾綉璐﹀彿宸茶鍏朵粬璐﹀彿缁戝畾' });
+      return res.json({ ok: false, msg: '该智学网账号已被其他账号绑定' });
     }
 
     users[userIndex].zhixueCertType = 'zhixue';
@@ -1345,30 +1413,33 @@ app.patch('/api/user/me', (req, res) => {
     users[userIndex].zhixueManualImages = null;
 
   } else if (type === 'manual') {
-    // 鎵嬪姩璁よ瘉锛氬鍚?+ 閭 + 璇存槑 + 鍥剧墖
+    // 手动认证：姓名 + 邮箱 + 说明 + 图片
     const { manualName, manualEmail, manualNote, manualImages } = req.body;
-    if (!manualName || !manualName.trim()) return res.json({ ok: false, msg: '璇峰～鍐欏鍚? });
-    if (!manualEmail || !manualEmail.trim()) return res.json({ ok: false, msg: '璇峰～鍐欓偖绠? });
-    if (!manualNote || !manualNote.trim()) return res.json({ ok: false, msg: '璇峰～鍐欒璇佽鏄? });
+    if (!manualName || !manualName.trim()) return res.json({ ok: false, msg: '请填写姓名' });
+    if (!manualEmail || !manualEmail.trim()) return res.json({ ok: false, msg: '请填写邮箱' });
+    if (!manualNote || !manualNote.trim()) return res.json({ ok: false, msg: '请填写认证说明' });
     if (!manualImages || !Array.isArray(manualImages) || manualImages.length === 0) {
-      return res.json({ ok: false, msg: '璇疯嚦灏戜笂浼犱竴寮犺瘉鏄庡浘鐗? });
+      return res.json({ ok: false, msg: '请至少上传一张证明图片' });
     }
-    if (manualImages.length > 3) return res.json({ ok: false, msg: '鏈€澶氫笂浼?寮犲浘鐗? });
-    // 楠岃瘉鍥剧墖鏍煎紡涓庡ぇ灏忥紙base64 data URL锛?    // 淇琚?express.json() 鐮村潖鐨?data URL锛坉ata:image/jpeg;base64 鈫?dataimagejpegbase64锛?    for (let i = 0; i < manualImages.length; i++) {
+    if (manualImages.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
+    // 验证图片格式与大小（base64 data URL）
+    // 修正被 express.json() 破坏的 data URL（data:image/jpeg;base64 → dataimagejpegbase64）
+    for (let i = 0; i < manualImages.length; i++) {
       const img = manualImages[i];
       let fixed = img;
-      // 鍖归厤 dataimagejpegbase64, 鎴?dataimage/jpegbase64, 绛夊悇绉嶅彉浣?      const m = img.match(/^dataimage\/?(jpeg|jpg|png|gif|webp|svg\xml)base64,/i)
+      // 匹配 dataimagejpegbase64, 或 dataimage/jpegbase64, 等各种变体
+      const m = img.match(/^dataimage\/?(jpeg|jpg|png|gif|webp|svg\xml)base64,/i)
               || img.match(/^data:image\/?(jpeg|jpg|png|gif|webp|svg\xml);base64,/i);
       if (m) {
         fixed = 'data:image/' + m[1] + ';base64,' + img.slice(m[0].length);
       } else if (!/^data:image\//i.test(img)) {
-        return res.json({ ok: false, msg: '鍙厑璁镐笂浼犲浘鐗囨枃浠? });
+        return res.json({ ok: false, msg: '只允许上传图片文件' });
       }
       manualImages[i] = fixed;
       const base64Data = fixed.split(',')[1] || '';
       const sizeBytes = Math.ceil(base64Data.length * 3 / 4);
       if (sizeBytes > 10 * 1024 * 1024) {
-        return res.json({ ok: false, msg: '鍗曞紶鍥剧墖涓嶈兘瓒呰繃 10MB' });
+        return res.json({ ok: false, msg: '单张图片不能超过 10MB' });
       }
     }
 
@@ -1381,7 +1452,7 @@ app.patch('/api/user/me', (req, res) => {
     users[userIndex].zhixueManualImages = manualImages;
 
   } else {
-    return res.json({ ok: false, msg: '鏃犳晥鐨勮璇佺被鍨? });
+    return res.json({ ok: false, msg: '无效的认证类型' });
   }
 
   users[userIndex].zhixueStatus = 'pending';
@@ -1390,18 +1461,18 @@ app.patch('/api/user/me', (req, res) => {
   users[userIndex].zhixueReviewedBy = null;
   writeUsers(users);
 
-  res.json({ ok: true, msg: '鎻愪氦鎴愬姛锛岃绛夊緟绠＄悊鍛樺鏍?, data: { type, status: 'pending' } });
+  res.json({ ok: true, msg: '提交成功，请等待管理员审核', data: { type, status: 'pending' } });
 });
 
-// 瑙ｇ粦鍚屽璁よ瘉
+// 解绑同学认证
 app.delete('/api/user/bind-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   users[userIndex].zhixueCertType = null;
   users[userIndex].zhixueUsername = null;
@@ -1419,31 +1490,32 @@ app.delete('/api/user/bind-zhixue', (req, res) => {
   res.json({ ok: true });
 });
 
-// 鑾峰彇褰撳墠鐢ㄦ埛鍚屽璁よ瘉淇℃伅锛堢敤浜庡墠绔睍绀猴級
+// 获取当前用户同学认证信息（用于前端展示）
 app.get('/api/user/me/zhixue-info', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
 
   if (!user.zhixueUsername && !user.zhixueManualNote) {
     return res.json({ ok: true, data: null });
   }
 
-  // 鏍￠獙锛歴tatus=approved 蹇呴』鏈?reviewedBy锛堢鐞嗗憳瀹℃牳璁板綍锛夛紝鍚﹀垯闄嶇骇涓?pending
+  // 校验：status=approved 必须有 reviewedBy（管理员审核记录），否则降级为 pending
   let displayStatus = user.zhixueStatus || 'pending';
   if (displayStatus === 'approved' && !user.zhixueReviewedBy) {
     displayStatus = 'pending';
-    console.warn('[zhixue-info] 鐢ㄦ埛', user.id, '鐘舵€佷负 approved 浣嗙己灏戝鏍歌褰曪紝闄嶇骇涓?pending');
+    console.warn('[zhixue-info] 用户', user.id, '状态为 approved 但缺少审核记录，降级为 pending');
   }
 
   const realName = decryptCert ? decryptCert(user.certRealName) : null;
   const className = user.certClassName ? (decryptCert ? decryptCert(user.certClassName) : null) : null;
-  // 鏈€氳繃瀹℃牳鎴栬椹冲洖鏃讹紝杩斿洖缂栬緫鎵€闇€鐨勯濉暟鎹?  let editData = null;
+  // 未通过审核或被驳回时，返回编辑所需的预填数据
+  let editData = null;
   if (displayStatus !== 'approved' && displayStatus !== 'pending_confirm') {
     editData = {
       certType: user.zhixueCertType || 'zhixue',
@@ -1470,9 +1542,10 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   });
 });
 
-// ===== 绠＄悊鍛樺悓瀛﹁璇佸鏍?=====
+// ===== 管理员同学认证审核 =====
 
-// 鑾峰彇寰呭鏍稿垪琛紙浠呯鐞嗗憳锛?app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
+// 获取待审核列表（仅管理员）
+app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
   const users = readUsers();
   const pending = users.filter(u => u.zhixueStatus === 'pending');
   const list = pending.map(u => ({
@@ -1489,21 +1562,23 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   res.json({ ok: true, data: list });
 });
 
-// 瀹℃牳鍚屽璁よ瘉锛堥€氳繃/鎷掔粷锛?app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
+// 审核同学认证（通过/拒绝）
+app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   const { action, realName, className, rejectReason } = req.body; // action: approve | reject
   if (!['approve', 'reject'].includes(action)) {
-    return res.json({ ok: false, msg: '鏃犳晥鐨勬搷浣? });
+    return res.json({ ok: false, msg: '无效的操作' });
   }
 
-  // 鎷掔粷鏃跺繀椤诲～鍐欏師鍥?  if (action === 'reject') {
+  // 拒绝时必须填写原因
+  if (action === 'reject') {
     if (!rejectReason || !rejectReason.trim()) {
-      return res.json({ ok: false, msg: '璇峰～鍐欓┏鍥炲師鍥? });
+      return res.json({ ok: false, msg: '请填写驳回原因' });
     }
   }
 
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === req.params.userId);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   const now = new Date().toISOString();
 
@@ -1514,26 +1589,29 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
     users[userIndex].zhixueReviewedAt = now;
     users[userIndex].zhixueReviewedBy = req.admin.id;
     writeUsers(users);
-    return res.json({ ok: true, msg: '宸叉嫆缁濊鐢宠' });
+    return res.json({ ok: true, msg: '已拒绝该申请' });
   }
 
-  // === approve 娴佺▼ ===
-  // 閫氳繃鏃讹細鏅哄璁よ瘉蹇呴』濉啓濮撳悕锛涙墜鍔ㄨ璇佹湁 manualName 鍏滃簳锛岀鐞嗗憳鍙笉濉?  const u = users[userIndex];
+  // === approve 流程 ===
+  // 通过时：智学认证必须填写姓名；手动认证有 manualName 兜底，管理员可不填
+  const u = users[userIndex];
   const isManual = u.zhixueCertType === 'manual';
   const hasManualName = u.zhixueManualName;
   if (!isManual && !hasManualName && (!realName || !realName.trim())) {
-    return res.json({ ok: false, msg: '璇峰～鍐欏鐢熷鍚? });
+    return res.json({ ok: false, msg: '请填写学生姓名' });
   }
 
-  // 鏅哄璁よ瘉 鈫?pending_confirm锛堢瓑寰呯敤鎴风‘璁わ級
-  // 鎵嬪姩璁よ瘉 鈫?approved锛堢洿鎺ラ€氳繃锛?  users[userIndex].zhixueStatus = isManual ? 'approved' : 'pending_confirm';
+  // 智学认证 → pending_confirm（等待用户确认）
+  // 手动认证 → approved（直接通过）
+  users[userIndex].zhixueStatus = isManual ? 'approved' : 'pending_confirm';
   users[userIndex].zhixueReviewedAt = now;
   users[userIndex].zhixueReviewedBy = req.admin.id;
   users[userIndex].zhixuePassword = null;
   users[userIndex].zhixueRejectReason = null;
   users[userIndex].zhixueRejectedAt = null;
 
-  // 鍔犲瘑瀛樺偍濮撳悕鐝骇锛坧ending_confirm 鏃朵篃瀛橈紝渚涚敤鎴风‘璁ゆ椂灞曠ず锛?  const nameToStore = (realName && realName.trim())
+  // 加密存储姓名班级（pending_confirm 时也存，供用户确认时展示）
+  const nameToStore = (realName && realName.trim())
     ? realName.trim()
     : (u.zhixueManualName || null);
   if (nameToStore) {
@@ -1542,66 +1620,68 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
   users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
 
   if (isManual) {
-    // 鎵嬪姩璁よ瘉鐩存帴閫氳繃锛屽鍔?Credits
+    // 手动认证直接通过，奖励 Credits
     users[userIndex].credit = (users[userIndex].credit || 0) + 300;
   }
 
   writeUsers(users);
 
   if (isManual) {
-    return res.json({ ok: true, msg: '宸查€氳繃瀹℃牳' });
+    return res.json({ ok: true, msg: '已通过审核' });
   } else {
-    return res.json({ ok: true, msg: '瀹℃牳閫氳繃锛岀瓑寰呯敤鎴风‘璁や俊鎭?, pendingConfirm: true });
+    return res.json({ ok: true, msg: '审核通过，等待用户确认信息', pendingConfirm: true });
   }
 });
 
-// 鐢ㄦ埛纭鏅哄璁よ瘉淇℃伅锛坧ending_confirm 鈫?approved锛?app.post('/api/user/confirm-zhixue', (req, res) => {
+// 用户确认智学认证信息（pending_confirm → approved）
+app.post('/api/user/confirm-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤', code: 'BANNED' });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  if (users[userIndex].status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   if (users[userIndex].zhixueStatus !== 'pending_confirm') {
-    return res.json({ ok: false, msg: '褰撳墠鏃犻渶纭璁よ瘉淇℃伅' });
+    return res.json({ ok: false, msg: '当前无需确认认证信息' });
   }
 
   users[userIndex].zhixueStatus = 'approved';
   users[userIndex].zhixueConfirmedAt = new Date().toISOString();
-  // 濂栧姳 Credits锛堢‘璁ゆ椂鎵嶅彂鏀撅級
+  // 奖励 Credits（确认时才发放）
   users[userIndex].credit = (users[userIndex].credit || 0) + 300;
   writeUsers(users);
 
-  res.json({ ok: true, msg: '璁よ瘉淇℃伅宸茬‘璁わ紝娆㈣繋锛? });
+  res.json({ ok: true, msg: '认证信息已确认，欢迎！' });
 });
 
-// 鐢ㄦ埛鍚﹁鏅哄璁よ瘉淇℃伅锛坧ending_confirm 鈫?rejected锛?app.post('/api/user/deny-zhixue', (req, res) => {
+// 用户否认智学认证信息（pending_confirm → rejected）
+app.post('/api/user/deny-zhixue', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === session.id);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
   if (users[userIndex].zhixueStatus !== 'pending_confirm') {
-    return res.json({ ok: false, msg: '褰撳墠鏃犻渶纭璁よ瘉淇℃伅' });
+    return res.json({ ok: false, msg: '当前无需确认认证信息' });
   }
 
   users[userIndex].zhixueStatus = 'rejected';
-  users[userIndex].zhixueRejectReason = '浣犵‘璁ゆ彁浜ょ殑淇℃伅骞堕潪鏈汉锛岃閲嶆柊濉啓姝ｇ‘鐨勪俊鎭?;
+  users[userIndex].zhixueRejectReason = '你确认提交的信息并非本人，请重新填写正确的信息';
   users[userIndex].zhixueRejectedAt = new Date().toISOString();
   users[userIndex].certRealName = null;
   users[userIndex].certClassName = null;
   writeUsers(users);
 
-  res.json({ ok: true, msg: '宸叉爣璁颁负鏈€氳繃锛岃閲嶆柊鎻愪氦璁よ瘉淇℃伅' });
+  res.json({ ok: true, msg: '已标记为未通过，请重新提交认证信息' });
 });
 
-// 鑾峰彇鎵€鏈夊悓瀛﹁璇佽褰曪紙浠呯鐞嗗憳锛屾寜鐘舵€佸垎缁勶級
+// 获取所有同学认证记录（仅管理员，按状态分组）
 app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
   const users = readUsers();
   const records = users
@@ -1623,19 +1703,20 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
     .sort((a, b) => {
       const ta = a.submittedAt || a.reviewedAt || '';
       const tb = b.submittedAt || b.reviewedAt || '';
-      return tb.localeCompare(ta); // 鏈€鏂扮殑鍦ㄥ墠
+      return tb.localeCompare(ta); // 最新的在前
     });
   res.json({ ok: true, data: records });
 });
 
-// 閲嶇疆璁よ瘉璁板綍涓哄緟瀹℃牳锛堢鐞嗗憳鎾ら攢閫氳繃/鎭㈠琚┏鍥炵殑璁板綍锛?app.post('/api/admin/zhixue/:userId/reset', requireAdmin, (req, res) => {
+// 重置认证记录为待审核（管理员撤销通过/恢复被驳回的记录）
+app.post('/api/admin/zhixue/:userId/reset', requireAdmin, (req, res) => {
   const users = readUsers();
   const userIndex = users.findIndex(u => u.id === req.params.userId);
-  if (userIndex === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   const u = users[userIndex];
   if (!u.zhixueStatus || !['approved', 'rejected', 'pending_confirm'].includes(u.zhixueStatus)) {
-    return res.json({ ok: false, msg: '璇ョ敤鎴峰綋鍓嶇姸鎬佹棤闇€閲嶇疆' });
+    return res.json({ ok: false, msg: '该用户当前状态无需重置' });
   }
 
   u.zhixueStatus = 'pending';
@@ -1645,39 +1726,41 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
   u.zhixueRejectedAt = null;
   u.certRealName = null;
   u.certClassName = null;
-  u.zhixuePassword = u._origPassword || null; // 淇濈暀瀵嗙爜浠ヤ究閲嶆柊瀹℃牳
+  u.zhixuePassword = u._origPassword || null; // 保留密码以便重新审核
   writeUsers(users);
 
-  res.json({ ok: true, msg: '宸查噸缃负寰呭鏍哥姸鎬? });
+  res.json({ ok: true, msg: '已重置为待审核状态' });
 });
 
-// 鑾峰彇鎸囧畾鐢ㄦ埛鍏紑淇℃伅锛堥€氳繃鐢ㄦ埛ID锛?app.get('/api/users/:id', (req, res) => {
+// 获取指定用户公开信息（通过用户ID）
+app.get('/api/users/:id', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璇ヨ处鍙峰凡琚鐢?, code: 'BANNED' });
-  // 涓嶈繑鍥炲瘑鐮佺瓑鏁忔劅淇℃伅
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
+  // 不返回密码等敏感信息
   res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
 });
 
-// 鑾峰彇鐢ㄦ埛瀹屾暣璇︽儏锛堜粎绠＄悊鍛橈級
+// 获取用户完整详情（仅管理员）
 app.post('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 璇诲彇甯栧瓙
+  // 读取帖子
   const posts = readPosts();
   const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname);
 
-  // 璇诲彇涓炬姤璁板綍
+  // 读取举报记录
   const reports = readReports();
   const userReports = reports.filter(r =>
     r.reportedBy === user.id || r.reporterName === user.nickname ||
     r.postAuthor === user.nickname
   );
 
-  // 鏋勫缓杩斿洖鏁版嵁锛堟帓闄?password锛?  const { password, ...safeUser } = user;
+  // 构建返回数据（排除 password）
+  const { password, ...safeUser } = user;
   res.json({
     ok: true,
     data: {
@@ -1686,7 +1769,7 @@ app.post('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) =>
       posts: userPosts.map(p => ({
         id: p.id,
         content: p.content,
-        type: p.type || '鏃ュ父',
+        type: p.type || '日常',
         time: p.time,
         likes: (p.likes || []).length,
         commentsCount: (p.comments || []).length,
@@ -1705,11 +1788,11 @@ app.post('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) =>
   });
 });
 
-// 鎵归噺鍒犻櫎鐢ㄦ埛锛堜粎绠＄悊鍛橈級
+// 批量删除用户（仅管理员）
 app.post('/api/admin/users/batch-delete', requireAdmin, (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return res.json({ ok: false, msg: '璇锋寚瀹氳鍒犻櫎鐨勭敤鎴? });
+    return res.json({ ok: false, msg: '请指定要删除的用户' });
   }
   let users = readUsers();
   let posts = readPosts();
@@ -1732,23 +1815,25 @@ app.post('/api/admin/users/batch-delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deleted: deletedCount, deletedPosts: deletedPostCount });
 });
 
-// ===== 鍗″瘑绠＄悊锛堜粎瓒呯骇绠＄悊鍛橈級=====
-// 姣忔棩鍒涘缓鏁伴噺闄愬埗
+// ===== 卡密管理（仅超级管理员）=====
+// 每日创建数量限制
 const cardCreateLimits = new Map();
-const CARD_DAILY_LIMIT = 100; // 姣忓ぉ鏈€澶氬垱寤?100 寮?
-// 鍒涘缓鍗″瘑
+const CARD_DAILY_LIMIT = 100; // 每天最多创建 100 张
+
+// 创建卡密
 app.post('/api/admin/credit-cards/create', requireAdmin, requireSuper, (req, res) => {
   const { count, value } = req.body;
   const num = parseInt(count) || 1;
   const val = parseInt(value) || 10;
-  if (num < 1 || num > 100) return res.json({ ok: false, msg: '鏁伴噺鑼冨洿 1~100' });
-  if (val < 1) return res.json({ ok: false, msg: '闈㈠€艰嚦灏戜负 1 Credit' });
+  if (num < 1 || num > 100) return res.json({ ok: false, msg: '数量范围 1~100' });
+  if (val < 1) return res.json({ ok: false, msg: '面值至少为 1 Credit' });
 
-  // 姣忔棩闄愰妫€鏌?  const today = new Date().toISOString().slice(0, 10);
+  // 每日限额检查
+  const today = new Date().toISOString().slice(0, 10);
   const key = req.admin.id + '|' + today;
   const used = cardCreateLimits.get(key) || 0;
   if (used + num > CARD_DAILY_LIMIT) {
-    return res.json({ ok: false, msg: '浠婃棩鍒涘缓宸茶揪涓婇檺锛? + CARD_DAILY_LIMIT + ' 寮狅級锛岃鏄庡ぉ鍐嶈瘯' });
+    return res.json({ ok: false, msg: '今日创建已达上限（' + CARD_DAILY_LIMIT + ' 张），请明天再试' });
   }
   cardCreateLimits.set(key, used + num);
 
@@ -1769,41 +1854,44 @@ app.post('/api/admin/credit-cards/create', requireAdmin, requireSuper, (req, res
   const all = cards.concat(newCards);
   writeCreditCards(all);
 
-  // 瀹¤鏃ュ織
-  console.warn('[AUDIT] 瓒呯骇绠＄悊鍛?' + req.admin.id + ' 鍒涘缓浜?' + num + ' 寮犲崱瀵嗭紝姣忓紶 ' + val + ' Credit');
+  // 审计日志
+  console.warn('[AUDIT] 超级管理员 ' + req.admin.id + ' 创建了 ' + num + ' 张卡密，每张 ' + val + ' Credit');
 
   res.json({ ok: true, data: { count: num, value: val, cards: newCards.map(c => c.code) } });
 });
 
-// 鏌ヨ鎵€鏈夊崱瀵?app.get('/api/admin/credit-cards', requireAdmin, requireSuper, (req, res) => {
+// 查询所有卡密
+app.get('/api/admin/credit-cards', requireAdmin, requireSuper, (req, res) => {
   const cards = readCreditCards();
   const users = readUsers();
   const list = cards.reverse().map(c => ({
     ...c,
-    usedByNickname: c.usedBy ? (users.find(u => u.id === c.usedBy)?.nickname || '鏈煡') : null
+    usedByNickname: c.usedBy ? (users.find(u => u.id === c.usedBy)?.nickname || '未知') : null
   }));
   res.json({ ok: true, data: list });
 });
 
-// ===== Credit 绠＄悊锛堜粎瓒呯骇绠＄悊鍛橈級=====
+// ===== Credit 管理（仅超级管理员）=====
 
-// 鑾峰彇 Credit 鎬昏鏁版嵁
+// 获取 Credit 总览数据
 app.get('/api/admin/credit/overview', requireAdmin, requireSuper, (req, res) => {
-  // 鍗″瘑缁熻
+  // 卡密统计
   const cards = readCreditCards();
-  const totalRedeemed = cards.filter(c => c.status === 'used').reduce((s, c) => s + c.value, 0); // 宸插厬鎹?  // 鐢ㄦ埛鎸佹湁鎬婚噺
+  const totalRedeemed = cards.filter(c => c.status === 'used').reduce((s, c) => s + c.value, 0); // 已兑换
+  // 用户持有总量
   const users = readUsers();
   const inCirculation = users.reduce((s, u) => s + (u.credit || 0), 0);
-  // 绠＄悊鍛樻墸闄ゆ€婚噺
+  // 管理员扣除总量
   const logs = readCreditLogs();
   const totalDeducted = logs.filter(l => l.amount < 0).reduce((s, l) => s + Math.abs(l.amount), 0);
 
-  // 杩?7 澶╂瘡鏃ユ暟鎹?  const chart = [];
+  // 近 7 天每日数据
+  const chart = [];
   for (let i = 6; i >= 0; i--) {
     const day = new Date();
     day.setDate(day.getDate() - i);
     const dayStr = day.toISOString().slice(0, 10);
-    const label = i === 0 ? '浠婂ぉ' : (day.getMonth() + 1) + '/' + day.getDate();
+    const label = i === 0 ? '今天' : (day.getMonth() + 1) + '/' + day.getDate();
     const dayLogs = logs.filter(l => l.createdAt && l.createdAt.startsWith(dayStr));
     chart.push({
       label,
@@ -1818,7 +1906,8 @@ app.get('/api/admin/credit/overview', requireAdmin, requireSuper, (req, res) => 
   });
 });
 
-// 鎼滅储鐢ㄦ埛锛堟寜鐢ㄦ埛鍚嶆垨鏄电О锛?app.get('/api/admin/credit/search-user', requireAdmin, requireSuper, (req, res) => {
+// 搜索用户（按用户名或昵称）
+app.get('/api/admin/credit/search-user', requireAdmin, requireSuper, (req, res) => {
   const q = (req.query.q || '').trim().toLowerCase();
   if (!q) return res.json({ ok: true, data: [] });
   const users = readUsers();
@@ -1834,82 +1923,83 @@ app.get('/api/admin/credit/overview', requireAdmin, requireSuper, (req, res) => 
   res.json({ ok: true, data: matches });
 });
 
-// 璧犻€?Credit 缁欐寚瀹氱敤鎴?app.post('/api/admin/credit/grant', requireAdmin, requireSuper, (req, res) => {
+// 赠送 Credit 给指定用户
+app.post('/api/admin/credit/grant', requireAdmin, requireSuper, (req, res) => {
   const { userId, amount, reason } = req.body;
   const num = parseInt(amount);
-  if (!userId) return res.json({ ok: false, msg: '璇锋寚瀹氱敤鎴? });
-  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '璧犻€佹暟閲忚寖鍥?1~10000' });
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '赠送数量范围 1~10000' });
 
   const users = readUsers();
   const idx = users.findIndex(u => u.id === userId);
-  if (idx === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   users[idx].credit = (users[idx].credit || 0) + num;
   writeUsers(users);
 
-  // 璁板綍娴佹按
+  // 记录流水
   const logs = readCreditLogs();
   logs.push({
     id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId,
     amount: num,
-    reason: '绠＄悊鍛樿禒閫侊細' + (reason || '鏃犲娉?) + '锛堢粡鍔炰汉锛? + req.admin.id + '锛?,
+    reason: '管理员赠送：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）',
     createdAt: new Date().toISOString()
   });
   writeCreditLogs(logs);
 
-  // 瀹¤鏃ュ織
-  console.warn('[AUDIT] 绠＄悊鍛?' + req.admin.id + ' 璧犻€?' + num + ' Credit 缁欑敤鎴?' + userId);
+  // 审计日志
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 赠送 ' + num + ' Credit 给用户 ' + userId);
 
   res.json({ ok: true, data: { credit: users[idx].credit } });
 });
 
-// 鎵ｉ櫎鐢ㄦ埛 Credit
+// 扣除用户 Credit
 app.post('/api/admin/credit/deduct', requireAdmin, requireSuper, (req, res) => {
   const { userId, amount, reason } = req.body;
   const num = parseInt(amount);
-  if (!userId) return res.json({ ok: false, msg: '璇锋寚瀹氱敤鎴? });
-  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '鎵ｉ櫎鏁伴噺鑼冨洿 1~10000' });
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '扣除数量范围 1~10000' });
 
   const users = readUsers();
   const idx = users.findIndex(u => u.id === userId);
-  if (idx === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
 
   const current = users[idx].credit || 0;
-  if (current < num) return res.json({ ok: false, msg: '鐢ㄦ埛 Credit 浣欓涓嶈冻锛屽綋鍓嶄粎 ' + current });
+  if (current < num) return res.json({ ok: false, msg: '用户 Credit 余额不足，当前仅 ' + current });
 
   users[idx].credit = current - num;
   writeUsers(users);
 
-  // 璁板綍娴佹按锛堣礋鏁拌〃绀烘墸闄わ級
+  // 记录流水（负数表示扣除）
   const logs = readCreditLogs();
   logs.push({
     id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId,
     amount: -num,
-    reason: '绠＄悊鍛樻墸闄わ細' + (reason || '鏃犲娉?) + '锛堢粡鍔炰汉锛? + req.admin.id + '锛?,
+    reason: '管理员扣除：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）',
     createdAt: new Date().toISOString()
   });
   writeCreditLogs(logs);
 
-  // 瀹¤鏃ュ織
-  console.warn('[AUDIT] 绠＄悊鍛?' + req.admin.id + ' 鎵ｉ櫎鐢ㄦ埛 ' + userId + ' 鐨?' + num + ' Credit');
+  // 审计日志
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 扣除用户 ' + userId + ' 的 ' + num + ' Credit');
 
   res.json({ ok: true, data: { credit: users[idx].credit } });
 });
 
-// 鑾峰彇鎸囧畾鐢ㄦ埛鍙戝竷甯栧瓙
+// 获取指定用户发布帖子
 app.get('/api/users/:id/posts', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (user.status === 'banned') return res.json({ ok: false, msg: '璇ヨ处鍙峰凡琚鐢?, code: 'BANNED' });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   const posts = readPosts();
   const userPosts = posts.filter(p => !p.deleted && (p.userId === user.id || p.author === user.nickname));
   res.json({ ok: true, data: userPosts });
 });
 
-// 鑾峰彇鐢ㄦ埛鍒楄〃锛堜粎绠＄悊鍛橈級
+// 获取用户列表（仅管理员）
 app.get('/api/admin/users', requireAdmin, (req, res) => {
   const users = readUsers();
   const posts = readPosts();
@@ -1926,21 +2016,22 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
   res.json({ ok: true, data: list });
 });
 
-// 灏佺/瑙ｅ皝鐢ㄦ埛锛堜粎绠＄悊鍛橈紝鏀寔 banDays: 0=姘镐箙, >0=澶╂暟锛?app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
+// 封禁/解封用户（仅管理员，支持 banDays: 0=永久, >0=天数）
+app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
   const { status, banDays } = req.body;
   if (!['active', 'banned'].includes(status)) {
-    return res.json({ ok: false, msg: '鐘舵€佹棤鏁? });
+    return res.json({ ok: false, msg: '状态无效' });
   }
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
   user.status = status;
   if (status === 'banned') {
     if (banDays !== undefined && banDays !== null) {
       const days = parseInt(banDays);
-      if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '澶╂暟鏃犳晥' });
+      if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
       if (days === 0) {
-        user.banUntil = null; // 姘镐箙
+        user.banUntil = null; // 永久
         user.banDays = null;
       } else {
         const until = new Date();
@@ -1950,20 +2041,22 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
       }
     }
   } else {
-    // 瑙ｅ皝鏃舵竻闄ゅ皝绂佷俊鎭?    user.banUntil = null;
+    // 解封时清除封禁信息
+    user.banUntil = null;
     user.banDays = null;
   }
   writeUsers(users);
   res.json({ ok: true });
 });
 
-// 鍒犻櫎鐢ㄦ埛锛堜粎绠＄悊鍛橈級鈥斺€?鐢ㄦ埛璐﹀彿鐗╃悊鍒犻櫎锛屽叾鍐呭杞垹闄や繚鐣?app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
+// 删除用户（仅管理员）—— 用户账号物理删除，其内容软删除保留
+app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
   const userId = req.params.id;
   const users = readUsers();
   const user = users.find(u => u.id === userId);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 鐗╃悊鍒犻櫎璇ョ敤鎴风殑鎵€鏈夊笘瀛愶紝鍏堜繚瀛樺埌 deleted_items
+  // 物理删除该用户的所有帖子，先保存到 deleted_items
   let posts = readPosts();
   const now = new Date().toISOString();
   let softDeleted = 0;
@@ -1976,44 +2069,46 @@ app.get('/api/admin/users', requireAdmin, (req, res) => {
   posts = posts.filter(p => !(p.userId === userId || p.author === user.nickname) || p.deleted);
   writePosts(posts);
 
-  // 鍐嶅垹闄ょ敤鎴疯处鍙?  const updated = users.filter(u => u.id !== userId);
+  // 再删除用户账号
+  const updated = users.filter(u => u.id !== userId);
   writeUsers(updated);
 
   res.json({ ok: true, deletedPosts: softDeleted });
 });
 
-// 閲嶇疆鐢ㄦ埛瀵嗙爜锛堜粎绠＄悊鍛橈級鈥斺€?鐢熸垚闅忔満瀵嗙爜杩斿洖缁欑鐞嗗憳
+// 重置用户密码（仅管理员）—— 生成随机密码返回给管理员
 app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 鐢熸垚 8 浣嶉殢鏈哄瘑鐮?  const newPassword = Math.random().toString(36).slice(2, 10);
+  // 生成 8 位随机密码
+  const newPassword = Math.random().toString(36).slice(2, 10);
   user.password = hashPassword(newPassword);
   writeUsers(users);
 
   res.json({ ok: true, data: { password: newPassword } });
 });
 
-// 鑾峰彇鐢ㄦ埛瀹屾暣璇︽儏锛堜粎绠＄悊鍛橈級
+// 获取用户完整详情（仅管理员）
 app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 涓嶈繑鍥炲瘑鐮侊紱瑙ｅ瘑瀹炲悕淇℃伅
+  // 不返回密码；解密实名信息
   const { password, certRealName, certClassName, ...safeUser } = user;
   safeUser.certRealNameDecrypted  = decryptCert(certRealName)  || null;
   safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
 
-  // 甯栧瓙
+  // 帖子
   const posts = readPosts();
   const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
     .slice(0, 20)
     .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
 
-  // 涓炬姤璁板綍
+  // 举报记录
   const reports = readReports();
   const userReports = reports.filter(r => r.targetUserId === user.id || r.targetAuthor === user.nickname)
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
@@ -2031,7 +2126,7 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
   });
 });
 
-// 鍙戝笘鏃舵洿鏂扮敤鎴?postCount
+// 发帖时更新用户 postCount
 function incUserPostCount(nickname) {
   const users = readUsers();
   const user = users.find(u => u.nickname === nickname);
@@ -2041,20 +2136,24 @@ function incUserPostCount(nickname) {
   }
 }
 
-// 鑾峰彇鎵€鏈夊笘瀛?app.get('/api/posts', (req, res) => {
+// 获取所有帖子
+app.get('/api/posts', (req, res) => {
   const posts = readPosts();
-  // 杩囨护宸插垹闄ょ殑甯栧瓙锛堟櫘閫氱敤鎴蜂笉鍙锛?  const activePosts = posts.filter(p => !p.deleted);
+  // 过滤已删除的帖子（普通用户不可见）
+  const activePosts = posts.filter(p => !p.deleted);
   const users = readUsers();
-  const admins = readAdmins(); // 鐢ㄤ簬楠岃瘉绠＄悊鍛樼粦瀹氭槸鍚︿粛鏈夋晥
-  // 涓烘瘡涓笘瀛愰檮鍔犱綔鑰呯殑绠＄悊鍛樿鑹蹭俊鎭?  const postsWithAdmin = activePosts.map(p => {
+  const admins = readAdmins(); // 用于验证管理员绑定是否仍有效
+  // 为每个帖子附加作者的管理员角色信息
+  const postsWithAdmin = activePosts.map(p => {
     if (p.userId) {
       const author = users.find(u => u.id === p.userId);
       if (author) {
-        // 璁よ瘉鐘舵€佹牎楠岋細approved 蹇呴』鏈夊鏍歌褰?        let zhixueStatus = author.zhixueStatus || null;
+        // 认证状态校验：approved 必须有审核记录
+        let zhixueStatus = author.zhixueStatus || null;
         if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
           zhixueStatus = null;
         }
-        // 绠＄悊鍛樼粦瀹氭湁鏁堟€ф牎楠岋細绠＄悊鍛樿处鍙峰繀椤讳粛瀛樺湪
+        // 管理员绑定有效性校验：管理员账号必须仍存在
         let adminRole = null;
         let adminId = null;
         if (author.bindAdminId && author.bindAdminRole) {
@@ -2078,12 +2177,13 @@ function incUserPostCount(nickname) {
   res.json({ ok: true, data: postsWithAdmin });
 });
 
-// 鑾峰彇鍗曚釜甯栧瓙锛堢敤浜庤鎯呴〉锛?app.get('/api/posts/:id', (req, res) => {
+// 获取单个帖子（用于详情页）
+app.get('/api/posts/:id', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
-  if (post.deleted) return res.json({ ok: false, msg: '甯栧瓙宸茶鍒犻櫎' });
-  // 杩囨护宸插垹闄ょ殑璇勮
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+  // 过滤已删除的评论
   if (post.comments) {
     post.comments = post.comments.filter(c => !c.deleted);
   }
@@ -2101,26 +2201,28 @@ function incUserPostCount(nickname) {
   res.json({ ok: true, data: post });
 });
 
-  // 鍙戝竷鏂板笘瀛?app.post('/api/posts', (req, res) => {
-  // 楠岃瘉鐢ㄦ埛 Token锛堝彲閫夛細娌?token 浠ュ尶鍚嶈韩浠藉彂甯栵紝鏈?token 蹇呴』鏈夋晥锛?  let realUserId = null;
-  let realAuthor = '鍖垮悕';
-  let realAvatar = '馃檲';
+  // 发布新帖子
+app.post('/api/posts', (req, res) => {
+  // 验证用户 Token（可选：没 token 以匿名身份发帖，有 token 必须有效）
+  let realUserId = null;
+  let realAuthor = '匿名';
+  let realAvatar = '🙈';
   const token = req.headers['x-user-token'];
   if (token) {
     const session = verifyUserToken(token);
-    if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈燂紝璇烽噸鏂扮櫥褰?, code: 'TOKEN_EXPIRED' });
+    if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
     realUserId = session.id;
-    realAuthor = session.nickname || '鍖垮悕';
-    // 浠庣敤鎴锋暟鎹腑鑾峰彇澶村儚
+    realAuthor = session.nickname || '匿名';
+    // 从用户数据中获取头像
     const allUsers = readUsers();
     const user = allUsers.find(u => u.id === session.id);
-    realAvatar = (user && user.avatar) || '馃檲';
+    realAvatar = (user && user.avatar) || '🙈';
   }
 
   const { type, content, captchaId, captchaText, sensitiveForce, images } = req.body;
 
   
-// 鍙戝笘棰戠巼妫€娴嬶紙5鍒嗛挓鍐呮渶澶?绡囷紝瓒呭嚭闇€楠岃瘉鐮侊級
+// 发帖频率检测（5分钟内最多3篇，超出需验证码）
 if (realUserId) {
   const now = Date.now();
   const timestamps = postRateLimit.get(realUserId) || [];
@@ -2128,49 +2230,51 @@ if (realUserId) {
   if (recentPosts.length >= 3) {
     const entry = captchaStore.get(captchaId);
     if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, needCaptcha: true, msg: '鍙戝笘棰戠巼杩囬珮锛岃鍏堥獙璇? });
+      return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
     }
-    // 楠岃瘉鐮侀€氳繃锛屾竻闄ら檺鍒讹紝閲嶆柊璁℃椂
+    // 验证码通过，清除限制，重新计时
     postRateLimit.delete(realUserId);
     captchaStore.delete(captchaId);
   }
-  // 璁板綍鏈鍙戝笘
-  postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 淇濈暀鏈€杩?0鏉?}
+  // 记录本次发帖
+  postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 保留最近20条
+}
 if (!content || !content.trim()) {
-    return res.json({ ok: false, msg: '鍐呭涓嶈兘涓虹┖' });
+    return res.json({ ok: false, msg: '内容不能为空' });
   }
   if (content.length > CONTENT_MAX_LENGTH) {
-    return res.json({ ok: false, msg: '鍐呭涓嶈兘瓒呰繃 ' + CONTENT_MAX_LENGTH + ' 瀛? });
+    return res.json({ ok: false, msg: '内容不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
   }
   if (!type) {
-    return res.json({ ok: false, msg: '璇烽€夋嫨绫诲瀷' });
+    return res.json({ ok: false, msg: '请选择类型' });
   }
 
-  // 鏁忔劅璇嶆娴嬶紙sensitiveForce=true 鏃惰烦杩囨鏌ワ紝浣嗗悗缁粛浼氱敓鎴愪妇鎶ワ級
+  // 敏感词检测（sensitiveForce=true 时跳过检查，但后续仍会生成举报）
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
 
-  // 鏈夋晱鎰熻瘝涓旂敤鎴锋湭纭 鈫?涓嶄繚瀛橈紝杩斿洖璀﹀憡
+  // 有敏感词且用户未确认 → 不保存，返回警告
   if (hasSensitive && !sensitiveForce) {
     return res.json({
       ok: false,
       warning: true,
-      warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯'
+      warningMsg: '内容包含敏感词，请修改后重试'
     });
   }
 
-  // 闇稿噷淇濇姢濮撳悕妫€娴嬶紙濮嬬粓闃绘锛屼笉鏀寔 force 缁曡繃锛?  const blockedNames = checkBullyingNames(content);
+  // 霸凌保护姓名检测（始终阻止，不支持 force 绕过）
+  const blockedNames = checkBullyingNames(content);
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
       bullying: true,
-      warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€?
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
 
   const posts = readPosts();
 
-  // 楠岃瘉鍥剧墖锛坆ase64 data URL锛屾瘡寮犫墹2MB锛屾渶澶?寮狅級
+  // 验证图片（base64 data URL，每张≤2MB，最多4张）
   var validImages = [];
   var maxImageSize = 2 * 1024 * 1024;
   if (Array.isArray(images)) {
@@ -2202,7 +2306,7 @@ if (!content || !content.trim()) {
   posts.unshift(newPost);
   writePosts(posts);
 
-  // 鏁忔劅璇嶅懡涓細鑷姩鐢熸垚涓炬姤璁板綍鎸傚埌鍚庡彴
+  // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
     const reports = readReports();
     reports.push({
@@ -2210,7 +2314,7 @@ if (!content || !content.trim()) {
       type: 'sensitive_post',
       targetId: newPost.id,
       postId: newPost.id,
-      reason: '绯荤粺鑷姩妫€娴嬶細鍐呭鍖呭惈鏁忔劅璇?[' + sensitiveWords.join(', ') + ']',
+      reason: '系统自动检测：内容包含敏感词 [' + sensitiveWords.join(', ') + ']',
       reportedBy: realUserId,
       reporterName: realAuthor,
       createdAt: new Date().toISOString(),
@@ -2219,12 +2323,13 @@ if (!content || !content.trim()) {
     writeReports(reports);
   }
 
-  // 鏇存柊娉ㄥ唽鐢ㄦ埛鐨勫彂璐存暟
+  // 更新注册用户的发贴数
   if (realUserId && realAuthor) {
     incUserPostCount(realAuthor);
   }
 
-  // 鍚屾鍒拌璁哄尯锛堝鏋滅敤鎴锋寚瀹氫簡璇濋锛?  const syncDiscussionId = req.body.syncDiscussionId;
+  // 同步到讨论区（如果用户指定了话题）
+  const syncDiscussionId = req.body.syncDiscussionId;
   if (syncDiscussionId && realUserId) {
     var discussions = readDiscussions();
     var disc = discussions.find(function(d) { return d.id === syncDiscussionId; });
@@ -2258,8 +2363,10 @@ if (!content || !content.trim()) {
   });
 });
 
-// 鐐硅禐 / 鍙栨秷鐐硅禐锛堝甫鐢ㄦ埛韬唤璺熻釜锛?app.post('/api/posts/:id/like', (req, res) => {
-  // 鑾峰彇鐐硅禐鑰呰韩浠?  let likerId = getClientIP(req); // 鍖垮悕鐢ㄦ埛鐢?IP
+// 点赞 / 取消点赞（带用户身份跟踪）
+app.post('/api/posts/:id/like', (req, res) => {
+  // 获取点赞者身份
+  let likerId = getClientIP(req); // 匿名用户用 IP
   const token = req.headers['x-user-token'];
   if (token) {
     const session = verifyUserToken(token);
@@ -2270,10 +2377,11 @@ if (!content || !content.trim()) {
   const post = posts.find(p => p.id === req.params.id);
 
   if (!post) {
-    return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+    return res.json({ ok: false, msg: '帖子不存在' });
   }
 
-  // 鍒濆鍖?likedBy 鏁扮粍锛堝吋瀹规棫鏁版嵁锛?  if (!Array.isArray(post.likedBy)) post.likedBy = [];
+  // 初始化 likedBy 数组（兼容旧数据）
+  if (!Array.isArray(post.likedBy)) post.likedBy = [];
 
   const idx = post.likedBy.indexOf(likerId);
   if (idx === -1) {
@@ -2290,72 +2398,75 @@ if (!content || !content.trim()) {
   res.json({ ok: true, data: { liked: post.liked, likes: post.likes } });
 });
 
-// 鑾峰彇甯栧瓙璇勮
+// 获取帖子评论
 app.get('/api/posts/:id/comments', (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) {
-    return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+    return res.json({ ok: false, msg: '帖子不存在' });
   }
   const comments = post.comments || [];
   res.json({ ok: true, data: comments });
 });
 
-// 鍙戣〃璇勮锛堥渶 Token 楠岃瘉锛?app.post('/api/posts/:id/comments', (req, res) => {
-  // 楠岃瘉鐢ㄦ埛 Token
+// 发表评论（需 Token 验证）
+app.post('/api/posts/:id/comments', (req, res) => {
+  // 验证用户 Token
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍鍚庡啀璇勮', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录后再评论', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈燂紝璇烽噸鏂扮櫥褰?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
 
-  // 浠?Token 涓幏鍙栫敤鎴蜂俊鎭紝绂佹浠?req.body 璇诲彇
-  const author = session.nickname || '鍖垮悕';
+  // 从 Token 中获取用户信息，禁止从 req.body 读取
+  const author = session.nickname || '匿名';
   const userId = session.id;
-  // 鑾峰彇鐢ㄦ埛澶村儚
+  // 获取用户头像
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  const avatar = (user && user.avatar) || '馃檲';
+  const avatar = (user && user.avatar) || '🙈';
 
   const { content } = req.body;
   if (!content || !content.trim()) {
-    return res.json({ ok: false, msg: '璇勮鍐呭涓嶈兘涓虹┖' });
+    return res.json({ ok: false, msg: '评论内容不能为空' });
   }
   if (content.length > CONTENT_MAX_LENGTH) {
-    return res.json({ ok: false, msg: '璇勮涓嶈兘瓒呰繃 ' + CONTENT_MAX_LENGTH + ' 瀛? });
+    return res.json({ ok: false, msg: '评论不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
   }
-  // 鏁忔劅璇嶆娴嬶紙sensitiveForce=true 鏃惰烦杩囨鏌ワ紝鍚庣画浠嶄細鐢熸垚涓炬姤锛?  const sensitiveForce = req.body.sensitiveForce === true;
+  // 敏感词检测（sensitiveForce=true 时跳过检查，后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
 
-  // 鏈夋晱鎰熻瘝涓旂敤鎴锋湭纭 鈫?涓嶄繚瀛橈紝杩斿洖璀﹀憡
+  // 有敏感词且用户未确认 → 不保存，返回警告
   if (hasSensitive && !sensitiveForce) {
     return res.json({
       ok: false,
       warning: true,
-      warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯'
+      warningMsg: '内容包含敏感词，请修改后重试'
     });
   }
 
-  // 闇稿噷淇濇姢濮撳悕妫€娴嬶紙濮嬬粓闃绘锛?  const blockedNames = checkBullyingNames(content);
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
       bullying: true,
-      warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€?
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
 
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
   if (!post) {
-    return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+    return res.json({ ok: false, msg: '帖子不存在' });
   }
   if (!post.comments) post.comments = [];
   const newComment = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     content: content.trim(),
-    author: author || '鍖垮悕',
-    avatar: avatar || '馃檲',
+    author: author || '匿名',
+    avatar: avatar || '🙈',
     userId: userId || null,
     time: new Date().toISOString(),
     likes: 0,
@@ -2364,7 +2475,7 @@ app.get('/api/posts/:id/comments', (req, res) => {
   post.comments.push(newComment);
   post.commentsCount = post.comments.length;
 
-  // 鏁忔劅璇嶅懡涓細鑷姩鐢熸垚涓炬姤璁板綍锛堜粎鍦?sensitiveForce 鏃舵墽琛岋級
+  // 敏感词命中：自动生成举报记录（仅在 sensitiveForce 时执行）
   if (hasSensitive) {
     const reports = readReports();
     reports.push({
@@ -2372,7 +2483,7 @@ app.get('/api/posts/:id/comments', (req, res) => {
       type: 'sensitive_comment',
       targetId: newComment.id,
       postId: post.id,
-      reason: '绯荤粺鑷姩妫€娴嬶細璇勮鍖呭惈鏁忔劅璇?[' + sensitiveWords.join(', ') + ']',
+      reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
       reportedBy: realUserId,
       reporterName: realAuthor,
       createdAt: new Date().toISOString(),
@@ -2390,8 +2501,10 @@ app.get('/api/posts/:id/comments', (req, res) => {
   });
 });
 
-// 璇勮鐐硅禐锛堝甫鐢ㄦ埛韬唤璺熻釜锛?app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
-  // 鑾峰彇鐐硅禐鑰呰韩浠?  let likerId = getClientIP(req);
+// 评论点赞（带用户身份跟踪）
+app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
+  // 获取点赞者身份
+  let likerId = getClientIP(req);
   const token = req.headers['x-user-token'];
   if (token) {
     const session = verifyUserToken(token);
@@ -2400,11 +2513,12 @@ app.get('/api/posts/:id/comments', (req, res) => {
 
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.postId);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
-  if (!comment) return res.json({ ok: false, msg: '璇勮涓嶅瓨鍦? });
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
 
-  // 鍒濆鍖?likedBy 鏁扮粍锛堝吋瀹规棫鏁版嵁锛?  if (!Array.isArray(comment.likedBy)) comment.likedBy = [];
+  // 初始化 likedBy 数组（兼容旧数据）
+  if (!Array.isArray(comment.likedBy)) comment.likedBy = [];
 
   const idx = comment.likedBy.indexOf(likerId);
   if (idx === -1) {
@@ -2420,21 +2534,22 @@ app.get('/api/posts/:id/comments', (req, res) => {
   res.json({ ok: true, data: { liked: comment.liked, likes: comment.likes } });
 });
 
-// 鍒犻櫎璇勮锛堣瘎璁轰綔鑰呮垨甯栧瓙浣滆€呭彲鍒狅級鈥斺€?鏀逛负杞垹闄?app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
+// 删除评论（评论作者或帖子作者可删）—— 改为软删除
+app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   const userId = req.headers['x-user-token'] ? (() => {
     const s = verifySignedToken(req.headers['x-user-token']);
     return s ? s.id : null;
   })() : null;
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.postId);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
-  if (!comment) return res.json({ ok: false, msg: '璇勮涓嶅瓨鍦? });
-  if (comment.deleted) return res.json({ ok: false, msg: '璇勮宸茶鍒犻櫎' });
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+  if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
   const isCommentAuthor = userId && comment.userId && userId === comment.userId;
   const isPostAuthor = userId && post.userId && userId === post.userId;
   if (!isCommentAuthor && !isPostAuthor) {
-    return res.json({ ok: false, msg: '鏃犳潈鍒犻櫎姝よ瘎璁? });
+    return res.json({ ok: false, msg: '无权删除此评论' });
   }
   saveDeletedItem('comment', comment, userId === comment.userId ? 'user' : 'post_author');
   post.comments = post.comments.filter(c => c.id !== req.params.commentId);
@@ -2443,14 +2558,14 @@ app.get('/api/posts/:id/comments', (req, res) => {
   res.json({ ok: true });
 });
 
-// 涓炬姤璇勮
+// 举报评论
 app.post('/api/comments/:commentId/report', (req, res) => {
   const { postId, reason } = req.body;
-  if (!reason) return res.json({ ok: false, msg: '璇峰～鍐欎妇鎶ュ師鍥? });
+  if (!reason) return res.json({ ok: false, msg: '请填写举报原因' });
   const reports = readReports();
-  // 鍘婚噸
+  // 去重
   const existing = reports.find(r => r.targetId === req.params.commentId && r.type === 'comment');
-  if (existing) return res.json({ ok: false, msg: '宸蹭妇鎶ヨ繃姝よ瘎璁? });
+  if (existing) return res.json({ ok: false, msg: '已举报过此评论' });
   reports.push({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: 'comment',
@@ -2464,7 +2579,8 @@ app.post('/api/comments/:commentId/report', (req, res) => {
   res.json({ ok: true });
 });
 
-// 鎵归噺鍒犻櫎璇勮锛堢鐞嗗悗鍙帮級鈥斺€?鏀逛负杞垹闄?app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
+// 批量删除评论（管理后台）—— 改为软删除
+app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
   const posts = readPosts();
   let found = false;
   const now = new Date().toISOString();
@@ -2477,9 +2593,9 @@ app.post('/api/comments/:commentId/report', (req, res) => {
       found = true;
     }
   });
-  if (!found) return res.json({ ok: false, msg: '璇勮涓嶅瓨鍦ㄦ垨宸茶鍒犻櫎' });
+  if (!found) return res.json({ ok: false, msg: '评论不存在或已被删除' });
   writePosts(posts);
-  // 鍚屾椂鍒犻櫎璇ヨ瘎璁虹殑涓炬姤璁板綍
+  // 同时删除该评论的举报记录
   const reports = readReports();
   const remaining = reports.filter(r => r.targetId !== req.params.commentId || r.type !== 'comment');
   writeReports(remaining);
@@ -2488,7 +2604,7 @@ app.post('/api/comments/:commentId/report', (req, res) => {
 
 app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
   const { ids } = req.body;
-  if (!Array.isArray(ids) || ids.length === 0) return res.json({ ok: false, msg: '璇锋彁渚涜鍒犻櫎鐨勮瘎璁?ID 鍒楄〃' });
+  if (!Array.isArray(ids) || ids.length === 0) return res.json({ ok: false, msg: '请提供要删除的评论 ID 列表' });
   const posts = readPosts();
   let deletedCount = 0;
   const now = new Date().toISOString();
@@ -2503,16 +2619,18 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
     post.commentsCount = (post.comments || []).length;
   });
   writePosts(posts);
-  // 鍚屾椂鍒犻櫎鐩稿叧鐨勪妇鎶ヨ褰?  const reports = readReports();
+  // 同时删除相关的举报记录
+  const reports = readReports();
   const remainingReports = reports.filter(r => !ids.includes(r.targetId) || r.type !== 'comment');
   writeReports(reports);
   res.json({ ok: true, deleted: deletedCount });
 });
 
-// 鎵归噺鍒犻櫎甯栧瓙 鈥斺€?鏀逛负杞垹闄?app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
+// 批量删除帖子 —— 改为软删除
+app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
   const { ids } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
-    return res.json({ ok: false, msg: '璇锋彁渚涜鍒犻櫎鐨勫笘瀛?ID 鍒楄〃' });
+    return res.json({ ok: false, msg: '请提供要删除的帖子 ID 列表' });
   }
   let posts = readPosts();
   let deletedCount = 0;
@@ -2527,12 +2645,12 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deleted: deletedCount });
 });
 
-// 鍒犻櫎甯栧瓙锛堜粎绠＄悊鍛橈級鈥斺€?鏀逛负鐗╃悊鍒犻櫎锛屽啓鍏?deleted_items
+// 删除帖子（仅管理员）—— 改为物理删除，写入 deleted_items
 app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   let posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
-  if (post.deleted) return res.json({ ok: false, msg: '甯栧瓙宸茶鍒犻櫎' });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
 
   saveDeletedItem('post', post, 'admin');
   posts = posts.filter(p => p.id !== req.params.id);
@@ -2541,18 +2659,18 @@ app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// 鐢ㄦ埛鍒犻櫎鑷繁鍙戠殑甯栧瓙 鈥斺€?鐗╃悊鍒犻櫎锛屽啓鍏?deleted_items
+// 用户删除自己发的帖子 —— 物理删除，写入 deleted_items
 app.delete('/api/user/posts/:id', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   let posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
-  if (post.deleted) return res.json({ ok: false, msg: '甯栧瓙宸茶鍒犻櫎' });
-  if (post.userId !== session.id) return res.json({ ok: false, msg: '鏃犳潈鍒犻櫎浠栦汉鐨勫笘瀛? });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+  if (post.userId !== session.id) return res.json({ ok: false, msg: '无权删除他人的帖子' });
 
   saveDeletedItem('post', post, 'user');
   posts = posts.filter(p => p.id !== req.params.id);
@@ -2561,10 +2679,11 @@ app.delete('/api/user/posts/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// 淇敼甯栧瓙锛堢疆椤?淇敼鍐呭锛?app.put('/api/posts/:id', requireAdmin, (req, res) => {
+// 修改帖子（置顶/修改内容）
+app.put('/api/posts/:id', requireAdmin, (req, res) => {
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
 
   const { content, pinned } = req.body;
   if (content !== undefined) post.content = content;
@@ -2574,7 +2693,7 @@ app.delete('/api/user/posts/:id', (req, res) => {
   res.json({ ok: true, data: post });
 });
 
-// 缁熻鏁版嵁
+// 统计数据
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
   const posts = readPosts();
   const now = Date.now();
@@ -2589,7 +2708,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     byType: {}
   };
 
-  ['鏃ュ父', '琛ㄧ櫧', '鏍戞礊', '澶辩墿鎷涢', '娲诲姩'].forEach(t => {
+  ['日常', '表白', '树洞', '失物招领', '活动'].forEach(t => {
     stats.byType[t] = posts.filter(p => p.type === t).length;
   });
 
@@ -2600,7 +2719,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     dayStart.setDate(dayStart.getDate() - i);
     const dayEnd = new Date(dayStart.getTime() + 86400000);
     stats.dailyChart.push({
-      label: i === 0 ? '浠婂ぉ' : `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
+      label: i === 0 ? '今天' : `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
       count: posts.filter(p => {
         const t = new Date(p.time).getTime();
         return t >= dayStart.getTime() && t < dayEnd.getTime();
@@ -2611,39 +2730,41 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
   res.json({ ok: true, data: stats });
 });
 
-// ===== 涓炬姤鏁版嵁璇诲啓 =====
+// ===== 举报数据读写 =====
 function readReports () { return db.readReports(); }
 
 function writeReports (reports) { db.writeReports(reports); }
 
 
 
-// ===== 鐢ㄦ埛鍙嶉璇诲啓 =====
+// ===== 用户反馈读写 =====
 function readFeedbacks () { return db.readFeedbacks(); }
 
 function writeFeedbacks (feedbacks) { db.writeFeedbacks(feedbacks); }
 
-// ===== 闇稿噷鎶ュ憡璇诲啓 =====
+// ===== 霸凌报告读写 =====
 function readBullying () { return db.readBullying(); }
 
 function writeBullying (data) { db.writeBullying(data); }
-// ===== Credit 鏁版嵁璇诲啓 =====
+// ===== Credit 数据读写 =====
 function readCreditLogs () { return db.readCreditLogs(); }
 
 function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
 
-// ===== 鍗″瘑鏁版嵁璇诲啓 =====
+// ===== 卡密数据读写 =====
 function readCreditCards () { return db.readCreditCards(); }
 function writeCreditCards (cards) { db.writeCreditCards(cards); }
-// 鐢熸垚鍗″瘑锛欳W-XXXX-XXXX-X锛堝惈鏍￠獙鐮侀槻杈撻敊锛?// 瀛楁瘝琛ㄦ帓闄ゆ槗娣锋穯鐨?0/O/1/I
+// 生成卡密：CW-XXXX-XXXX-X（含校验码防输错）
+// 字母表排除易混淆的 0/O/1/I
 const CARD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CARD_MOD = CARD_CHARS.length;
 
-// Luhn mod N 鏍￠獙锛氭渶鍚庝竴浣嶆槸鏍￠獙鐮?function luhnModN(code) {
+// Luhn mod N 校验：最后一位是校验码
+function luhnModN(code) {
   let factor = 2;
   let sum = 0;
   const n = CARD_MOD;
-  for (let i = code.length - 2; i >= 0; i--) { // 浠庡€掓暟绗簩浣嶅紑濮嬬畻
+  for (let i = code.length - 2; i >= 0; i--) { // 从倒数第二位开始算
     let val = CARD_CHARS.indexOf(code[i]);
     if (val === -1) return false;
     let add = val * factor;
@@ -2664,7 +2785,7 @@ function generateCardCode(existingCards) {
     for (let i = 0; i < 11; i++) {
       raw.push(CARD_CHARS[crypto.randomInt(CARD_MOD)]);
     }
-    // 绠楁牎楠岀爜
+    // 算校验码
     let factor = 2;
     let sum = 0;
     const n = CARD_MOD;
@@ -2678,12 +2799,12 @@ function generateCardCode(existingCards) {
     const rawCode = raw.join('') + check;
     code = 'CW-' + rawCode.slice(0, 4) + '-' + rawCode.slice(4, 8) + '-' + rawCode.slice(8, 12);
     attempts++;
-    if (attempts > 100) break; // 闃叉寰幆
+    if (attempts > 100) break; // 防死循环
   } while (codeSet.has(code));
   return code;
 }
 
-// ===== 璁ㄨ鏁版嵁璇诲啓 =====
+// ===== 讨论数据读写 =====
 const DISCUSSIONS_FILE = path.join(DATA_DIR, 'discussions.json');
 const DISCUSSION_COMMENTS_FILE = path.join(DATA_DIR, 'discussion_comments.json');
 const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
@@ -2700,20 +2821,22 @@ function readDiscussionComments () { return db.readDiscussionComments(); }
 
 function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); }
 
-// ===== 鍏憡 API =====
+// ===== 公告 API =====
 
-// 鑾峰彇褰撳墠鍏憡锛堝叕寮€锛?app.get('/api/announcement', (req, res) => {
+// 获取当前公告（公开）
+app.get('/api/announcement', (req, res) => {
   const announcement = readAnnouncement();
   res.json({ ok: true, data: announcement });
 });
 
-// 鍙戝竷/鏇存柊鍏憡锛堢鐞嗗憳锛?app.post('/api/announcement', requireAdmin, (req, res) => {
+// 发布/更新公告（管理员）
+app.post('/api/announcement', requireAdmin, (req, res) => {
   const { title, content } = req.body;
   if (!content || !content.trim()) {
-    return res.json({ ok: false, msg: '鍏憡鍐呭涓嶈兘涓虹┖' });
+    return res.json({ ok: false, msg: '公告内容不能为空' });
   }
   const data = {
-    title: title ? title.trim() : '鍏憡',
+    title: title ? title.trim() : '公告',
     content: content.trim(),
     publishedAt: new Date().toISOString(),
     publishedBy: req.admin.name
@@ -2722,17 +2845,19 @@ function writeDiscussionComments (comments) { db.writeDiscussionComments(comment
   res.json({ ok: true, data });
 });
 
-// 鍒犻櫎鍏憡锛堢鐞嗗憳锛?app.delete('/api/announcement', requireAdmin, (req, res) => {
+// 删除公告（管理员）
+app.delete('/api/announcement', requireAdmin, (req, res) => {
   writeAnnouncement(null);
   res.json({ ok: true });
 });
 
-// ===== 璁ㄨ API =====
+// ===== 讨论 API =====
 
-// 鑾峰彇鎵€鏈夎璁鸿瘽棰橈紙鍏紑锛?app.get('/api/discussions', (req, res) => {
+// 获取所有讨论话题（公开）
+app.get('/api/discussions', (req, res) => {
   const discussions = readDiscussions();
   const now = new Date();
-  // 濡傛灉鏈夊叧閿瘝鎼滅储锛屽彧杩斿洖鍖归厤鐨勯潪鍒犻櫎璇濋
+  // 如果有关键词搜索，只返回匹配的非删除话题
   if (req.query.q) {
     const q = req.query.q.toLowerCase();
     const matched = discussions.filter(d => !d.deleted && d.title && d.title.toLowerCase().includes(q));
@@ -2744,9 +2869,9 @@ function writeDiscussionComments (comments) { db.writeDiscussionComments(comment
   res.json({ ok: true, data: active });
 });
 
-// 鍒涘缓璁ㄨ璇濋锛堢鐞嗗憳 鎴?瀛︾敓浼氶€氱煡鍙戝竷鑰咃級
+// 创建讨论话题（管理员 或 学生会通知发布者）
 app.post('/api/discussions', (req, res) => {
-  // 鍏佽绠＄悊鍛?token (x-admin-token) 鎴?瀛︾敓浼?token (x-sc-token)
+  // 允许管理员 token (x-admin-token) 或 学生会 token (x-sc-token)
   const adminToken = req.headers['x-admin-token'];
   const scToken = req.headers['x-sc-token'];
   let authed = false;
@@ -2765,12 +2890,12 @@ app.post('/api/discussions', (req, res) => {
     }
   }
   if (!authed) {
-    return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+    return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   }
 
   const { title, expiresAt } = req.body;
   if (!title || !title.trim()) {
-    return res.json({ ok: false, msg: '璇濋鏍囬涓嶈兘涓虹┖' });
+    return res.json({ ok: false, msg: '话题标题不能为空' });
   }
 
   const discussions = readDiscussions();
@@ -2778,7 +2903,8 @@ app.post('/api/discussions', (req, res) => {
   const newDiscussion = {
     id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: title.trim(),
-    expiresAt: expiresAt || null, // null 琛ㄧず鏃犻檺鏈?    deleted: false,
+    expiresAt: expiresAt || null, // null 表示无限期
+    deleted: false,
     createdAt: new Date().toISOString(),
     createdBy: creatorName,
     commentCount: 0
@@ -2788,14 +2914,15 @@ app.post('/api/discussions', (req, res) => {
   res.json({ ok: true, data: newDiscussion });
 });
 
-// 鏇存柊璁ㄨ璇濋锛堢鐞嗗憳锛?app.put('/api/discussions/:id', requireAdmin, (req, res) => {
+// 更新讨论话题（管理员）
+app.put('/api/discussions/:id', requireAdmin, (req, res) => {
   const { title, expiresAt } = req.body;
   const discussions = readDiscussions();
   const idx = discussions.findIndex(d => d.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '璇濋涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '话题不存在' });
 
   if (title !== undefined) {
-    if (!title.trim()) return res.json({ ok: false, msg: '鏍囬涓嶈兘涓虹┖' });
+    if (!title.trim()) return res.json({ ok: false, msg: '标题不能为空' });
     discussions[idx].title = title.trim();
   }
   if (expiresAt !== undefined) discussions[idx].expiresAt = expiresAt || null;
@@ -2803,17 +2930,18 @@ app.post('/api/discussions', (req, res) => {
   res.json({ ok: true, data: discussions[idx] });
 });
 
-// 鍒犻櫎璁ㄨ璇濋锛堢鐞嗗憳锛夆€斺€?鐗╃悊鍒犻櫎锛屽啓鍏?deleted_items
+// 删除讨论话题（管理员）—— 物理删除，写入 deleted_items
 app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   let discussions = readDiscussions();
   const d = discussions.find(d => d.id === req.params.id);
-  if (!d) return res.json({ ok: false, msg: '璇濋涓嶅瓨鍦? });
-  if (d.deleted) return res.json({ ok: false, msg: '璇濋宸茶鍒犻櫎' });
+  if (!d) return res.json({ ok: false, msg: '话题不存在' });
+  if (d.deleted) return res.json({ ok: false, msg: '话题已被删除' });
   saveDeletedItem('discussion', d, 'admin');
   discussions = discussions.filter(x => x.id !== req.params.id);
   writeDiscussions(discussions);
 
-  // 鍚屾椂鐗╃悊鍒犻櫎璇ヨ瘽棰樹笅鐨勬墍鏈夎瘎璁?  let comments = readDiscussionComments();
+  // 同时物理删除该话题下的所有评论
+  let comments = readDiscussionComments();
   comments.forEach(c => {
     if (c.discussionId === req.params.id && !c.deleted) {
       saveDeletedItem('disc_comment', c, 'admin');
@@ -2825,13 +2953,14 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// 鑾峰彇鏌愪釜璇濋鐨勮瘎璁猴紙宓屽缁撴瀯锛?app.get('/api/discussions/:id/comments', (req, res) => {
+// 获取某个话题的评论（嵌套结构）
+app.get('/api/discussions/:id/comments', (req, res) => {
   const comments = readDiscussionComments();
   const discussionComments = comments
     .filter(c => c.discussionId === req.params.id && !c.deleted)
     .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-  // 鏋勫缓宓屽缁撴瀯
+  // 构建嵌套结构
   const topLevel = [];
   const byId = {};
   discussionComments.forEach(c => {
@@ -2849,53 +2978,56 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   res.json({ ok: true, data: topLevel });
 });
 
-// 鍙戣〃璁ㄨ璇勮锛堥渶鐧诲綍锛?app.post('/api/discussions/:id/comments', (req, res) => {
+// 发表讨论评论（需登录）
+app.post('/api/discussions/:id/comments', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const { content, parentId } = req.body;
   if (!content || !content.trim()) {
-    return res.json({ ok: false, msg: '璇勮鍐呭涓嶈兘涓虹┖' });
+    return res.json({ ok: false, msg: '评论内容不能为空' });
   }
   if (content.length > CONTENT_MAX_LENGTH) {
-    return res.json({ ok: false, msg: '璇勮涓嶈兘瓒呰繃 ' + CONTENT_MAX_LENGTH + ' 瀛? });
+    return res.json({ ok: false, msg: '评论不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
   }
   if (hasSpecialChars(content)) {
-    return res.json({ ok: false, msg: '璇勮鍖呭惈鐗规畩瀛楃' });
+    return res.json({ ok: false, msg: '评论包含特殊字符' });
   }
-  // 鏁忔劅璇嶆娴嬶紙sensitiveForce=true 鏃惰烦杩囨鏌ワ紝鍚庣画浠嶄細鐢熸垚涓炬姤锛?  const sensitiveForce = req.body.sensitiveForce === true;
+  // 敏感词检测（sensitiveForce=true 时跳过检查，后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
   const sensitiveWords = checkSensitive(content);
   const hasSensitive = sensitiveWords.length > 0;
 
-  // 鏈夋晱鎰熻瘝涓旂敤鎴锋湭纭 鈫?涓嶄繚瀛橈紝杩斿洖璀﹀憡
+  // 有敏感词且用户未确认 → 不保存，返回警告
   if (hasSensitive && !sensitiveForce) {
     return res.json({
       ok: false,
       warning: true,
-      warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯'
+      warningMsg: '内容包含敏感词，请修改后重试'
     });
   }
 
-  // 闇稿噷淇濇姢濮撳悕妫€娴嬶紙濮嬬粓闃绘锛?  const blockedNames = checkBullyingNames(content);
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
   if (blockedNames.length > 0) {
     return res.json({
       ok: false,
       bullying: true,
-      warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€?
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
     });
   }
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
   if (!user || user.status === 'banned') {
-    return res.json({ ok: false, msg: '璐﹀彿宸茶绂佺敤' });
+    return res.json({ ok: false, msg: '账号已被禁用' });
   }
 
   const discussions = readDiscussions();
   const discussion = discussions.find(d => d.id === req.params.id);
-  if (!discussion) return res.json({ ok: false, msg: '璇濋涓嶅瓨鍦? });
+  if (!discussion) return res.json({ ok: false, msg: '话题不存在' });
 
   const comments = readDiscussionComments();
   const newComment = {
@@ -2903,8 +3035,8 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
     discussionId: req.params.id,
     parentId: parentId || null,
     content: content.trim(),
-    author: user.nickname || '鍖垮悕',
-    avatar: user.avatar || '馃檲',
+    author: user.nickname || '匿名',
+    avatar: user.avatar || '🙈',
     userId: user.id,
     createdAt: new Date().toISOString(),
     likes: 0,
@@ -2915,7 +3047,7 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   comments.push(newComment);
   writeDiscussionComments(comments);
 
-  // 鏁忔劅璇嶅懡涓細鑷姩鐢熸垚涓炬姤璁板綍
+  // 敏感词命中：自动生成举报记录
   if (hasSensitive) {
     const reports = readReports();
     reports.push({
@@ -2923,28 +3055,29 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
       type: 'sensitive_discussion_comment',
       targetId: newComment.id,
       discussionId: req.params.id,
-      reason: '绯荤粺鑷姩妫€娴嬶細璁ㄨ璇勮鍖呭惈鏁忔劅璇嶃€? + sensitiveWords.join('銆?) + '銆?,
+      reason: '系统自动检测：讨论评论包含敏感词【' + sensitiveWords.join('、') + '】',
       reportedBy: session.id,
-      reporterName: session.nickname || '鏈煡',
+      reporterName: session.nickname || '未知',
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
     writeReports(reports);
   }
 
-  // 鍚屾鍒版牎鍥锛堝鏋滅敤鎴峰嬀閫変簡锛?  const syncToWall = req.body.syncToWall === true;
+  // 同步到校园墙（如果用户勾选了）
+  const syncToWall = req.body.syncToWall === true;
   if (syncToWall) {
     const posts = readPosts();
-    const topicTitle = discussion.title || '璁ㄨ';
+    const topicTitle = discussion.title || '讨论';
     const wallContent = '#' + topicTitle + ' ' + content.trim();
     const postId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     posts.unshift({
       id: postId,
-      type: '鏃ュ父',
+      type: '日常',
       content: wallContent,
       discussionId: req.params.id,
-      avatar: user.avatar || '馃檲',
-      author: session.nickname || '鍖垮悕',
+      avatar: user.avatar || '🙈',
+      author: session.nickname || '匿名',
       userId: session.id,
       time: new Date().toISOString(),
       likes: 0,
@@ -2959,7 +3092,8 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
     newComment.syncPostId = postId;
   }
 
-  // 鏇存柊璇濋璇勮鏁?  discussion.commentCount = (discussion.commentCount || 0) + 1;
+  // 更新话题评论数
+  discussion.commentCount = (discussion.commentCount || 0) + 1;
   writeDiscussions(discussions);
 
   res.json({
@@ -2970,7 +3104,7 @@ app.delete('/api/discussions/:id', requireAdmin, (req, res) => {
   });
 });
 
-// 鍒犻櫎璁ㄨ璇勮锛堝彂閫佽€呮垨绠＄悊鍛樺彲鍒狅級
+// 删除讨论评论（发送者或管理员可删）
 app.delete('/api/discussions/comments/:id', (req, res) => {
   try {
     const token = req.headers['x-user-token'];
@@ -2991,26 +3125,26 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     }
 
     if (!isAdmin && !userId) {
-      return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+      return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
     }
 
     const comments = readDiscussionComments();
     const comment = comments.find(c => c.id === req.params.id);
-    if (!comment) return res.json({ ok: false, msg: '璇勮涓嶅瓨鍦? });
-    if (comment.deleted) return res.json({ ok: false, msg: '璇勮宸茶鍒犻櫎' });
+    if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+    if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
 
-    // 妫€鏌ユ潈闄愶細璇勮浣滆€呫€佸洖澶嶄綔鑰呫€佺鐞嗗憳
+    // 检查权限：评论作者、回复作者、管理员
     const isAuthor = userId && comment.userId && userId === comment.userId;
     const isParentAuthor = userId && comment.parentId
       ? (() => { const parent = comments.find(c => c.id === comment.parentId); return parent && parent.userId && parent.userId === userId; })()
       : false;
 
     if (!isAdmin && !isAuthor && !isParentAuthor) {
-      return res.json({ ok: false, msg: '鏃犳潈鍒犻櫎姝よ瘎璁? });
+      return res.json({ ok: false, msg: '无权删除此评论' });
     }
 
     const byWho = isAdmin ? 'admin' : 'user';
-    // 鐗╃悊鍒犻櫎璇ヨ瘎璁哄強鍏舵墍鏈夊瓙鍥炲锛屽厛淇濆瓨
+    // 物理删除该评论及其所有子回复，先保存
     let idsToRemove = [];
     let syncPostIds = [];
     comments.forEach(c => {
@@ -3023,7 +3157,7 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     const filtered = comments.filter(c => !idsToRemove.includes(c.id));
     writeDiscussionComments(filtered);
 
-    // 鍚屾鍒犻櫎瀵瑰簲鐨勬牎鍥甯栧瓙
+    // 同步删除对应的校园墙帖子
     if (syncPostIds.length > 0) {
       let posts = readPosts();
       syncPostIds.forEach(function(pid) {
@@ -3039,31 +3173,32 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     console.error('[delete-disc-comment] 500:', e.message, e.stack);
-    res.json({ ok: false, msg: '鏈嶅姟鍣ㄩ敊璇? ' + e.message });
+    res.json({ ok: false, msg: '服务器错误: ' + e.message });
   }
 });
 
-// 涓炬姤璁ㄨ璇勮
+// 举报讨论评论
 app.post('/api/discussions/comments/:id/report', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
-    return res.json({ ok: false, msg: '璇峰～鍐欎妇鎶ュ師鍥? });
+    return res.json({ ok: false, msg: '请填写举报原因' });
   }
 
   const commentId = req.params.id;
   const comments = readDiscussionComments();
   const comment = comments.find(c => c.id === commentId);
-  if (!comment) return res.json({ ok: false, msg: '璇勮涓嶅瓨鍦? });
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
 
-  // 鍘婚噸锛氬悓涓€鐢ㄦ埛鍙兘涓炬姤鍚屼竴鏉¤瘎璁轰竴娆?  const reports = readReports();
+  // 去重：同一用户只能举报同一条评论一次
+  const reports = readReports();
   const alreadyReported = reports.some(r => r.targetId === commentId && r.type === 'discussion_comment' && r.reportedBy === session.id);
   if (alreadyReported) {
-    return res.json({ ok: false, msg: '鎮ㄥ凡缁忎妇鎶ヨ繃姝よ瘎璁? });
+    return res.json({ ok: false, msg: '您已经举报过此评论' });
   }
 
   reports.push({
@@ -3073,13 +3208,13 @@ app.post('/api/discussions/comments/:id/report', (req, res) => {
     discussionId: comment.discussionId,
     reason: reason.trim(),
     reportedBy: session.id,
-    reporterName: session.nickname || '鏈煡',
+    reporterName: session.nickname || '未知',
     createdAt: new Date().toISOString(),
     status: 'pending'
   });
   writeReports(reports);
 
-  // 鏇存柊璇勮涓炬姤璁℃暟
+  // 更新评论举报计数
   comment.reportCount = (comment.reportCount || 0) + 1;
   if (comment.reportCount > 20) {
     comment.hidden = true;
@@ -3089,41 +3224,43 @@ app.post('/api/discussions/comments/:id/report', (req, res) => {
   res.json({ ok: true, data: { reportCount: comment.reportCount, hidden: comment.hidden } });
 });
 
-// ===== 涓炬姤 API =====
+// ===== 举报 API =====
 
-// 鎻愪氦涓炬姤锛堜换鎰忕敤鎴凤紝闇€鐧诲綍 token锛?app.post('/api/posts/:id/report', (req, res) => {
+// 提交举报（任意用户，需登录 token）
+app.post('/api/posts/:id/report', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
 
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const { reason } = req.body;
   if (!reason || !reason.trim()) {
-    return res.json({ ok: false, msg: '璇峰～鍐欎妇鎶ュ師鍥? });
+    return res.json({ ok: false, msg: '请填写举报原因' });
   }
 
   const postId = req.params.id;
   const posts = readPosts();
   const post = posts.find(p => p.id === postId);
-  if (!post) return res.json({ ok: false, msg: '甯栧瓙涓嶅瓨鍦? });
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
 
   const reports = readReports();
 
-  // 妫€鏌ヨ鐢ㄦ埛鏄惁宸蹭妇鎶ヨ繃姝ゅ笘锛堝瓧娈靛悕鏄?reportedBy锛屼笉鏄?userId锛?  const alreadyReported = reports.some(
+  // 检查该用户是否已举报过此帖（字段名是 reportedBy，不是 userId）
+  const alreadyReported = reports.some(
     r => r.postId === postId && r.reportedBy === session.id
   );
   if (alreadyReported) {
-    return res.json({ ok: false, msg: '鎮ㄥ凡缁忎妇鎶ヨ繃杩欐潯甯栧瓙浜? });
+    return res.json({ ok: false, msg: '您已经举报过这条帖子了' });
   }
 
   reports.push({
     id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     postId,
     postContent: (post.content || '').slice(0, 100),
-    postAuthor: post.author || '鍖垮悕',
+    postAuthor: post.author || '匿名',
     reportedBy: session.id,
-    reporterName: session.nickname || '鏈煡',
+    reporterName: session.nickname || '未知',
     reason: reason.trim(),
     createdAt: new Date().toISOString(),
     status: 'pending' // pending / resolved / ignored
@@ -3131,21 +3268,22 @@ app.post('/api/discussions/comments/:id/report', (req, res) => {
 
   writeReports(reports);
 
-  // 鏇存柊甯栧瓙鐨勪妇鎶ヨ鏁?  post.reportCount = (post.reportCount || 0) + 1;
-  // 涓炬姤鏁?> 20 鑷姩闅愯棌
+  // 更新帖子的举报计数
+  post.reportCount = (post.reportCount || 0) + 1;
+  // 举报数 > 20 自动隐藏
   if (post.reportCount > 20) {
     post.hidden = true;
   }
   writePosts(posts);
 
-  // 涓炬姤鎴愬姛鍚庣珛鍗冲彂閫?T1 閫氱煡
+  // 举报成功后立即发送 T1 通知
   try {
     const notices = readNotices();
     notices.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      title: '馃摦 涓炬姤宸叉敹鍒?,
-      content: '浣犱妇鎶ョ殑甯栧瓙锛? + (post.content || '').slice(0, 50) + '...锛夊凡鎻愪氦缁欑鐞嗗憳瀹℃牳銆俓n\n涓炬姤鍘熷洜锛? + reason.trim() + '\n\n鎴戜滑浼氬敖蹇鐞嗭紝鎰熻阿浣犲鏍″洯澧欑幆澧冪殑缁存姢锛?,
-      author: '绯荤粺',
+      title: '📮 举报已收到',
+      content: '你举报的帖子（' + (post.content || '').slice(0, 50) + '...）已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们会尽快处理，感谢你对校园墙环境的维护！',
+      author: '系统',
       auto: true,
     level: 'T1',
       createdAt: new Date().toISOString(),
@@ -3153,19 +3291,19 @@ app.post('/api/discussions/comments/:id/report', (req, res) => {
     });
     writeNotices(notices);
   } catch (e) {
-    console.error('鍙戦€佷妇鎶ラ€氱煡澶辫触:', e.message);
+    console.error('发送举报通知失败:', e.message);
   }
 
   res.json({ ok: true, data: { reportCount: post.reportCount, hidden: !!post.hidden } });
 });
 
-// 鑾峰彇涓炬姤鍒楄〃锛堜粎绠＄悊鍛橈紝鏀寔 status 绛涢€夛級
+// 获取举报列表（仅管理员，支持 status 筛选）
 app.get('/api/admin/reports', requireAdmin, (req, res) => {
   const reports = readReports();
   const { status } = req.query;
   const filtered = status ? reports.filter(r => r.status === status) : reports;
 
-  // 鎸夌姸鎬佹帓搴忥細pending 浼樺厛锛屽啀鎸夋椂闂村€掑簭
+  // 按状态排序：pending 优先，再按时间倒序
   filtered.sort((a, b) => {
     if (a.status === 'pending' && b.status !== 'pending') return -1;
     if (a.status !== 'pending' && b.status === 'pending') return 1;
@@ -3175,7 +3313,7 @@ app.get('/api/admin/reports', requireAdmin, (req, res) => {
   res.json({ ok: true, data: filtered });
 });
 
-// 鑾峰彇鎵€鏈夎瘎璁猴紙渚涚鐞嗗悗鍙帮級
+// 获取所有评论（供管理后台）
 app.get('/api/admin/comments', requireAdmin, (req, res) => {
   const posts = readPosts();
   const allComments = [];
@@ -3193,23 +3331,23 @@ app.get('/api/admin/comments', requireAdmin, (req, res) => {
   res.json({ ok: true, data: allComments });
 });
 
-// 澶勭悊涓炬姤锛堟爣璁?resolved / ignored锛屼粎绠＄悊鍛橈級
+// 处理举报（标记 resolved / ignored，仅管理员）
 app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   const { status, action } = req.body;
   if (!['resolved', 'ignored'].includes(status)) {
-    return res.json({ ok: false, msg: '鐘舵€佹棤鏁? });
+    return res.json({ ok: false, msg: '状态无效' });
   }
 
   const reports = readReports();
   const report = reports.find(r => r.id === req.params.id);
-  if (!report) return res.json({ ok: false, msg: '涓炬姤璁板綍涓嶅瓨鍦? });
+  if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
 
   report.status = status;
   report.handledBy = req.admin.id;
   report.handledAt = new Date().toISOString();
   if (action) report.action = action;
 
-  // 濡傛灉 action 鏄?delete_post锛屽悓鏃惰蒋鍒犻櫎琚妇鎶ョ殑甯栧瓙
+  // 如果 action 是 delete_post，同时软删除被举报的帖子
   if (action === 'delete_post' && report.postId) {
     const posts = readPosts();
     const now = new Date().toISOString();
@@ -3222,7 +3360,7 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     });
     writePosts(posts);
   }
-  // 濡傛灉 action 鏄?delete_comment锛屽悓鏃惰蒋鍒犻櫎琚妇鎶ョ殑璇勮
+  // 如果 action 是 delete_comment，同时软删除被举报的评论
   if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
     const posts = readPosts();
     const now = new Date().toISOString();
@@ -3239,7 +3377,8 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     });
     writePosts(posts);
   }
-  // 濡傛灉 action 鏄?delete_discussion_comment锛屽悓鏃惰蒋鍒犻櫎琚妇鎶ョ殑璁ㄨ鍖鸿瘎璁?  if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
+  // 如果 action 是 delete_discussion_comment，同时软删除被举报的讨论区评论
+  if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
     const comments = readDiscussionComments();
     const now = new Date().toISOString();
     comments.forEach(c => {
@@ -3256,22 +3395,22 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 灏佺涓炬姤鍙戦€佽€咃紙绠＄悊鍛橈級=====
+// ===== 封禁举报发送者（管理员）=====
 app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   const { banDays } = req.body;
   const days = banDays !== undefined ? parseInt(banDays) : 0;
-  if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '澶╂暟鏃犳晥' });
+  if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
 
   const reports = readReports();
   const report = reports.find(r => r.id === req.params.id);
-  if (!report) return res.json({ ok: false, msg: '涓炬姤璁板綍涓嶅瓨鍦? });
+  if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
 
   const targetUserId = report.reportedBy;
-  if (!targetUserId) return res.json({ ok: false, msg: '璇ヤ妇鎶ユ病鏈夊叧鑱旂敤鎴凤紙鍖垮悕涓炬姤锛? });
+  if (!targetUserId) return res.json({ ok: false, msg: '该举报没有关联用户（匿名举报）' });
 
   const users = readUsers();
   const user = users.find(u => u.id === targetUserId);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
   user.status = 'banned';
   if (days === 0) {
@@ -3285,7 +3424,7 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   }
   writeUsers(users);
 
-  // 鍚屾椂鏍囪涓炬姤涓哄凡澶勭悊
+  // 同时标记举报为已处理
   report.status = 'resolved';
   report.handledBy = req.admin.id;
   report.handledAt = new Date().toISOString();
@@ -3293,16 +3432,16 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
   writeReports(reports);
 
   res.json({ ok: true,
-    msg: days === 0 ? '宸叉案涔呭皝绂佽鐢ㄦ埛' : '宸插皝绂佽鐢ㄦ埛 ' + days + ' 澶?,
+    msg: days === 0 ? '已永久封禁该用户' : '已封禁该用户 ' + days + ' 天',
     user: { id: user.id, username: user.username, nickname: user.nickname }
   });
 });
 
-// ===== 鍚姩鏃舵竻鐞嗘棫鐨勮蒋鍒犻櫎鏁版嵁锛堣縼绉诲埌 deleted_items 骞朵粠鍘熻〃绉婚櫎锛?====
+// ===== 启动时清理旧的软删除数据（迁移到 deleted_items 并从原表移除）=====
 function cleanupOldDeletedData() {
   var cleaned = 0;
 
-  // 娓呯悊甯栧瓙
+  // 清理帖子
   var posts = readPosts();
   var oldDeleted = posts.filter(function(p) { return p.deleted; });
   if (oldDeleted.length > 0) {
@@ -3311,7 +3450,7 @@ function cleanupOldDeletedData() {
         id: p.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         type: 'post',
         content: typeof p.content === 'string' ? p.content.substring(0, 500) : '',
-        author: p.author || '鏈煡',
+        author: p.author || '未知',
         userId: p.userId || null,
         deletedAt: p.deletedAt || p.time || new Date().toISOString(),
         deletedBy: p.deletedBy || 'system',
@@ -3323,7 +3462,7 @@ function cleanupOldDeletedData() {
     cleaned += oldDeleted.length;
   }
 
-  // 娓呯悊甯栧瓙鍐呯殑璇勮
+  // 清理帖子内的评论
   var commentCount = 0;
   posts.forEach(function(post) {
     var oldComments = (post.comments || []).filter(function(c) { return c.deleted; });
@@ -3333,7 +3472,7 @@ function cleanupOldDeletedData() {
           id: c.id,
           type: 'comment',
           content: typeof c.content === 'string' ? c.content.substring(0, 500) : '',
-          author: c.author || '鏈煡',
+          author: c.author || '未知',
           userId: c.userId || null,
           deletedAt: c.deletedAt || c.time || new Date().toISOString(),
           deletedBy: c.deletedBy || 'system',
@@ -3347,7 +3486,7 @@ function cleanupOldDeletedData() {
   });
   if (commentCount > 0) { writePosts(posts); cleaned += commentCount; }
 
-  // 娓呯悊璁ㄨ
+  // 清理讨论
   var discussions = readDiscussions();
   var oldDiscussions = discussions.filter(function(d) { return d.deleted; });
   if (oldDiscussions.length > 0) {
@@ -3356,7 +3495,7 @@ function cleanupOldDeletedData() {
         id: d.id,
         type: 'discussion',
         content: d.title || '',
-        author: d.createdBy || '鏈煡',
+        author: d.createdBy || '未知',
         userId: d.createdBy || null,
         deletedAt: d.deletedAt || d.createdAt || new Date().toISOString(),
         deletedBy: d.deletedBy || 'system',
@@ -3368,7 +3507,7 @@ function cleanupOldDeletedData() {
     cleaned += oldDiscussions.length;
   }
 
-  // 娓呯悊璁ㄨ璇勮
+  // 清理讨论评论
   var discComments = readDiscussionComments();
   var oldDiscComments = discComments.filter(function(c) { return c.deleted; });
   if (oldDiscComments.length > 0) {
@@ -3377,7 +3516,7 @@ function cleanupOldDeletedData() {
         id: c.id,
         type: 'disc_comment',
         content: typeof c.content === 'string' ? c.content.substring(0, 500) : '',
-        author: c.author || '鏈煡',
+        author: c.author || '未知',
         userId: c.userId || null,
         deletedAt: c.deletedAt || c.createdAt || new Date().toISOString(),
         deletedBy: c.deletedBy || 'system',
@@ -3390,11 +3529,11 @@ function cleanupOldDeletedData() {
   }
 
   if (cleaned > 0) {
-    console.log('[cleanup] 鉁?宸茶縼绉?' + cleaned + ' 鏉℃棫杞垹闄ゆ暟鎹埌 deleted_items 琛?);
+    console.log('[cleanup] ✅ 已迁移 ' + cleaned + ' 条旧软删除数据到 deleted_items 表');
   }
 }
 
-// ===== 鍒犻櫎甯栧瓙鏃跺悓姝ュ垹闄ゅ叧鑱旂殑璁ㄨ璇勮 =====
+// ===== 删除帖子时同步删除关联的讨论评论 =====
 function deleteSyncedDiscComment(postId) {
   try {
     var comments = readDiscussionComments();
@@ -3407,13 +3546,13 @@ function deleteSyncedDiscComment(postId) {
   } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
 }
 
-// ===== 宸插垹闄ゅ唴瀹硅褰曡緟鍔╁嚱鏁?=====
+// ===== 已删除内容记录辅助函数 =====
 function saveDeletedItem(type, item, deletedBy, extra) {
   db.addDeletedItem({
     id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: type,
     content: typeof item.content === 'string' ? item.content.substring(0, 500) : '',
-    author: item.author || item.nickname || item.createdBy || '鏈煡',
+    author: item.author || item.nickname || item.createdBy || '未知',
     userId: item.userId || item.createdBy || null,
     deletedAt: new Date().toISOString(),
     deletedBy: deletedBy,
@@ -3421,7 +3560,7 @@ function saveDeletedItem(type, item, deletedBy, extra) {
   });
 }
 
-// ===== 绠＄悊绔細鏌ョ湅宸插垹闄ゅ唴瀹?=====
+// ===== 管理端：查看已删除内容 =====
 app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
   const items = db.readDeletedItems();
   const posts = items.filter(i => i.type === 'post');
@@ -3439,11 +3578,13 @@ app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
   });
 });
 
-// ===== 骞冲彴闇稿噷涓炬姤 =====
-// ===== 鍦ㄧ嚎鐢ㄦ埛缁熻 =====
+// ===== 平台霸凌举报 =====
+// ===== 在线用户统计 =====
 const onlineUsers = new Map(); // userId -> lastHeartbeat (timestamp)
-const ONLINE_TIMEOUT = 120000; // 2 鍒嗛挓鏃犲績璺宠涓虹绾?
-// 蹇冭烦鎺ュ彛锛堢敤鎴风櫥褰曞悗瀹氭椂璋冪敤锛?app.post('/api/user/heartbeat', (req, res) => {
+const ONLINE_TIMEOUT = 120000; // 2 分钟无心跳视为离线
+
+// 心跳接口（用户登录后定时调用）
+app.post('/api/user/heartbeat', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) { onlineUsers.set('anon_' + getClientIP(req), Date.now()); return res.json({ ok: true }); }
   const session = verifyUserToken(token);
@@ -3452,39 +3593,41 @@ const ONLINE_TIMEOUT = 120000; // 2 鍒嗛挓鏃犲績璺宠涓虹绾?
   res.json({ ok: true });
 });
 
-// 缁熻鎺ュ彛锛堝惈浠婃棩甯栨暟銆佸湪绾夸汉鏁帮級
+// 统计接口（含今日帖数、在线人数）
 app.get('/api/stats', (req, res) => {
-  // 娓呯悊杩囨湡
+  // 清理过期
   const now = Date.now();
   for (const [id, ts] of onlineUsers) {
     if (now - ts > ONLINE_TIMEOUT) onlineUsers.delete(id);
   }
-  // 浠婃棩甯栨暟
+  // 今日帖数
   const posts = readPosts();
   const today = new Date().toISOString().slice(0, 10);
   const todayPosts = posts.filter(p => p.time && p.time.startsWith(today)).length;
   res.json({ ok: true, data: { todayPosts, onlineCount: onlineUsers.size } });
 });
 
-// 鐗堟湰鍙锋帴鍙ｏ紙杩斿洖鏈湴 git 鍝堝笇锛?app.get('/api/version', (req, res) => {
+// 版本号接口（返回本地 git 哈希）
+app.get('/api/version', (req, res) => {
   res.json({ ok: true, data: { sha: cachedGitSha, message: cachedCommitMsg } });
 });
 
-// 姣忓垎閽熸竻鐞嗕竴娆¤繃鏈熷績璺?setInterval(() => {
+// 每分钟清理一次过期心跳
+setInterval(() => {
   const now = Date.now();
   for (const [id, ts] of onlineUsers) {
     if (now - ts > ONLINE_TIMEOUT) onlineUsers.delete(id);
   }
 }, 60000);
 
-// ===== 鍚姩 =====
+// ===== 启动 =====
 
-// ===== 鐢ㄦ埛鍙嶉鎻愪氦 =====
+// ===== 用户反馈提交 =====
 app.post('/api/feedback', (req, res) => {
   const { type, description, contact, images } = req.body;
-  if (!type || !description) return res.json({ ok: false, msg: '绫诲瀷鍜屾弿杩颁笉鑳戒负绌? });
-  if (description.length < 10) return res.json({ ok: false, msg: '鎻忚堪鑷冲皯10涓瓧' });
-  if (description.length > 500) return res.json({ ok: false, msg: '鎻忚堪鏈€澶?00瀛? });
+  if (!type || !description) return res.json({ ok: false, msg: '类型和描述不能为空' });
+  if (description.length < 10) return res.json({ ok: false, msg: '描述至少10个字' });
+  if (description.length > 500) return res.json({ ok: false, msg: '描述最多500字' });
 
   const feedbacks = readFeedbacks();
   const newFeedback = {
@@ -3504,16 +3647,16 @@ app.post('/api/feedback', (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 闇稿噷浜嬩欢鎶ュ憡鎻愪氦 =====
+// ===== 霸凌事件报告提交 =====
 app.post('/api/bullying-report', (req, res) => {
   const { reporterRole, victimName, bullyType, description, involved, location, time, contact, anonymous, images } = req.body;
-  if (!reporterRole || !['self', 'witness'].includes(reporterRole)) return res.json({ ok: false, msg: '璇烽€夋嫨鎮ㄧ殑韬唤' });
-  if (!bullyType || !description) return res.json({ ok: false, msg: '闇稿噷绫诲瀷鍜屾弿杩颁笉鑳戒负绌? });
-  if (description.length < 20) return res.json({ ok: false, msg: '鎻忚堪鑷冲皯20涓瓧' });
-  if (description.length > 1000) return res.json({ ok: false, msg: '鎻忚堪鏈€澶?000瀛? });
-  if (!anonymous && !contact) return res.json({ ok: false, msg: '瀹炲悕鎻愪氦蹇呴』濉啓鑱旂郴鏂瑰紡' });
+  if (!reporterRole || !['self', 'witness'].includes(reporterRole)) return res.json({ ok: false, msg: '请选择您的身份' });
+  if (!bullyType || !description) return res.json({ ok: false, msg: '霸凌类型和描述不能为空' });
+  if (description.length < 20) return res.json({ ok: false, msg: '描述至少20个字' });
+  if (description.length > 1000) return res.json({ ok: false, msg: '描述最多1000字' });
+  if (!anonymous && !contact) return res.json({ ok: false, msg: '实名提交必须填写联系方式' });
 
-  // 灏濊瘯鑾峰彇鎻愪氦鑰?userId
+  // 尝试获取提交者 userId
   let reporterUserId = null;
   try {
     const token = req.headers['x-user-token'];
@@ -3525,7 +3668,8 @@ app.post('/api/bullying-report', (req, res) => {
 
   const reports = readBullying();
 
-  // 鑷垜涓炬姤 鈫?鑷姩灏嗗彈瀹宠€呭鍚嶅姞鍏ヤ繚鎶ゅ悕鍗?  if (reporterRole === 'self' && victimName) {
+  // 自我举报 → 自动将受害者姓名加入保护名单
+  if (reporterRole === 'self' && victimName) {
     addBullyingName(victimName);
   }
 
@@ -3546,20 +3690,20 @@ app.post('/api/bullying-report', (req, res) => {
     handledBy: null,
     handledAt: null,
     handleNote: null,
-    userId: reporterUserId // 瀛樺偍鎻愪氦鑰?userId
+    userId: reporterUserId // 存储提交者 userId
   };
   reports.unshift(newReport);
   writeBullying(reports);
 
-  // 鍙戦€?T1 閫氱煡
+  // 发送 T1 通知
   if (reporterUserId) {
     try {
       const notices = readNotices();
       notices.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        title: '馃洝锔?闇稿噷涓炬姤宸叉敹鍒?,
-        content: '浣犵殑闇稿噷浜嬩欢鎶ュ憡宸叉彁浜ょ粰绠＄悊鍛樺鏍搞€俓n\n鎴戜滑灏嗗敖蹇牳瀹炲苟澶勭悊锛岃淇濇寔鑱旂郴鏂瑰紡鐣呴€氥€俓n\n鎰熻阿浣犲鏍″洯瀹夊叏鐨勫叧娉紒',
-        author: '绯荤粺',
+        title: '🛡️ 霸凌举报已收到',
+        content: '你的霸凌事件报告已提交给管理员审核。\n\n我们将尽快核实并处理，请保持联系方式畅通。\n\n感谢你对校园安全的关注！',
+        author: '系统',
         auto: true,
     level: 'T1',
         auto: true,
@@ -3568,14 +3712,14 @@ app.post('/api/bullying-report', (req, res) => {
       });
       writeNotices(notices);
     } catch (e) {
-      console.error('鍙戦€侀湼鍑屼妇鎶ラ€氱煡澶辫触:', e.message);
+      console.error('发送霸凌举报通知失败:', e.message);
     }
   }
 
   res.json({ ok: true, data: { id: newReport.id } });
 });
 
-// ===== 鑾峰彇闇稿噷鎶ュ憡鍒楄〃锛堢鐞嗗憳锛?====
+// ===== 获取霸凌报告列表（管理员）=====
 app.get('/api/admin/bullying', requireAdmin, (req, res) => {
   const reports = readBullying();
   const { status } = req.query;
@@ -3602,30 +3746,30 @@ app.get('/api/admin/bullying', requireAdmin, (req, res) => {
   res.json({ ok: true, data: result });
 });
 
-// ===== 澶勭悊闇稿噷鎶ュ憡锛堢鐞嗗憳锛?====
+// ===== 处理霸凌报告（管理员）=====
 app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   const { status, handleNote } = req.body;
   if (!status || !['pending','processing','resolved'].includes(status)) {
-    return res.json({ ok: false, msg: '鏃犳晥鐨勭姸鎬? });
+    return res.json({ ok: false, msg: '无效的状态' });
   }
   const reports = readBullying();
   const idx = reports.findIndex(r => r.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鎶ュ憡涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
   reports[idx].status = status;
   reports[idx].handleNote = handleNote || '';
   reports[idx].handledBy = req.admin.name || req.admin.id;
   reports[idx].handledAt = new Date().toISOString();
   writeBullying(reports);
 
-  // 纭纭湁闇稿噷锛坮esolved锛夆啋 鍙戦€?T0 閫氱煡
+  // 确认确有霸凌（resolved）→ 发送 T0 通知
   if (status === 'resolved' && reports[idx].userId) {
     try {
       const notices = readNotices();
       notices.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        title: '馃洝锔?闇稿噷涓炬姤宸茬‘璁ゅ鐞?,
-        content: '浣犳彁浜ょ殑闇稿噷浜嬩欢鎶ュ憡缁忕鐞嗗憳鏍稿疄宸茬‘璁わ紝鐩稿叧澶勭悊姝ｅ湪杩涜涓€俓n\n澶勭悊澶囨敞锛? + (handleNote || '鏃?) + '\n\n濡傛儏鍐典粛鏈敼鍠勶紝璇烽噸鏂版彁浜ゆ姤鍛婃垨鑱旂郴瀛︽牎鐩稿叧閮ㄩ棬銆?,
-        author: '绯荤粺',
+        title: '🛡️ 霸凌举报已确认处理',
+        content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
+        author: '系统',
         auto: true,
     level: 'T0',
         createdAt: new Date().toISOString(),
@@ -3633,22 +3777,22 @@ app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
       });
       writeNotices(notices);
     } catch (e) {
-      console.error('鍙戦€侀湼鍑屽鐞嗛€氱煡澶辫触:', e.message);
+      console.error('发送霸凌处理通知失败:', e.message);
     }
   }
 
   res.json({ ok: true });
 });
 
-// ===== 鑾峰彇鍗曟潯闇稿噷鎶ュ憡璇︽儏锛堢鐞嗗憳锛?====
+// ===== 获取单条霸凌报告详情（管理员）=====
 app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   const reports = readBullying();
   const report = reports.find(r => r.id === req.params.id);
-  if (!report) return res.json({ ok: false, msg: '鎶ュ憡涓嶅瓨鍦? });
+  if (!report) return res.json({ ok: false, msg: '报告不存在' });
   res.json({ ok: true, data: report });
 });
 
-// ===== 鑾峰彇鍙嶉鍒楄〃锛堢鐞嗗憳锛?====
+// ===== 获取反馈列表（管理员）=====
 app.get('/api/admin/feedbacks', requireAdmin, (req, res) => {
   const feedbacks = readFeedbacks();
   const result = feedbacks.map(f => ({
@@ -3666,23 +3810,23 @@ app.get('/api/admin/feedbacks', requireAdmin, (req, res) => {
   res.json({ ok: true, data: result });
 });
 
-// ===== 鑾峰彇鍗曟潯鍙嶉璇︽儏锛堢鐞嗗憳锛?====
+// ===== 获取单条反馈详情（管理员）=====
 app.get('/api/admin/feedback/:id', requireAdmin, (req, res) => {
   const feedbacks = readFeedbacks();
   const f = feedbacks.find(x => x.id === req.params.id);
-  if (!f) return res.json({ ok: false, msg: '鍙嶉涓嶅瓨鍦? });
+  if (!f) return res.json({ ok: false, msg: '反馈不存在' });
   res.json({ ok: true, data: f });
 });
 
-// ===== 澶勭悊鍙嶉锛堢鐞嗗憳锛?====
+// ===== 处理反馈（管理员）=====
 app.post('/api/admin/feedback/:id/handle', requireAdmin, (req, res) => {
   const { status, note } = req.body;
   if (!status || !['pending', 'resolved', 'rejected'].includes(status)) {
-    return res.json({ ok: false, msg: '鐘舵€佹棤鏁? });
+    return res.json({ ok: false, msg: '状态无效' });
   }
   const feedbacks = readFeedbacks();
   const idx = feedbacks.findIndex(f => f.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鍙嶉涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '反馈不存在' });
   feedbacks[idx].status = status;
   feedbacks[idx].handledBy = req.admin.id;
   feedbacks[idx].handledAt = new Date().toISOString();
@@ -3691,10 +3835,11 @@ app.post('/api/admin/feedback/:id/handle', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== 杩濈璇嶇鐞嗭紙绠＄悊鍛橈級=====
+// ===== 违禁词管理（管理员）=====
 const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
 
-// 鑾峰彇杩濈璇嶅垪琛?app.get('/api/admin/sensitive-words', requireAdmin, (req, res) => {
+// 获取违禁词列表
+app.get('/api/admin/sensitive-words', requireAdmin, (req, res) => {
   try {
     if (!fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
       return res.json({ ok: true, data: [] });
@@ -3702,17 +3847,18 @@ const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
     const words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
     res.json({ ok: true, data: Array.isArray(words) ? words : [] });
   } catch (e) {
-    res.json({ ok: false, msg: '璇诲彇澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '读取失败: ' + e.message });
   }
 });
 
-// 娣诲姞杩濈璇?app.post('/api/admin/sensitive-words', requireAdmin, (req, res) => {
+// 添加违禁词
+app.post('/api/admin/sensitive-words', requireAdmin, (req, res) => {
   try {
     const { word } = req.body;
-    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '璇疯緭鍏ユ湁鏁堣瘝璇? });
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
     const trimmed = word.trim();
-    if (trimmed.length === 0) return res.json({ ok: false, msg: '璇嶈涓嶈兘涓虹┖' });
-    if (trimmed.length > 50) return res.json({ ok: false, msg: '璇嶈澶暱锛屾渶澶?0瀛? });
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
 
     let words = [];
     if (fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
@@ -3720,29 +3866,30 @@ const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
     }
     if (!Array.isArray(words)) words = [];
 
-    if (words.includes(trimmed)) return res.json({ ok: false, msg: '璇ヨ繚绂佽瘝宸插瓨鍦? });
+    if (words.includes(trimmed)) return res.json({ ok: false, msg: '该违禁词已存在' });
 
     words.push(trimmed);
     fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
-    reloadSensitive(); // 閲嶆柊鍔犺浇璇嶅簱
+    reloadSensitive(); // 重新加载词库
 
     res.json({ ok: true, data: words });
   } catch (e) {
-    res.json({ ok: false, msg: '娣诲姞澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
   }
 });
 
-// 鍒犻櫎杩濈璇?app.delete('/api/admin/sensitive-words/:word', requireAdmin, (req, res) => {
+// 删除违禁词
+app.delete('/api/admin/sensitive-words/:word', requireAdmin, (req, res) => {
   try {
     const word = decodeURIComponent(req.params.word);
     if (!fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
-      return res.json({ ok: false, msg: '娌℃湁鑷畾涔夎繚绂佽瘝' });
+      return res.json({ ok: false, msg: '没有自定义违禁词' });
     }
     let words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
     if (!Array.isArray(words)) words = [];
 
     const idx = words.indexOf(word);
-    if (idx === -1) return res.json({ ok: false, msg: '鏈壘鍒拌杩濈璇? });
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该违禁词' });
 
     words.splice(idx, 1);
     fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
@@ -3750,44 +3897,47 @@ const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
 
     res.json({ ok: true, data: words });
   } catch (e) {
-    res.json({ ok: false, msg: '鍒犻櫎澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
   }
 });
 
-// 鑾峰彇杩濈璇嶇粺璁?app.get('/api/admin/sensitive-stats', requireAdmin, (req, res) => {
+// 获取违禁词统计
+app.get('/api/admin/sensitive-stats', requireAdmin, (req, res) => {
   try {
     const stats = getSensitiveStats();
     res.json({ ok: true, data: stats });
   } catch (e) {
-    res.json({ ok: false, msg: '鑾峰彇缁熻澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '获取统计失败: ' + e.message });
   }
 });
 
-// ===== 鏁忔劅璇嶇櫧鍚嶅崟绠＄悊锛堢鐞嗗憳锛?====
+// ===== 敏感词白名单管理（管理员）=====
 
-// 鑾峰彇鐧藉悕鍗曞垪琛?app.get('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+// 获取白名单列表
+app.get('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
   try {
     if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: true, data: [] });
     const list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
     res.json({ ok: true, data: Array.isArray(list) ? list : [] });
   } catch (e) {
-    res.json({ ok: false, msg: '璇诲彇鐧藉悕鍗曞け璐? ' + e.message });
+    res.json({ ok: false, msg: '读取白名单失败: ' + e.message });
   }
 });
 
-// 娣诲姞鐧藉悕鍗?app.post('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+// 添加白名单
+app.post('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
   try {
     const { word } = req.body;
-    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '璇疯緭鍏ユ湁鏁堣瘝璇? });
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
     const trimmed = word.trim();
-    if (trimmed.length === 0) return res.json({ ok: false, msg: '璇嶈涓嶈兘涓虹┖' });
-    if (trimmed.length > 50) return res.json({ ok: false, msg: '璇嶈澶暱锛屾渶澶?0瀛? });
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
 
     let list = [];
     if (fs.existsSync(WHITELIST_FILE)) list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
     if (!Array.isArray(list)) list = [];
 
-    if (list.includes(trimmed)) return res.json({ ok: false, msg: '璇ヨ瘝宸插湪鐧藉悕鍗曚腑' });
+    if (list.includes(trimmed)) return res.json({ ok: false, msg: '该词已在白名单中' });
 
     list.push(trimmed);
     saveWhitelist(list);
@@ -3795,19 +3945,20 @@ const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
 
     res.json({ ok: true, data: list });
   } catch (e) {
-    res.json({ ok: false, msg: '娣诲姞澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
   }
 });
 
-// 鍒犻櫎鐧藉悕鍗?app.delete('/api/admin/sensitive-whitelist/:word', requireAdmin, (req, res) => {
+// 删除白名单
+app.delete('/api/admin/sensitive-whitelist/:word', requireAdmin, (req, res) => {
   try {
     const word = decodeURIComponent(req.params.word);
-    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: false, msg: '鐧藉悕鍗曚负绌? });
+    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: false, msg: '白名单为空' });
     let list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
     if (!Array.isArray(list)) list = [];
 
     const idx = list.indexOf(word);
-    if (idx === -1) return res.json({ ok: false, msg: '鏈壘鍒拌鐧藉悕鍗曡瘝' });
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该白名单词' });
 
     list.splice(idx, 1);
     saveWhitelist(list);
@@ -3815,62 +3966,63 @@ const SENSITIVE_CUSTOM_FILE = require('./sensitiveWords').CUSTOM_FILE;
 
     res.json({ ok: true, data: list });
   } catch (e) {
-    res.json({ ok: false, msg: '鍒犻櫎澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
   }
 });
 
-// ===== 闇稿噷鐘舵€佺鐞嗭紙绠＄悊鍛橈級=====
+// ===== 霸凌状态管理（管理员）=====
 
-// 鑾峰彇淇濇姢濮撳悕鍒楄〃
+// 获取保护姓名列表
 app.get('/api/admin/bullying-names', requireAdmin, (req, res) => {
   try {
     const names = getAllBullyingNames();
     res.json({ ok: true, data: names });
   } catch (e) {
-    res.json({ ok: false, msg: '璇诲彇澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '读取失败: ' + e.message });
   }
 });
 
-// 鎵嬪姩娣诲姞淇濇姢濮撳悕
+// 手动添加保护姓名
 app.post('/api/admin/bullying-names', requireAdmin, (req, res) => {
   try {
     const { name } = req.body;
-    if (!name || typeof name !== 'string') return res.json({ ok: false, msg: '璇疯緭鍏ユ湁鏁堝鍚? });
+    if (!name || typeof name !== 'string') return res.json({ ok: false, msg: '请输入有效姓名' });
     const trimmed = name.trim();
-    if (trimmed.length === 0) return res.json({ ok: false, msg: '濮撳悕涓嶈兘涓虹┖' });
-    if (trimmed.length > 30) return res.json({ ok: false, msg: '濮撳悕澶暱锛屾渶澶?0瀛? });
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '姓名不能为空' });
+    if (trimmed.length > 30) return res.json({ ok: false, msg: '姓名太长，最多30字' });
 
     if (addBullyingName(trimmed)) {
-      res.json({ ok: true, msg: '娣诲姞鎴愬姛' });
+      res.json({ ok: true, msg: '添加成功' });
     } else {
-      res.json({ ok: false, msg: '璇ュ鍚嶅凡鍦ㄤ繚鎶ゅ悕鍗曚腑' });
+      res.json({ ok: false, msg: '该姓名已在保护名单中' });
     }
   } catch (e) {
-    res.json({ ok: false, msg: '娣诲姞澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
   }
 });
 
-// 鍒犻櫎淇濇姢濮撳悕
+// 删除保护姓名
 app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
   try {
     const name = decodeURIComponent(req.params.name);
     if (removeBullyingName(name)) {
-      res.json({ ok: true, msg: '鍒犻櫎鎴愬姛' });
+      res.json({ ok: true, msg: '删除成功' });
     } else {
-      res.json({ ok: false, msg: '鏈壘鍒拌濮撳悕' });
+      res.json({ ok: false, msg: '未找到该姓名' });
     }
   } catch (e) {
-    res.json({ ok: false, msg: '鍒犻櫎澶辫触: ' + e.message });
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
   }
 });
 
-// ===== Q&A 闂瓟绯荤粺 =====
+// ===== Q&A 问答系统 =====
 function readQAQuestions () { return db.readQAQuestions(); }
 function writeQAQuestions (data) { db.writeQAQuestions(data); }
 function readQAAnswers () { return db.readQAAnswers(); }
 function writeQAAnswers (data) { db.writeQAAnswers(data); }
 
-// 缁欑敤鎴峰彉鏇?credit 骞惰褰曟祦姘?function changeCredit(userId, amount, reason) {
+// 给用户变更 credit 并记录流水
+function changeCredit(userId, amount, reason) {
   const users = readUsers();
   const idx = users.findIndex(u => u.id === userId);
   if (idx === -1) return false;
@@ -3889,7 +4041,7 @@ function writeQAAnswers (data) { db.writeQAAnswers(data); }
   return true;
 }
 
-// 缁撶畻鍒版湡闂
+// 结算到期问题
 function settleExpiredQuestions() {
   const questions = readQAQuestions();
   const answers = readQAAnswers();
@@ -3899,31 +4051,33 @@ function settleExpiredQuestions() {
     if (q.status !== 'open') continue;
     if (!q.deadline) continue;
     if (new Date(q.deadline) > now) continue;
-    // 鍒版湡锛屾壘姝ら棶棰樼殑鎵€鏈夊洖绛旓紝鎸夎禐鏁板垎閰?    q.status = 'expired';
+    // 到期，找此问题的所有回答，按赞数分配
+    q.status = 'expired';
     changed = true;
     const qAnswers = answers.filter(a => a.questionId === q.id && !a.deleted);
     const totalLikes = qAnswers.reduce((s, a) => s + (a.likes || 0), 0);
     const bounty = q.bounty || 0;
     if (bounty > 0 && qAnswers.length > 0) {
       if (totalLikes === 0) {
-        // 鏃犱汉鐐硅禐鍒欏钩鍒?        const share = Math.floor(bounty / qAnswers.length);
+        // 无人点赞则平分
+        const share = Math.floor(bounty / qAnswers.length);
         for (const a of qAnswers) {
-          if (share > 0) changeCredit(a.userId, share, '闂銆? + q.title.slice(0, 10) + '...銆嶈禐鏁板潎鍒嗘偓璧?);
+          if (share > 0) changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数均分悬赏');
         }
       } else {
         let distributed = 0;
         for (const a of qAnswers) {
           const share = Math.floor(bounty * (a.likes || 0) / totalLikes);
           if (share > 0) {
-            changeCredit(a.userId, share, '闂銆? + q.title.slice(0, 10) + '...銆嶈禐鏁板垎閰嶆偓璧?);
+            changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数分配悬赏');
             distributed += share;
           }
         }
-        // 浣欐暟缁欒禐鏈€澶氱殑
+        // 余数给赞最多的
         const remainder = bounty - distributed;
         if (remainder > 0) {
           const top = qAnswers.sort((a, b) => (b.likes || 0) - (a.likes || 0))[0];
-          changeCredit(top.userId, remainder, '闂鎮祻浣欐暟濂栧姳');
+          changeCredit(top.userId, remainder, '问题悬赏余数奖励');
         }
       }
     }
@@ -3931,9 +4085,10 @@ function settleExpiredQuestions() {
   if (changed) writeQAQuestions(questions);
 }
 
-// 瀹氭椂姣忓垎閽熸鏌ュ埌鏈熼棶棰?setInterval(settleExpiredQuestions, 60 * 1000);
+// 定时每分钟检查到期问题
+setInterval(settleExpiredQuestions, 60 * 1000);
 
-// 鑾峰彇闂鍒楄〃
+// 获取问题列表
 app.get('/api/qa/questions', (req, res) => {
   settleExpiredQuestions();
   const questions = readQAQuestions().filter(q => !q.deleted);
@@ -3951,12 +4106,12 @@ app.get('/api/qa/questions', (req, res) => {
   res.json({ ok: true, data: result, total, page: Number(page), limit: Number(limit) });
 });
 
-// 鑾峰彇鎴戠殑鎻愰棶
+// 获取我的提问
 app.get('/api/qa/my-questions', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰? });
+  if (!token) return res.json({ ok: false, msg: '未登录' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
   const questions = readQAQuestions().filter(q => q.userId === session.id && !q.deleted);
   const answers = readQAAnswers();
@@ -3974,11 +4129,12 @@ app.get('/api/qa/my-questions', (req, res) => {
   res.json({ ok: true, data: result });
 });
 
-// 鑾峰彇鍗曚釜闂璇︽儏锛堝惈鍥炵瓟锛?app.get('/api/qa/questions/:id', (req, res) => {
+// 获取单个问题详情（含回答）
+app.get('/api/qa/questions/:id', (req, res) => {
   settleExpiredQuestions();
   const questions = readQAQuestions();
   const q = questions.find(x => x.id === req.params.id && !x.deleted);
-  if (!q) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
   const answers = readQAAnswers().filter(a => a.questionId === q.id && !a.deleted);
   answers.sort((a, b) => {
     if (a.reward && !b.reward) return -1;
@@ -3991,34 +4147,36 @@ app.get('/api/qa/my-questions', (req, res) => {
   res.json({ ok: true, data: { ...q, answers, remainingBounty } });
 });
 
-// 鍙戝竷闂
+// 发布问题
 app.post('/api/qa/questions', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const { title, content, bounty = 0, images = [], sensitiveForce = false } = req.body;
-  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '鏍囬鑷冲皯2涓瓧' });
-  if (title.trim().length > 100) return res.json({ ok: false, msg: '鏍囬鏈€澶?00涓瓧' });
-  if ((content || '').length > 2000) return res.json({ ok: false, msg: '鍐呭鏈€澶?000涓瓧' });
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if ((content || '').length > 2000) return res.json({ ok: false, msg: '内容最多2000个字' });
   const b = Math.floor(Number(bounty) || 0);
-  if (b < 0) return res.json({ ok: false, msg: '鎮祻涓嶈兘涓鸿礋鏁? });
-  if (!Number.isInteger(b)) return res.json({ ok: false, msg: '鎮祻蹇呴』涓烘暣鏁? });
-  if (images.length > 3) return res.json({ ok: false, msg: '鏈€澶氫笂浼?寮犲浘鐗? });
+  if (b < 0) return res.json({ ok: false, msg: '悬赏不能为负数' });
+  if (!Number.isInteger(b)) return res.json({ ok: false, msg: '悬赏必须为整数' });
+  if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
 
-  // 鏁忔劅璇嶆娴?  const checkText = (title.trim() + ' ' + (content || '')).trim();
+  // 敏感词检测
+  const checkText = (title.trim() + ' ' + (content || '')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
-  // 闇稿噷淇濇姢濮撳悕妫€娴嬶紙濮嬬粓闃绘锛?  const blockedNames = checkBullyingNames(checkText);
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(checkText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if ((user.credit || 0) < b) return res.json({ ok: false, msg: 'Credits涓嶈冻锛屽綋鍓嶄綑棰濓細' + (user.credit || 0) });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if ((user.credit || 0) < b) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });
 
-  // 鎵ｉ櫎鎮祻 credits
+  // 扣除悬赏 credits
   if (b > 0) {
     user.credit = (user.credit || 0) - b;
     writeUsers(users);
@@ -4027,7 +4185,7 @@ app.post('/api/qa/questions', (req, res) => {
       id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       userId: session.id,
       amount: -b,
-      reason: '鍙戝竷闂鎮祻锛? + title.slice(0, 20),
+      reason: '发布问题悬赏：' + title.slice(0, 20),
       createdAt: new Date().toISOString()
     });
     writeCreditLogs(logs);
@@ -4046,7 +4204,7 @@ app.post('/api/qa/questions', (req, res) => {
     deadline: null,
     status: 'open', // open | accepted | expired | closed
     acceptedAnswerId: null,
-    distributedCredits: 0,  // 宸插彂鏀剧殑鎮祻鎬婚
+    distributedCredits: 0,  // 已发放的悬赏总额
     createdAt: new Date().toISOString(),
     deleted: false
   };
@@ -4055,37 +4213,41 @@ app.post('/api/qa/questions', (req, res) => {
   res.json({ ok: true, data: q });
 });
 
-// 鍥炵瓟闂
+// 回答问题
 app.post('/api/qa/questions/:id/answers', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const { content, images = [], sensitiveForce = false } = req.body;
-  if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '鍥炵瓟鑷冲皯2涓瓧' });
-  if (content.length > 2000) return res.json({ ok: false, msg: '鍥炵瓟鏈€澶?000瀛? });
-  if (images.length > 3) return res.json({ ok: false, msg: '鏈€澶氫笂浼?寮犲浘鐗? });
+  if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '回答至少2个字' });
+  if (content.length > 2000) return res.json({ ok: false, msg: '回答最多2000字' });
+  if (images.length > 3) return res.json({ ok: false, msg: '最多上传3张图片' });
 
-  // 鏁忔劅璇嶆娴?  const sensitiveWords = checkSensitive(content);
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
-  // 闇稿噷淇濇姢濮撳悕妫€娴嬶紙濮嬬粓闃绘锛?  const blockedNames = checkBullyingNames(content);
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
   const questions = readQAQuestions();
   const q = questions.find(x => x.id === req.params.id && !x.deleted);
-  if (!q) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
-  if (q.status !== 'open') return res.json({ ok: false, msg: '璇ラ棶棰樺凡鍏抽棴' });
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  if (q.status !== 'open') return res.json({ ok: false, msg: '该问题已关闭' });
 
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 涓嶅厑璁歌嚜绛?  if (q.userId === session.id) return res.json({ ok: false, msg: '涓嶈兘鍥炵瓟鑷繁鐨勯棶棰? });
+  // 不允许自答
+  if (q.userId === session.id) return res.json({ ok: false, msg: '不能回答自己的问题' });
 
   const answers = readQAAnswers();
-  // 姣忎汉鍙兘鍥炵瓟涓€娆?  if (answers.find(a => a.questionId === q.id && a.userId === session.id && !a.deleted)) {
-    return res.json({ ok: false, msg: '浣犲凡鍥炵瓟杩囨闂' });
+  // 每人只能回答一次
+  if (answers.find(a => a.questionId === q.id && a.userId === session.id && !a.deleted)) {
+    return res.json({ ok: false, msg: '你已回答过此问题' });
   }
   const a = {
     id: 'qa_ans_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -4098,7 +4260,7 @@ app.post('/api/qa/questions/:id/answers', (req, res) => {
     likes: 0,
     likedBy: [],
     accepted: false,
-    reward: 0,  // 鑾峰緱鐨勬偓璧廋redits
+    reward: 0,  // 获得的悬赏Credits
     createdAt: new Date().toISOString(),
     deleted: false
   };
@@ -4107,17 +4269,17 @@ app.post('/api/qa/questions/:id/answers', (req, res) => {
   res.json({ ok: true, data: a });
 });
 
-// 鐐硅禐鍥炵瓟
+// 点赞回答
 app.post('/api/qa/answers/:id/like', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const answers = readQAAnswers();
   const idx = answers.findIndex(a => a.id === req.params.id && !a.deleted);
-  if (idx === -1) return res.json({ ok: false, msg: '鍥炵瓟涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
   const a = answers[idx];
-  if (a.userId === session.id) return res.json({ ok: false, msg: '涓嶈兘缁欒嚜宸辩殑鍥炵瓟鐐硅禐' });
+  if (a.userId === session.id) return res.json({ ok: false, msg: '不能给自己的回答点赞' });
   const likedBy = a.likedBy || [];
   if (likedBy.includes(session.id)) {
-    // 鍙栨秷鐐硅禐
+    // 取消点赞
     a.likedBy = likedBy.filter(id => id !== session.id);
     a.likes = Math.max(0, (a.likes || 0) - 1);
     writeQAAnswers(answers);
@@ -4129,29 +4291,30 @@ app.post('/api/qa/answers/:id/like', (req, res) => {
   res.json({ ok: true, liked: true, likes: a.likes });
 });
 
-// 閲囩撼鍥炵瓟锛堟彁闂€呬笓鐢級
+// 采纳回答（提问者专用）
 app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const questions = readQAQuestions();
   const qIdx = questions.findIndex(x => x.id === req.params.qid && !x.deleted);
-  if (qIdx === -1) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
+  if (qIdx === -1) return res.json({ ok: false, msg: '问题不存在' });
   const q = questions[qIdx];
-  if (q.userId !== session.id) return res.json({ ok: false, msg: '鍙湁鎻愰棶鑰呭彲浠ラ噰绾崇瓟妗? });
-  if (q.status !== 'open') return res.json({ ok: false, msg: '璇ラ棶棰樺凡鍏抽棴' });
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '只有提问者可以采纳答案' });
+  if (q.status !== 'open') return res.json({ ok: false, msg: '该问题已关闭' });
 
   const answers = readQAAnswers();
   const aIdx = answers.findIndex(a => a.id === req.params.aid && a.questionId === q.id && !a.deleted);
-  if (aIdx === -1) return res.json({ ok: false, msg: '鍥炵瓟涓嶅瓨鍦? });
+  if (aIdx === -1) return res.json({ ok: false, msg: '回答不存在' });
 
-  // 娓呴櫎鏃ч噰绾?  answers.forEach(a => { if (a.questionId === q.id) a.accepted = false; });
+  // 清除旧采纳
+  answers.forEach(a => { if (a.questionId === q.id) a.accepted = false; });
   answers[aIdx].accepted = true;
   q.status = 'accepted';
   q.acceptedAnswerId = req.params.aid;
-  // 濂栧姳鎮祻 credits
+  // 奖励悬赏 credits
   if (q.bounty > 0) {
     const remaining = q.bounty - (q.distributedCredits || 0);
     if (remaining > 0) {
-      changeCredit(answers[aIdx].userId, remaining, '闂銆? + q.title.slice(0, 20) + '銆嶈閲囩撼濂栧姳');
+      changeCredit(answers[aIdx].userId, remaining, '问题「' + q.title.slice(0, 20) + '」被采纳奖励');
       answers[aIdx].reward = (answers[aIdx].reward || 0) + remaining;
       q.distributedCredits = (q.distributedCredits || 0) + remaining;
     }
@@ -4161,26 +4324,27 @@ app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
   res.json({ ok: true });
 });
 
-// 鍙戞斁鎮祻锛堟彁闂€呭悜澶氫釜鍥炵瓟鍒嗛厤 Credits锛?app.post('/api/qa/questions/:id/reward', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+// 发放悬赏（提问者向多个回答分配 Credits）
+app.post('/api/qa/questions/:id/reward', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const { rewards } = req.body; // [{ answerId, amount }]
-  if (!Array.isArray(rewards) || rewards.length === 0) return res.json({ ok: false, msg: '璇疯嚦灏戦€夋嫨涓€涓洖绛? });
+  if (!Array.isArray(rewards) || rewards.length === 0) return res.json({ ok: false, msg: '请至少选择一个回答' });
 
   const questions = readQAQuestions();
   const qIdx = questions.findIndex(x => x.id === req.params.id && !x.deleted);
-  if (qIdx === -1) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
+  if (qIdx === -1) return res.json({ ok: false, msg: '问题不存在' });
   const q = questions[qIdx];
-  if (q.userId !== session.id) return res.json({ ok: false, msg: '鍙湁鎻愰棶鑰呭彲浠ュ彂鏀惧鍔? });
-  if (!q.bounty || q.bounty <= 0) return res.json({ ok: false, msg: '璇ラ棶棰樻湭鎮祻Credits' });
-  if (q.status === 'expired') return res.json({ ok: false, msg: '璇ラ棶棰樺凡鍒版湡' });
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '只有提问者可以发放奖励' });
+  if (!q.bounty || q.bounty <= 0) return res.json({ ok: false, msg: '该问题未悬赏Credits' });
+  if (q.status === 'expired') return res.json({ ok: false, msg: '该问题已到期' });
 
   const remaining = q.bounty - (q.distributedCredits || 0);
-  if (remaining <= 0) return res.json({ ok: false, msg: '鎮祻宸插叏閮ㄥ彂鏀惧畬姣? });
+  if (remaining <= 0) return res.json({ ok: false, msg: '悬赏已全部发放完毕' });
 
-  // 鏍￠獙鎬诲拰
+  // 校验总和
   const total = rewards.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-  if (total <= 0) return res.json({ ok: false, msg: '鍙戞斁閲戦涓嶈兘涓?' });
-  if (total > remaining) return res.json({ ok: false, msg: '鍙戞斁鎬婚瓒呭嚭鍓╀綑鎮祻锛堝墿浣?' + remaining + ' Credits锛? });
+  if (total <= 0) return res.json({ ok: false, msg: '发放金额不能为0' });
+  if (total > remaining) return res.json({ ok: false, msg: '发放总额超出剩余悬赏（剩余 ' + remaining + ' Credits）' });
 
   const answers = readQAAnswers();
   for (const r of rewards) {
@@ -4188,7 +4352,7 @@ app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
     if (amount <= 0) continue;
     const aIdx = answers.findIndex(a => a.id === r.answerId && a.questionId === q.id && !a.deleted);
     if (aIdx === -1) continue;
-    changeCredit(answers[aIdx].userId, amount, '闂銆? + q.title.slice(0, 20) + '銆嶆偓璧忓彂鏀?);
+    changeCredit(answers[aIdx].userId, amount, '问题「' + q.title.slice(0, 20) + '」悬赏发放');
     answers[aIdx].reward = (answers[aIdx].reward || 0) + amount;
   }
   q.distributedCredits = (q.distributedCredits || 0) + total;
@@ -4197,64 +4361,69 @@ app.post('/api/qa/questions/:qid/accept/:aid', (req, res) => {
   res.json({ ok: true, distributed: total, remaining: q.bounty - q.distributedCredits });
 });
 
-// 鍒犻櫎闂锛堟湰浜烘垨绠＄悊鍛橈級
+// 删除问题（本人或管理员）
 app.delete('/api/qa/questions/:id', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const questions = readQAQuestions();
   const idx = questions.findIndex(x => x.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
-  if (questions[idx].userId !== session.id) return res.json({ ok: false, msg: '鏃犳潈鍒犻櫎' });
+  if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  if (questions[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
   if (questions[idx].status !== 'closed' && questions[idx].bounty > 0) {
-    // 閫€杩樻湭鍙戞斁鐨勬偓璧?    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
-    if (remain > 0) changeCredit(session.id, remain, '鍒犻櫎闂閫€杩樺墿浣欐偓璧?);
+    // 退还未发放的悬赏
+    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
+    if (remain > 0) changeCredit(session.id, remain, '删除问题退还剩余悬赏');
   }
   questions[idx].deleted = true;
   writeQAQuestions(questions);
   res.json({ ok: true });
 });
 
-// 鍒犻櫎鍥炵瓟锛堟湰浜猴級
+// 删除回答（本人）
 app.delete('/api/qa/answers/:id', (req, res) => {
-  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '鏈櫥褰? }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const answers = readQAAnswers();
   const idx = answers.findIndex(a => a.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鍥炵瓟涓嶅瓨鍦? });
-  if (answers[idx].userId !== session.id) return res.json({ ok: false, msg: '鏃犳潈鍒犻櫎' });
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  if (answers[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
   answers[idx].deleted = true;
   writeQAAnswers(answers);
   res.json({ ok: true });
 });
 
-// 绠＄悊鍛樿幏鍙栭棶棰樺垪琛?app.get('/api/admin/qa/questions', requireAdmin, (req, res) => {
+// 管理员获取问题列表
+app.get('/api/admin/qa/questions', requireAdmin, (req, res) => {
   const questions = readQAQuestions();
   const answers = readQAAnswers();
   const list = questions.filter(q => !q.deleted).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json({ ok: true, data: list.map(q => ({ ...q, answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length })) });
 });
 
-// 绠＄悊鍛樺垹闄ら棶棰?app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
+// 管理员删除问题
+app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
   const questions = readQAQuestions();
   const idx = questions.findIndex(q => q.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '闂涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
   if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
-    changeCredit(questions[idx].userId, questions[idx].bounty, '绠＄悊鍛樺垹闄ら棶棰橀€€杩樻偓璧?);
+    changeCredit(questions[idx].userId, questions[idx].bounty, '管理员删除问题退还悬赏');
   }
   questions[idx].deleted = true;
   writeQAQuestions(questions);
   res.json({ ok: true });
 });
 
-// 绠＄悊鍛樺垹闄ゅ洖绛?app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
+// 管理员删除回答
+app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
   const answers = readQAAnswers();
   const idx = answers.findIndex(a => a.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鍥炵瓟涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
   answers[idx].deleted = true;
   writeQAAnswers(answers);
   res.json({ ok: true });
 });
 
-// ===== 鎶曠エ鍔熻兘 =====
-// 鑾峰彇鎶曠エ鍒楄〃锛堟寜鏃堕棿鍊掑簭锛屽彲閫夊寘鍚凡鎶曠エ淇℃伅锛?app.get('/api/votes', (req, res) => {
+// ===== 投票功能 =====
+// 获取投票列表（按时间倒序，可选包含已投票信息）
+app.get('/api/votes', (req, res) => {
   const votes = readVotes();
   const records = readVoteRecords();
 
@@ -4278,34 +4447,36 @@ app.delete('/api/qa/answers/:id', (req, res) => {
   res.json({ ok: true, data: list });
 });
 
-// 鍒涘缓鎶曠エ锛堥渶瑕佺鐞嗗憳鏉冮檺锛?app.post('/api/votes', requireAdmin, (req, res) => {
+// 创建投票（需要管理员权限）
+app.post('/api/votes', requireAdmin, (req, res) => {
   const admin = req.admin;
   const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
-  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '鏍囬鑷冲皯2涓瓧' });
-  if (title.trim().length > 100) return res.json({ ok: false, msg: '鏍囬鏈€澶?00涓瓧' });
-  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '鑷冲皯闇€瑕?涓€夐」' });
-  if (options.length > 20) return res.json({ ok: false, msg: '鏈€澶?0涓€夐」' });
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '閫夐」涓嶈兘涓虹┖' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '閫夐」鏈€澶?00涓瓧' });
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  // 鏁忔劅璇嶆娴?  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  // 敏感词检测
+  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
   const blockedNames = checkBullyingNames(checkText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
   const votes = readVotes();
   const newVote = {
     id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId: 'admin:' + admin.id,
-    author: '绠＄悊鍛?,
+    author: '管理员',
     avatar: '',
     title: title.trim(),
     options: options.map((text, idx) => ({
@@ -4325,35 +4496,35 @@ app.delete('/api/qa/answers/:id', (req, res) => {
   res.json({ ok: true, data: newVote });
 });
 
-// 绠＄悊鍛樺垱寤烘姇绁紙涓?/api/votes 绛変环锛屼繚鐣欑粺涓€绠＄悊鍛樿矾寰勶級
+// 管理员创建投票（与 /api/votes 等价，保留统一管理员路径）
 app.post('/api/admin/votes', requireAdmin, (req, res) => {
   const admin = req.admin;
   const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
-  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '鏍囬鑷冲皯2涓瓧' });
-  if (title.trim().length > 100) return res.json({ ok: false, msg: '鏍囬鏈€澶?00涓瓧' });
-  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '鑷冲皯闇€瑕?涓€夐」' });
-  if (options.length > 20) return res.json({ ok: false, msg: '鏈€澶?0涓€夐」' });
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '閫夐」涓嶈兘涓虹┖' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '閫夐」鏈€澶?00涓瓧' });
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
   const blockedNames = checkBullyingNames(checkText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
   const votes = readVotes();
   const newVote = {
     id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId: 'admin:' + admin.id,
-    author: '绠＄悊鍛?,
+    author: '管理员',
     avatar: '',
     title: title.trim(),
     options: options.map((text, idx) => ({
@@ -4373,64 +4544,66 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
   res.json({ ok: true, data: newVote });
 });
 
-// 鍙備笌鎶曠エ锛堥渶瑕佺櫥褰?+ 鍚屼竴缃戠粶鐜涓嬩粎鍙姇涓€绁級
+// 参与投票（需要登录 + 同一网络环境下仅可投一票）
 app.post('/api/votes/:id/vote', (req, res) => {
   const userToken = req.headers['x-user-token'];
   const scToken = req.headers['x-sc-token'];
   let session = null;
   if (userToken) session = verifyUserToken(userToken);
   if (!session && scToken) session = verifySignedToken(scToken);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
   const { optionIds = [], customOption } = req.body;
   if (!customOption && (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0)) {
-    return res.json({ ok: false, msg: '璇烽€夋嫨閫夐」' });
+    return res.json({ ok: false, msg: '请选择选项' });
   }
 
   const votes = readVotes();
   const vote = votes.find(v => v.id === req.params.id && !v.deleted);
-  if (!vote) return res.json({ ok: false, msg: '鎶曠エ涓嶅瓨鍦? });
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
 
-  // 妫€鏌ユ埅姝㈡椂闂?  if (vote.endTime && new Date(vote.endTime) < new Date()) {
-    return res.json({ ok: false, msg: '鎶曠エ宸茬粨鏉? });
+  // 检查截止时间
+  if (vote.endTime && new Date(vote.endTime) < new Date()) {
+    return res.json({ ok: false, msg: '投票已结束' });
   }
 
-  // 鑾峰彇鐪熷疄瀹㈡埛绔?IP锛堟敮鎸佸弽鍚戜唬鐞嗭級
+  // 获取真实客户端 IP（支持反向代理）
   const clientIp = getClientIP(req);
 
-  // 1. 妫€鏌ュ綋鍓嶇敤鎴锋槸鍚﹀凡鎶曠エ
+  // 1. 检查当前用户是否已投票
   const records = readVoteRecords();
   const existingByUser = records.find(r => r.voteId === vote.id && r.userId === session.id);
-  if (existingByUser) return res.json({ ok: false, msg: '浣犲凡缁忔姇杩囩エ浜? });
+  if (existingByUser) return res.json({ ok: false, msg: '你已经投过票了' });
 
-  // 2. 妫€鏌ュ悓涓€ IP 鏄惁宸叉姇杩囩エ锛堝嵆浣垮垏鎹㈣处鍙凤級
+  // 2. 检查同一 IP 是否已投过票（即使切换账号）
   const ipRecords = readVoteIpRecords();
   const existingByIp = ipRecords.find(r => r.voteId === vote.id && r.ip === clientIp);
-  if (existingByIp) return res.json({ ok: false, msg: '褰撳墠缃戠粶鐜涓嬪凡鏈変汉鎶曡繃绁紝璇锋洿鎹㈢綉缁滃悗閲嶈瘯' });
+  if (existingByIp) return res.json({ ok: false, msg: '当前网络环境下已有人投过票，请更换网络后重试' });
 
-  // 鏍￠獙閫夐」
+  // 校验选项
   if (!vote.multiple && optionIds.length !== 1) {
-    return res.json({ ok: false, msg: '璇ユ姇绁ㄥ彧鑳介€夋嫨涓€涓€夐」' });
+    return res.json({ ok: false, msg: '该投票只能选择一个选项' });
   }
 
-  // 澶勭悊鑷畾涔夐€夐」
+  // 处理自定义选项
   let finalOptionIds = [...optionIds];
   if (customOption && vote.allowCustom) {
     const trimmed = String(customOption).trim();
-    if (trimmed.length < 1) return res.json({ ok: false, msg: '鑷畾涔夐€夐」涓嶈兘涓虹┖' });
-    if (trimmed.length > 100) return res.json({ ok: false, msg: '鑷畾涔夐€夐」鏈€澶?00瀛? });
-    // 妫€鏌ユ晱鎰熻瘝
+    if (trimmed.length < 1) return res.json({ ok: false, msg: '自定义选项不能为空' });
+    if (trimmed.length > 100) return res.json({ ok: false, msg: '自定义选项最多100字' });
+    // 检查敏感词
     const sw = checkSensitive(trimmed);
-    if (sw.length > 0) return res.json({ ok: false, msg: '鑷畾涔夐€夐」鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀? });
+    if (sw.length > 0) return res.json({ ok: false, msg: '自定义选项包含敏感词，请修改' });
     const bn = checkBullyingNames(trimmed);
-    if (bn.length > 0) return res.json({ ok: false, msg: '鑷畾涔夐€夐」娑夊強鍙椾繚鎶や汉鍛樺鍚? });
-    // 妫€鏌ユ槸鍚﹀凡鏈夌浉鍚岄€夐」
+    if (bn.length > 0) return res.json({ ok: false, msg: '自定义选项涉及受保护人员姓名' });
+    // 检查是否已有相同选项
     let existingOpt = vote.options.find(o => o.text.trim() === trimmed);
     let newOptId;
     if (existingOpt) {
       newOptId = existingOpt.id;
     } else {
-      // 娣诲姞鏂伴€夐」鍒版姇绁?      newOptId = 'custom_' + Math.random().toString(36).slice(2, 8);
+      // 添加新选项到投票
+      newOptId = 'custom_' + Math.random().toString(36).slice(2, 8);
       vote.options.push({ id: newOptId, text: trimmed, votes: 0 });
     }
     finalOptionIds = [newOptId];
@@ -4438,7 +4611,7 @@ app.post('/api/votes/:id/vote', (req, res) => {
 
   for (const optId of finalOptionIds) {
     const opt = vote.options.find(o => o.id === optId);
-    if (!opt) return res.json({ ok: false, msg: '閫夐」涓嶅瓨鍦? });
+    if (!opt) return res.json({ ok: false, msg: '选项不存在' });
     opt.votes = (opt.votes || 0) + 1;
     records.push({
       id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -4449,7 +4622,7 @@ app.post('/api/votes/:id/vote', (req, res) => {
     });
   }
 
-  // 璁板綍 IP 鎶曠エ
+  // 记录 IP 投票
   ipRecords.push({
     id: 'vrip_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     voteId: vote.id,
@@ -4466,16 +4639,18 @@ app.post('/api/votes/:id/vote', (req, res) => {
   res.json({ ok: true, data: { ...vote, totalVotes, userVoted: finalOptionIds } });
 });
 
-// 鍒犻櫎鎶曠エ锛堜粎绠＄悊鍛樺彲鍒犻櫎锛?app.delete('/api/votes/:id', requireAdmin, (req, res) => {
+// 删除投票（仅管理员可删除）
+app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
   const idx = votes.findIndex(v => v.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鎶曠エ涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
   votes[idx].deleted = true;
   writeVotes(votes);
   res.json({ ok: true });
 });
 
-// 绠＄悊鍛樿幏鍙栨姇绁ㄥ垪琛?app.get('/api/admin/votes', requireAdmin, (req, res) => {
+// 管理员获取投票列表
+app.get('/api/admin/votes', requireAdmin, (req, res) => {
   const votes = readVotes();
   const records = readVoteRecords();
   const list = votes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -4489,16 +4664,17 @@ app.post('/api/votes/:id/vote', (req, res) => {
   });
 });
 
-// 绠＄悊鍛樺垹闄ゆ姇绁?app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
+// 管理员删除投票
+app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
   const idx = votes.findIndex(v => v.id === req.params.id);
-  if (idx === -1) return res.json({ ok: false, msg: '鎶曠エ涓嶅瓨鍦? });
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
   votes[idx].deleted = true;
   writeVotes(votes);
   res.json({ ok: true });
 });
 
-// ===== 鏍″洯澧欐媿鍗栫郴缁?=====
+// ===== 校园墙拍卖系统 =====
 const PICKUP_SLOTS = ['00-04', '04-08', '08-12', '12-16', '16-20', '20-23'];
 const BASE_BID = 300;
 const BID_STEP = 50;
@@ -4508,7 +4684,8 @@ function writePickupAuctions (data) { db.writePickupAuctions(data); }
 function readPickupReports () { return db.readPickupReports(); }
 function writePickupReports (data) { db.writePickupReports(data); }
 
-// 鑾峰彇鎴栧垱寤轰粖澶╂煇涓椂闂存Ы鐨勬媿鍗?function getOrCreateAuction(slot, dateStr) {
+// 获取或创建今天某个时间槽的拍卖
+function getOrCreateAuction(slot, dateStr) {
   let auctions = readPickupAuctions();
   let idx = auctions.findIndex(a => a.slot === slot && a.date === dateStr);
   if (idx === -1) {
@@ -4524,7 +4701,8 @@ function writePickupReports (data) { db.writePickupReports(data); }
   return auctions[idx];
 }
 
-// 鑾峰彇褰撳墠姝ｅ湪鏄剧ず鐨勬椂娈碉紙鏍规嵁褰撳墠鏃堕棿锛?function getCurrentSlot() {
+// 获取当前正在显示的时段（根据当前时间）
+function getCurrentSlot() {
   const h = new Date().getHours();
   if (h < 4) return '00-04';
   if (h < 8) return '04-08';
@@ -4538,19 +4716,24 @@ function slotLabel(slot) {
   return m[slot] || slot;
 }
 
-// 鑾峰彇浠婂ぉ鏃ユ湡瀛楃涓?function todayStr() {
+// 获取今天日期字符串
+function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
-// 鑾峰彇鏄庡ぉ鏃ユ湡瀛楃涓诧紙鎷嶅崠鎶曠殑鏄浜屽ぉ鏃舵锛?function tomorrowStr() {
+// 获取明天日期字符串（拍卖投的是第二天时段）
+function tomorrowStr() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-// 鑾峰彇鎵€鏈夋椂娈电殑鎷嶅崠鐘舵€?app.get('/api/pickup/auctions', (req, res) => {
-  const date = req.query.date || tomorrowStr(); // 鎷嶅崠鎶曠殑鏄浜屽ぉ鐨勬椂娈?  const auctions = readPickupAuctions();
-  // 纭繚姣忎釜鏃舵閮芥湁涓€涓媿鍗栧璞?  const result = PICKUP_SLOTS.map(slot => {
+// 获取所有时段的拍卖状态
+app.get('/api/pickup/auctions', (req, res) => {
+  const date = req.query.date || tomorrowStr(); // 拍卖投的是第二天的时段
+  const auctions = readPickupAuctions();
+  // 确保每个时段都有一个拍卖对象
+  const result = PICKUP_SLOTS.map(slot => {
     const existing = auctions.find(a => a.slot === slot && a.date === date);
     if (existing) return existing;
     return getOrCreateAuction(slot, date);
@@ -4559,14 +4742,15 @@ function slotLabel(slot) {
     ok: true,
     data: result.map(a => ({
       id: a.id, slot: a.slot, slotLabel: slotLabel(a.slot), date: a.date, status: a.status,
-      bids: a.bids.map(b => ({ username: b.anonymous ? '鍖垮悕鐢ㄦ埛' : b.username, amount: b.amount, content: b.content, anonymous: b.anonymous, time: b.time, reviewStatus: b.reviewStatus })),
+      bids: a.bids.map(b => ({ username: b.anonymous ? '匿名用户' : b.username, amount: b.amount, content: b.content, anonymous: b.anonymous, time: b.time, reviewStatus: b.reviewStatus })),
       currentPrice: a.bids.length > 0 ? Math.max(...a.bids.map(b => b.amount)) : BASE_BID,
       bidderCount: a.bids.length
     }))
   });
 });
 
-// 鑾峰彇褰撳墠姝ｅ湪灞曠ず鐨勬媿鍗栧唴瀹?app.get('/api/pickup/current', (req, res) => {
+// 获取当前正在展示的拍卖内容
+app.get('/api/pickup/current', (req, res) => {
   const date = todayStr();
   const currentSlot = getCurrentSlot();
   const auctions = readPickupAuctions();
@@ -4574,7 +4758,7 @@ function slotLabel(slot) {
   if (!auction || auction.bids.length === 0) {
     return res.json({ ok: true, data: null, slot: currentSlot, slotLabel: slotLabel(currentSlot) });
   }
-  // 鑾峰彇鎵€鏈夊鏍搁€氳繃涓旀湭琚爣璁拌繚瑙勭殑鍑轰环锛屾寜閲戦闄嶅簭
+  // 获取所有审核通过且未被标记违规的出价，按金额降序
   const approvedBids = auction.bids
     .filter(b => b.reviewStatus === 'approved')
     .sort((a, b) => b.amount - a.amount);
@@ -4588,53 +4772,58 @@ function slotLabel(slot) {
       bidId: highestBid.id,
       content: highestBid.content,
       anonymous: highestBid.anonymous,
-      username: highestBid.anonymous ? '鍖垮悕鐢ㄦ埛' : highestBid.username
+      username: highestBid.anonymous ? '匿名用户' : highestBid.username
     }
   });
 });
 
-// 鍑轰环
+// 出价
 app.post('/api/pickup/bid', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍' });
+  if (!token) return res.json({ ok: false, msg: '请先登录' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
   const { slot, date, content, anonymous, amount } = req.body;
-  if (!slot || !PICKUP_SLOTS.includes(slot)) return res.json({ ok: false, msg: '鏃犳晥鐨勬椂闂存' });
-  if (!content || content.trim().length === 0) return res.json({ ok: false, msg: '璇疯緭鍏ュ睍绀哄唴瀹? });
-  if (content.length > 100) return res.json({ ok: false, msg: '鍐呭涓嶈兘瓒呰繃100瀛? });
-  if (!amount || amount < BASE_BID) return res.json({ ok: false, msg: '鍑轰环涓嶈兘浣庝簬 ' + BASE_BID + ' Credits' });
-  if (amount % BID_STEP !== 0) return res.json({ ok: false, msg: '鍑轰环蹇呴』鏄?' + BID_STEP + ' 鐨勫€嶆暟' });
+  if (!slot || !PICKUP_SLOTS.includes(slot)) return res.json({ ok: false, msg: '无效的时间段' });
+  if (!content || content.trim().length === 0) return res.json({ ok: false, msg: '请输入展示内容' });
+  if (content.length > 100) return res.json({ ok: false, msg: '内容不能超过100字' });
+  if (!amount || amount < BASE_BID) return res.json({ ok: false, msg: '出价不能低于 ' + BASE_BID + ' Credits' });
+  if (amount % BID_STEP !== 0) return res.json({ ok: false, msg: '出价必须是 ' + BID_STEP + ' 的倍数' });
 
-  // 鏁忔劅璇嶆娴?  const sensitiveWords = checkSensitive(content);
+  // 敏感词检测
+  const sensitiveWords = checkSensitive(content);
   if (sensitiveWords.length > 0) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
-  // 闇稿噷淇濇姢濮撳悕妫€娴?  const blockedNames = checkBullyingNames(content);
+  // 霸凌保护姓名检测
+  const blockedNames = checkBullyingNames(content);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
-  const dateStr = date || tomorrowStr(); // 鍑轰环鎶曠殑鏄浜屽ぉ鐨勬椂娈?  const auctions = readPickupAuctions();
+  const dateStr = date || tomorrowStr(); // 出价投的是第二天的时段
+  const auctions = readPickupAuctions();
   const idx = auctions.findIndex(a => a.slot === slot && a.date === dateStr);
-  if (idx === -1) return res.json({ ok: false, msg: '璇ユ椂闂存Ы鎷嶅崠灏氭湭鍒濆鍖? });
+  if (idx === -1) return res.json({ ok: false, msg: '该时间槽拍卖尚未初始化' });
 
   const auction = auctions[idx];
-  if (auction.status !== 'open') return res.json({ ok: false, msg: '璇ユ椂闂存Ы绔炴媿宸茬粨鏉? });
+  if (auction.status !== 'open') return res.json({ ok: false, msg: '该时间槽竞拍已结束' });
 
   const currentPrice = auction.bids.length > 0 ? Math.max(...auction.bids.map(b => b.amount)) : BASE_BID;
-  if (amount < currentPrice + BID_STEP) return res.json({ ok: false, msg: '鍑轰环鑷冲皯涓哄綋鍓嶆渶楂樹环 + ' + BID_STEP + ' Credits锛堝綋鍓嶆渶楂橈細' + currentPrice + '锛? });
+  if (amount < currentPrice + BID_STEP) return res.json({ ok: false, msg: '出价至少为当前最高价 + ' + BID_STEP + ' Credits（当前最高：' + currentPrice + '）' });
 
-  // 妫€鏌ヤ綑棰?  const users = readUsers();
+  // 检查余额
+  const users = readUsers();
   const uIdx = users.findIndex(u => u.id === session.id);
-  if (uIdx === -1) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
+  if (uIdx === -1) return res.json({ ok: false, msg: '用户不存在' });
   const userCredit = users[uIdx].credit || 0;
-  if (userCredit < amount) return res.json({ ok: false, msg: '浣欓涓嶈冻锛屽綋鍓嶄綑棰濓細' + userCredit + ' Credits' });
+  if (userCredit < amount) return res.json({ ok: false, msg: '余额不足，当前余额：' + userCredit + ' Credits' });
 
-  // 鎵ｅ噺鍑轰环閲戦锛堝喕缁擄級
-  changeCredit(session.id, -amount, '鏍″洯澧欐媿鍗栧嚭浠?- ' + slotLabel(slot) + ' - 鍑轰环 ' + amount + ' Credits');
-  // 娣诲姞鍒扮珵浠疯褰曪紝榛樿寰呭鏍?  const bid = {
+  // 扣减出价金额（冻结）
+  changeCredit(session.id, -amount, '校园墙拍卖出价 - ' + slotLabel(slot) + ' - 出价 ' + amount + ' Credits');
+  // 添加到竞价记录，默认待审核
+  const bid = {
     id: 'bid_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     userId: session.id, username: session.nickname || session.username,
     amount, content: content.trim(), anonymous: !!anonymous,
@@ -4644,21 +4833,23 @@ app.post('/api/pickup/bid', (req, res) => {
   auction.bids.push(bid);
   writePickupAuctions(auctions);
 
-  res.json({ ok: true, msg: '鍑轰环鎴愬姛锛佸唴瀹瑰凡鎻愪氦瀹℃牳锛岄€氳繃鍚庡皢鍦ㄥ搴旀椂娈靛睍绀恒€?, bid });
+  res.json({ ok: true, msg: '出价成功！内容已提交审核，通过后将在对应时段展示。', bid });
 });
 
-// 鑾峰彇鏌愪釜鏃舵鐨勫嚭浠疯鎯?app.get('/api/pickup/auction-detail/:slot', (req, res) => {
-  const date = req.query.date || tomorrowStr(); // 鎷嶅崠鎶曠殑鏄浜屽ぉ鐨勬椂娈?  const slot = req.params.slot;
-  if (!PICKUP_SLOTS.includes(slot)) return res.json({ ok: false, msg: '鏃犳晥鐨勬椂闂存' });
+// 获取某个时段的出价详情
+app.get('/api/pickup/auction-detail/:slot', (req, res) => {
+  const date = req.query.date || tomorrowStr(); // 拍卖投的是第二天的时段
+  const slot = req.params.slot;
+  if (!PICKUP_SLOTS.includes(slot)) return res.json({ ok: false, msg: '无效的时间段' });
 
   const auctions = readPickupAuctions();
   const auction = auctions.find(a => a.slot === slot && a.date === date);
   if (!auction) return res.json({ ok: true, data: null });
 
   const currentPrice = auction.bids.length > 0 ? Math.max(...auction.bids.map(b => b.amount)) : BASE_BID;
-  // 瀵圭敤鎴烽殣钘?userId
+  // 对用户隐藏 userId
   const publicBids = auction.bids.map(b => ({
-    username: b.anonymous ? '鍖垮悕鐢ㄦ埛' : b.username,
+    username: b.anonymous ? '匿名用户' : b.username,
     amount: b.amount,
     time: b.time,
     content: b.content,
@@ -4678,12 +4869,12 @@ app.post('/api/pickup/bid', (req, res) => {
   });
 });
 
-// 鑾峰彇褰撳墠鐢ㄦ埛鍦ㄦ墍鏈夋椂娈电殑鍑轰环璁板綍
+// 获取当前用户在所有时段的出价记录
 app.get('/api/pickup/my-bids', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const auctions = readPickupAuctions();
   const myBids = [];
@@ -4706,13 +4897,14 @@ app.get('/api/pickup/my-bids', (req, res) => {
       });
     }
   }
-  // 鎸夋椂闂村€掑簭
+  // 按时间倒序
   myBids.sort((a, b) => new Date(b.time) - new Date(a.time));
   res.json({ ok: true, data: myBids });
 });
 
-// ===== 绠＄悊鍛橈細鎷嶅崠瀹℃牳 =====
-// 鑾峰彇鎵€鏈夊緟瀹℃牳鐨勫嚭浠?app.get('/api/admin/pickup/bids', requireAdmin, (req, res) => {
+// ===== 管理员：拍卖审核 =====
+// 获取所有待审核的出价
+app.get('/api/admin/pickup/bids', requireAdmin, (req, res) => {
   const auctions = readPickupAuctions();
   const allBids = [];
   for (const auction of auctions) {
@@ -4727,7 +4919,7 @@ app.get('/api/pickup/my-bids', (req, res) => {
       });
     }
   }
-  // 寰呭鏍哥殑鎺掑湪鏈€鍓嶉潰
+  // 待审核的排在最前面
   allBids.sort((a, b) => {
     if ((a.reviewStatus === 'pending_review') !== (b.reviewStatus === 'pending_review')) {
       return a.reviewStatus === 'pending_review' ? -1 : 1;
@@ -4737,10 +4929,10 @@ app.get('/api/pickup/my-bids', (req, res) => {
   res.json({ ok: true, data: allBids });
 });
 
-// 瀹℃牳閫氳繃/鎷掔粷
+// 审核通过/拒绝
 app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
-  const { action } = req.body; // 'approve' 鎴?'reject'
-  if (!['approve', 'reject'].includes(action)) return res.json({ ok: false, msg: '鏃犳晥鎿嶄綔' });
+  const { action } = req.body; // 'approve' 或 'reject'
+  if (!['approve', 'reject'].includes(action)) return res.json({ ok: false, msg: '无效操作' });
 
   const auctions = readPickupAuctions();
   let found = false;
@@ -4751,15 +4943,15 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
         found = true;
         if (action === 'approve') {
           auction.bids[bi].reviewStatus = 'approved';
-          // 鑷姩鍙戦€?T0 閫氱煡
+          // 自动发送 T0 通知
           const bid = auction.bids[bi];
           const slotLabelStr = slotLabel(auction.slot);
           const notices = readNotices();
           notices.push({
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-            title: '馃弳 鎷嶅崠鍐呭宸查€氳繃瀹℃牳',
-            content: '浣犲湪 ' + auction.date + ' ' + slotLabelStr + ' 鏃舵鎻愪氦鐨勬媿鍗栧唴瀹瑰凡閫氳繃瀹℃牳锛屽嵆灏嗗湪鏍″洯澧欐媿鍗栨爮灞曠ず銆俓n\n馃摑 灞曠ず鍐呭锛? + (bid.content || '(鏈～鍐?'),
-            author: '绯荤粺',
+            title: '🏆 拍卖内容已通过审核',
+            content: '你在 ' + auction.date + ' ' + slotLabelStr + ' 时段提交的拍卖内容已通过审核，即将在校园墙拍卖栏展示。\n\n📝 展示内容：' + (bid.content || '(未填写)'),
+            author: '系统',
             auto: true,
     level: 'T0',
             createdAt: new Date().toISOString(),
@@ -4767,42 +4959,42 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
           });
           writeNotices(notices);
         } else {
-          // 鎷掔粷锛氭爣璁颁负rejected锛岄€€杩樺喕缁撶殑credit
+          // 拒绝：标记为rejected，退还冻结的credit
           auction.bids[bi].reviewStatus = 'rejected';
-          changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '鏍″洯澧欐媿鍗栧唴瀹瑰鏍告湭閫氳繃 - 閫€杩樺嚭浠?' + auction.bids[bi].amount + ' Credits');
+          changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '校园墙拍卖内容审核未通过 - 退还出价 ' + auction.bids[bi].amount + ' Credits');
         }
         writePickupAuctions(auctions);
-        return res.json({ ok: true, msg: action === 'approve' ? '宸查€氳繃瀹℃牳' : '宸叉嫆缁濆苟閫€杩?' + auction.bids[bi].amount + ' Credits' });
+        return res.json({ ok: true, msg: action === 'approve' ? '已通过审核' : '已拒绝并退还 ' + auction.bids[bi].amount + ' Credits' });
       }
     }
   }
-  if (!found) return res.json({ ok: false, msg: '鏈壘鍒拌鍑轰环璁板綍' });
+  if (!found) return res.json({ ok: false, msg: '未找到该出价记录' });
 });
 
-// ===== 婊氬姩鏍忓睍绀哄唴瀹逛妇鎶?=====
+// ===== 滚动栏展示内容举报 =====
 
-// 鑾峰彇浠婂ぉ鎵€鏈夋椂娈靛綋鍓嶅睍绀虹殑鍐呭锛堝鏍搁€氳繃鐨勬渶楂樺嚭浠凤紝鍏ㄩ儴6涓椂娈碉級
+// 获取今天所有时段当前展示的内容（审核通过的最高出价，全部6个时段）
 app.get('/api/pickup/today-content', (req, res) => {
-  const date = todayStr(); // 灞曠ず鐨勬槸浠婂ぉ鐨勫唴瀹癸紙鏄ㄥぉ鎷嶅崠涓爣鐨勶級
+  const date = todayStr(); // 展示的是今天的内容（昨天拍卖中标的）
   const auctions = readPickupAuctions();
   const result = [];
   for (const slot of PICKUP_SLOTS) {
     const auction = auctions.find(a => a.slot === slot && a.date === date);
     if (!auction || auction.bids.length === 0) {
-      // 璇ユ椂娈垫棤浠讳綍鍑轰环 鈫?鍗犱綅
+      // 该时段无任何出价 → 占位
       result.push({
         bidId: null, slot, slotLabel: slotLabel(slot),
-        content: '娆㈣繋鏉ュ埌鏍″洯澧?馃槉', username: '', anonymous: false,
+        content: '欢迎来到校园墙 😊', username: '', anonymous: false,
         amount: 0, time: '', placeholder: true
       });
       continue;
     }
     const approvedBids = auction.bids.filter(b => b.reviewStatus === 'approved');
     if (approvedBids.length === 0) {
-      // 鏈夋椂娈典絾鏃犲鏍搁€氳繃鍐呭 鈫?鍗犱綅
+      // 有时段但无审核通过内容 → 占位
       result.push({
         bidId: null, slot, slotLabel: slotLabel(slot),
-        content: '娆㈣繋鏉ュ埌鏍″洯澧?馃槉', username: '', anonymous: false,
+        content: '欢迎来到校园墙 😊', username: '', anonymous: false,
         amount: 0, time: '', placeholder: true
       });
       continue;
@@ -4810,7 +5002,7 @@ app.get('/api/pickup/today-content', (req, res) => {
     const highest = approvedBids.reduce((max, b) => b.amount > max.amount ? b : max, approvedBids[0]);
     result.push({
       bidId: highest.id, slot, slotLabel: slotLabel(slot),
-      content: highest.content, username: highest.anonymous ? '鍖垮悕鐢ㄦ埛' : highest.username,
+      content: highest.content, username: highest.anonymous ? '匿名用户' : highest.username,
       anonymous: highest.anonymous, amount: highest.amount, time: highest.time,
       placeholder: false
     });
@@ -4818,32 +5010,33 @@ app.get('/api/pickup/today-content', (req, res) => {
   res.json({ ok: true, data: result });
 });
 
-// 鐢ㄦ埛涓炬姤灞曠ず鍐呭
+// 用户举报展示内容
 app.post('/api/pickup/report-content/:bidId', (req, res) => {
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
 
   const bidId = req.params.bidId;
   const { reason } = req.body;
   const auctions = readPickupAuctions();
 
-  // 鏌ユ壘璇ュ嚭浠锋槸鍚﹀瓨鍦?  let foundBid = null;
+  // 查找该出价是否存在
+  let foundBid = null;
   let foundAuction = null;
   for (const auction of auctions) {
     const bid = auction.bids.find(b => b.id === bidId);
     if (bid) { foundBid = bid; foundAuction = auction; break; }
   }
-  if (!foundBid) return res.json({ ok: false, msg: '鏈壘鍒拌灞曠ず鍐呭' });
-  if (foundBid.reviewStatus !== 'approved') return res.json({ ok: false, msg: '璇ュ唴瀹瑰凡涓嶅湪灞曠ず涓? });
+  if (!foundBid) return res.json({ ok: false, msg: '未找到该展示内容' });
+  if (foundBid.reviewStatus !== 'approved') return res.json({ ok: false, msg: '该内容已不在展示中' });
 
-  // 妫€鏌ユ槸鍚﹀凡涓炬姤
+  // 检查是否已举报
   const reports = readPickupReports();
   const existing = reports.find(r => r.bidId === bidId && r.reporterId === session.id);
-  if (existing) return res.json({ ok: false, msg: '浣犲凡涓炬姤杩囪鍐呭锛岃绛夊緟澶勭悊' });
+  if (existing) return res.json({ ok: false, msg: '你已举报过该内容，请等待处理' });
 
-  // 鍒涘缓涓炬姤璁板綍
+  // 创建举报记录
   const report = {
     id: 'pr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     bidId,
@@ -4852,10 +5045,10 @@ app.post('/api/pickup/report-content/:bidId', (req, res) => {
     slotLabel: slotLabel(foundAuction.slot),
     date: foundAuction.date,
     content: foundBid.content,
-    username: foundBid.anonymous ? '鍖垮悕鐢ㄦ埛' : foundBid.username,
+    username: foundBid.anonymous ? '匿名用户' : foundBid.username,
     userId: foundBid.userId,
     amount: foundBid.amount,
-    reason: (reason || '杩濊鍐呭').trim().slice(0, 200),
+    reason: (reason || '违规内容').trim().slice(0, 200),
     reporterId: session.id,
     reporterName: session.nickname || session.username,
     status: 'pending', // pending / resolved_violation / resolved_dismissed
@@ -4864,13 +5057,14 @@ app.post('/api/pickup/report-content/:bidId', (req, res) => {
   reports.push(report);
   writePickupReports(reports);
 
-  res.json({ ok: true, msg: '涓炬姤宸叉彁浜わ紝绠＄悊鍛樺皢灏藉揩澶勭悊' });
+  res.json({ ok: true, msg: '举报已提交，管理员将尽快处理' });
 });
 
-// 绠＄悊鍛橈細鑾峰彇鎷嶅崠鍐呭涓炬姤鍒楄〃
+// 管理员：获取拍卖内容举报列表
 app.get('/api/admin/pickup/reports', requireAdmin, (req, res) => {
   const reports = readPickupReports();
-  // 鎸夌姸鎬佹帓搴忥細pending 鎺掓渶鍓?  reports.sort((a, b) => {
+  // 按状态排序：pending 排最前
+  reports.sort((a, b) => {
     if (a.status === 'pending' && b.status !== 'pending') return -1;
     if (a.status !== 'pending' && b.status === 'pending') return 1;
     return new Date(b.time) - new Date(a.time);
@@ -4878,28 +5072,30 @@ app.get('/api/admin/pickup/reports', requireAdmin, (req, res) => {
   res.json({ ok: true, data: reports });
 });
 
-// 绠＄悊鍛橈細澶勭悊鎷嶅崠鍐呭涓炬姤
+// 管理员：处理拍卖内容举报
 app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) => {
-  const { action } = req.body; // 'confirm'锛堢‘璁よ繚瑙勶級 鎴?'dismiss'锛堥┏鍥炰妇鎶ワ級
-  if (!['confirm', 'dismiss'].includes(action)) return res.json({ ok: false, msg: '鏃犳晥鎿嶄綔' });
+  const { action } = req.body; // 'confirm'（确认违规） 或 'dismiss'（驳回举报）
+  if (!['confirm', 'dismiss'].includes(action)) return res.json({ ok: false, msg: '无效操作' });
 
   const reports = readPickupReports();
   const rIdx = reports.findIndex(r => r.id === req.params.reportId);
-  if (rIdx === -1) return res.json({ ok: false, msg: '涓炬姤涓嶅瓨鍦? });
+  if (rIdx === -1) return res.json({ ok: false, msg: '举报不存在' });
 
   const report = reports[rIdx];
-  if (report.status !== 'pending') return res.json({ ok: false, msg: '璇ヤ妇鎶ュ凡澶勭悊' });
+  if (report.status !== 'pending') return res.json({ ok: false, msg: '该举报已处理' });
 
   if (action === 'dismiss') {
-    // 椹冲洖涓炬姤锛氫笉澶勭悊鍐呭锛屼粎鏍囪涓炬姤鐘舵€?    reports[rIdx].status = 'resolved_dismissed';
+    // 驳回举报：不处理内容，仅标记举报状态
+    reports[rIdx].status = 'resolved_dismissed';
     reports[rIdx].resolvedAt = new Date().toISOString();
     reports[rIdx].resolvedBy = req.admin.username;
     writePickupReports(reports);
-    return res.json({ ok: true, msg: '涓炬姤宸查┏鍥? });
+    return res.json({ ok: true, msg: '举报已驳回' });
   }
 
-  // === 纭杩濊 ===
-  // 1. 鎵惧嚭瀵瑰簲鐨勫嚭浠疯褰?  const auctions = readPickupAuctions();
+  // === 确认违规 ===
+  // 1. 找出对应的出价记录
+  const auctions = readPickupAuctions();
   let targetBid = null, targetAuction = null, targetAuctionIdx = -1, targetBidIdx = -1;
   for (let ai = 0; ai < auctions.length; ai++) {
     const auction = auctions[ai];
@@ -4915,70 +5111,76 @@ app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) =
     if (targetBid) break;
   }
 
-  if (!targetBid) return res.json({ ok: false, msg: '鍑轰环璁板綍涓嶅瓨鍦ㄦ垨琚垹闄? });
+  if (!targetBid) return res.json({ ok: false, msg: '出价记录不存在或被删除' });
 
-  // 2. 鏍囪鍑轰环涓鸿繚瑙?  targetBid.reviewStatus = 'violated';
+  // 2. 标记出价为违规
+  targetBid.reviewStatus = 'violated';
   targetBid.violatedAt = new Date().toISOString();
 
-  // 3. 灏佺鐢ㄦ埛锛堜笉閫€杩?Credits锛?  const users = readUsers();
+  // 3. 封禁用户（不退还 Credits）
+  const users = readUsers();
   const uIdx = users.findIndex(u => u.id === targetBid.userId);
   let banMsg = '';
   if (uIdx !== -1 && users[uIdx].status !== 'banned') {
     users[uIdx].status = 'banned';
     users[uIdx].bannedAt = new Date().toISOString();
-    users[uIdx].banReason = '鏍″洯澧欐媿鍗栧睍绀哄唴瀹硅繚瑙勶紙涓炬姤澶勭悊锛?;
+    users[uIdx].banReason = '校园墙拍卖展示内容违规（举报处理）';
     writeUsers(users);
-    banMsg = '锛屽凡灏佺鐢ㄦ埛 ' + users[uIdx].username;
+    banMsg = '，已封禁用户 ' + users[uIdx].username;
   }
 
-  // 4. 鏌ユ壘涓嬩竴涓鏍搁€氳繃鐨勭浜岄珮鍑轰环
+  // 4. 查找下一个审核通过的第二高出价
   const approvedBids = targetAuction.bids
     .filter(b => b.reviewStatus === 'approved' && b.id !== report.bidId)
     .sort((a, b) => b.amount - a.amount);
   let replaceMsg = '';
   if (approvedBids.length > 0) {
-    // 鏈変笅涓€涓鏍搁€氳繃鐨勫嚭浠?鈫?鑷姩鏇挎崲
-    replaceMsg = '锛屽凡鑷姩鏇挎崲涓虹浜屽嚭浠疯€呭唴瀹?;
+    // 有下一个审核通过的出价 → 自动替换
+    replaceMsg = '，已自动替换为第二出价者内容';
   } else {
-    // 娌℃湁瀹℃牳閫氳繃鐨勫嚭浠?鈫?灏嗗湪 /api/pickup/current 涓繑鍥?null锛屽墠绔樉绀洪粯璁ゆ枃妗?    replaceMsg = '锛岃鏃舵鏆傛棤鍏朵粬瀹℃牳閫氳繃鍐呭';
+    // 没有审核通过的出价 → 将在 /api/pickup/current 中返回 null，前端显示默认文案
+    replaceMsg = '，该时段暂无其他审核通过内容';
   }
 
   writePickupAuctions(auctions);
 
-  // 5. 鏇存柊涓炬姤鐘舵€?  reports[rIdx].status = 'resolved_violation';
+  // 5. 更新举报状态
+  reports[rIdx].status = 'resolved_violation';
   reports[rIdx].resolvedAt = new Date().toISOString();
   reports[rIdx].resolvedBy = req.admin.username;
   writePickupReports(reports);
 
   res.json({
     ok: true,
-    msg: '宸茬‘璁よ繚瑙勶細鍐呭宸蹭笅鏋讹紝Credit 涓嶄簣閫€杩? + banMsg + replaceMsg
+    msg: '已确认违规：内容已下架，Credit 不予退还' + banMsg + replaceMsg
   });
 });
 
-// 鍚姩鏃朵慨澶嶅紓甯歌璇佹暟鎹細approved 鏃犲鏍歌褰?鈫?闄嶇骇
+// 启动时修复异常认证数据：approved 无审核记录 → 降级
 function fixCertDataOnStart() {
   try {
     const users = readUsers();
     let changed = false;
     users.forEach(u => {
       if (u.zhixueStatus === 'approved' && !u.zhixueReviewedBy) {
-        console.warn('[鍚姩淇] 鐢ㄦ埛', u.id, '(' + u.nickname + ') 鐘舵€佷负 approved 浣嗙己灏戝鏍歌褰曪紝閲嶇疆涓?null');
+        console.warn('[启动修复] 用户', u.id, '(' + u.nickname + ') 状态为 approved 但缺少审核记录，重置为 null');
         delete u.zhixueStatus;
         changed = true;
       }
-      // nully 鐘舵€佺殑璁よ瘉娈嬬暀鏁版嵁涔熸竻鐞嗭紙鏈?zhixueUsername/manualNote 浣嗘棤 status锛?      if (!u.zhixueStatus && (u.zhixueUsername || u.zhixueManualNote)) {
-        // 鏈夋彁浜ゆ暟鎹絾鐘舵€佷负绌?鈫?杩欏彲鑳芥槸 bug 瀵艰嚧鐨勬畫鐣欙紝璁句负 pending 浠ヨЕ鍙戝鏍?        u.zhixueStatus = 'pending';
+      // nully 状态的认证残留数据也清理（有 zhixueUsername/manualNote 但无 status）
+      if (!u.zhixueStatus && (u.zhixueUsername || u.zhixueManualNote)) {
+        // 有提交数据但状态为空 → 这可能是 bug 导致的残留，设为 pending 以触发审核
+        u.zhixueStatus = 'pending';
         changed = true;
       }
     });
     if (changed) writeUsers(users);
   } catch (e) {
-    console.error('[鍚姩淇] 璁よ瘉鏁版嵁妫€鏌ュけ璐?', e.message);
+    console.error('[启动修复] 认证数据检查失败:', e.message);
   }
 }
 
-// ===== 瀛︾敓浼氶€氱煡 =====
+// ===== 学生会通知 =====
 const SC_FILE = path.join(DATA_DIR, 'student_council.json');
 const NOTICES_FILE = path.join(DATA_DIR, 'notices.json');
 
@@ -4991,72 +5193,76 @@ function writeNotices (data) { db.writeNotices(data); }
 function readMaintenance () { return db.readMaintenance(); }
 function writeMaintenance (data) { db.writeMaintenance(data); }
 
-// 妫€娴嬫槸鍚﹀凡鍒濆鍖?app.get('/api/student-council/check-init', (req, res) => {
+// 检测是否已初始化
+app.get('/api/student-council/check-init', (req, res) => {
   const sc = readSC();
   res.json({ ok: true, data: { needInit: !sc } });
 });
 
-// 棣栨璁剧疆瀛︾敓浼氳处鍙?app.post('/api/student-council/init', (req, res) => {
-  if (readSC()) return res.json({ ok: false, msg: '宸插垵濮嬪寲锛岃鐩存帴鐧诲綍' });
+// 首次设置学生会账号
+app.post('/api/student-council/init', (req, res) => {
+  if (readSC()) return res.json({ ok: false, msg: '已初始化，请直接登录' });
 
   const { id, password, name } = req.body;
   if (!id || !/^[a-zA-Z0-9_]{3,20}$/.test(id))
-    return res.json({ ok: false, msg: '璐﹀彿鏍煎紡锛?-20浣嶅瓧姣嶃€佹暟瀛椼€佷笅鍒掔嚎' });
+    return res.json({ ok: false, msg: '账号格式：3-20位字母、数字、下划线' });
   if (!password || password.length < 6)
-    return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯6浣? });
+    return res.json({ ok: false, msg: '密码至少6位' });
   if (!name || !name.trim())
-    return res.json({ ok: false, msg: '璇疯緭鍏ュ悕绉? });
+    return res.json({ ok: false, msg: '请输入名称' });
 
   writeSC({
     id, name: name.trim(),
     password: hashPassword(password),
     createdAt: new Date().toISOString()
   });
-  res.json({ ok: true, msg: '瀛︾敓浼氳处鍙峰凡鍒涘缓' });
+  res.json({ ok: true, msg: '学生会账号已创建' });
 });
 
-// 瀛︾敓浼氱櫥褰曪紙鏀寔鍘熷鐢熶細璐﹀彿 + 鏍″洯澧欑敤鎴风櫥褰曪級
+// 学生会登录（支持原学生会账号 + 校园墙用户登录）
 app.post('/api/student-council/login', (req, res) => {
   const { id, password, captchaId, captchaText } = req.body;
 
-  // 楠岃瘉 captcha
+  // 验证 captcha
   if (captchaId && captchaText) {
     const entry = captchaStore.get(captchaId);
     if (!entry || entry.text !== captchaText.toLowerCase()) {
-      return res.json({ ok: false, msg: '楠岃瘉鐮侀敊璇? });
+      return res.json({ ok: false, msg: '验证码错误' });
     }
     captchaStore.delete(captchaId);
   }
 
-  if (!id || !password) return res.json({ ok: false, msg: '璇疯緭鍏ヨ处鍙峰拰瀵嗙爜' });
+  if (!id || !password) return res.json({ ok: false, msg: '请输入账号和密码' });
 
-  // 灏濊瘯鍘熷鐢熶細璐﹀彿鐧诲綍
+  // 尝试原学生会账号登录
   const sc = readSC();
   if (sc && sc.id === id) {
     if (!verifyPassword(password, sc.password))
-      return res.json({ ok: false, msg: '璐﹀彿鎴栧瘑鐮侀敊璇? });
+      return res.json({ ok: false, msg: '账号或密码错误' });
     const token = signToken({ id: sc.id, loginAt: Date.now() });
     return res.json({ ok: true, data: { token, name: sc.name, type: 'sc' } });
   }
 
-  // 灏濊瘯鏍″洯澧欑敤鎴风櫥褰曪紙闇€ noticePublisher 鏉冮檺锛?  const users = readUsers();
+  // 尝试校园墙用户登录（需 noticePublisher 权限）
+  const users = readUsers();
   const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher && u.status !== 'banned');
   if (user) {
     if (!verifyPassword(password, user.password)) {
-      return res.json({ ok: false, msg: '璐﹀彿鎴栧瘑鐮侀敊璇? });
+      return res.json({ ok: false, msg: '账号或密码错误' });
     }
     const token = signToken({ id: user.id, loginAt: Date.now() });
     return res.json({ ok: true, data: { token, name: user.nickname, type: 'user' } });
   }
 
-  return res.json({ ok: false, msg: '璐﹀彿鎴栧瘑鐮侀敊璇? });
+  return res.json({ ok: false, msg: '账号或密码错误' });
 });
 
-// ===== 绠＄悊鍛樼鐞嗗鐢熶細璐﹀彿 =====
+// ===== 管理员管理学生会账号 =====
 
-// 鑾峰彇瀛︾敓浼氳处鍙蜂俊鎭紙浠呯鐞嗗憳锛?app.get('/api/admin/student-council', requireAdmin, (req, res) => {
+// 获取学生会账号信息（仅管理员）
+app.get('/api/admin/student-council', requireAdmin, (req, res) => {
   const sc = readSC();
-  if (!sc) return res.json({ ok: false, msg: '瀛︾敓浼氳处鍙锋湭鍒濆鍖? });
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
   res.json({
     ok: true,
     data: {
@@ -5067,108 +5273,113 @@ app.post('/api/student-council/login', (req, res) => {
   });
 });
 
-// 閲嶇疆瀛︾敓浼氬瘑鐮侊紙浠呯鐞嗗憳锛?app.post('/api/admin/student-council/reset-pwd', requireAdmin, (req, res) => {
+// 重置学生会密码（仅管理员）
+app.post('/api/admin/student-council/reset-pwd', requireAdmin, (req, res) => {
   const sc = readSC();
-  if (!sc) return res.json({ ok: false, msg: '瀛︾敓浼氳处鍙锋湭鍒濆鍖? });
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
   const { newPassword } = req.body;
   if (!newPassword || newPassword.length < 6) {
-    return res.json({ ok: false, msg: '瀵嗙爜鑷冲皯 6 浣? });
+    return res.json({ ok: false, msg: '密码至少 6 位' });
   }
   sc.password = hashPassword(newPassword);
   writeSC(sc);
-  res.json({ ok: true, msg: '瀛︾敓浼氬瘑鐮佸凡閲嶇疆' });
+  res.json({ ok: true, msg: '学生会密码已重置' });
 });
 
-// 淇敼瀛︾敓浼氬悕绉帮紙浠呯鐞嗗憳锛?app.post('/api/admin/student-council/change-name', requireAdmin, (req, res) => {
+// 修改学生会名称（仅管理员）
+app.post('/api/admin/student-council/change-name', requireAdmin, (req, res) => {
   const sc = readSC();
-  if (!sc) return res.json({ ok: false, msg: '瀛︾敓浼氳处鍙锋湭鍒濆鍖? });
+  if (!sc) return res.json({ ok: false, msg: '学生会账号未初始化' });
   const { name } = req.body;
-  if (!name || !name.trim()) return res.json({ ok: false, msg: '璇疯緭鍏ュ悕绉? });
+  if (!name || !name.trim()) return res.json({ ok: false, msg: '请输入名称' });
   sc.name = name.trim();
   writeSC(sc);
-  res.json({ ok: true, msg: '瀛︾敓浼氬悕绉板凡淇敼', data: { name: sc.name } });
+  res.json({ ok: true, msg: '学生会名称已修改', data: { name: sc.name } });
 });
 
-// 淇敼瀵嗙爜
+// 修改密码
 app.post('/api/student-council/change-pwd', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰? });
+  if (!token) return res.json({ ok: false, msg: '未登录' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
-  // 楠岃瘉锛氬鐢熶細璐﹀彿 鎴?鏍″洯澧欓€氱煡鍙戝竷鑰?  const sc = readSC();
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 验证：学生会账号 或 校园墙通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
-  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { oldPwd, newPwd } = req.body;
-  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '璇峰～鍐欏畬鏁? });
-  if (!verifyPassword(oldPwd, sc.password)) return res.json({ ok: false, msg: '鏃у瘑鐮侀敊璇? });
-  if (newPwd.length < 6) return res.json({ ok: false, msg: '鏂板瘑鐮佽嚦灏?浣? });
-  if (oldPwd === newPwd) return res.json({ ok: false, msg: '鏂版棫瀵嗙爜涓嶈兘鐩稿悓' });
+  if (!oldPwd || !newPwd) return res.json({ ok: false, msg: '请填写完整' });
+  if (!verifyPassword(oldPwd, sc.password)) return res.json({ ok: false, msg: '旧密码错误' });
+  if (newPwd.length < 6) return res.json({ ok: false, msg: '新密码至少6位' });
+  if (oldPwd === newPwd) return res.json({ ok: false, msg: '新旧密码不能相同' });
 
   sc.password = hashPassword(newPwd);
   writeSC(sc);
-  res.json({ ok: true, msg: '瀵嗙爜宸蹭慨鏀? });
+  res.json({ ok: true, msg: '密码已修改' });
 });
 
-// 淇敼鏄电О
+// 修改昵称
 app.post('/api/student-council/change-name', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '鏈櫥褰? });
+  if (!token) return res.json({ ok: false, msg: '未登录' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
-  // 楠岃瘉锛氬鐢熶細璐﹀彿 鎴?鏍″洯澧欓€氱煡鍙戝竷鑰?  const sc = readSC();
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 验证：学生会账号 或 校园墙通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
-  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { name } = req.body;
-  if (!name || !name.trim()) return res.json({ ok: false, msg: '璇疯緭鍏ュ悕绉? });
+  if (!name || !name.trim()) return res.json({ ok: false, msg: '请输入名称' });
 
   sc.name = name.trim();
   writeSC(sc);
-  // 杩斿洖鏂?token 鍜屾柊鍚嶇О
+  // 返回新 token 和新名称
   const newToken = signToken({ id: sc.id, loginAt: Date.now() });
-  res.json({ ok: true, msg: '鏄电О宸蹭慨鏀?, data: { token: newToken, name: sc.name } });
+  res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
-// 閫氱煡鍙戝竷鑰呭垱寤烘姇绁紙闇€ x-sc-token锛屽鐢熶細璐﹀彿鎴栭€氱煡鍙戝竷鑰咃級
+// 通知发布者创建投票（需 x-sc-token，学生会账号或通知发布者）
 app.post('/api/notice/votes', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
-  // 楠岃瘉韬唤锛氬鐢熶細璐﹀彿 鎴?閫氱煡鍙戝竷鑰?  const sc = readSC();
+  // 验证身份：学生会账号 或 通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const publisher = users.find(u => u.id === session.id && u.noticePublisher);
-  if (!isSC && !publisher) return res.json({ ok: false, msg: '鏃犳潈闄愬垱寤烘姇绁? });
+  if (!isSC && !publisher) return res.json({ ok: false, msg: '无权限创建投票' });
 
   const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
-  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '鏍囬鑷冲皯2涓瓧' });
-  if (title.trim().length > 100) return res.json({ ok: false, msg: '鏍囬鏈€澶?00涓瓧' });
-  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '鑷冲皯闇€瑕?涓€夐」' });
-  if (options.length > 20) return res.json({ ok: false, msg: '鏈€澶?0涓€夐」' });
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '閫夐」涓嶈兘涓虹┖' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '閫夐」鏈€澶?00涓瓧' });
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, warningMsg: '鍐呭鍖呭惈鏁忔劅璇嶏紝璇蜂慨鏀瑰悗閲嶈瘯' });
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
   }
   const blockedNames = checkBullyingNames(checkText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, warningMsg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
-  const authorName = isSC ? sc.name : (publisher.nickname || '閫氱煡鍙戝竷鑰?);
+  const authorName = isSC ? sc.name : (publisher.nickname || '通知发布者');
   const votes = readVotes();
   const newVote = {
     id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -5194,53 +5405,59 @@ app.post('/api/notice/votes', (req, res) => {
 });
 
 
-// 鑾峰彇鐢ㄦ埛涓汉閫氱煡锛堢郴缁熻嚜鍔ㄥ彂閫佺殑涓撳睘閫氱煡锛?app.get('/api/user/notifications', (req, res) => {
+// 获取用户个人通知（系统自动发送的专属通知）
+app.get('/api/user/notifications', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: true, data: [] });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: true, data: [] });
   const notices = readNotices();
-  // 杩斿洖 targetUserId 涓哄綋鍓嶇敤鎴风殑閫氱煡
+  // 返回 targetUserId 为当前用户的通知
   const userNotices = notices.filter(n => n.targetUserId === session.id && !n.deleted);
   userNotices.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json({ ok: true, data: userNotices });
 });
 
-// 鑾峰彇閫氱煡鍒楄〃锛堝叕寮€锛岃繃婊ゅ凡鍒犻櫎锛?app.get('/api/notices', (req, res) => {
+// 获取通知列表（公开，过滤已删除）
+app.get('/api/notices', (req, res) => {
   const notices = readNotices();
   const active = notices.filter(n => !n.deleted && !n.targetUserId);
   const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
 
-// 鍙戝竷閫氱煡锛堥渶楠岃瘉token锛?app.post('/api/notices', (req, res) => {
+// 发布通知（需验证token）
+app.post('/api/notices', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
-  // 楠岃瘉锛氬鐢熶細璐﹀彿 鎴?鏍″洯澧欓€氱煡鍙戝竷鑰?  const sc = readSC();
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 验证：学生会账号 或 校园墙通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher);
-  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!isSC && !isPublisher) return res.json({ ok: false, msg: '登录已过期' });
 
   const { title, content, author, level, images } = req.body;
-  if (!title || !title.trim()) return res.json({ ok: false, msg: '璇峰～鍐欐爣棰? });
-  if (!content || !content.trim()) return res.json({ ok: false, msg: '璇峰～鍐欏唴瀹? });
+  if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
+  if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
 
-  // 鏁忔劅璇嶆娴嬶紙閫氱煡鏍囬+鍐呭涓€璧锋鏌ワ級
+  // 敏感词检测（通知标题+内容一起检查）
   const combinedText = (title || '') + ' ' + (content || '');
   const sensitiveWords = checkSensitive(combinedText);
   const hasSensitive = sensitiveWords.length > 0;
   if (hasSensitive) {
-    return res.json({ ok: false, warning: true, msg: '鍐呭鍖呭惈鏁忔劅璇?[' + sensitiveWords.join(', ') + ']锛岃淇敼鍚庨噸鏂版彁浜?, words: sensitiveWords });
+    return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
   }
-  // 闇稿噷濮撳悕妫€娴?  const blockedNames = checkBullyingNames(combinedText);
+  // 霸凌姓名检测
+  const blockedNames = checkBullyingNames(combinedText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, msg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
   }
 
-  // 楠岃瘉鍥剧墖锛坆ase64 data URL锛屾瘡寮犫墹10MB锛?  var validImages = [];
+  // 验证图片（base64 data URL，每张≤10MB）
+  var validImages = [];
   var maxSize = 10 * 1024 * 1024;
   if (Array.isArray(images)) {
     images.forEach(function(img) {
@@ -5261,58 +5478,59 @@ app.post('/api/notice/votes', (req, res) => {
     createdAt: new Date().toISOString()
   });
   writeNotices(notices);
-  res.json({ ok: true, msg: '閫氱煡宸插彂甯? });
+  res.json({ ok: true, msg: '通知已发布' });
 });
 
-// 鍒犻櫎閫氱煡锛堥渶楠岃瘉token锛夆€斺€?杞垹闄わ紝60澶╁悗鑷姩娓呯悊
+// 删除通知（需验证token）—— 软删除，60天后自动清理
 app.delete('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
-  // 楠岃瘉锛氬鐢熶細璐﹀彿 鎴?鏍″洯澧欓€氱煡鍙戝竷鑰?  const sc = readSC();
+  // 验证：学生会账号 或 校园墙通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
-    // 妫€鏌ユ槸鍚﹀瓨鍦ㄨ鐢ㄦ埛
+    // 检查是否存在该用户
     const userExists = users.find(u => u.id === session.id);
-    if (!userExists) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦?, code: 'USER_NOT_FOUND' });
-    return res.json({ ok: false, msg: '鏃犻€氱煡鍙戝竷鏉冮檺', code: 'NO_PERMISSION' });
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
   }
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
-  if (!notice) return res.json({ ok: false, msg: '閫氱煡涓嶅瓨鍦? });
-  if (notice.deleted) return res.json({ ok: false, msg: '閫氱煡宸茶鍒犻櫎' });
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
 
   notice.deleted = true;
   notice.deletedAt = new Date().toISOString();
   writeNotices(notices);
-  res.json({ ok: true, msg: '閫氱煡宸插垹闄? });
+  res.json({ ok: true, msg: '通知已删除' });
 });
 
-// 缃《/鍙栨秷缃《閫氱煡
+// 置顶/取消置顶通知
 app.post('/api/notices/:id/pin', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     const userExists = users.find(u => u.id === session.id);
-    if (!userExists) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦?, code: 'USER_NOT_FOUND' });
-    return res.json({ ok: false, msg: '鏃犻€氱煡鍙戝竷鏉冮檺', code: 'NO_PERMISSION' });
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
   }
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
-  if (!notice) return res.json({ ok: false, msg: '閫氱煡涓嶅瓨鍦? });
-  if (notice.deleted) return res.json({ ok: false, msg: '閫氱煡宸茶鍒犻櫎' });
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
 
   notice.pinned = !notice.pinned;
   if (notice.pinned) {
@@ -5322,67 +5540,70 @@ app.post('/api/notices/:id/pin', (req, res) => {
   }
   notice.updatedAt = new Date().toISOString();
   writeNotices(notices);
-  res.json({ ok: true, msg: notice.pinned ? '宸茬疆椤? : '宸插彇娑堢疆椤?, pinned: notice.pinned });
+  res.json({ ok: true, msg: notice.pinned ? '已置顶' : '已取消置顶', pinned: notice.pinned });
 });
 
-// 鍚屾閫氱煡鍒板叾浠栧钩鍙?app.post('/api/notices/:id/sync', (req, res) => {
+// 同步通知到其他平台
+app.post('/api/notices/:id/sync', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
   const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
     const userExists = users.find(u => u.id === session.id);
-    if (!userExists) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦?, code: 'USER_NOT_FOUND' });
-    return res.json({ ok: false, msg: '鏃犻€氱煡鍙戝竷鏉冮檺', code: 'NO_PERMISSION' });
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
   }
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
-  if (!notice) return res.json({ ok: false, msg: '閫氱煡涓嶅瓨鍦? });
-  if (notice.deleted) return res.json({ ok: false, msg: '閫氱煡宸茶鍒犻櫎' });
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
 
   notice.synced = true;
   notice.syncedAt = new Date().toISOString();
   notice.updatedAt = new Date().toISOString();
   writeNotices(notices);
-  res.json({ ok: true, msg: '鍚屾鎴愬姛' });
+  res.json({ ok: true, msg: '同步成功' });
 });
 
-// 淇敼閫氱煡锛堥渶楠岃瘉token锛?app.put('/api/notices/:id', (req, res) => {
+// 修改通知（需验证token）
+app.put('/api/notices/:id', (req, res) => {
   const token = req.headers['x-sc-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍', code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifySignedToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈? });
-  // 楠岃瘉锛氬鐢熶細璐﹀彿 鎴?鏍″洯澧欓€氱煡鍙戝竷鑰?  const sc = readSC();
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 验证：学生会账号 或 校园墙通知发布者
+  const sc = readSC();
   const users = readUsers();
   const isSC = sc && sc.id === session.id;
   const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
   if (!isSC && !isPublisher) {
-    // 妫€鏌ユ槸鍚﹀瓨鍦ㄨ鐢ㄦ埛
+    // 检查是否存在该用户
     const userExists = users.find(u => u.id === session.id);
-    if (!userExists) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦?, code: 'USER_NOT_FOUND' });
-    return res.json({ ok: false, msg: '鏃犻€氱煡鍙戝竷鏉冮檺', code: 'NO_PERMISSION' });
+    if (!userExists) return res.json({ ok: false, msg: '用户不存在', code: 'USER_NOT_FOUND' });
+    return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
   }
 
   const { title, content, author, level, images, sensitiveForce } = req.body;
-  if (!title || !title.trim()) return res.json({ ok: false, msg: '璇峰～鍐欐爣棰? });
-  if (!content || !content.trim()) return res.json({ ok: false, msg: '璇峰～鍐欏唴瀹? });
+  if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
+  if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
 
-  // 鏁忔劅璇嶆娴嬶紙sensitiveForce=true 鏃惰烦杩囨鏌ワ級
+  // 敏感词检测（sensitiveForce=true 时跳过检查）
   const combinedText = (title || '') + ' ' + (content || '');
   const sensitiveWords = checkSensitive(combinedText);
   const hasSensitive = sensitiveWords.length > 0;
   if (hasSensitive && !sensitiveForce) {
-    return res.json({ ok: false, warning: true, msg: '鍐呭鍖呭惈鏁忔劅璇?[' + sensitiveWords.join(', ') + ']锛岃淇敼鍚庨噸鏂版彁浜?, words: sensitiveWords });
+    return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
   }
-  // 闇稿噷濮撳悕妫€娴嬶紙濮嬬粓闃绘锛屼笉鍙己鍒讹級
+  // 霸凌姓名检测（始终阻止，不可强制）
   const blockedNames = checkBullyingNames(combinedText);
   if (blockedNames.length > 0) {
-    return res.json({ ok: false, bullying: true, msg: '鍐呭娑夊強鍙椾繚鎶や汉鍛樺鍚嶏紝鏃犳硶鍙戦€? });
+    return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
   }
 
   var maxSize = 10 * 1024 * 1024;
@@ -5397,8 +5618,8 @@ app.post('/api/notices/:id/pin', (req, res) => {
 
   const notices = readNotices();
   const notice = notices.find(n => n.id === req.params.id);
-  if (!notice) return res.json({ ok: false, msg: '閫氱煡涓嶅瓨鍦? });
-  if (notice.deleted) return res.json({ ok: false, msg: '閫氱煡宸茶鍒犻櫎' });
+  if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+  if (notice.deleted) return res.json({ ok: false, msg: '通知已被删除' });
 
   notice.title = title.trim();
   notice.content = content.trim();
@@ -5409,10 +5630,10 @@ app.post('/api/notices/:id/pin', (req, res) => {
   }
   notice.updatedAt = new Date().toISOString();
   writeNotices(notices);
-  res.json({ ok: true, msg: '閫氱煡宸蹭慨鏀? });
+  res.json({ ok: true, msg: '通知已修改' });
 });
 
-// ===== 閫氱煡鍙戝竷璐﹀彿鐢宠 =====
+// ===== 通知发布账号申请 =====
 const APP_FILE = path.join(DATA_DIR, 'notice_applications.json');
 const PASSKEY_FILE = path.join(DATA_DIR, 'notice_passkey.json');
 
@@ -5424,41 +5645,43 @@ function readApps () { return db.readApps(); }
 
 function writeApps (data) { db.writeApps(data); }
 
-// 鎻愪氦鐢宠锛堝叕寮€锛岄渶 pass-key锛?app.post('/api/notice-account/apply', (req, res) => {
+// 提交申请（公开，需 pass-key）
+app.post('/api/notice-account/apply', (req, res) => {
   const { name, department, contact, reason, passkey, captchaId, captchaText } = req.body;
 
-  // 楠岃瘉鐢ㄦ埛鐧诲綍
+  // 验证用户登录
   const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '璇峰厛鐧诲綍鏍″洯澧欒处鍙?, code: 'NOT_LOGIN' });
+  if (!token) return res.json({ ok: false, msg: '请先登录校园墙账号', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '鐧诲綍宸茶繃鏈燂紝璇烽噸鏂扮櫥褰?, code: 'TOKEN_EXPIRED' });
+  if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
 
-  // 楠岃瘉 captcha
+  // 验证 captcha
   const entry = captchaStore.get(captchaId);
   if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-    return res.json({ ok: false, msg: '楠岃瘉鐮侀敊璇? });
+    return res.json({ ok: false, msg: '验证码错误' });
   }
   captchaStore.delete(captchaId);
 
-  if (!name || !name.trim()) return res.json({ ok: false, msg: '璇峰～鍐欑敵璇蜂汉濮撳悕' });
-  if (!department || !department.trim()) return res.json({ ok: false, msg: '璇峰～鍐欓儴闂?缁勭粐' });
-  if (!contact || !contact.trim()) return res.json({ ok: false, msg: '璇峰～鍐欒仈绯绘柟寮? });
-  if (!reason || !reason.trim()) return res.json({ ok: false, msg: '璇峰～鍐欑敵璇风悊鐢? });
+  if (!name || !name.trim()) return res.json({ ok: false, msg: '请填写申请人姓名' });
+  if (!department || !department.trim()) return res.json({ ok: false, msg: '请填写部门/组织' });
+  if (!contact || !contact.trim()) return res.json({ ok: false, msg: '请填写联系方式' });
+  if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请填写申请理由' });
 
   const apps = readApps();
-  // 姣忎汉鍙兘鐢宠涓€娆★紙闄ら潪琚┏鍥烇級
+  // 每人只能申请一次（除非被驳回）
   const existing = apps.find(a => a.userId === session.id && a.status !== 'rejected');
   if (existing) {
-    const hint = existing.status === 'pending' ? '璇风瓑寰呭鏍哥粨鏋? : '浣犵殑鐢宠宸查€氳繃';
-    return res.json({ ok: false, msg: '浣犲凡鎻愪氦杩囩敵璇凤紝' + hint });
+    const hint = existing.status === 'pending' ? '请等待审核结果' : '你的申请已通过';
+    return res.json({ ok: false, msg: '你已提交过申请，' + hint });
   }
 
-  // 楠岃瘉 pass-key锛堥€夊～锛?  const stored = readPasskey();
+  // 验证 pass-key（选填）
+  const stored = readPasskey();
   const hasValidPasskey = stored && stored.key && passkey && passkey.trim() === stored.key;
   const hasPasskeyInput = passkey && passkey.trim().length > 0;
 
   if (hasValidPasskey) {
-    // 閫氳鐮佹纭?鈫?鑷姩閫氳繃锛岀洿鎺ユ巿浜堥€氱煡鍙戝竷鏉冮檺
+    // 通行码正确 → 自动通过，直接授予通知发布权限
     const users = readUsers();
     const targetUser = users.find(u => u.id === session.id);
     if (targetUser) {
@@ -5466,7 +5689,7 @@ function writeApps (data) { db.writeApps(data); }
       targetUser.noticePublisherAddedAt = new Date().toISOString();
       targetUser._noticeAppNotification = {
         status: 'approved',
-        message: '浣犵殑閫氱煡鍙戝竷鐢宠宸查€氳繃锛佷綘鍙互浣跨敤鏍″洯澧欒处鍙峰瘑鐮佺櫥褰?notice.html 绠＄悊閫氱煡',
+        message: '你的通知发布申请已通过！你可以使用校园墙账号密码登录 notice.html 管理通知',
         timestamp: new Date().toISOString()
       };
       writeUsers(users);
@@ -5477,7 +5700,7 @@ function writeApps (data) { db.writeApps(data); }
       department: department.trim(),
       contact: contact.trim(),
       reason: reason.trim(),
-      status: 'approved', // 鑷姩閫氳繃
+      status: 'approved', // 自动通过
       userId: session.id,
       userNickname: session.nickname || name.trim(),
       createdAt: new Date().toISOString(),
@@ -5485,12 +5708,12 @@ function writeApps (data) { db.writeApps(data); }
       reviewedBy: 'system'
     });
     writeApps(apps);
-    res.json({ ok: true, msg: '馃帀 閫氳鐮侀獙璇侀€氳繃锛屼綘宸茶幏寰楅€氱煡鍙戝竷鏉冮檺锛? });
+    res.json({ ok: true, msg: '🎉 通行码验证通过，你已获得通知发布权限！' });
   } else if (hasPasskeyInput) {
-    // 鏈夐€氳鐮佷絾涓嶅尮閰?鈫?杩斿洖閿欒
-    res.json({ ok: false, msg: '閫氳鐮侀敊璇紝璇风‘璁ゅ悗閲嶆柊杈撳叆' });
+    // 有通行码但不匹配 → 返回错误
+    res.json({ ok: false, msg: '通行码错误，请确认后重新输入' });
   } else {
-    // 鏃犻€氳鐮?鈫?鎻愪氦鐢宠锛岀瓑寰呯鐞嗗憳瀹℃牳
+    // 无通行码 → 提交申请，等待管理员审核
     apps.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name: name.trim(),
@@ -5503,11 +5726,12 @@ function writeApps (data) { db.writeApps(data); }
       createdAt: new Date().toISOString()
     });
     writeApps(apps);
-    res.json({ ok: true, msg: '鐢宠宸叉彁浜わ紝璇风瓑寰呯鐞嗗憳瀹℃牳' });
+    res.json({ ok: true, msg: '申请已提交，请等待管理员审核' });
   }
 });
 
-// 鑾峰彇鐢ㄦ埛鐨勯€氱煡鐢宠瀹℃牳缁撴灉閫氱煡锛堣鍙栧悗娓呴櫎锛?app.get('/api/user/notice-app-notification', (req, res) => {
+// 获取用户的通知申请审核结果通知（读取后清除）
+app.get('/api/user/notice-app-notification', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, data: null });
   const session = verifyUserToken(token);
@@ -5518,28 +5742,28 @@ function writeApps (data) { db.writeApps(data); }
   if (!user || !user._noticeAppNotification) return res.json({ ok: true, data: null });
 
   const notif = user._noticeAppNotification;
-  // 娓呴櫎閫氱煡锛堜竴娆℃€ц鍙栵級
+  // 清除通知（一次性读取）
   delete user._noticeAppNotification;
   writeUsers(users);
 
   res.json({ ok: true, data: notif });
 });
 
-// 鏌ョ湅鐢宠鍒楄〃锛堜粎绠＄悊鍛橈級
+// 查看申请列表（仅管理员）
 app.get('/api/admin/notice-applications', requireAdmin, (req, res) => {
   const apps = readApps().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   res.json({ ok: true, data: apps });
 });
 
-// 瀹℃牳鐢宠锛堜粎绠＄悊鍛橈級
+// 审核申请（仅管理员）
 app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) => {
   const { action, accountId, accountName, accountPwd } = req.body;
-  if (!['approve', 'reject'].includes(action)) return res.json({ ok: false, msg: '鏃犳晥鎿嶄綔' });
+  if (!['approve', 'reject'].includes(action)) return res.json({ ok: false, msg: '无效操作' });
 
   const apps = readApps();
   const app = apps.find(a => a.id === req.params.id);
-  if (!app) return res.json({ ok: false, msg: '鐢宠涓嶅瓨鍦? });
-  if (app.status !== 'pending') return res.json({ ok: false, msg: '璇ョ敵璇峰凡澶勭悊' });
+  if (!app) return res.json({ ok: false, msg: '申请不存在' });
+  if (app.status !== 'pending') return res.json({ ok: false, msg: '该申请已处理' });
 
   if (action === 'reject') {
     app.status = 'rejected';
@@ -5547,31 +5771,33 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
     app.reviewedBy = req.admin.id;
     writeApps(apps);
 
-    // 瀛樺偍閫氱煡鍒扮敤鎴疯褰?    const users = readUsers();
+    // 存储通知到用户记录
+    const users = readUsers();
     const targetUser = users.find(u => u.id === app.userId);
     if (targetUser) {
       targetUser._noticeAppNotification = {
         status: 'rejected',
-        message: '浣犵殑閫氱煡鍙戝竷鐢宠宸茶椹冲洖锛屽彲浠ラ噸鏂版彁浜ょ敵璇?,
+        message: '你的通知发布申请已被驳回，可以重新提交申请',
         timestamp: new Date().toISOString()
       };
       writeUsers(users);
     }
 
-    return res.json({ ok: true, msg: '宸叉嫆缁濊鐢宠' });
+    return res.json({ ok: true, msg: '已拒绝该申请' });
   }
 
-  // 閫氳繃锛氭爣璁版牎鍥鐢ㄦ埛涓洪€氱煡鍙戝竷鑰?  const users = readUsers();
+  // 通过：标记校园墙用户为通知发布者
+  const users = readUsers();
   const targetUser = users.find(u => u.id === app.userId);
   if (!targetUser) {
-    return res.json({ ok: false, msg: '鏈壘鍒板搴旂殑鏍″洯澧欑敤鎴凤紝璇风‘璁よ鐢ㄦ埛宸叉敞鍐? });
+    return res.json({ ok: false, msg: '未找到对应的校园墙用户，请确认该用户已注册' });
   }
 
   targetUser.noticePublisher = true;
   targetUser.noticePublisherAddedAt = new Date().toISOString();
   targetUser._noticeAppNotification = {
     status: 'approved',
-    message: '浣犵殑閫氱煡鍙戝竷鐢宠宸查€氳繃锛佷綘鍙互浣跨敤鏍″洯澧欒处鍙峰瘑鐮佺櫥褰?notice.html 绠＄悊閫氱煡',
+    message: '你的通知发布申请已通过！你可以使用校园墙账号密码登录 notice.html 管理通知',
     timestamp: new Date().toISOString()
   };
   writeUsers(users);
@@ -5581,37 +5807,39 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
   app.reviewedBy = req.admin.id;
   writeApps(apps);
 
-  res.json({ ok: true, msg: '宸查€氳繃锛岃鐢ㄦ埛鍙娇鐢ㄦ牎鍥璐﹀彿瀵嗙爜鐧诲綍閫氱煡绠＄悊椤甸潰' });
+  res.json({ ok: true, msg: '已通过，该用户可使用校园墙账号密码登录通知管理页面' });
 });
 
-// 鑾峰彇褰撳墠 pass-key锛堜粎绠＄悊鍛橈級
+// 获取当前 pass-key（仅管理员）
 app.get('/api/admin/notice-passkey', requireAdmin, (req, res) => {
   const stored = readPasskey();
   res.json({ ok: true, data: { hasKey: !!stored && !!stored.key, key: stored ? stored.key : null, createdAt: stored ? stored.createdAt : null } });
 });
 
-// 鐢熸垚/鍒锋柊 pass-key锛堜粎绠＄悊鍛橈級
+// 生成/刷新 pass-key（仅管理员）
 app.post('/api/admin/notice-passkey', requireAdmin, (req, res) => {
   const { action, key } = req.body;
   if (action === 'clear') {
     writePasskey({});
-    return res.json({ ok: true, msg: '閫氳鐮佸凡娓呯┖锛屾殏鍋滅敵璇? });
+    return res.json({ ok: true, msg: '通行码已清空，暂停申请' });
   }
 
-  // 鑷姩鐢熸垚鎴栨墜鍔ㄨ缃?  const newKey = (key && key.trim()) ? key.trim() : Math.random().toString(36).slice(2, 10).toUpperCase();
+  // 自动生成或手动设置
+  const newKey = (key && key.trim()) ? key.trim() : Math.random().toString(36).slice(2, 10).toUpperCase();
   writePasskey({ key: newKey, createdAt: new Date().toISOString(), createdBy: req.admin.id });
-  res.json({ ok: true, msg: '閫氳鐮佸凡鐢熸垚', data: { key: newKey } });
+  res.json({ ok: true, msg: '通行码已生成', data: { key: newKey } });
 });
 
-// ===== 閫氱煡鍙戝竷鑰呯鐞嗭紙浠呯鐞嗗憳锛?=====
-// 鑾峰彇鎵€鏈夐€氱煡鍙戝竷鑰咃紙鍚洿澶氱粺璁′俊鎭級
+// ===== 通知发布者管理（仅管理员） =====
+// 获取所有通知发布者（含更多统计信息）
 app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
   const users = readUsers();
   const notices = readNotices();
   const publishers = users
     .filter(u => u.noticePublisher)
     .map(u => {
-      // 缁熻璇ュ彂甯冭€呯殑閫氱煡鏁帮紙鎸?author 鏄电О鍖归厤锛?      const userNotices = notices.filter(n =>
+      // 统计该发布者的通知数（按 author 昵称匹配）
+      const userNotices = notices.filter(n =>
         !n.deleted && !n.auto && !n.targetUserId &&
         (n.author === u.nickname || n.author === u.username)
       );
@@ -5632,34 +5860,36 @@ app.get('/api/admin/notice-publishers', requireAdmin, (req, res) => {
   res.json({ ok: true, data: publishers });
 });
 
-// 娣诲姞閫氱煡鍙戝竷鑰呮潈闄?app.post('/api/admin/notice-publishers/add', requireAdmin, (req, res) => {
+// 添加通知发布者权限
+app.post('/api/admin/notice-publishers/add', requireAdmin, (req, res) => {
   const { userId } = req.body;
-  if (!userId) return res.json({ ok: false, msg: '璇锋寚瀹氱敤鎴稩D' });
+  if (!userId) return res.json({ ok: false, msg: '请指定用户ID' });
   const users = readUsers();
   const user = users.find(u => u.id === userId);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (user.noticePublisher) return res.json({ ok: false, msg: '璇ョ敤鎴峰凡鏄€氱煡鍙戝竷鑰? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.noticePublisher) return res.json({ ok: false, msg: '该用户已是通知发布者' });
 
   user.noticePublisher = true;
   user.noticePublisherAddedAt = new Date().toISOString();
   writeUsers(users);
-  res.json({ ok: true, msg: '宸叉巿浜堥€氱煡鍙戝竷鏉冮檺' });
+  res.json({ ok: true, msg: '已授予通知发布权限' });
 });
 
-// 绉婚櫎閫氱煡鍙戝竷鑰呮潈闄?app.post('/api/admin/notice-publishers/remove', requireAdmin, (req, res) => {
+// 移除通知发布者权限
+app.post('/api/admin/notice-publishers/remove', requireAdmin, (req, res) => {
   const { userId } = req.body;
-  if (!userId) return res.json({ ok: false, msg: '璇锋寚瀹氱敤鎴稩D' });
+  if (!userId) return res.json({ ok: false, msg: '请指定用户ID' });
   const users = readUsers();
   const user = users.find(u => u.id === userId);
-  if (!user) return res.json({ ok: false, msg: '鐢ㄦ埛涓嶅瓨鍦? });
-  if (!user.noticePublisher) return res.json({ ok: false, msg: '璇ョ敤鎴蜂笉鏄€氱煡鍙戝竷鑰? });
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (!user.noticePublisher) return res.json({ ok: false, msg: '该用户不是通知发布者' });
 
   user.noticePublisher = false;
   writeUsers(users);
-  res.json({ ok: true, msg: '宸茬Щ闄ゅ彂甯冩潈闄? });
+  res.json({ ok: true, msg: '已移除发布权限' });
 });
 
-// ===== 閫氱煡璐﹀彿姒傝缁熻 =====
+// ===== 通知账号概览统计 =====
 app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
   const users = readUsers();
   const notices = readNotices();
@@ -5681,8 +5911,9 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
   });
 });
 
-// ===== 缁存姢鐘舵€佺鐞?=====
-// 鑾峰彇褰撳墠缁存姢鐘舵€?app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
+// ===== 维护状态管理 =====
+// 获取当前维护状态
+app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   try {
     const data = readMaintenance() || { enabled: false };
     res.json({ ok: true, data });
@@ -5691,10 +5922,11 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
   }
 });
 
-// 鍒囨崲缁存姢鐘舵€?app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
+// 切换维护状态
+app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
   const { enabled } = req.body;
   if (typeof enabled !== 'boolean') {
-    return res.json({ ok: false, msg: '鍙傛暟鏃犳晥' });
+    return res.json({ ok: false, msg: '参数无效' });
   }
   const data = {
     enabled,
@@ -5702,14 +5934,14 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
     updatedBy: req.admin.name || req.admin.id
   };
   writeMaintenance(data);
-  res.json({ ok: true, msg: enabled ? '宸插紑鍚淮鎶ゆā寮? : '宸插叧闂淮鎶ゆā寮?, data });
+  res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
 });
 
 app.listen(PORT, () => {
   fixCertDataOnStart();
   cleanupOldDeletedData();
-  console.log(`\n  馃搶 鏍″洯澧欐湇鍔″凡鍚姩`);
-  console.log(`  鈫?http://localhost:${PORT}/`);
-  console.log(`  鈫?http://localhost:${PORT}/admin.html`);
+  console.log(`\n  📌 校园墙服务已启动`);
+  console.log(`  → http://localhost:${PORT}/`);
+  console.log(`  → http://localhost:${PORT}/admin.html`);
 });
 
