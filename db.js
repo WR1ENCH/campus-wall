@@ -47,6 +47,14 @@ function migrate() {
     "userId" TEXT,
     "createdAt" TEXT
   )`);
+  // 创建 vote_ip_records 表（IP 投票记录，用于同 IP 去重）
+  db.exec(`CREATE TABLE IF NOT EXISTS "vote_ip_records" (
+    "id" TEXT PRIMARY KEY,
+    "voteId" TEXT,
+    "ip" TEXT,
+    "userId" TEXT,
+    "createdAt" TEXT
+  )`);
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['images', 'discussionId'] },
@@ -292,6 +300,10 @@ function writeVotes(data) { dropAndInsert('votes', data); }
 function readVoteRecords() { return all('vote_records'); }
 function writeVoteRecords(data) { dropAndInsert('vote_records', data); }
 
+// Vote IP records (which IP voted on which poll — one IP one vote per poll)
+function readVoteIpRecords() { return all('vote_ip_records'); }
+function writeVoteIpRecords(data) { dropAndInsert('vote_ip_records', data); }
+
 // ===== 已删除内容记录 =====
 function readDeletedItems() { return all('deleted_items'); }
 function writeDeletedItems(data) { dropAndInsert('deleted_items', data); }
@@ -327,4 +339,5 @@ module.exports = {
   readDeletedItems, writeDeletedItems, addDeletedItem,
   readVotes, writeVotes,
   readVoteRecords, writeVoteRecords,
+  readVoteIpRecords, writeVoteIpRecords,
 };
