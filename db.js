@@ -81,6 +81,11 @@ function migrate() {
 // ---- helpers ----
 function tryParse(v) {
   if (typeof v !== 'string') return v;
+  // 解析布尔值
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  // 解析数字
+  if (/^-?\d+(\.\d+)?$/.test(v)) return Number(v);
   // 尝试解析 JSON 数组或对象
   if ((v.startsWith('[') && v.endsWith(']')) || (v.startsWith('{') && v.endsWith('}'))) {
     try { return JSON.parse(v); } catch { return v; }
