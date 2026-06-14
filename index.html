@@ -636,6 +636,152 @@
       to   { opacity: 1; }
     }
 
+    /* 投票弹窗入场动画 */
+    @keyframes voteIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* 投票标签样式 */
+    .vote-tab {
+      padding: 6px 12px;
+      background: rgba(12, 74, 110, 0.1);
+      border: none;
+      border-radius: 6px;
+      color: #0c4a6e;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vote-tab:hover { background: rgba(12, 74, 110, 0.2); }
+    .vote-tab.active {
+      background: #0c4a6e;
+      color: #fff;
+    }
+
+    /* 投票卡片 */
+    .vote-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1.5px solid #bae6fd;
+    }
+    .vote-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .vote-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0c4a6e;
+      line-height: 1.4;
+    }
+    .vote-card-meta {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .vote-card-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .vote-option {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1.5px solid transparent;
+    }
+    .vote-option:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+    }
+    .vote-option.selected {
+      background: #bae6fd;
+      border-color: #0c4a6e;
+    }
+    .vote-option input[type="checkbox"],
+    .vote-option input[type="radio"] {
+      margin-right: 10px;
+      width: 16px;
+      height: 16px;
+    }
+    .vote-option-text {
+      flex: 1;
+      font-size: 14px;
+      color: #374151;
+    }
+    .vote-option-percent {
+      font-size: 13px;
+      color: #0c4a6e;
+      font-weight: 600;
+    }
+    .vote-option-bar {
+      height: 6px;
+      background: #e0f2fe;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .vote-option-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0c4a6e, #22d3ee);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .vote-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .vote-card-btn {
+      padding: 8px 20px;
+      background: #0c4a6e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .vote-card-btn:hover { background: #075985; }
+    .vote-card-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .vote-status {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .vote-status-active {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .vote-status-ended {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    .vote-participants {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
     /* ===== 发帖弹窗 ===== */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
@@ -1558,6 +1704,7 @@
       <button class="compose-btn" onclick="openModal()">✏️ <span class="btn-label">贴一张</span></button>
       <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()">💬 <span class="btn-label">讨论区</span></button>
       <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()">🙋 <span class="btn-label">你问我答</span></button>
+      <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()">🗳️ <span class="btn-label">投票</span></button>
       <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知" style="background:transparent;border:1.5px solid rgba(0,0,0,0.1);border-radius:4px;font-size:16px;padding:6px 10px;cursor:pointer;position:relative;">🔔<span id="notifBadge" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:2px solid #fff;"></span></button>
     </div>
     <!-- 校园墙拍卖滚动栏 -->
@@ -2127,6 +2274,67 @@
     </div>
   </div>
 
+  <!-- ===== 投票功能 主弹窗 ===== -->
+  <div class="modal-overlay" id="voteOverlay" onclick="closeVoteOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
+    <div onclick="event.stopPropagation()" style="background:#e0f7ff;border-radius:18px;width:min(94vw,720px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #7dd3fc;animation:voteIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+      <!-- 头部 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #bae6fd;flex-shrink:0;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span style="font-size:20px;font-weight:700;color:#0c4a6e;">🗳️ 投票</span>
+          <div style="display:flex;gap:6px;" id="voteTabBar">
+            <button onclick="switchVoteTab('list')" class="vote-tab active" id="voteTabList">全部投票</button>
+            <button onclick="switchVoteTab('create')" class="vote-tab" id="voteTabCreate">发起投票</button>
+            <button onclick="switchVoteTab('my')" class="vote-tab" id="voteTabMy">我的投票</button>
+          </div>
+        </div>
+        <button onclick="closeVoteModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+      </div>
+
+      <!-- 投票列表页 -->
+      <div id="votePageList" style="flex:1;overflow-y:auto;padding:16px 20px;">
+        <div id="voteListContainer"></div>
+      </div>
+
+      <!-- 创建投票页 -->
+      <div id="votePageCreate" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;font-size:14px;font-weight:600;color:#333;">投票标题</label>
+          <input type="text" id="voteTitleInput" placeholder="请输入投票标题" style="width:100%;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;font-size:14px;font-weight:600;color:#333;">投票选项</label>
+          <div id="voteOptionsContainer">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" class="vote-option-input" placeholder="选项 1" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">
+              <button onclick="addVoteOption()" style="padding:0 12px;border:1.5px dashed #7dd3fc;border-radius:10px;color:#0c4a6e;font-size:14px;cursor:pointer;">+</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" class="vote-option-input" placeholder="选项 2" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">
+              <button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;margin-bottom:6px;font-size:14px;font-weight:600;color:#333;">是否允许多选</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="voteMultiple" style="width:18px;height:18px;">
+            <span>允许多项选择</span>
+          </label>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-size:14px;font-weight:600;color:#333;">截止时间（可选）</label>
+          <input type="datetime-local" id="voteEndTime" style="padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">
+        </div>
+        <button onclick="submitVote()" style="width:100%;background:#0c4a6e;color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">发起投票</button>
+      </div>
+
+      <!-- 我的投票页 -->
+      <div id="votePageMy" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div id="voteMyContainer"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 你问我答 主弹窗 ===== -->
   <div class="modal-overlay" id="qaOverlay" onclick="closeQAOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
     <div onclick="event.stopPropagation()" style="background:#fffdf5;border-radius:18px;width:min(94vw,820px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #e8c84a;animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
@@ -2276,6 +2484,308 @@
   </div>
 
   <script>
+    // ===== 投票功能 =====
+    var votes = [];
+    var voteUserVotes = {};
+
+    // 初始化模拟数据
+    function initMockVotes() {
+      votes = [
+        {
+          id: 'vote_1',
+          title: '你最喜欢的校园活动是什么？',
+          options: [
+            { id: 'opt_1', text: '运动会', votes: 45 },
+            { id: 'opt_2', text: '文艺晚会', votes: 62 },
+            { id: 'opt_3', text: '社团招新', votes: 38 },
+            { id: 'opt_4', text: '读书节', votes: 29 }
+          ],
+          multiple: false,
+          endTime: '2026-12-31T23:59:59',
+          createdAt: '2026-01-15T10:30:00',
+          author: '校园墙管理员',
+          authorId: 'admin'
+        },
+        {
+          id: 'vote_2',
+          title: '食堂饭菜满意度调查',
+          options: [
+            { id: 'opt_1', text: '非常满意', votes: 23 },
+            { id: 'opt_2', text: '比较满意', votes: 56 },
+            { id: 'opt_3', text: '一般', votes: 41 },
+            { id: 'opt_4', text: '不满意', votes: 12 }
+          ],
+          multiple: false,
+          endTime: '',
+          createdAt: '2026-02-20T14:00:00',
+          author: '学生会',
+          authorId: 'student_council'
+        },
+        {
+          id: 'vote_3',
+          title: '周末你通常会做什么？（可多选）',
+          options: [
+            { id: 'opt_1', text: '学习', votes: 89 },
+            { id: 'opt_2', text: '运动', votes: 67 },
+            { id: 'opt_3', text: '看电影', votes: 78 },
+            { id: 'opt_4', text: '玩游戏', votes: 54 },
+            { id: 'opt_5', text: '和朋友聚会', votes: 43 }
+          ],
+          multiple: true,
+          endTime: '2026-06-30T23:59:59',
+          createdAt: '2026-06-01T09:00:00',
+          author: '校园墙',
+          authorId: 'wall'
+        }
+      ];
+    }
+
+    function openVoteModal() {
+      initMockVotes();
+      var overlay = document.getElementById('voteOverlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        switchVoteTab('list');
+      }
+    }
+
+    function closeVoteModal() {
+      var overlay = document.getElementById('voteOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+
+    function closeVoteOverlay(e) {
+      if (e && e.target !== document.getElementById('voteOverlay')) return;
+      closeVoteModal();
+    }
+
+    function switchVoteTab(tab) {
+      var tabs = ['list', 'create', 'my'];
+      tabs.forEach(function(t) {
+        document.getElementById('voteTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
+        document.getElementById('votePage' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = 'none';
+      });
+      document.getElementById('voteTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+      document.getElementById('votePage' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+
+      if (tab === 'list') {
+        renderVoteList(votes);
+      } else if (tab === 'my') {
+        renderMyVotes();
+      }
+    }
+
+    function addVoteOption() {
+      var container = document.getElementById('voteOptionsContainer');
+      var options = container.querySelectorAll('.vote-option-input').length + 1;
+      var div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.gap = '8px';
+      div.style.marginBottom = '8px';
+      div.innerHTML = '<input type="text" class="vote-option-input" placeholder="选项 ' + options + '" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
+                      '<button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button>';
+      container.appendChild(div);
+    }
+
+    function removeVoteOption(el) {
+      var container = document.getElementById('voteOptionsContainer');
+      var options = container.querySelectorAll('.vote-option-input');
+      if (options.length > 2) {
+        el.parentElement.remove();
+      }
+    }
+
+    function submitVote() {
+      var title = document.getElementById('voteTitleInput').value.trim();
+      var optionInputs = document.querySelectorAll('.vote-option-input');
+      var options = [];
+      optionInputs.forEach(function(input) {
+        var text = input.value.trim();
+        if (text) {
+          options.push({ id: 'opt_' + Date.now() + '_' + options.length, text: text, votes: 0 });
+        }
+      });
+
+      if (!title) {
+        alert('请输入投票标题');
+        return;
+      }
+      if (options.length < 2) {
+        alert('至少需要两个选项');
+        return;
+      }
+
+      var newVote = {
+        id: 'vote_' + Date.now(),
+        title: title,
+        options: options,
+        multiple: document.getElementById('voteMultiple').checked,
+        endTime: document.getElementById('voteEndTime').value,
+        createdAt: new Date().toISOString(),
+        author: getCurrentUserName() || '匿名用户',
+        authorId: getCurrentUserId() || 'anonymous'
+      };
+
+      votes.unshift(newVote);
+      alert('投票创建成功！');
+      switchVoteTab('list');
+
+      // 清空表单
+      document.getElementById('voteTitleInput').value = '';
+      document.getElementById('voteMultiple').checked = false;
+      document.getElementById('voteEndTime').value = '';
+      var container = document.getElementById('voteOptionsContainer');
+      container.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+                           '<input type="text" class="vote-option-input" placeholder="选项 1" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
+                           '<button onclick="addVoteOption()" style="padding:0 12px;border:1.5px dashed #7dd3fc;border-radius:10px;color:#0c4a6e;font-size:14px;cursor:pointer;">+</button></div>' +
+                           '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+                           '<input type="text" class="vote-option-input" placeholder="选项 2" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
+                           '<button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button></div>';
+    }
+
+    function renderVoteList(voteList) {
+      var container = document.getElementById('voteListContainer');
+      if (!container || !voteList || voteList.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
+        return;
+      }
+
+      var html = '';
+      voteList.forEach(function(vote) {
+        var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
+        var totalVotes = vote.options.reduce(function(sum, opt) { return sum + opt.votes; }, 0);
+        var hasVoted = voteUserVotes[vote.id];
+        var userVotedOptions = hasVoted ? voteUserVotes[vote.id] : [];
+
+        html += '<div class="vote-card">';
+        html += '<div class="vote-card-header">';
+        html += '<div>';
+        html += '<div class="vote-card-title">' + escapeHtml(vote.title) + '</div>';
+        html += '<div class="vote-card-meta">';
+        html += '<span>🗳️ ' + totalVotes + ' 人参与</span>';
+        html += '<span>👤 ' + escapeHtml(vote.author) + '</span>';
+        html += '<span>' + formatDate(vote.createdAt) + '</span>';
+        if (vote.endTime) {
+          html += '<span>⏰ ' + formatDate(vote.endTime) + ' 截止</span>';
+        }
+        html += '</div>';
+        html += '</div>';
+        html += '<span class="vote-status ' + (isEnded ? 'vote-status-ended' : 'vote-status-active') + '">';
+        html += isEnded ? '已结束' : '进行中';
+        html += '</span>';
+        html += '</div>';
+
+        html += '<div class="vote-card-options">';
+        vote.options.forEach(function(opt) {
+          var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+          var isSelected = userVotedOptions.includes(opt.id);
+          var inputType = vote.multiple ? 'checkbox' : 'radio';
+          var disabled = isEnded || hasVoted;
+
+          html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
+          html += '<input type="' + inputType + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this, \'' + vote.id + '\', \'' + opt.id + '\', ' + vote.multiple + ')">';
+          html += '<span class="vote-option-text">' + escapeHtml(opt.text) + '</span>';
+          html += '<span class="vote-option-percent">' + percent + '%</span>';
+          html += '</div>';
+          html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
+        });
+        html += '</div>';
+
+        html += '<div class="vote-card-footer">';
+        html += '<span class="vote-participants">';
+        if (hasVoted) {
+          html += '✓ 你已参与投票';
+        } else if (isEnded) {
+          html += '投票已结束';
+        } else {
+          html += '点击选项进行投票';
+        }
+        html += '</span>';
+        if (!isEnded && !hasVoted) {
+          html += '<button class="vote-card-btn" onclick="submitVoteSelection(\'' + vote.id + '\')">确认投票</button>';
+        }
+        html += '</div>';
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    function handleVoteOptionClick(input, voteId, optId, isMultiple) {
+      if (!input.checked) return;
+
+      if (!voteUserVotes[voteId]) {
+        voteUserVotes[voteId] = [];
+      }
+
+      if (isMultiple) {
+        var idx = voteUserVotes[voteId].indexOf(optId);
+        if (idx === -1) {
+          voteUserVotes[voteId].push(optId);
+        } else {
+          voteUserVotes[voteId].splice(idx, 1);
+        }
+      } else {
+        voteUserVotes[voteId] = [optId];
+      }
+    }
+
+    function submitVoteSelection(voteId) {
+      var selected = voteUserVotes[voteId];
+      if (!selected || selected.length === 0) {
+        alert('请选择投票选项');
+        return;
+      }
+
+      var vote = votes.find(function(v) { return v.id === voteId; });
+      if (vote) {
+        selected.forEach(function(optId) {
+          var opt = vote.options.find(function(o) { return o.id === optId; });
+          if (opt) {
+            opt.votes++;
+          }
+        });
+      }
+
+      renderVoteList(votes);
+    }
+
+    function renderMyVotes() {
+      var container = document.getElementById('voteMyContainer');
+      var myVotes = votes.filter(function(v) {
+        return v.authorId === getCurrentUserId() || v.authorId === 'anonymous';
+      });
+
+      if (!myVotes || myVotes.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+        return;
+      }
+
+      renderVoteList(myVotes);
+    }
+
+    function getCurrentUserName() {
+      var user = JSON.parse(localStorage.getItem('user') || 'null');
+      return user ? user.nickname || user.username : null;
+    }
+
+    function getCurrentUserId() {
+      var user = JSON.parse(localStorage.getItem('user') || 'null');
+      return user ? user.id : null;
+    }
+
+    function formatDate(isoStr) {
+      if (!isoStr) return '';
+      var d = new Date(isoStr);
+      var month = d.getMonth() + 1;
+      var day = d.getDate();
+      var hour = d.getHours().toString().padStart(2, '0');
+      var minute = d.getMinutes().toString().padStart(2, '0');
+      return month + '月' + day + '日 ' + hour + ':' + minute;
+    }
+
     // ===== 特殊字符检测 =====
     const SPECIAL_CHAR_REG = /[~!@#$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
     function hasSpecialChars(val) {
