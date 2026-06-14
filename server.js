@@ -285,6 +285,8 @@ function requireAdmin(req, res, next) {
 }
 
 function requireSuper(req, res, next) {
+  if (req.admin.role !== 'super') {
+    return res.json({ ok: false, msg: '权限不足，仅超级管理员可用', code: 'FORBIDDEN' });
   }
   next();
 }
@@ -313,9 +315,6 @@ function checkMaintenance(req, res, next) {
     // 文件不存在等，正常放行
   }
   next();
-}
-
-// 生成 token（含 HMAC 签名）
 }
 
 // 生成 token（含 HMAC 签名）
@@ -2092,7 +2091,7 @@ app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
 });
 
 // 获取用户完整详情（仅管理员）
-app.get('/api/admin/user/:id/detail', requireAdmin, (req, res) => {
+app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
