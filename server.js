@@ -2083,6 +2083,7 @@ app.get('/api/posts', (req, res) => {
   // 过滤已删除的帖子（普通用户不可见）
   const activePosts = posts.filter(p => !p.deleted);
   const users = readUsers();
+  const admins = readAdmins(); // 用于验证管理员绑定是否仍有效
   // 为每个帖子附加作者的管理员角色信息
   const postsWithAdmin = activePosts.map(p => {
     if (p.userId) {
@@ -2093,10 +2094,20 @@ app.get('/api/posts', (req, res) => {
         if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
           zhixueStatus = null;
         }
+        // 管理员绑定有效性校验：管理员账号必须仍存在
+        let adminRole = null;
+        let adminId = null;
+        if (author.bindAdminId && author.bindAdminRole) {
+          const boundAdmin = admins.find(a => a.id === author.bindAdminId);
+          if (boundAdmin) {
+            adminRole = author.bindAdminRole;
+            adminId = author.bindAdminId;
+          }
+        }
         return {
           ...p,
-          authorAdminRole: author.bindAdminRole || null,
-          authorBindAdminId: author.bindAdminId || null,
+          authorAdminRole: adminRole,
+          authorBindAdminId: adminId,
           authorZhixueStatus: zhixueStatus,
           authorZhixueCertType: author.zhixueCertType || null
         };

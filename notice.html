@@ -602,6 +602,9 @@ body {
   </div>
 </div>
 
+<!-- ===== #话题建议浮层 ===== -->
+<div id="notifSuggestBox" style="display:none;position:fixed;background:#fffbe6;border:2px solid #f0e090;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:9999;font-size:13px;"></div>
+
 <script>
 (function() {
   var currentUser = null;
@@ -1498,6 +1501,85 @@ body {
       '<button onclick="this.closest(\'[style*=\\"position:fixed\\"]\').remove()" style="padding:9px 20px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">知道了，返回修改</button></div>';
     document.body.appendChild(overlay);
   }
+
+  // ===== #话题自动补全（notifContent / editContent 输入框）=====
+  var _suggestTimer = null;
+  function setupDiscussionSuggest(textareaId) {
+    var ta = document.getElementById(textareaId);
+    if (!ta) return;
+    ta.addEventListener('input', function() {
+      var val = this.value;
+      var cursorPos = this.selectionStart;
+      var textBefore = val.substring(0, cursorPos);
+      var hashIdx = textBefore.lastIndexOf('#');
+      if (hashIdx >= 0 && (hashIdx === 0 || /\s/.test(textBefore[hashIdx - 1]))) {
+        var query = textBefore.substring(hashIdx + 1);
+        if (query.length > 0 && !/\s/.test(query)) {
+          if (_suggestTimer) clearTimeout(_suggestTimer);
+          _suggestTimer = setTimeout(function() { fetchNotifSuggest(textareaId, query); }, 200);
+          return;
+        }
+      }
+      hideNotifSuggest();
+    });
+    ta.addEventListener('blur', function() { setTimeout(hideNotifSuggest, 300); });
+    ta.addEventListener('scroll', repositionNotifSuggest);
+  }
+  window.addEventListener('resize', function() { if (document.getElementById('notifSuggestBox').style.display !== 'none') repositionNotifSuggest(); });
+
+  function fetchNotifSuggest(textareaId, q) {
+    fetch('/api/discussions?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(j) {
+      if (!j.ok || !j.data || j.data.length === 0) { hideNotifSuggest(); return; }
+      var box = document.getElementById('notifSuggestBox');
+      var ta = document.getElementById(textareaId);
+      var rect = ta.getBoundingClientRect();
+      box.style.top = (rect.top - 10) + 'px';
+      box.style.left = rect.left + 'px';
+      box.style.width = rect.width + 'px';
+      box.innerHTML = j.data.map(function(d) {
+        return '<div onclick="selectNotifSuggest(\'' + textareaId + '\',\'' + d.id + '\',\'' + escHtml(d.title.replace(/'/g,"\\'")) + '\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8a0;transition:background 0.1s;" onmouseover="this.style.background=\'#fef7d0\'" onmouseout="this.style.background=\'\'">\uD83D\uDCAC ' + escHtml(d.title) + '</div>';
+      }).join('');
+      box.style.display = 'block';
+    }).catch(function() { hideNotifSuggest(); });
+  }
+
+  function hideNotifSuggest() {
+    var box = document.getElementById('notifSuggestBox');
+    if (box) box.style.display = 'none';
+  }
+
+  function repositionNotifSuggest() {
+    var box = document.getElementById('notifSuggestBox');
+    if (box.style.display === 'none') return;
+    var ta = document.querySelector('textarea:focus');
+    if (!ta) return;
+    var rect = ta.getBoundingClientRect();
+    box.style.top = (rect.top - 10) + 'px';
+    box.style.left = rect.left + 'px';
+  }
+
+  window.selectNotifSuggest = function(textareaId, id, title) {
+    var ta = document.getElementById(textareaId);
+    if (!ta) return;
+    var val = ta.value;
+    var cursorPos = ta.selectionStart;
+    var textBefore = val.substring(0, cursorPos);
+    var hashIdx = textBefore.lastIndexOf('#');
+    if (hashIdx >= 0) {
+      var afterHash = textBefore.substring(hashIdx);
+      var spaceIdx = afterHash.indexOf(' ');
+      var replaceEnd = spaceIdx >= 0 ? hashIdx + spaceIdx : cursorPos;
+      ta.value = val.substring(0, hashIdx) + '#' + title + ' ' + val.substring(cursorPos);
+      ta.focus();
+      var newPos = hashIdx + 1 + title.length + 1;
+      ta.selectionStart = ta.selectionEnd = newPos;
+    }
+    hideNotifSuggest();
+  };
+
+  // 为两个内容输入框启用 #话题自动补全
+  setupDiscussionSuggest('notifContent');
+  setupDiscussionSuggest('editContent');
 
   // ===== 启动 =====
   var savedToken = localStorage.getItem(SC_TOKEN_KEY);
