@@ -26,6 +26,27 @@ function migrate() {
     "deletedAt" TEXT, "deletedBy" TEXT,
     "extra" TEXT
   )`);
+  // 创建 votes 表（投票功能）
+  db.exec(`CREATE TABLE IF NOT EXISTS "votes" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "author" TEXT,
+    "avatar" TEXT,
+    "title" TEXT,
+    "options" TEXT,
+    "multiple" INTEGER,
+    "endTime" TEXT,
+    "createdAt" TEXT,
+    "deleted" INTEGER
+  )`);
+  // 创建 vote_records 表（投票记录）
+  db.exec(`CREATE TABLE IF NOT EXISTS "vote_records" (
+    "id" TEXT PRIMARY KEY,
+    "voteId" TEXT,
+    "optionId" TEXT,
+    "userId" TEXT,
+    "createdAt" TEXT
+  )`);
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['images', 'discussionId'] },
