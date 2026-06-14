@@ -9,6 +9,19 @@ const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
 
+// ===== 读取本地 git 版本号 =====
+let cachedGitSha = 'dev';
+let cachedCommitMsg = '';
+try {
+  const { execSync } = require('child_process');
+  const sha = execSync('git rev-parse --short=7 HEAD', { cwd: __dirname, timeout: 5000 }).toString().trim();
+  const msg = execSync('git log -1 --pretty=%s', { cwd: __dirname, timeout: 5000 }).toString().trim();
+  if (sha) cachedGitSha = sha;
+  if (msg) cachedCommitMsg = msg;
+} catch (e) {
+  cachedGitSha = 'dev';
+}
+
 // ===== 崩溃保护 =====
 process.on('uncaughtException', (err) => {
   console.error('[CRASH] Uncaught Exception:', err.message, err.stack);
@@ -3558,6 +3571,11 @@ app.get('/api/stats', (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const todayPosts = posts.filter(p => p.time && p.time.startsWith(today)).length;
   res.json({ ok: true, data: { todayPosts, onlineCount: onlineUsers.size } });
+});
+
+// 版本号接口（返回本地 git 哈希）
+app.get('/api/version', (req, res) => {
+  res.json({ ok: true, data: { sha: cachedGitSha, message: cachedCommitMsg } });
 });
 
 // 每分钟清理一次过期心跳
