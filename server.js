@@ -83,10 +83,16 @@ function getDisplayZhixueStatus(user) {
 }
 
 // ===== 实名信息对称加密（AES-256-CBC）=====
-// 密钥从环境变量读取，不存在则每次启动随机生成（重启后密文失效，可接受）
+// 密钥必须通过环境变量 CERT_ENC_SECRET 设置（64位 hex 即 32 字节）
+// 未设置时每次启动随机生成，重启后已加密的实名数据将无法解密
+if (!process.env.CERT_ENC_SECRET) {
+  console.error('[SECURITY] ⚠️ 未设置环境变量 CERT_ENC_SECRET，已使用随机密钥启动。');
+  console.error('[SECURITY]    重启后已加密的实名数据将无法解密！请在 .env 中配置 CERT_ENC_SECRET。');
+  console.error('[SECURITY]    生成密钥: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+}
 const CERT_ENC_KEY = crypto.createHash('sha256')
-  .update(process.env.CERT_ENC_SECRET || 'campus-wall-cert-secret-2024')
-  .digest(); // 32字节 key
+  .update(process.env.CERT_ENC_SECRET || crypto.randomBytes(32).toString('hex'))
+  .digest();
 
 /**
  * 加密实名信息

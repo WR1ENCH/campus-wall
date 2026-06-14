@@ -302,6 +302,139 @@ body {
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ===== 投票卡片 ===== */
+.vote-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1.5px solid #bae6fd;
+}
+.vote-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.vote-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0c4a6e;
+  line-height: 1.4;
+}
+.vote-card-meta {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.vote-card-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vote-option {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid transparent;
+}
+.vote-option:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+.vote-option.selected {
+  background: #bae6fd;
+  border-color: #0c4a6e;
+}
+.vote-option input[type="checkbox"],
+.vote-option input[type="radio"] {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+}
+.vote-option-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+}
+.vote-option-percent {
+  font-size: 13px;
+  color: #0c4a6e;
+  font-weight: 600;
+}
+.vote-option-bar {
+  height: 6px;
+  background: #e0f2fe;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.vote-option-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0c4a6e, #22d3ee);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.vote-custom-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1.5px dashed #cbd5e1;
+  margin-top: 6px;
+}
+.vote-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+.vote-card-btn {
+  padding: 8px 20px;
+  background: #0c4a6e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.vote-card-btn:hover { background: #075985; }
+.vote-card-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.vote-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.vote-status-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.vote-status-ended {
+  background: #fef3c7;
+  color: #d97706;
+}
+.vote-participants {
+  font-size: 13px;
+  color: #6b7280;
+}
+
 @media (max-width: 600px) {
   .header { padding: 28px 16px 24px; }
   .header h1 { font-size: 22px; }
@@ -400,6 +533,17 @@ body {
         <button class="btn-publish" onclick="checkAndCreateDiscussion()" style="font-size:12px;padding:5px 12px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);">&#x2795; 发起话题</button>
       </div>
       <div id="discussionList">
+        <div class="loading">加载中&#x2026;</div>
+      </div>
+    </div>
+
+    <!-- 投票列表 -->
+    <div id="voteSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;font-size:15px;color:var(--text);">&#x1F5F3; 投票</h3>
+        <button class="btn-publish" onclick="checkAndCreateVote()" style="font-size:12px;padding:5px 12px;background:linear-gradient(135deg,#0c4a6e,#0369a1);">&#x2795; 发起投票</button>
+      </div>
+      <div id="voteList">
         <div class="loading">加载中&#x2026;</div>
       </div>
     </div>
@@ -753,6 +897,7 @@ body {
         document.getElementById('userName').textContent = currentUser.name;
         loadNotices();
         loadDiscussions();
+        loadVoteList();
       } else {
         errEl.textContent = json.msg || '\u767B\u5F55\u5931\u8D25';
         if (json.msg && json.msg.indexOf('验证码') >= 0) {
@@ -1688,6 +1833,182 @@ body {
     hideNotifSuggest();
   };
 
+  // ===== 投票功能 =====
+  var _votes = [];
+  var _voteUserVotes = {};
+
+  async function loadVoteList() {
+    var list = document.getElementById('voteList');
+    if (!list) return;
+    try {
+      var res = await fetch('/api/votes');
+      var json = await res.json();
+      if (!json.ok) { list.innerHTML = '<div class="empty-tip">加载失败</div>'; return; }
+      var data = json.data || [];
+      _votes = data;
+      _voteUserVotes = {};
+      data.forEach(function(v) {
+        if (v.userVoted && v.userVoted.length > 0) {
+          _voteUserVotes[v.id] = v.userVoted;
+        }
+      });
+      renderVoteList(data);
+    } catch(e) {
+      list.innerHTML = '<div class="empty-tip">加载失败</div>';
+    }
+  }
+
+  function renderVoteList(voteList) {
+    var list = document.getElementById('voteList');
+    if (!list) return;
+    if (!voteList || voteList.length === 0) {
+      list.innerHTML = '<div class="empty-tip">暂无投票</div>';
+      return;
+    }
+    var html = '';
+    voteList.forEach(function(vote) {
+      var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
+      var totalVotes = vote.totalVotes !== undefined
+        ? vote.totalVotes
+        : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+      var hasVoted = _voteUserVotes[vote.id] && _voteUserVotes[vote.id].length > 0;
+      var userVotedOptions = hasVoted ? _voteUserVotes[vote.id] : [];
+
+      html += '<div class="vote-card">';
+      html += '<div class="vote-card-header">';
+      html += '<div>';
+      html += '<div class="vote-card-title">' + escHtml(vote.title) + '</div>';
+      html += '<div class="vote-card-meta">';
+      html += '<span>&#x1F5F3; ' + totalVotes + ' 人参与</span>';
+      html += '<span>' + escHtml(vote.author || '') + '</span>';
+      html += '<span>' + formatVoteDate(vote.createdAt) + '</span>';
+      if (vote.endTime) {
+        html += '<span>' + formatVoteDate(vote.endTime) + ' 截止</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+      html += '<span class="vote-status ' + (isEnded ? 'vote-status-ended' : 'vote-status-active') + '">';
+      html += isEnded ? '已结束' : '进行中';
+      html += '</span>';
+      html += '</div>';
+
+      html += '<div class="vote-card-options">';
+      vote.options.forEach(function(opt) {
+        var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        var isSelected = userVotedOptions.indexOf(opt.id) >= 0;
+        var inputType = vote.multiple ? 'checkbox' : 'radio';
+        var disabled = isEnded || hasVoted;
+
+        html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
+        html += '<input type="' + inputType + '" id="vote_' + vote.id + '_opt_' + opt.id + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this,\'' + vote.id + '\',\'' + opt.id + '\',' + vote.multiple + ')">';
+        html += '<span class="vote-option-text" onclick="var inp=document.getElementById(\'vote_' + vote.id + '_opt_' + opt.id + '\');if(!inp.disabled){inp.checked=' + (!isSelected ? 'true' : 'false') + ';handleVoteOptionClick(inp,\'' + vote.id + '\',\'' + opt.id + '\',' + vote.multiple + ');}">' + escHtml(opt.text) + '</span>';
+        html += '<span class="vote-option-percent">' + percent + '%</span>';
+        html += '</div>';
+        html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
+      });
+
+      // 自定义选项（开启 allowCustom 且未投票且未结束时显示）
+      if (vote.allowCustom && !isEnded && !hasVoted) {
+        html += '<div class="vote-custom-option">';
+        var customType = vote.multiple ? 'checkbox' : 'radio';
+        html += '<input type="' + customType + '" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this,\'' + vote.id + '\',' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
+        html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项..." maxlength="100" style="flex:1;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
+        html += '</div>';
+      }
+
+      html += '</div>';
+
+      html += '<div class="vote-card-footer">';
+      html += '<span class="vote-participants">';
+      if (hasVoted) {
+        html += '&#x2713; 你已参与投票';
+      } else if (isEnded) {
+        html += '投票已结束';
+      } else {
+        html += '点击选项进行投票';
+      }
+      html += '</span>';
+      if (!isEnded && !hasVoted) {
+        html += '<button class="vote-card-btn" onclick="submitVoteSelection(\'' + vote.id + '\')">确认投票</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  window.handleVoteOptionClick = function(input, voteId, optId, isMultiple) {
+    if (input && input.disabled) return;
+    var customCheckbox = document.getElementById('customOpt_' + voteId);
+    if (customCheckbox) customCheckbox.checked = false;
+
+    if (!_voteUserVotes[voteId]) _voteUserVotes[voteId] = [];
+
+    if (isMultiple) {
+      var idx = _voteUserVotes[voteId].indexOf(optId);
+      if (idx === -1) {
+        _voteUserVotes[voteId].push(optId);
+      } else {
+        _voteUserVotes[voteId].splice(idx, 1);
+      }
+    } else {
+      _voteUserVotes[voteId] = [optId];
+    }
+  };
+
+  window.handleCustomOptionClick = function(checkbox, voteId, isMultiple) {
+    if (!checkbox.checked) return;
+    var radios = document.querySelectorAll('input[name="vote_' + voteId + '"]');
+    for (var i = 0; i < radios.length; i++) { radios[i].checked = false; }
+    _voteUserVotes[voteId] = ['__custom__'];
+  };
+
+  window.submitVoteSelection = async function(voteId) {
+    var selected = _voteUserVotes[voteId];
+    if (!selected || selected.length === 0) {
+      showToast('请选择或输入投票选项', 'error');
+      return;
+    }
+
+    var customOption = null;
+    var optionIds = selected;
+    if (selected[0] === '__custom__') {
+      var inputEl = document.getElementById('customInput_' + voteId);
+      customOption = inputEl ? inputEl.value.trim() : '';
+      if (!customOption) {
+        showToast('请输入自定义选项内容', 'error');
+        return;
+      }
+      optionIds = [];
+    }
+
+    try {
+      var token = localStorage.getItem('campus_user_token') || '';
+      var res = await fetch('/api/votes/' + voteId + '/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+        body: JSON.stringify(customOption ? { optionIds: optionIds, customOption: customOption } : { optionIds: optionIds })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('投票成功', 'success');
+        loadVoteList();
+      } else {
+        showToast(json.msg || '投票失败', 'error');
+      }
+    } catch(e) {
+      showToast('网络错误，请稍后重试', 'error');
+    }
+  };
+
+  function formatVoteDate(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' +
+      d.getHours().toString().padStart(2, '0') + ':' +
+      d.getMinutes().toString().padStart(2, '0');
+  }
+
   // 为两个内容输入框启用 #话题自动补全
   setupDiscussionSuggest('notifContent');
   setupDiscussionSuggest('editContent');
@@ -1701,6 +2022,7 @@ body {
     document.getElementById('userName').textContent = savedName || '\u5B66\u751F\u4F1A';
     loadNotices();
     loadDiscussions();
+    loadVoteList();
   } else {
     refreshLoginCaptcha();
     checkInit();
