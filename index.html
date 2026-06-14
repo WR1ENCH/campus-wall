@@ -885,6 +885,8 @@
       white-space: nowrap;
       font-family: 'ZCOOL KuaiLe', cursive;
     }
+    .toast.success { background: #bbf7d0; color: #166534; }
+    .toast.error { background: #fee2e2; color: #991b1b; }
     @keyframes toastIn {
       from { opacity: 0; transform: translateY(-10px) rotate(-2deg); }
       to { opacity: 1; transform: translateY(0) rotate(0); }
@@ -2743,13 +2745,13 @@
     function submitVoteSelection(voteId) {
       var selected = voteUserVotes[voteId];
       if (!selected || selected.length === 0) {
-        alert('请选择投票选项');
+        showToast('⚠️ 请选择投票选项', 'error');
         return;
       }
 
       var token = localStorage.getItem('campus_user_token');
       if (!token) {
-        alert('请先登录');
+        showToast('⚠️ 请先登录', 'error');
         return;
       }
 
@@ -2764,15 +2766,14 @@
         .then(function(resp) { return resp.json(); })
         .then(function(data) {
           if (data.ok) {
-            alert('投票成功！');
-            // 刷新列表
+            showToast('🎉 投票成功！', 'success');
             loadVoteList();
           } else {
-            alert(data.msg || '投票失败，请重试');
+            showToast('❌ ' + (data.msg || '投票失败，请重试'), 'error');
           }
         })
         .catch(function() {
-          alert('网络错误，请稍后重试');
+          showToast('❌ 网络错误，请稍后重试', 'error');
         });
     }
 
@@ -4791,10 +4792,10 @@
       }
     }
 
-    function showToast(msg) {
+    function showToast(msg, type) {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = 'toast';
+      toast.className = 'toast' + (type ? ' ' + type : '');
       toast.textContent = msg;
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 2500);
