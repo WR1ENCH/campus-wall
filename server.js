@@ -181,6 +181,7 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const REPORTS_FILE = path.join(DATA_DIR, 'reports.json');
 const FEEDBACK_FILE = path.join(DATA_DIR, 'feedbacks.json');
 const BULLYING_FILE = path.join(DATA_DIR, 'bullying.json');
+const MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance.json');
 const LOGS_FILE = path.join(DATA_DIR, 'login_logs.json');
 const CREDIT_LOGS_FILE = path.join(DATA_DIR, 'credit_logs.json');
 const CREDIT_CARDS_FILE = path.join(DATA_DIR, 'credit_cards.json');
@@ -236,6 +237,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(__dirname)); // 静态文件服务
+app.use(checkMaintenance); // 维护状态检查
 
 const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
 
@@ -283,10 +285,37 @@ function requireAdmin(req, res, next) {
 }
 
 function requireSuper(req, res, next) {
-  if (req.admin.role !== 'super') {
-    return res.json({ ok: false, msg: '权限不足，仅超级管理员可用', code: 'FORBIDDEN' });
   }
   next();
+}
+
+// 维护状态检查中间件（跳过管理后台相关路径）
+function checkMaintenance(req, res, next) {
+  const path = req.path;
+  // 放行管理后台、静态文件、API 路径
+  if (path.startsWith('/api/admin/') || path === '/admin.html' || path === '/maintenance.html' || path === '/' || path.startsWith('/assets/')) {
+    return next();
+  }
+  // 放行管理员相关其他路径
+  if (path.startsWith('/api/admin')) return next();
+  
+  try {
+    const data = readMaintenance();
+    if (data && data.enabled === true) {
+      // 如果是 HTML 页面请求，重定向到维护页面
+      if (req.accepts('html')) {
+        return res.redirect('/maintenance.html');
+      }
+      // API 请求返回错误
+      return res.json({ ok: false, msg: '系统维护中，暂时无法访问', code: 'MAINTENANCE' });
+    }
+  } catch (e) {
+    // 文件不存在等，正常放行
+  }
+  next();
+}
+
+// 生成 token（含 HMAC 签名）
 }
 
 // 生成 token（含 HMAC 签名）
@@ -4518,9 +4547,11 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
 
 // 参与投票（需要登录 + 同一网络环境下仅可投一票）
 app.post('/api/votes/:id/vote', (req, res) => {
-  const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '未登录' });
-  const session = verifyUserToken(token);
+  const userToken = req.headers['x-user-token'];
+  const scToken = req.headers['x-sc-token'];
+  let session = null;
+  if (userToken) session = verifyUserToken(userToken);
+  if (!session && scToken) session = verifySignedToken(scToken);
   if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
   const { optionIds = [], customOption } = req.body;
@@ -5158,9 +5189,10 @@ function readSC () { return db.readSC(); }
 
 function writeSC (data) { db.writeSC(data); }
 
-function readNotices () { return db.readNotices(); }
-
 function writeNotices (data) { db.writeNotices(data); }
+
+function readMaintenance () { return db.readMaintenance(); }
+function writeMaintenance (data) { db.writeMaintenance(data); }
 
 // 检测是否已初始化
 app.get('/api/student-council/check-init', (req, res) => {
@@ -5878,6 +5910,32 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
       pendingApps
     }
   });
+});
+
+// ===== 维护状态管理 =====
+// 获取当前维护状态
+app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
+  try {
+    const data = readMaintenance() || { enabled: false };
+    res.json({ ok: true, data });
+  } catch (e) {
+    res.json({ ok: true, data: { enabled: false } });
+  }
+});
+
+// 切换维护状态
+app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
+  const { enabled } = req.body;
+  if (typeof enabled !== 'boolean') {
+    return res.json({ ok: false, msg: '参数无效' });
+  }
+  const data = {
+    enabled,
+    updatedAt: new Date().toISOString(),
+    updatedBy: req.admin.name || req.admin.id
+  };
+  writeMaintenance(data);
+  res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
 });
 
 app.listen(PORT, () => {

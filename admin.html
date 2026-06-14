@@ -567,6 +567,15 @@
       display: inline-block; padding: 1px 8px; border-radius: 8px;
       font-size: 11px; font-weight: 600;
     }
+
+    /* Toggle Switch */
+    .toggle-switch .toggle-slider::before {
+      position: absolute; content: ""; height: 22px; width: 22px;
+      left: 3px; bottom: 3px; background: white; border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #22c55e; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); }
     .del-badge-admin { background: #fee2e2; color: #dc2626; }
     .del-badge-user { background: #fef3c7; color: #d97706; }
     .del-badge-system { background: #e0e7ff; color: #4f46e5; }
@@ -650,6 +659,10 @@
       <div class="nav-item active" onclick="showPage('dashboard', this)">
         <span class="nav-icon">📊</span>
         <span>数据总览</span>
+      </div>
+      <div class="nav-item" onclick="showPage('maintenance', this)">
+        <span class="nav-icon">🔧</span>
+        <span>维护模式</span>
       </div>
     </div>
 
@@ -804,6 +817,40 @@
         <div class="chart-card">
           <div class="chart-title">🗂️ 板块分布</div>
           <div class="type-list" id="typeChart"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 维护模式页 -->
+    <div class="page" id="page-maintenance" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">控制系统维护模式，开启后所有用户访问将被重定向到维护提示页面</span>
+        </div>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadMaintenanceStatus()">🔄 刷新</button>
+      </div>
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);border:1px solid var(--border);max-width:600px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+          <div style="font-size:48px;">🔧</div>
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--text);">维护模式</div>
+            <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">开启后所有访客将看到维护提示页面，管理员仍可正常访问后台</div>
+          </div>
+        </div>
+        <div id="maintenanceStatusCard" style="background:var(--bg);border-radius:10px;padding:20px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:15px;font-weight:600;color:var(--text);" id="maintenanceStateText">状态：加载中…</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:4px;" id="maintenanceMetaText"></div>
+            </div>
+            <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
+              <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenance()" style="opacity:0;width:0;height:0;">
+              <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:28px;transition:0.3s;"></span>
+            </label>
+          </div>
+        </div>
+        <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
+          ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
         </div>
       </div>
     </div>
@@ -3494,7 +3541,7 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理', votes: '投票管理' };
+    const titles = { dashboard: '数据总览', maintenance: '维护模式', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理', votes: '投票管理' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
@@ -3517,6 +3564,45 @@
     if (id === 'noticeApps') { loadNoticeApps(); }
     if (id === 'noticePublishers') { loadPublishers(); }
     if (id === 'votes') { loadAdminVotes(); }
+    if (id === 'maintenance') { loadMaintenanceStatus(); }
+  }
+
+  // ===== 维护模式 =====
+  async function loadMaintenanceStatus() {
+    try {
+      const res = await fetch('/api/admin/maintenance/status', { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      const d = json.data;
+      const enabled = d && d.enabled === true;
+      document.getElementById('maintenanceToggle').checked = enabled;
+      document.getElementById('maintenanceStateText').textContent = enabled ? '🟢 维护模式已开启' : '⚪ 维护模式已关闭';
+      document.getElementById('maintenanceStateText').style.color = enabled ? 'var(--success, #22c55e)' : 'var(--text-sub)';
+      document.getElementById('maintenanceMetaText').textContent = d && d.updatedAt
+        ? '最后更新：' + new Date(d.updatedAt).toLocaleString('zh-CN') + ' · 操作者：' + (d.updatedBy || '-')
+        : '暂无操作记录';
+    } catch (e) {
+      showToast('加载维护状态失败', 'error');
+    }
+  }
+
+  async function toggleMaintenance() {
+    const cb = document.getElementById('maintenanceToggle');
+    const enabled = cb.checked;
+    try {
+      const res = await fetch('/api/admin/maintenance/toggle', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast(json.msg, 'success');
+      loadMaintenanceStatus();
+    } catch (e) {
+      showToast(e.message || '操作失败', 'error');
+      cb.checked = !enabled;
+    }
   }
 
   function refreshCurrent() {

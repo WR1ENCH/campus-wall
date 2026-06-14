@@ -263,6 +263,30 @@ function writeSC(data) {
 function readNotices() { return all('notices'); }
 function writeNotices(data) { dropAndInsert('notices', data); }
 
+// Maintenance mode
+function readMaintenance() {
+  const rows = getDb().prepare('SELECT * FROM "maintenance"').all();
+  if (!rows || rows.length === 0) return null;
+  const obj = {};
+  for (const r of rows) {
+    obj[r._key] = tryParse(r._value);
+  }
+  return obj;
+}
+function writeMaintenance(data) {
+  const d = getDb();
+  d.exec(`CREATE TABLE IF NOT EXISTS "maintenance" ("_key" TEXT PRIMARY KEY, "_value" TEXT)`);
+  d.exec('DELETE FROM "maintenance"');
+  if (!data || Object.keys(data).length === 0) return;
+  const ins = d.prepare('INSERT INTO "maintenance" ("_key", "_value") VALUES (?, ?)');
+  const tx = d.transaction(() => {
+    for (const [k, v] of Object.entries(data)) {
+      ins.run(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+    }
+  });
+  tx();
+}
+
 // Passkey
 function readPasskey() {
   // 表结构为 _key / _value，需要重构为对象
@@ -333,6 +357,7 @@ module.exports = {
   readPickupAuctions, writePickupAuctions,
   readPickupReports, writePickupReports,
   readSC, writeSC,
+  readMaintenance, writeMaintenance,
   readNotices, writeNotices,
   readPasskey, writePasskey,
   readApps, writeApps,
