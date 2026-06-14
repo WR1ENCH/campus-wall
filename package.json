@@ -4,7 +4,7 @@
   "description": "中学校园墙 - 便利贴",
   "main": "server.js",
   "scripts": {
-    "start": "SENSITIVE_KEY=a4abce322fca09afc3d76c6bbae6077b2be1a741a7e6b1008f3a939fb9f9502a node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

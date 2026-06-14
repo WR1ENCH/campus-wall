@@ -387,12 +387,21 @@ body {
         <span class="logout-link" onclick="doLogout()">退出</span>
       </div>
       <button class="btn-publish" onclick="checkAndPublish()">&#x270F;&#xFE0F; 发布通知</button>
+      <button class="btn-publish" onclick="checkAndCreateDiscussion()" style="margin-left:8px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);">&#x1F4AC; 发起话题</button>
     </div>
     <div id="noticeList">
       <div class="loading">加载中&#x2026;</div>
     </div>
-  </div>
-</div>
+    <!-- 讨论话题列表 -->
+    <div id="discussionSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="margin:0;font-size:15px;color:var(--text);">&#x1F4AC; 讨论话题</h3>
+        <button class="btn-publish" onclick="checkAndCreateDiscussion()" style="font-size:12px;padding:5px 12px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);">&#x2795; 发起话题</button>
+      </div>
+      <div id="discussionList">
+        <div class="loading">加载中&#x2026;</div>
+      </div>
+    </div>
 
 <!-- ===== Publish Modal ===== -->
 <div class="modal-overlay" id="publishOverlay" onclick="if(event.target===this)closePublishModal()">
@@ -567,6 +576,32 @@ body {
   </div>
 </div>
 
+<!-- ===== 创建话题弹窗 ===== -->
+<div class="modal-overlay" id="discussionOverlay" onclick="if(event.target===this)closeDiscussionModal()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>&#x1F4AC; 发起讨论话题</h3>
+      <button class="modal-close" onclick="closeDiscussionModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="discussionTitle">话题标题</label>
+        <input class="form-input" id="discussionTitle" maxlength="50" placeholder="输入讨论话题标题">
+      </div>
+      <div class="form-group">
+        <label for="discussionExpires">截止时间 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
+        <input class="form-input" id="discussionExpires" type="datetime-local">
+        <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">留空则无截止时间</div>
+      </div>
+      <div class="form-error" id="discussionError"></div>
+    </div>
+    <div class="form-actions" style="padding:16px 20px;border-top:1px solid var(--border);">
+      <button class="btn-cancel" onclick="closeDiscussionModal()">取消</button>
+      <button class="btn-submit" id="discussionBtn" onclick="doCreateDiscussion()">&#x1F4AC; 发起话题</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   var currentUser = null;
@@ -672,6 +707,7 @@ body {
         document.getElementById('userBadge').style.display = 'inline-flex';
         document.getElementById('userName').textContent = currentUser.name;
         loadNotices();
+        loadDiscussions();
       } else {
         errEl.textContent = json.msg || '\u767B\u5F55\u5931\u8D25';
         if (json.msg && json.msg.indexOf('验证码') >= 0) {
@@ -1353,6 +1389,81 @@ body {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ===== 讨论话题 =====
+  window.checkAndCreateDiscussion = function() {
+    if (!currentUser) {
+      showToast('\u8BF7\u5148\u767B\u5F55', 'error');
+      return;
+    }
+    openDiscussionModal();
+  };
+
+  window.openDiscussionModal = function() {
+    document.getElementById('discussionOverlay').style.display = 'flex';
+    document.getElementById('discussionError').textContent = '';
+    document.getElementById('discussionTitle').value = '';
+    document.getElementById('discussionExpires').value = '';
+  };
+
+  window.closeDiscussionModal = function() {
+    document.getElementById('discussionOverlay').style.display = 'none';
+    document.getElementById('discussionError').textContent = '';
+  };
+
+  window.doCreateDiscussion = async function() {
+    var title = document.getElementById('discussionTitle').value.trim();
+    var expiresAt = document.getElementById('discussionExpires').value || null;
+    var errEl = document.getElementById('discussionError');
+    if (!title) { errEl.textContent = '\u8BF7\u8F93\u5165\u8BDD\u9898\u6807\u9898'; return; }
+    errEl.textContent = '';
+    var btn = document.getElementById('discussionBtn');
+    btn.disabled = true; btn.textContent = '\u521B\u5EFA\u4E2D\u2026';
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/discussions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
+        body: JSON.stringify({ title: title, expiresAt: expiresAt })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('\u2705 \u8BDD\u9898\u5DF2\u521B\u5EFA', 'success');
+        closeDiscussionModal();
+        loadDiscussions();
+      } else {
+        errEl.textContent = json.msg || '\u521B\u5EFA\u5931\u8D25';
+      }
+    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
+    finally { btn.disabled = false; btn.textContent = '\uD83D\uDCAC \u53D1\u8D77\u8BDD\u9898'; }
+  };
+
+  async function loadDiscussions() {
+    try {
+      var res = await fetch('/api/discussions');
+      var json = await res.json();
+      var list = document.getElementById('discussionList');
+      if (!json.ok) { list.innerHTML = '<div class="empty-tip">\u52A0\u8F7D\u5931\u8D25</div>'; return; }
+      var data = json.data || [];
+      if (data.length === 0) {
+        list.innerHTML = '<div class="empty-tip">\u6682\u65E0\u8BA8\u8BBA\u8BDD\u9898</div>';
+        return;
+      }
+      var html = '';
+      data.forEach(function(d) {
+        var expiresText = d.expiresAt ? '\u5230 ' + new Date(d.expiresAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '\u65E0\u671F\u9650';
+        var isExpired = d.expiresAt && new Date(d.expiresAt) < new Date();
+        html += '<div class="discussion-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;' + (isExpired ? 'opacity:0.6;' : '') + '">' +
+          '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:14px;color:' + (isExpired ? '#9ca3af' : 'var(--text)') + ';">' + escHtml(d.title) + (isExpired ? ' <span style="font-size:11px;color:var(--text-sub);">(\u5DF2\u8FC7\u671F)</span>' : '') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-sub);margin-top:3px;">\uD83D\uDCC5 ' + expiresText + ' \u00B7 \uD83D\uDCAC ' + (d.commentCount || 0) + ' \u6761\u8BC4\u8BBA</div>' +
+          '</div></div>';
+      });
+      list.innerHTML = html;
+    } catch(e) {
+      document.getElementById('discussionList').innerHTML = '<div class="empty-tip">\u7F51\u7EDC\u9519\u8BEF</div>';
+    }
+  }
+
   function showToast(msg, type) {
     var t = document.createElement('div');
     t.className = 'toast ' + type;
@@ -1394,9 +1505,9 @@ body {
   if (savedToken) {
     currentUser = { token: savedToken, name: savedName || '学生会' };
     document.getElementById('mainApp').classList.add('show');
-    document.getElementById('userBadge').style.display = 'inline-flex';
-    document.getElementById('userName').textContent = savedName || '学生会';
+    document.getElementById('userName').textContent = savedName || '\u5B66\u751F\u4F1A';
     loadNotices();
+    loadDiscussions();
   } else {
     refreshLoginCaptcha();
     checkInit();

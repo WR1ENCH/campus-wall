@@ -24,7 +24,7 @@ print(f'  Remaining node processes: {count}')
 
 # 启动新服务
 print(f'\n🚀 Starting new server...')
-cmd = f'cd {DIR} && SENSITIVE_KEY=a4abce322fca09afc3d76c6bbae6077b2be1a741a7e6b1008f3a939fb9f9502a nohup {NODE} server.js > server.out 2> server.err &'
+cmd = f'cd {DIR} && nohup {NODE} server.js > server.out 2> server.err &'
 stdin, stdout, stderr = client.exec_command(cmd)
 time.sleep(2)
 

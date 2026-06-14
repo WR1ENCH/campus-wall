@@ -195,15 +195,13 @@ function sanitizeString(val) {
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
-    const { avatar, manualImages, manualEmail, challenge, prefix, nonce, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
+    // ⚠️ PoW 字段已移除 — 服务端未实现实际 PoW 校验，这些字段无安全意义
+    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
       ...(manualImages !== undefined ? { manualImages } : {}),
       ...(manualEmail !== undefined ? { manualEmail } : {}),
-      ...(challenge !== undefined ? { challenge } : {}),
-      ...(prefix !== undefined ? { prefix } : {}),
-      ...(nonce !== undefined ? { nonce } : {}),
       ...(images !== undefined ? { images } : {}),
       ...(content !== undefined ? { content } : {}),
       ...(title !== undefined ? { title } : {}),
@@ -563,9 +561,9 @@ setInterval(() => {
   for (const [userId, timestamps] of postRateLimit) {
     const filtered = timestamps.filter(ts => now - ts < 600000);
     if (filtered.length === 0) {
-      postRateLimit.delete(userId);
+      postRateLimit.delete(realUserId);
     } else {
-      postRateLimit.set(userId, filtered);
+      postRateLimit.set(realUserId, filtered);
     }
   }
 }, 60000);
@@ -1351,7 +1349,7 @@ app.post('/api/user/bind-zhixue', (req, res) => {
 
     users[userIndex].zhixueCertType = 'zhixue';
     users[userIndex].zhixueUsername = zhixueUsername;
-    users[userIndex].zhixuePassword = zhixuePassword;
+    users[userIndex].zhixuePassword = encryptCert(zhixuePassword);
     users[userIndex].zhixueManualNote = null;
     users[userIndex].zhixueManualImages = null;
 
@@ -2127,7 +2125,7 @@ app.get('/api/posts/:id', (req, res) => {
       if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
         zhixueStatus = null;
       }
-      return res.json({ ok: true, data: { ...post, authorAdminRole: author.bindAdminRole || null, authorBindAdminId: author.bindAdminId || null, authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
+      return res.json({ ok: true, data: { ...post, authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
     }
   }
   res.json({ ok: true, data: post });
@@ -2135,13 +2133,29 @@ app.get('/api/posts/:id', (req, res) => {
 
   // 发布新帖子
 app.post('/api/posts', (req, res) => {
-  const { type, content, avatar, author, userId, captchaId, captchaText, sensitiveForce, images } = req.body;
+  // 验证用户 Token（可选：没 token 以匿名身份发帖，有 token 必须有效）
+  let realUserId = null;
+  let realAuthor = '匿名';
+  let realAvatar = '🙈';
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+    realUserId = session.id;
+    realAuthor = session.nickname || '匿名';
+    // 从用户数据中获取头像
+    const allUsers = readUsers();
+    const user = allUsers.find(u => u.id === session.id);
+    realAvatar = (user && user.avatar) || '🙈';
+  }
+
+  const { type, content, captchaId, captchaText, sensitiveForce, images } = req.body;
 
   
 // 发帖频率检测（5分钟内最多3篇，超出需验证码）
-if (userId) {
+if (realUserId) {
   const now = Date.now();
-  const timestamps = postRateLimit.get(userId) || [];
+  const timestamps = postRateLimit.get(realUserId) || [];
   const recentPosts = timestamps.filter(ts => now - ts < 300000);
   if (recentPosts.length >= 3) {
     const entry = captchaStore.get(captchaId);
@@ -2149,11 +2163,11 @@ if (userId) {
       return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
     }
     // 验证码通过，清除限制，重新计时
-    postRateLimit.delete(userId);
+    postRateLimit.delete(realUserId);
     captchaStore.delete(captchaId);
   }
   // 记录本次发帖
-  postRateLimit.set(userId, [...recentPosts.slice(-19), now]); // 保留最近20条
+  postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 保留最近20条
 }
 if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '内容不能为空' });
@@ -2190,18 +2204,6 @@ if (!content || !content.trim()) {
 
   const posts = readPosts();
 
-  // 如果有 userId，查询用户是否绑定了管理员
-  let authorAdminRole = null;
-  let authorBindAdminId = null;
-  if (userId) {
-    const users = readUsers();
-    const user = users.find(u => u.id === userId);
-    if (user) {
-      authorAdminRole = user.bindAdminRole || null;
-      authorBindAdminId = user.bindAdminId || null;
-    }
-  }
-
   // 验证图片（base64 data URL，每张≤2MB，最多4张）
   var validImages = [];
   var maxImageSize = 2 * 1024 * 1024;
@@ -2217,18 +2219,17 @@ if (!content || !content.trim()) {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type,
     content: content.trim(),
-    avatar: avatar || '🙈',
-    author: author || '匿名',
-    userId: userId || null,
+    avatar: realAvatar,
+    author: realAuthor,
+    userId: realUserId,
     time: new Date().toISOString(),
     likes: 0,
+    likedBy: [],
     comments: 0,
     commentsCount: 0,
     liked: false,
     rotate: (Math.random() - 0.5) * 8,
     zIndex: Math.floor(Math.random() * 5) + 1,
-    authorAdminRole: authorAdminRole,
-    authorBindAdminId: authorBindAdminId,
     images: validImages.length > 0 ? validImages : undefined
   };
 
@@ -2244,8 +2245,8 @@ if (!content || !content.trim()) {
       targetId: newPost.id,
       postId: newPost.id,
       reason: '系统自动检测：内容包含敏感词 [' + sensitiveWords.join(', ') + ']',
-      reportedBy: userId || null,
-      reporterName: author || '匿名',
+      reportedBy: realUserId,
+      reporterName: realAuthor,
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
@@ -2253,13 +2254,13 @@ if (!content || !content.trim()) {
   }
 
   // 更新注册用户的发贴数
-  if (userId && author) {
-    incUserPostCount(author);
+  if (realUserId && realAuthor) {
+    incUserPostCount(realAuthor);
   }
 
   // 同步到讨论区（如果用户指定了话题）
   const syncDiscussionId = req.body.syncDiscussionId;
-  if (syncDiscussionId && userId) {
+  if (syncDiscussionId && realUserId) {
     var discussions = readDiscussions();
     var disc = discussions.find(function(d) { return d.id === syncDiscussionId; });
     if (disc && !disc.deleted) {
@@ -2269,8 +2270,8 @@ if (!content || !content.trim()) {
         discussionId: syncDiscussionId,
         parentId: null,
         content: content.trim(),
-        author: author || '匿名',
-        userId: userId,
+        author: realAuthor,
+        userId: realUserId,
         createdAt: new Date().toISOString(),
         likes: 0,
         liked: false,
@@ -2292,8 +2293,16 @@ if (!content || !content.trim()) {
   });
 });
 
-// 点赞 / 取消点赞
+// 点赞 / 取消点赞（带用户身份跟踪）
 app.post('/api/posts/:id/like', (req, res) => {
+  // 获取点赞者身份
+  let likerId = getClientIP(req); // 匿名用户用 IP
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) likerId = session.id;
+  }
+
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.id);
 
@@ -2301,9 +2310,18 @@ app.post('/api/posts/:id/like', (req, res) => {
     return res.json({ ok: false, msg: '帖子不存在' });
   }
 
-  post.liked = !post.liked;
-  post.likes += post.liked ? 1 : -1;
-  post.likes = Math.max(0, post.likes);
+  // 初始化 likedBy 数组（兼容旧数据）
+  if (!Array.isArray(post.likedBy)) post.likedBy = [];
+
+  const idx = post.likedBy.indexOf(likerId);
+  if (idx === -1) {
+    post.likedBy.push(likerId);
+  } else {
+    post.likedBy.splice(idx, 1);
+  }
+
+  post.likes = post.likedBy.length;
+  post.liked = post.likedBy.includes(likerId);
 
   writePosts(posts);
 
@@ -2321,9 +2339,23 @@ app.get('/api/posts/:id/comments', (req, res) => {
   res.json({ ok: true, data: comments });
 });
 
-// 发表评论
+// 发表评论（需 Token 验证）
 app.post('/api/posts/:id/comments', (req, res) => {
-  const { content, author, avatar, userId } = req.body;
+  // 验证用户 Token
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录后再评论', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+
+  // 从 Token 中获取用户信息，禁止从 req.body 读取
+  const author = session.nickname || '匿名';
+  const userId = session.id;
+  // 获取用户头像
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  const avatar = (user && user.avatar) || '🙈';
+
+  const { content } = req.body;
   if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '评论内容不能为空' });
   }
@@ -2382,8 +2414,8 @@ app.post('/api/posts/:id/comments', (req, res) => {
       targetId: newComment.id,
       postId: post.id,
       reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
-      reportedBy: userId || null,
-      reporterName: author || '匿名',
+      reportedBy: realUserId,
+      reporterName: realAuthor,
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
@@ -2399,16 +2431,35 @@ app.post('/api/posts/:id/comments', (req, res) => {
   });
 });
 
-// 评论点赞
+// 评论点赞（带用户身份跟踪）
 app.post('/api/posts/:postId/comments/:commentId/like', (req, res) => {
+  // 获取点赞者身份
+  let likerId = getClientIP(req);
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) likerId = session.id;
+  }
+
   const posts = readPosts();
   const post = posts.find(p => p.id === req.params.postId);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   const comment = (post.comments || []).find(c => c.id === req.params.commentId);
   if (!comment) return res.json({ ok: false, msg: '评论不存在' });
-  comment.liked = !comment.liked;
-  comment.likes = (comment.likes || 0) + (comment.liked ? 1 : -1);
-  comment.likes = Math.max(0, comment.likes);
+
+  // 初始化 likedBy 数组（兼容旧数据）
+  if (!Array.isArray(comment.likedBy)) comment.likedBy = [];
+
+  const idx = comment.likedBy.indexOf(likerId);
+  if (idx === -1) {
+    comment.likedBy.push(likerId);
+  } else {
+    comment.likedBy.splice(idx, 1);
+  }
+
+  comment.likes = comment.likedBy.length;
+  comment.liked = comment.likedBy.includes(likerId);
+
   writePosts(posts);
   res.json({ ok: true, data: { liked: comment.liked, likes: comment.likes } });
 });
@@ -2748,8 +2799,30 @@ app.get('/api/discussions', (req, res) => {
   res.json({ ok: true, data: active });
 });
 
-// 创建讨论话题（管理员，最多3个）
-app.post('/api/discussions', requireAdmin, (req, res) => {
+// 创建讨论话题（管理员 或 学生会通知发布者，最多3个）
+app.post('/api/discussions', (req, res) => {
+  // 允许管理员 token (x-admin-token) 或 学生会 token (x-sc-token)
+  const adminToken = req.headers['x-admin-token'];
+  const scToken = req.headers['x-sc-token'];
+  let authed = false;
+  let creatorName = null;
+  if (adminToken) {
+    const session = verifySignedToken(adminToken);
+    if (session && session.id && session.loginAt && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
+      authed = true;
+      creatorName = session.name || session.id;
+    }
+  } else if (scToken) {
+    const session = verifySignedToken(scToken);
+    if (session && session.id && session.loginAt && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
+      authed = true;
+      creatorName = session.name || session.id;
+    }
+  }
+  if (!authed) {
+    return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  }
+
   const { title, expiresAt } = req.body;
   if (!title || !title.trim()) {
     return res.json({ ok: false, msg: '话题标题不能为空' });
@@ -2766,8 +2839,9 @@ app.post('/api/discussions', requireAdmin, (req, res) => {
     id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: title.trim(),
     expiresAt: expiresAt || null, // null 表示无限期
-    createdBy: req.admin.id,
+    deleted: false,
     createdAt: new Date().toISOString(),
+    createdBy: creatorName,
     commentCount: 0
   };
   discussions.push(newDiscussion);

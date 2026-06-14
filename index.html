@@ -3545,7 +3545,7 @@
         temp.style.cssText = `position:absolute;visibility:hidden;width:${sizeInfo.width}px;padding:${sizeInfo.padding}px;padding-top:${sizeInfo.padding + 10}px;font-family:'Ma Shan Zheng',cursive;`;
         temp.innerHTML = `
           <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
-          <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${post.content}</div>
+          <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${escHtml(post.content)}</div>
           <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
             <span style="display:flex;align-items:center;gap:3px;">${post.avatar && post.avatar.startsWith('data:') ? '<img src="' + escHtml(post.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : (post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')} ${post.author}${post.authorAdminRole === 'super' ? ' 🔴 超管认证' : post.authorAdminRole === 'admin' ? ' 🟡 普管认证' : ''}</span>
             <span style="display:flex;gap:4px;align-items:center;">
