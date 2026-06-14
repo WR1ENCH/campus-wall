@@ -969,6 +969,10 @@
             <input type="checkbox" id="adminVoteMultiple" style="width:16px;height:16px;">
             <span>允许多选</span>
           </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="adminVoteAllowCustom" style="width:16px;height:16px;">
+            <span>允许参与者添加自定义选项</span>
+          </label>
           <div style="display:flex;align-items:center;gap:6px;">
             <label style="font-size:13px;">截止时间：</label>
             <input type="datetime-local" id="adminVoteEndTime" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);">
@@ -4505,6 +4509,7 @@
     const title = (document.getElementById('adminVoteTitle').value || '').trim();
     const optionsText = (document.getElementById('adminVoteOptions').value || '').trim();
     const multiple = document.getElementById('adminVoteMultiple').checked;
+    const allowCustom = document.getElementById('adminVoteAllowCustom').checked;
     const endTime = document.getElementById('adminVoteEndTime').value || null;
 
     if (!title) { alert('请输入投票标题'); return; }
@@ -4521,6 +4526,7 @@
       title: title,
       options: options,
       multiple: multiple,
+      allowCustom: allowCustom,
       endTime: endTime ? new Date(endTime).toISOString() : null
     };
 
@@ -4536,6 +4542,7 @@
           document.getElementById('adminVoteTitle').value = '';
           document.getElementById('adminVoteOptions').value = '';
           document.getElementById('adminVoteMultiple').checked = false;
+          document.getElementById('adminVoteAllowCustom').checked = false;
           document.getElementById('adminVoteEndTime').value = '';
           document.getElementById('voteCreateForm').style.display = 'none';
           loadAdminVotes();

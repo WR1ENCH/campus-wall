@@ -4416,7 +4416,7 @@ app.get('/api/votes', (req, res) => {
 // 创建投票（需要管理员权限）
 app.post('/api/votes', requireAdmin, (req, res) => {
   const admin = req.admin;
-  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+  const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
@@ -4451,6 +4451,7 @@ app.post('/api/votes', requireAdmin, (req, res) => {
       votes: 0
     })),
     multiple: !!multiple,
+    allowCustom: !!allowCustom,
     endTime: endTime || null,
     createdAt: new Date().toISOString(),
     deleted: false
@@ -4464,7 +4465,7 @@ app.post('/api/votes', requireAdmin, (req, res) => {
 // 管理员创建投票（与 /api/votes 等价，保留统一管理员路径）
 app.post('/api/admin/votes', requireAdmin, (req, res) => {
   const admin = req.admin;
-  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+  const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
@@ -4498,6 +4499,7 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
       votes: 0
     })),
     multiple: !!multiple,
+    allowCustom: !!allowCustom,
     endTime: endTime || null,
     createdAt: new Date().toISOString(),
     deleted: false
@@ -4515,8 +4517,8 @@ app.post('/api/votes/:id/vote', (req, res) => {
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期' });
 
-  const { optionIds } = req.body;
-  if (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0) {
+  const { optionIds = [], customOption } = req.body;
+  if (!customOption && (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0)) {
     return res.json({ ok: false, msg: '请选择选项' });
   }
 
@@ -4546,7 +4548,32 @@ app.post('/api/votes/:id/vote', (req, res) => {
   if (!vote.multiple && optionIds.length !== 1) {
     return res.json({ ok: false, msg: '该投票只能选择一个选项' });
   }
-  for (const optId of optionIds) {
+
+  // 处理自定义选项
+  let finalOptionIds = [...optionIds];
+  if (customOption && vote.allowCustom) {
+    const trimmed = String(customOption).trim();
+    if (trimmed.length < 1) return res.json({ ok: false, msg: '自定义选项不能为空' });
+    if (trimmed.length > 100) return res.json({ ok: false, msg: '自定义选项最多100字' });
+    // 检查敏感词
+    const sw = checkSensitive(trimmed);
+    if (sw.length > 0) return res.json({ ok: false, msg: '自定义选项包含敏感词，请修改' });
+    const bn = checkBullyingNames(trimmed);
+    if (bn.length > 0) return res.json({ ok: false, msg: '自定义选项涉及受保护人员姓名' });
+    // 检查是否已有相同选项
+    let existingOpt = vote.options.find(o => o.text.trim() === trimmed);
+    let newOptId;
+    if (existingOpt) {
+      newOptId = existingOpt.id;
+    } else {
+      // 添加新选项到投票
+      newOptId = 'custom_' + Math.random().toString(36).slice(2, 8);
+      vote.options.push({ id: newOptId, text: trimmed, votes: 0 });
+    }
+    finalOptionIds = [newOptId];
+  }
+
+  for (const optId of finalOptionIds) {
     const opt = vote.options.find(o => o.id === optId);
     if (!opt) return res.json({ ok: false, msg: '选项不存在' });
     opt.votes = (opt.votes || 0) + 1;
@@ -4573,7 +4600,7 @@ app.post('/api/votes/:id/vote', (req, res) => {
   writeVoteIpRecords(ipRecords);
 
   const totalVotes = vote.options.reduce((s, opt) => s + (opt.votes || 0), 0);
-  res.json({ ok: true, data: { ...vote, totalVotes, userVoted: optionIds } });
+  res.json({ ok: true, data: { ...vote, totalVotes, userVoted: finalOptionIds } });
 });
 
 // 删除投票（仅管理员可删除）
@@ -5294,7 +5321,7 @@ app.post('/api/notice/votes', (req, res) => {
   const publisher = users.find(u => u.id === session.id && u.noticePublisher);
   if (!isSC && !publisher) return res.json({ ok: false, msg: '无权限创建投票' });
 
-  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+  const { title, options, multiple = false, allowCustom = false, endTime = null, sensitiveForce = false } = req.body;
 
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
@@ -5329,6 +5356,7 @@ app.post('/api/notice/votes', (req, res) => {
       votes: 0
     })),
     multiple: !!multiple,
+    allowCustom: !!allowCustom,
     endTime: endTime || null,
     createdAt: new Date().toISOString(),
     deleted: false

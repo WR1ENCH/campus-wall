@@ -739,6 +739,14 @@
       border-radius: 3px;
       transition: width 0.5s ease;
     }
+    .vote-custom-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-top: 1.5px dashed #cbd5e1;
+      margin-top: 6px;
+    }
     .vote-card-footer {
       display: flex;
       justify-content: space-between;
@@ -2701,6 +2709,16 @@
           html += '</div>';
           html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
         });
+
+        // 自定义选项（如果投票开启允许自定义且用户尚未投票）
+        if (vote.allowCustom && !isEnded && !hasVoted) {
+          html += '<div class="vote-custom-option">';
+          var customType = vote.multiple ? 'checkbox' : 'radio';
+          html += '<input type="' + customType + '" name="vote_' + vote.id + '_custom" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this, \'' + vote.id + '\', ' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
+          html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项..." maxlength="100" style="flex:1;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
+          html += '</div>';
+        }
+
         html += '</div>';
 
         html += '<div class="vote-card-footer">';
@@ -2726,6 +2744,10 @@
     function handleVoteOptionClick(input, voteId, optId, isMultiple) {
       if (!input.checked) return;
 
+      // 取消自定义选项
+      var customCheckbox = document.getElementById('customOpt_' + voteId);
+      if (customCheckbox) customCheckbox.checked = false;
+
       if (!voteUserVotes[voteId]) {
         voteUserVotes[voteId] = [];
       }
@@ -2742,10 +2764,19 @@
       }
     }
 
+    function handleCustomOptionClick(checkbox, voteId, isMultiple) {
+      if (!checkbox.checked) return;
+
+      // 取消其他选项
+      var radios = document.querySelectorAll('input[name="vote_' + voteId + '"]');
+      radios.forEach(function(r) { r.checked = false; });
+      voteUserVotes[voteId] = ['__custom__'];
+    }
+
     function submitVoteSelection(voteId) {
       var selected = voteUserVotes[voteId];
       if (!selected || selected.length === 0) {
-        showToast('⚠️ 请选择投票选项', 'error');
+        showToast('⚠️ 请选择或输入投票选项', 'error');
         return;
       }
 
@@ -2755,13 +2786,26 @@
         return;
       }
 
+      // 检测是否选择了自定义选项
+      var customOption = null;
+      var optionIds = selected;
+      if (selected[0] === '__custom__') {
+        var inputEl = document.getElementById('customInput_' + voteId);
+        customOption = inputEl ? inputEl.value.trim() : '';
+        if (!customOption) {
+          showToast('⚠️ 请输入自定义选项内容', 'error');
+          return;
+        }
+        optionIds = []; // 自定义选项不走 optionIds，后端用 customOption 生成
+      }
+
       fetch('/api/votes/' + voteId + '/vote', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-token': token
         },
-        body: JSON.stringify({ optionIds: selected })
+        body: JSON.stringify(customOption ? { optionIds: optionIds, customOption: customOption } : { optionIds: optionIds })
       })
         .then(function(resp) { return resp.json(); })
         .then(function(data) {

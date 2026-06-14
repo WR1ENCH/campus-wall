@@ -626,6 +626,12 @@ body {
         </label>
       </div>
       <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="voteAllowCustom">
+          <span>允许参与者添加自定义选项</span>
+        </label>
+      </div>
+      <div class="form-group">
         <label for="voteEndTime">截止时间 <span style="font-weight:400;color:var(--text-sub);">（选填，留空无截止）</span></label>
         <input class="form-input" id="voteEndTime" type="datetime-local">
       </div>
@@ -1443,6 +1449,7 @@ body {
     document.getElementById('voteTitle').value = '';
     document.getElementById('voteOptions').value = '';
     document.getElementById('voteMultiple').checked = false;
+    document.getElementById('voteAllowCustom').checked = false;
     document.getElementById('voteEndTime').value = '';
   };
 
@@ -1455,6 +1462,7 @@ body {
     var title = document.getElementById('voteTitle').value.trim();
     var optionsText = document.getElementById('voteOptions').value.trim();
     var multiple = document.getElementById('voteMultiple').checked;
+    var allowCustom = document.getElementById('voteAllowCustom').checked;
     var endTime = document.getElementById('voteEndTime').value || null;
     var errEl = document.getElementById('voteError');
 
@@ -1477,6 +1485,7 @@ body {
           title: title,
           options: options,
           multiple: multiple,
+          allowCustom: allowCustom,
           endTime: endTime ? new Date(endTime).toISOString() : null
         })
       });
