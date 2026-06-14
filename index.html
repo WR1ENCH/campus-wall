@@ -747,6 +747,18 @@
       border-top: 1.5px dashed #cbd5e1;
       margin-top: 6px;
     }
+
+    .vote-option-custom {
+      background: #f0f9ff;
+      border: 1.5px dashed #64748b !important;
+      padding: 10px 12px;
+    }
+
+    .vote-option-custom input[type="text"]:focus {
+      outline: none;
+      border-color: #0284c7 !important;
+      background: #fff !important;
+    }
     .vote-card-footer {
       display: flex;
       justify-content: space-between;
@@ -2710,13 +2722,17 @@
           html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
         });
 
-        // 自定义选项（如果投票开启允许自定义且用户尚未投票）
+        // 自定义选项（如果投票开启允许自定义且用户尚未投票且投票未结束）
         if (vote.allowCustom && !isEnded && !hasVoted) {
-          html += '<div class="vote-custom-option">';
           var customType = vote.multiple ? 'checkbox' : 'radio';
-          html += '<input type="' + customType + '" name="vote_' + vote.id + '_custom" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this, \'' + vote.id + '\', ' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
-          html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项..." maxlength="100" style="flex:1;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
+          html += '<div class="vote-option vote-option-custom">';
+          html += '<input type="' + customType + '" name="vote_' + vote.id + '" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this, \'' + vote.id + '\', ' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
+          html += '<span class="vote-option-text" style="display:flex;flex-direction:column;gap:6px;flex:1;">';
+          html += '<span style="font-size:13px;color:#64748b;font-weight:500;">➕ 添加你的选项</span>';
+          html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项内容..." maxlength="100" onclick="event.stopPropagation()" style="width:100%;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;box-sizing:border-box;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
+          html += '</span>';
           html += '</div>';
+          html += '<div class="vote-option-bar" style="visibility:hidden;"><div></div></div>';
         }
 
         html += '</div>';
@@ -2742,8 +2758,6 @@
     }
 
     function handleVoteOptionClick(input, voteId, optId, isMultiple) {
-      if (!input.checked) return;
-
       // 取消自定义选项
       var customCheckbox = document.getElementById('customOpt_' + voteId);
       if (customCheckbox) customCheckbox.checked = false;
@@ -2753,24 +2767,45 @@
       }
 
       if (isMultiple) {
-        var idx = voteUserVotes[voteId].indexOf(optId);
-        if (idx === -1) {
-          voteUserVotes[voteId].push(optId);
+        // 多选：支持勾选和取消勾选
+        if (input.checked) {
+          if (voteUserVotes[voteId].indexOf(optId) === -1) {
+            voteUserVotes[voteId].push(optId);
+          }
         } else {
-          voteUserVotes[voteId].splice(idx, 1);
+          var idx = voteUserVotes[voteId].indexOf(optId);
+          if (idx !== -1) {
+            voteUserVotes[voteId].splice(idx, 1);
+          }
         }
       } else {
+        // 单选：浏览器已自动互斥，只需保存当前选项
         voteUserVotes[voteId] = [optId];
       }
     }
 
     function handleCustomOptionClick(checkbox, voteId, isMultiple) {
-      if (!checkbox.checked) return;
+      // 单选模式下：浏览器已自动取消其他 radio
+      // 多选模式下：点击自定义选项复选框时，需要切换状态
+      if (!voteUserVotes[voteId]) voteUserVotes[voteId] = [];
 
-      // 取消其他选项
-      var radios = document.querySelectorAll('input[name="vote_' + voteId + '"]');
-      radios.forEach(function(r) { r.checked = false; });
-      voteUserVotes[voteId] = ['__custom__'];
+      if (isMultiple) {
+        if (checkbox.checked) {
+          // 勾选：清空其他选项，只保留自定义标记
+          var otherInputs = document.querySelectorAll('input[name="vote_' + voteId + '"]');
+          otherInputs.forEach(function(inp) {
+            if (inp.id !== 'customOpt_' + voteId) inp.checked = false;
+          });
+          voteUserVotes[voteId] = ['__custom__'];
+        } else {
+          // 取消勾选
+          var idx = voteUserVotes[voteId].indexOf('__custom__');
+          if (idx !== -1) voteUserVotes[voteId].splice(idx, 1);
+        }
+      } else {
+        // 单选模式：选中自定义选项
+        voteUserVotes[voteId] = ['__custom__'];
+      }
     }
 
     function submitVoteSelection(voteId) {
