@@ -2500,7 +2500,7 @@
       var container = document.getElementById('voteListContainer');
       container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
 
-      var token = localStorage.getItem('userToken');
+      var token = localStorage.getItem('campus_user_token');
       var headers = {};
       if (token) headers['x-user-token'] = token;
 
@@ -2533,7 +2533,7 @@
       var container = document.getElementById('voteMyContainer');
       container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
 
-      var token = localStorage.getItem('userToken');
+      var token = localStorage.getItem('campus_user_token');
       var headers = {};
       if (token) headers['x-user-token'] = token;
 
@@ -2613,7 +2613,7 @@
         return;
       }
 
-      var token = localStorage.getItem('userToken');
+      var token = localStorage.getItem('campus_user_token');
       if (!token) {
         alert('请先登录');
         return;
@@ -2747,7 +2747,7 @@
         return;
       }
 
-      var token = localStorage.getItem('userToken');
+      var token = localStorage.getItem('campus_user_token');
       if (!token) {
         alert('请先登录');
         return;
