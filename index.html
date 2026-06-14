@@ -855,6 +855,34 @@
     .version-history-error {
       padding: 60px; text-align: center; color: #cb2431;
     }
+    .version-history-footer {
+      padding: 16px;
+      text-align: center;
+      border-top: 1px solid #e1e4e8;
+    }
+    .version-history-footer button {
+      background: #f6f8fa;
+      border: 1px solid #d1d5da;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #0366d6;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .version-history-footer button:hover {
+      background: #f1f8ff;
+      border-color: #0366d6;
+    }
+    .version-history-footer button:disabled {
+      color: #6a737d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .version-history-footer .loading-text {
+      color: #586069;
+      font-size: 13px;
+    }
 
     .empty-state {
       text-align: center; padding: 60px 20px;
@@ -2236,6 +2264,9 @@
       </div>
       <div class="version-history-list" id="versionHistoryList">
         <div class="version-history-loading">加载中...</div>
+      </div>
+      <div class="version-history-footer" id="versionHistoryFooter" style="display:none;">
+        <button id="versionLoadMoreBtn" onclick="loadMoreCommits()">加载更多</button>
       </div>
     </div>
   </div>
@@ -6263,47 +6294,128 @@
 
   <script>
     // ===== 版本历史弹窗控制 =====
+    var versionCommits = [];  // 存储所有加载的commits
+    var versionCurrentPage = 1;
+    var versionLoading = false;
+    var versionHasMore = true;
+    var TARGET_SHA = '8eef091';  // 目标最远commit
+
     function showVersionHistory() {
       var overlay = document.getElementById('versionHistoryOverlay');
       var listEl = document.getElementById('versionHistoryList');
+      var footerEl = document.getElementById('versionHistoryFooter');
       if (!overlay || !listEl) return;
 
       overlay.classList.add('show');
+
+      // 重置状态
+      versionCommits = [];
+      versionCurrentPage = 1;
+      versionHasMore = true;
+      versionLoading = false;
+
       listEl.innerHTML = '<div class="version-history-loading">加载中...</div>';
+      if (footerEl) footerEl.style.display = 'none';
 
-      // 从缓存读取或请求新数据
-      var cached = sessionStorage.getItem('gitee_commits');
-      var cachedTime = sessionStorage.getItem('gitee_commits_time');
-      var now = Date.now();
-      var TTL = 10 * 60 * 1000; // 10分钟缓存
+      loadVersionPage(1);
+    }
 
-      if (cached && cachedTime && (now - parseInt(cachedTime)) < TTL) {
-        try {
-          renderCommitList(JSON.parse(cached));
-          return;
-        } catch (e) {}
+    function loadVersionPage(page) {
+      if (versionLoading) return;
+      versionLoading = true;
+
+      var listEl = document.getElementById('versionHistoryList');
+      var footerEl = document.getElementById('versionHistoryFooter');
+      var loadMoreBtn = document.getElementById('versionLoadMoreBtn');
+
+      if (page > 1) {
+        // 加载更多时显示加载状态
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = '加载中...';
+        }
+      } else {
+        listEl.innerHTML = '<div class="version-history-loading">加载中...</div>';
       }
 
-      fetch('https://gitee.com/api/v5/repos/wr1Ench/campus-wall/commits?page=1&per_page=30')
+      fetch('https://gitee.com/api/v5/repos/wr1Ench/campus-wall/commits?page=' + page + '&per_page=30')
         .then(function(resp) {
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           return resp.json();
         })
         .then(function(data) {
+          versionLoading = false;
+
           if (data && Array.isArray(data) && data.length > 0) {
-            sessionStorage.setItem('gitee_commits', JSON.stringify(data));
-            sessionStorage.setItem('gitee_commits_time', String(now));
-            renderCommitList(data);
+            // 检查是否包含目标commit
+            var containsTarget = data.some(function(c) {
+              return c.sha && c.sha.startsWith(TARGET_SHA);
+            });
+
+            if (containsTarget || data.length < 30) {
+              versionHasMore = false;
+            }
+
+            if (page === 1) {
+              versionCommits = data;
+            } else {
+              versionCommits = versionCommits.concat(data);
+            }
+
+            // 如果有目标commit，截断到目标为止
+            if (containsTarget) {
+              var targetIndex = versionCommits.findIndex(function(c) {
+                return c.sha && c.sha.startsWith(TARGET_SHA);
+              });
+              if (targetIndex !== -1) {
+                versionCommits = versionCommits.slice(0, targetIndex + 1);
+              }
+              versionHasMore = false;
+            }
+
+            renderVersionList(versionCommits);
+
+            if (footerEl) {
+              if (versionHasMore) {
+                footerEl.style.display = 'block';
+                if (loadMoreBtn) {
+                  loadMoreBtn.disabled = false;
+                  loadMoreBtn.textContent = '加载更多';
+                }
+              } else {
+                footerEl.style.display = 'block';
+                if (loadMoreBtn) {
+                  loadMoreBtn.disabled = true;
+                  loadMoreBtn.textContent = '已加载全部历史';
+                }
+              }
+            }
           } else {
-            listEl.innerHTML = '<div class="version-history-empty">暂无更新记录</div>';
+            versionHasMore = false;
+            if (page === 1) {
+              listEl.innerHTML = '<div class="version-history-empty">暂无更新记录</div>';
+            }
+            if (footerEl) footerEl.style.display = 'block';
+            if (loadMoreBtn) {
+              loadMoreBtn.disabled = true;
+              loadMoreBtn.textContent = '已加载全部历史';
+            }
           }
         })
         .catch(function() {
+          versionLoading = false;
           listEl.innerHTML = '<div class="version-history-error">加载失败，请稍后重试</div>';
+          if (footerEl) footerEl.style.display = 'none';
         });
     }
 
-    function renderCommitList(commits) {
+    function loadMoreCommits() {
+      if (versionLoading || !versionHasMore) return;
+      versionCurrentPage++;
+      loadVersionPage(versionCurrentPage);
+    }
+
+    function renderVersionList(commits) {
       var listEl = document.getElementById('versionHistoryList');
       if (!listEl || !commits || commits.length === 0) {
         listEl.innerHTML = '<div class="version-history-empty">暂无更新记录</div>';
@@ -6314,13 +6426,11 @@
       commits.forEach(function(commit) {
         var sha = commit.sha || '';
         var shortSha = sha.substring(0, 7);
-        var fullSha = sha;
         var commitData = commit.commit || {};
         var message = commitData.message || '';
         var authorData = commitData.author || {};
         var committerData = commitData.committer || {};
         var authorName = authorData.name || '未知';
-        var authorEmail = authorData.email || '';
         var commitDate = authorData.date || committerData.date || '';
         var htmlUrl = commit.html_url || 'https://gitee.com/wr1Ench/campus-wall/commit/' + sha;
 
@@ -6339,7 +6449,7 @@
           html += '<div class="msg-body">' + escapeHtml(body) + '</div>';
         }
         html += '<div class="meta">';
-        html += '<span><svg viewBox="0 0 16 16"><path d="M11.28 6.78a.75.75 0 01-.75-.75c0-1.11.67-2.13 1.67-2.64l.78-.39a.75.75 0 01.83.83l-.39.78c-.51.99-1.53 1.67-2.64 1.67a.75.75 0 01-.75.75.75.75 0 01-.75-.75c0-.97.53-1.85 1.36-2.29l.79-.39a.25.25 0 00.17-.33l-.39-.79c-.44-.83-1.32-1.36-2.29-1.36a.75.75 0 010-1.5c.97 0 1.85.53 2.29 1.36l.39.79a.25.25 0 00.33.17l.79-.39c.44-.53 1.36-1.36 2.29-1.36a.75.75 0 01.75.75.75.75 0 01-.75.75c-.97 0-1.85-.53-2.29-1.36l-.39-.79a.25.25 0 00-.33-.17l-.79.39C10.15 1.03 9.28 1.5 8.5 2c-.79.5-1.15 1.29-1.15 2.12 0 .97.53 1.85 1.36 2.29l.79.39a.25.25 0 00.17.33l-.39.79c-.44.83.15 1.29.79 1.29a.75.75 0 01.75.75.75.75 0 01-.75.75c-.97 0-1.85-.53-2.29-1.36l-.39-.79a.25.25 0 00-.33-.17l-.79.39c-.99.51-1.67 1.53-1.67 2.64 0 .41.16.78.43 1.06a.75.75 0 01-1.06 1.07c-.55-.56-.88-1.32-.88-2.13 0-1.75 1.43-3.18 3.18-3.18.56 0 1.08.15 1.53.4l1.77.89A2.318 2.318 0 0011.28 6.78z"/></svg> <span class="author">' + escapeHtml(authorName) + '</span></span>';
+        html += '<span><svg viewBox="0 0 16 16"><path fill="currentColor" d="M11.28 6.78a.75.75 0 01-.75-.75c0-1.11.67-2.13 1.67-2.64l.78-.39a.75.75 0 01.83.83l-.39.78c-.51.99-1.53 1.67-2.64 1.67a.75.75 0 01-.75.75.75.75 0 01-.75-.75c0-.97.53-1.85 1.36-2.29l.79-.39a.25.25 0 00.17-.33l-.39-.79c-.44-.83-1.32-1.36-2.29-1.36a.75.75 0 010-1.5c.97 0 1.85.53 2.29 1.36l.39.79a.25.25 0 00.33.17l.79-.39c.44-.53 1.36-1.36 2.29-1.36a.75.75 0 01.75.75.75.75 0 01-.75.75c-.97 0-1.85-.53-2.29-1.36l-.39-.79a.25.25 0 00-.33-.17l-.79.39C10.15 1.03 9.28 1.5 8.5 2c-.79.5-1.15 1.29-1.15 2.12 0 .97.53 1.85 1.36 2.29l.79.39a.25.25 0 00.17.33l-.39.79c-.44.83.15 1.29.79 1.29a.75.75 0 01.75.75.75.75 0 01-.75.75c-.97 0-1.85-.53-2.29-1.36l-.39-.79a.25.25 0 00-.33-.17l-.79.39c-.99.51-1.67 1.53-1.67 2.64 0 .41.16.78.43 1.06a.75.75 0 01-1.06 1.07c-.55-.56-.88-1.32-.88-2.13 0-1.75 1.43-3.18 3.18-3.18.56 0 1.08.15 1.53.4l1.77.89A2.318 2.318 0 0011.28 6.78z"/></svg> <span class="author">' + escapeHtml(authorName) + '</span></span>';
         html += '<span>' + formatDateTime(commitDate) + '</span>';
         html += '</div>';
         html += '</div></div>';
