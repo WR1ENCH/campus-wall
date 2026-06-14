@@ -2799,7 +2799,7 @@ app.get('/api/discussions', (req, res) => {
   res.json({ ok: true, data: active });
 });
 
-// 创建讨论话题（管理员 或 学生会通知发布者，最多3个）
+// 创建讨论话题（管理员 或 学生会通知发布者）
 app.post('/api/discussions', (req, res) => {
   // 允许管理员 token (x-admin-token) 或 学生会 token (x-sc-token)
   const adminToken = req.headers['x-admin-token'];
@@ -2829,11 +2829,6 @@ app.post('/api/discussions', (req, res) => {
   }
 
   const discussions = readDiscussions();
-  const now = new Date();
-  const active = discussions.filter(d => !d.expiresAt || parseLocalDateTime(d.expiresAt) > now);
-  if (active.length >= 3) {
-    return res.json({ ok: false, msg: '最多只能设置 3 个讨论话题，请先删除或等待过期' });
-  }
 
   const newDiscussion = {
     id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -5037,7 +5032,7 @@ app.get('/api/user/notifications', (req, res) => {
 // 获取通知列表（公开，过滤已删除）
 app.get('/api/notices', (req, res) => {
   const notices = readNotices();
-  const active = notices.filter(n => !n.deleted && !n.auto && !n.targetUserId);
+  const active = notices.filter(n => !n.deleted && !n.targetUserId);
   const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
   res.json({ ok: true, data: list });
 });
