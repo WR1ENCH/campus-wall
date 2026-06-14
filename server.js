@@ -1,3 +1,8 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors');
+
 // ===== 加载 .env 文件 =====
 const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
@@ -13,11 +18,6 @@ if (fs.existsSync(envPath)) {
   }
   console.log('[env] 已加载 .env 文件');
 }
-
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const db = require('./db');
