@@ -237,6 +237,10 @@ function readVoteRecords () { return db.readVoteRecords(); }
 
 function writeVoteRecords (records) { db.writeVoteRecords(records); }
 
+function readVoteIpRecords () { return db.readVoteIpRecords(); }
+
+function writeVoteIpRecords (records) { db.writeVoteIpRecords(records); }
+
 function readAdmins () { return db.readAdmins(); }
 
 function hasAdmins() { return db.readAdmins().length > 0; }
@@ -4391,13 +4395,9 @@ app.get('/api/votes', (req, res) => {
   res.json({ ok: true, data: list });
 });
 
-// 创建投票（需要登录）
-app.post('/api/votes', (req, res) => {
-  const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '未登录' });
-  const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '登录已过期' });
-
+// 创建投票（需要管理员权限）
+app.post('/api/votes', requireAdmin, (req, res) => {
+  const admin = req.admin;
   const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
 
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
@@ -4420,16 +4420,12 @@ app.post('/api/votes', (req, res) => {
     return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
   }
 
-  const users = readUsers();
-  const user = users.find(u => u.id === session.id);
-  if (!user) return res.json({ ok: false, msg: '用户不存在' });
-
   const votes = readVotes();
   const newVote = {
     id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    userId: session.id,
-    author: user.nickname,
-    avatar: user.avatar || '',
+    userId: 'admin:' + admin.id,
+    author: '管理员',
+    avatar: '',
     title: title.trim(),
     options: options.map((text, idx) => ({
       id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
@@ -4447,7 +4443,54 @@ app.post('/api/votes', (req, res) => {
   res.json({ ok: true, data: newVote });
 });
 
-// 参与投票（需要登录）
+// 管理员创建投票（与 /api/votes 等价，保留统一管理员路径）
+app.post('/api/admin/votes', requireAdmin, (req, res) => {
+  const admin = req.admin;
+  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+  for (const opt of options) {
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+  }
+
+  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  const sensitiveWords = checkSensitive(checkText);
+  if (sensitiveWords.length > 0 && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
+  }
+  const blockedNames = checkBullyingNames(checkText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+  }
+
+  const votes = readVotes();
+  const newVote = {
+    id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: 'admin:' + admin.id,
+    author: '管理员',
+    avatar: '',
+    title: title.trim(),
+    options: options.map((text, idx) => ({
+      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+      text: text.trim(),
+      votes: 0
+    })),
+    multiple: !!multiple,
+    endTime: endTime || null,
+    createdAt: new Date().toISOString(),
+    deleted: false
+  };
+
+  votes.push(newVote);
+  writeVotes(votes);
+  res.json({ ok: true, data: newVote });
+});
+
+// 参与投票（需要登录 + 同一网络环境下仅可投一票）
 app.post('/api/votes/:id/vote', (req, res) => {
   const token = req.headers['x-user-token'];
   if (!token) return res.json({ ok: false, msg: '未登录' });
@@ -4468,10 +4511,18 @@ app.post('/api/votes/:id/vote', (req, res) => {
     return res.json({ ok: false, msg: '投票已结束' });
   }
 
-  // 检查是否已投票
+  // 获取真实客户端 IP（支持反向代理）
+  const clientIp = getClientIP(req);
+
+  // 1. 检查当前用户是否已投票
   const records = readVoteRecords();
-  const existing = records.find(r => r.voteId === vote.id && r.userId === session.id);
-  if (existing) return res.json({ ok: false, msg: '你已经投过票了' });
+  const existingByUser = records.find(r => r.voteId === vote.id && r.userId === session.id);
+  if (existingByUser) return res.json({ ok: false, msg: '你已经投过票了' });
+
+  // 2. 检查同一 IP 是否已投过票（即使切换账号）
+  const ipRecords = readVoteIpRecords();
+  const existingByIp = ipRecords.find(r => r.voteId === vote.id && r.ip === clientIp);
+  if (existingByIp) return res.json({ ok: false, msg: '当前网络环境下已有人投过票，请更换网络后重试' });
 
   // 校验选项
   if (!vote.multiple && optionIds.length !== 1) {
@@ -4490,25 +4541,28 @@ app.post('/api/votes/:id/vote', (req, res) => {
     });
   }
 
+  // 记录 IP 投票
+  ipRecords.push({
+    id: 'vrip_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    voteId: vote.id,
+    ip: clientIp,
+    userId: session.id,
+    createdAt: new Date().toISOString()
+  });
+
   writeVotes(votes);
   writeVoteRecords(records);
+  writeVoteIpRecords(ipRecords);
 
   const totalVotes = vote.options.reduce((s, opt) => s + (opt.votes || 0), 0);
   res.json({ ok: true, data: { ...vote, totalVotes, userVoted: optionIds } });
 });
 
-// 删除投票（本人）
-app.delete('/api/votes/:id', (req, res) => {
-  const token = req.headers['x-user-token'];
-  if (!token) return res.json({ ok: false, msg: '未登录' });
-  const session = verifyUserToken(token);
-  if (!session) return res.json({ ok: false, msg: '登录已过期' });
-
+// 删除投票（仅管理员可删除）
+app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
-  const idx = votes.findIndex(v => v.id === req.params.id && !v.deleted);
+  const idx = votes.findIndex(v => v.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
-  if (votes[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
-
   votes[idx].deleted = true;
   writeVotes(votes);
   res.json({ ok: true });

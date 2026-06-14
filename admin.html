@@ -699,6 +699,10 @@
         <span class="nav-icon">🔒</span>
         <span>霸凌状态管理</span>
       </div>
+      <div class="nav-item" onclick="showPage('votes', this)">
+        <span class="nav-icon">🗳️</span>
+        <span>投票管理</span>
+      </div>
       <div class="nav-item" onclick="showPage('pickup', this)">
         <span class="nav-icon">🏆</span>
         <span>拍卖审核</span>
@@ -936,6 +940,49 @@
         <div id="reportsBody">
           <div class="loading"><div class="spinner"></div>加载中…</div>
         </div>
+      </div>
+    </div>
+
+    <!-- 投票管理页 -->
+    <div class="page" id="page-votes" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">共 <strong id="voteTotalCount">0</strong> 个投票 · <span id="voteActiveCount">0</span> 个进行中</span>
+        </div>
+        <button class="btn-primary" style="padding:6px 14px;font-size:13px;" onclick="toggleVoteCreateForm()">➕ 发起新投票</button>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadAdminVotes()">🔄 刷新</button>
+      </div>
+
+      <!-- 创建投票表单 -->
+      <div id="voteCreateForm" style="background:var(--card-bg);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border);display:none;">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">发起新投票</div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--text);">投票标题</label>
+          <input type="text" id="adminVoteTitle" placeholder="请输入投票标题" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;background:var(--bg);color:var(--text);">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--text);">投票选项（每行一个，至少 2 项）</label>
+          <textarea id="adminVoteOptions" placeholder="选项 1&#10;选项 2&#10;选项 3" rows="4" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;font-family:inherit;background:var(--bg);color:var(--text);"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="adminVoteMultiple" style="width:16px;height:16px;">
+            <span>允许多选</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label style="font-size:13px;">截止时间：</label>
+            <input type="datetime-local" id="adminVoteEndTime" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary" style="padding:7px 16px;font-size:13px;" onclick="adminCreateVote()">✅ 发布投票</button>
+          <button class="btn-cancel" style="padding:7px 16px;font-size:13px;" onclick="toggleVoteCreateForm()">取消</button>
+        </div>
+      </div>
+
+      <!-- 投票列表 -->
+      <div id="adminVoteList" style="margin-top:4px;">
+        <div class="loading"><div class="spinner"></div>加载中…</div>
       </div>
     </div>
 
@@ -3443,7 +3490,7 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理' };
+    const titles = { dashboard: '数据总览', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理', votes: '投票管理' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
@@ -3465,6 +3512,7 @@
     if (id === 'deleted') { loadDeletedContent(); }
     if (id === 'noticeApps') { loadNoticeApps(); }
     if (id === 'noticePublishers') { loadPublishers(); }
+    if (id === 'votes') { loadAdminVotes(); }
   }
 
   function refreshCurrent() {
@@ -4348,6 +4396,176 @@
   function formatDate(isoStr) {
     if (!isoStr) return '-';
     return new Date(isoStr).toLocaleDateString('zh-CN');
+  }
+
+  // ===== 投票管理 =====
+  function loadAdminVotes() {
+    const container = document.getElementById('adminVoteList');
+    if (!container) return;
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>加载中…</div>';
+
+    fetch('/api/admin/votes', {
+      method: 'GET',
+      headers: authHeaders()
+    })
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (!data.ok) {
+          container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger);">加载失败：' + (data.msg || '') + '</div>';
+          return;
+        }
+        renderAdminVotes(data.data || []);
+      })
+      .catch(function() {
+        container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger);">网络错误，请刷新重试</div>';
+      });
+  }
+
+  function renderAdminVotes(list) {
+    const container = document.getElementById('adminVoteList');
+    const totalEl = document.getElementById('voteTotalCount');
+    const activeEl = document.getElementById('voteActiveCount');
+
+    let activeCount = 0;
+    if (list && list.length > 0) {
+      list.forEach(function(v) {
+        if (!v.deleted && (!v.endTime || new Date(v.endTime) > new Date())) activeCount++;
+      });
+    }
+    if (totalEl) totalEl.textContent = list ? list.length : 0;
+    if (activeEl) activeEl.textContent = activeCount;
+
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-sub);">暂无投票。点击右上角「➕ 发起新投票」创建投票。</div>';
+      return;
+    }
+
+    // 按创建时间倒序
+    list.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+    let html = '';
+    list.forEach(function(vote) {
+      const total = vote.totalVotes !== undefined
+        ? vote.totalVotes
+        : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+      const ended = vote.deleted || (vote.endTime && new Date(vote.endTime) < new Date());
+      const participants = vote.participantCount !== undefined ? vote.participantCount : total;
+
+      html += '<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);">';
+      html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;flex-wrap:wrap;">';
+      html += '<div style="flex:1;min-width:200px;">';
+      html += '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;">' + escHtml(vote.title) + '</div>';
+      html += '<div style="font-size:12px;color:var(--text-sub);">';
+      html += '创建：' + formatDate(vote.createdAt);
+      if (vote.endTime) html += ' · 截止：' + formatDate(vote.endTime);
+      if (vote.multiple) html += ' · 多选';
+      html += ' · 总票数：<strong>' + total + '</strong> · 参与人数：<strong>' + participants + '</strong>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+      html += '<span class="' + (ended ? 'badge-admin' : '') + '" style="' + (ended ? 'background:#fecaca;color:#991b1b;' : 'background:#bbf7d0;color:#166534;') + 'padding:3px 8px;border-radius:4px;font-size:12px;font-weight:500;">';
+      html += vote.deleted ? '已删除' : (ended ? '已结束' : '进行中');
+      html += '</span>';
+      if (!vote.deleted) {
+        html += '<button class="btn-del" style="font-size:12px;padding:4px 10px;" onclick="adminDeleteVote(\'' + vote.id + '\', \'' + escHtml(vote.title).replace(/'/g, "\\'") + '\')">🗑️ 删除</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+
+      // 选项展示
+      html += '<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">';
+      vote.options.forEach(function(opt) {
+        const percent = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
+        html += '<div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text);margin-bottom:2px;">';
+        html += '<span>' + escHtml(opt.text) + '</span>';
+        html += '<span style="color:var(--text-sub);">' + (opt.votes || 0) + ' 票 · ' + percent + '%</span>';
+        html += '</div>';
+        html += '<div style="background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#3b82f6,#0c4a6e);width:' + percent + '%;"></div></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  function toggleVoteCreateForm() {
+    const form = document.getElementById('voteCreateForm');
+    if (!form) return;
+    if (form.style.display === 'none' || !form.style.display) {
+      form.style.display = 'block';
+    } else {
+      form.style.display = 'none';
+    }
+  }
+
+  function adminCreateVote() {
+    const title = (document.getElementById('adminVoteTitle').value || '').trim();
+    const optionsText = (document.getElementById('adminVoteOptions').value || '').trim();
+    const multiple = document.getElementById('adminVoteMultiple').checked;
+    const endTime = document.getElementById('adminVoteEndTime').value || null;
+
+    if (!title) { alert('请输入投票标题'); return; }
+    if (title.length > 100) { alert('标题最多 100 个字'); return; }
+
+    const options = optionsText.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    if (options.length < 2) { alert('至少需要 2 个选项'); return; }
+    if (options.length > 20) { alert('最多 20 个选项'); return; }
+    for (const opt of options) {
+      if (opt.length > 100) { alert('选项最多 100 个字'); return; }
+    }
+
+    const payload = {
+      title: title,
+      options: options,
+      multiple: multiple,
+      endTime: endTime ? new Date(endTime).toISOString() : null
+    };
+
+    fetch('/api/votes', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(payload)
+    })
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          alert('投票发布成功！');
+          document.getElementById('adminVoteTitle').value = '';
+          document.getElementById('adminVoteOptions').value = '';
+          document.getElementById('adminVoteMultiple').checked = false;
+          document.getElementById('adminVoteEndTime').value = '';
+          document.getElementById('voteCreateForm').style.display = 'none';
+          loadAdminVotes();
+        } else {
+          alert('发布失败：' + (data.msg || data.warningMsg || '未知错误'));
+        }
+      })
+      .catch(function() {
+        alert('网络错误，请稍后重试');
+      });
+  }
+
+  function adminDeleteVote(id, title) {
+    if (!confirm('确认删除投票「' + title + '」？删除后前端将不再显示。')) return;
+    fetch('/api/votes/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: authHeaders()
+    })
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          alert('删除成功');
+          loadAdminVotes();
+        } else {
+          alert('删除失败：' + (data.msg || ''));
+        }
+      })
+      .catch(function() {
+        alert('网络错误，请稍后重试');
+      });
   }
 
   function typeEmoji(type) {
