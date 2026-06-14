@@ -1459,6 +1459,7 @@
       <div class="tape" style="--tape-rotate: -3deg;"></div>
       <h3>📝 写便利贴</h3>
       <textarea id="noteInput" placeholder="在这里写点什么..."></textarea>
+      <div id="discussionSuggest" style="display:none;position:absolute;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:300;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
       <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/50</div>
       <!-- 图片上传 -->
       <div style="margin-top:10px;">
@@ -3241,6 +3242,7 @@
     let currentTag = '日常';
     let currentFilter = '全部';
     let postImages = []; // 发帖附图，最多4张
+    let _selectedDiscussionId = null; // 发帖同步到讨论区的话题ID
 
     // ===== API 调用 =====
     async function fetchPosts() {
@@ -3277,7 +3279,7 @@
         const res = await fetch(API + '/api/posts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages })
+          body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId })
         });
         const json = await res.json();
         if (json.ok) {
@@ -3976,17 +3978,73 @@
     function closeModal(e) {
       if (e && e.target !== e.currentTarget) return;
       document.getElementById('modalOverlay').classList.remove('show');
+      _selectedDiscussionId = null;
     }
 
     var _justPostedId = null;  // 记录刚发的帖子ID，供引导使用
 
-    // 发帖字数实时统计
+    // 发帖字数实时统计 & #话题自动补全
+    var _suggestTimer = null;
     document.getElementById('noteInput').addEventListener('input', function() {
       const count = this.value.length;
       const el = document.getElementById('noteCount');
       el.textContent = count;
       el.style.color = count > 50 ? '#d32f2f' : 'inherit';
+
+      var val = this.value;
+      var cursorPos = this.selectionStart;
+      var textBefore = val.substring(0, cursorPos);
+      var hashIdx = textBefore.lastIndexOf('#');
+      if (hashIdx >= 0 && (hashIdx === 0 || /\s/.test(textBefore[hashIdx - 1]))) {
+        var query = textBefore.substring(hashIdx + 1);
+        if (query.length > 0 && !/\s/.test(query)) {
+          if (_suggestTimer) clearTimeout(_suggestTimer);
+          _suggestTimer = setTimeout(function() { fetchDiscussionSuggest(query); }, 200);
+          return;
+        }
+      }
+      hideDiscussionSuggest();
     });
+
+    function fetchDiscussionSuggest(q) {
+      fetch('/api/discussions?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(j) {
+        if (!j.ok || !j.data || j.data.length === 0) { hideDiscussionSuggest(); return; }
+        var box = document.getElementById('discussionSuggest');
+        var input = document.getElementById('noteInput');
+        var rect = input.getBoundingClientRect();
+        box.style.top = (rect.top - 160) + 'px';
+        box.style.left = rect.left + 'px';
+        box.style.width = (rect.width) + 'px';
+        box.innerHTML = j.data.map(function(d) {
+          return '<div onclick="selectDiscussionSuggest(\'' + d.id + '\',\'' + escHtml(d.title) + '\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8a0;transition:background 0.1s;" onmouseover="this.style.background=\'#fef7d0\'" onmouseout="this.style.background=\'\'">💬 ' + escHtml(d.title) + '</div>';
+        }).join('');
+        box.style.display = 'block';
+      }).catch(function() { hideDiscussionSuggest(); });
+    }
+
+    function hideDiscussionSuggest() {
+      var box = document.getElementById('discussionSuggest');
+      if (box) box.style.display = 'none';
+    }
+
+    function selectDiscussionSuggest(id, title) {
+      _selectedDiscussionId = id;
+      var input = document.getElementById('noteInput');
+      var val = input.value;
+      var cursorPos = input.selectionStart;
+      var textBefore = val.substring(0, cursorPos);
+      var hashIdx = textBefore.lastIndexOf('#');
+      if (hashIdx >= 0) {
+        var afterHash = textBefore.substring(hashIdx);
+        var spaceIdx = afterHash.indexOf(' ');
+        var replaceEnd = spaceIdx >= 0 ? hashIdx + spaceIdx : cursorPos;
+        input.value = val.substring(0, hashIdx) + '#' + title + ' ' + val.substring(cursorPos);
+        input.focus();
+        input.selectionStart = input.selectionEnd = hashIdx + title.length + 2;
+      }
+      hideDiscussionSuggest();
+      showToast('📌 已关联讨论：' + title);
+    }
 
     // ===== 发帖附图 =====
     function addPostImage(input) {
@@ -4038,6 +4096,7 @@
         _justPostedId = newPost.id;  // 记录刚发的帖子ID
         input.value = '';
         postImages = [];
+        _selectedDiscussionId = null;
         renderPostImages();
         closeModal();
         renderNotes(currentFilter);

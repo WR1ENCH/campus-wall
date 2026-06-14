@@ -2257,6 +2257,33 @@ if (!content || !content.trim()) {
     incUserPostCount(author);
   }
 
+  // 同步到讨论区（如果用户指定了话题）
+  const syncDiscussionId = req.body.syncDiscussionId;
+  if (syncDiscussionId && userId) {
+    var discussions = readDiscussions();
+    var disc = discussions.find(function(d) { return d.id === syncDiscussionId; });
+    if (disc && !disc.deleted) {
+      var discComments = readDiscussionComments();
+      var newDiscComment = {
+        id: 'dc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        discussionId: syncDiscussionId,
+        parentId: null,
+        content: content.trim(),
+        author: author || '匿名',
+        userId: userId,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        liked: false,
+        reportCount: 0,
+        syncPostId: newPost.id
+      };
+      discComments.push(newDiscComment);
+      writeDiscussionComments(discComments);
+      disc.commentCount = (disc.commentCount || 0) + 1;
+      writeDiscussions(discussions);
+    }
+  }
+
   res.json({
     ok: true,
     data: newPost,
@@ -2507,6 +2534,7 @@ app.delete('/api/posts/:id', requireAdmin, (req, res) => {
   saveDeletedItem('post', post, 'admin');
   posts = posts.filter(p => p.id !== req.params.id);
   writePosts(posts);
+  deleteSyncedDiscComment(req.params.id);
   res.json({ ok: true });
 });
 
@@ -2526,6 +2554,7 @@ app.delete('/api/user/posts/:id', (req, res) => {
   saveDeletedItem('post', post, 'user');
   posts = posts.filter(p => p.id !== req.params.id);
   writePosts(posts);
+  deleteSyncedDiscComment(req.params.id);
   res.json({ ok: true });
 });
 
@@ -2707,6 +2736,12 @@ app.delete('/api/announcement', requireAdmin, (req, res) => {
 app.get('/api/discussions', (req, res) => {
   const discussions = readDiscussions();
   const now = new Date();
+  // 如果有关键词搜索，只返回匹配的非删除话题
+  if (req.query.q) {
+    const q = req.query.q.toLowerCase();
+    const matched = discussions.filter(d => !d.deleted && d.title && d.title.toLowerCase().includes(q));
+    return res.json({ ok: true, data: matched.slice(0, 10).map(d => ({ id: d.id, title: d.title })) });
+  }
   const active = discussions
     .filter(d => !d.deleted && (!d.expiresAt || parseLocalDateTime(d.expiresAt) > now))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -3357,6 +3392,19 @@ function cleanupOldDeletedData() {
   if (cleaned > 0) {
     console.log('[cleanup] ✅ 已迁移 ' + cleaned + ' 条旧软删除数据到 deleted_items 表');
   }
+}
+
+// ===== 删除帖子时同步删除关联的讨论评论 =====
+function deleteSyncedDiscComment(postId) {
+  try {
+    var comments = readDiscussionComments();
+    var matched = comments.filter(function(c) { return c.syncPostId === postId; });
+    if (matched.length > 0) {
+      matched.forEach(function(c) { saveDeletedItem('disc_comment', c, 'system'); });
+      comments = comments.filter(function(c) { return c.syncPostId !== postId; });
+      writeDiscussionComments(comments);
+    }
+  } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
 }
 
 // ===== 已删除内容记录辅助函数 =====
