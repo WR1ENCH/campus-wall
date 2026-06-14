@@ -57,27 +57,6 @@
       background-size: 240px 120px;
       background-position: 0 0;
     }
-    /* 版本号显示 - 右下角 */
-    .version-badge {
-      position: fixed;
-      right: 12px;
-      bottom: 10px;
-      font-size: 11px;
-      font-family: 'Courier New', monospace;
-      color: #333;
-      opacity: 0.45;
-      z-index: 5;
-      letter-spacing: 0.5px;
-      pointer-events: none;
-      user-select: none;
-      padding: 3px 8px;
-      background: rgba(255, 255, 255, 0.25);
-      border-radius: 3px;
-    }
-    .version-badge:hover { opacity: 0.8; }
-    .version-badge .v-label { opacity: 0.8; }
-    .version-badge .v-sha { font-weight: bold; }
-
     .wall.is-dragging {
       cursor: grabbing;
     }
@@ -772,12 +751,21 @@
     /* ===== 底部 ===== */
     .footer {
       position: fixed; bottom: 0; left: 0; right: 0;
-      text-align: center; padding: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px;
       background: rgba(139,111,94,0.85);
       backdrop-filter: blur(8px);
       color: rgba(255,255,255,0.7); font-size: 12px;
       z-index: 50; border-top: 2px solid rgba(0,0,0,0.15);
     }
+    .footer .version-info {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      opacity: 0.5;
+      letter-spacing: 0.5px;
+    }
+    .footer .version-info .v-label { opacity: 0.7; }
+    .footer .version-info .v-sha { font-weight: bold; }
 
     .empty-state {
       text-align: center; padding: 60px 20px;
@@ -2144,7 +2132,10 @@
   </div>
 
   <div class="footer">
-    📌 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#ffd6d6;text-decoration:underline;font-weight:600;">🛡️ 报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#a8e6ff;text-decoration:underline;font-weight:600;">🌐 接入校园墙生态</a>
+    <span class="version-info" id="versionBadge" title="当前版本">
+      <span class="v-label">版本</span> <span class="v-sha" id="versionSha">...</span>
+    </span>
+    <span>📌 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#ffd6d6;text-decoration:underline;font-weight:600;">🛡️ 报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#a8e6ff;text-decoration:underline;font-weight:600;">🌐 接入校园墙生态</a></span>
   </div>
 
   <script>
@@ -6168,29 +6159,23 @@
     })();
   </script>
 
-  <!-- 版本号显示 - 右下角 -->
-  <div class="version-badge" id="versionBadge" title="当前版本">
-    <span class="v-label">版本</span> <span class="v-sha" id="versionSha">...</span>
-  </div>
-
   <script>
     // 从 Gitee API 获取最新提交的 commit SHA
     (function() {
       var shaEl = document.getElementById('versionSha');
       var badgeEl = document.getElementById('versionBadge');
+      if (!shaEl || !badgeEl) return;
 
-      // 先尝试从本地 sessionStorage 读取,减少网络请求
       var cached = sessionStorage.getItem('gitee_commit_sha');
       var cachedTime = sessionStorage.getItem('gitee_commit_time');
       var now = Date.now();
-      var TTL = 5 * 60 * 1000; // 5分钟缓存
+      var TTL = 5 * 60 * 1000;
 
       if (cached && cachedTime && (now - parseInt(cachedTime)) < TTL) {
         shaEl.textContent = cached;
         return;
       }
 
-      // 通过 Gitee API 获取最新 commit
       try {
         fetch('https://gitee.com/api/v5/repos/wr1Ench/campus-wall/commits?page=1&per_page=1')
           .then(function(resp) {
@@ -6202,7 +6187,6 @@
               var shortSha = data[0].sha.substring(0, 7);
               shaEl.textContent = shortSha;
               badgeEl.setAttribute('title', '版本: ' + data[0].sha + '\n' + (data[0].commit && data[0].commit.message ? data[0].commit.message.split('\n')[0] : ''));
-              // 写入缓存
               sessionStorage.setItem('gitee_commit_sha', shortSha);
               sessionStorage.setItem('gitee_commit_time', String(now));
             } else {
