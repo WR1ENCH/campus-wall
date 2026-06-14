@@ -2896,8 +2896,9 @@ app.post('/api/discussions/:id/comments', (req, res) => {
     const posts = readPosts();
     const topicTitle = discussion.title || '讨论';
     const wallContent = '#' + topicTitle + ' ' + content.trim();
+    const postId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     posts.unshift({
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      id: postId,
       type: '日常',
       content: wallContent,
       discussionId: req.params.id,
@@ -2914,6 +2915,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
       images: undefined
     });
     writePosts(posts);
+    newComment.syncPostId = postId;
   }
 
   // 更新话题评论数
@@ -2970,14 +2972,29 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     const byWho = isAdmin ? 'admin' : 'user';
     // 物理删除该评论及其所有子回复，先保存
     let idsToRemove = [];
+    let syncPostIds = [];
     comments.forEach(c => {
       if (c.id === req.params.id || c.parentId === req.params.id) {
         try { saveDeletedItem('disc_comment', c, byWho); } catch(e) { console.warn('[delete] saveDeletedItem failed:', e.message); }
+        if (c.syncPostId) syncPostIds.push(c.syncPostId);
         idsToRemove.push(c.id);
       }
     });
     const filtered = comments.filter(c => !idsToRemove.includes(c.id));
     writeDiscussionComments(filtered);
+
+    // 同步删除对应的校园墙帖子
+    if (syncPostIds.length > 0) {
+      let posts = readPosts();
+      syncPostIds.forEach(function(pid) {
+        var p = posts.find(function(x) { return x.id === pid; });
+        if (p) {
+          try { saveDeletedItem('post', p, byWho); } catch(e) { console.warn('[delete] sync post saveDeletedItem failed:', e.message); }
+        }
+      });
+      posts = posts.filter(function(x) { return syncPostIds.indexOf(x.id) === -1; });
+      writePosts(posts);
+    }
 
     res.json({ ok: true });
   } catch (e) {
