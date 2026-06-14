@@ -5262,6 +5262,65 @@ app.post('/api/student-council/change-name', (req, res) => {
   res.json({ ok: true, msg: '昵称已修改', data: { token: newToken, name: sc.name } });
 });
 
+// 通知发布者创建投票（需 x-sc-token，学生会账号或通知发布者）
+app.post('/api/notice/votes', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  // 验证身份：学生会账号 或 通知发布者
+  const sc = readSC();
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const publisher = users.find(u => u.id === session.id && u.noticePublisher);
+  if (!isSC && !publisher) return res.json({ ok: false, msg: '无权限创建投票' });
+
+  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+  for (const opt of options) {
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+  }
+
+  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  const sensitiveWords = checkSensitive(checkText);
+  if (sensitiveWords.length > 0 && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
+  }
+  const blockedNames = checkBullyingNames(checkText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+  }
+
+  const authorName = isSC ? sc.name : (publisher.nickname || '通知发布者');
+  const votes = readVotes();
+  const newVote = {
+    id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: 'sc:' + session.id,
+    author: authorName,
+    avatar: '',
+    title: title.trim(),
+    options: options.map((text, idx) => ({
+      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+      text: text.trim(),
+      votes: 0
+    })),
+    multiple: !!multiple,
+    endTime: endTime || null,
+    createdAt: new Date().toISOString(),
+    deleted: false
+  };
+
+  votes.push(newVote);
+  writeVotes(votes);
+  res.json({ ok: true, data: newVote });
+});
+
 
 // 获取用户个人通知（系统自动发送的专属通知）
 app.get('/api/user/notifications', (req, res) => {
