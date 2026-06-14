@@ -1,3 +1,19 @@
+// ===== 加载 .env 文件 =====
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const value = trimmed.slice(eqIdx + 1).trim();
+    if (!process.env[key]) process.env[key] = value;
+  }
+  console.log('[env] 已加载 .env 文件');
+}
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -114,15 +130,23 @@ function encryptCert(plainText) {
  */
 function decryptCert(cipherText) {
   if (!cipherText || !cipherText.includes(':')) return null;
+  const [ivHex, encHex] = cipherText.split(':');
+  const iv = Buffer.from(ivHex, 'hex');
+  const enc = Buffer.from(encHex, 'hex');
+  // 先用当前密钥尝试解密
   try {
-    const [ivHex, encHex] = cipherText.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const enc = Buffer.from(encHex, 'hex');
     const decipher = crypto.createDecipheriv('aes-256-cbc', CERT_ENC_KEY, iv);
     return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
-  } catch (e) {
-    return null;
+  } catch (e) {}
+  // 兼容旧密钥（硬编码默认值）
+  const LEGACY_KEY = crypto.createHash('sha256').update('campus-wall-cert-secret-2024').digest();
+  if (!CERT_ENC_KEY.equals(LEGACY_KEY)) {
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-cbc', LEGACY_KEY, iv);
+      return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8');
+    } catch (e) {}
   }
+  return null;
 }
 
 // ===== Token 签名（HMAC-SHA256，防伪造）=====
