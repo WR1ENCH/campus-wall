@@ -317,17 +317,18 @@ function requireSuper(req, res, next) {
 
 // 维护状态检查中间件（跳过管理后台相关路径）
 function checkMaintenance(req, res, next) {
-  const path = req.path;
+  const reqPath = req.path;
   // 放行管理后台、静态文件、API 路径
-  if (path.startsWith('/api/admin/') || path === '/admin.html' || path === '/maintenance.html' || path === '/' || path.startsWith('/assets/')) {
+  if (reqPath.startsWith('/api/admin/') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath === '/' || reqPath.startsWith('/assets/')) {
     return next();
   }
   // 放行管理员相关其他路径
-  if (path.startsWith('/api/admin')) return next();
+  if (reqPath.startsWith('/api/admin')) return next();
   
   try {
     const data = readMaintenance();
-    if (data && data.enabled === true) {
+    const enabled = data && (data.enabled === true || data.enabled === 'true');
+    if (enabled) {
       // 如果是 HTML 页面请求，重定向到维护页面
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
