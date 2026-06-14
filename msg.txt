@@ -1,6 +1,0 @@
-fix: 修复H-02管理员绑定伪装 + 确认H-04已修复
-
-- [H-02] 返回帖子时验证被绑管理员账号是否仍存在，不存在则不显示认证徽章
-- [H-04] 已确认评论接口已有Token验证，无需修改
-
-Co-Authored-By: AtomCode (deepseek-v4-flash) <noreply@atomgit.com>
