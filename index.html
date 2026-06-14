@@ -1459,7 +1459,7 @@
       <div class="tape" style="--tape-rotate: -3deg;"></div>
       <h3>📝 写便利贴</h3>
       <textarea id="noteInput" placeholder="在这里写点什么..."></textarea>
-      <div id="discussionSuggest" style="display:none;position:absolute;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:300;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
+      <div id="discussionSuggest" style="display:none;position:fixed;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:9999;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:200px;"></div>
       <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="noteCount">0</span>/50</div>
       <!-- 图片上传 -->
       <div style="margin-top:10px;">
@@ -3613,6 +3613,13 @@
         return;
       }
       document.getElementById('modalOverlay').classList.add('show');
+      const inp = document.getElementById('noteInput');
+      inp.value = '#';
+      inp.focus();
+      // 将光标移到 # 后面
+      inp.selectionStart = inp.selectionEnd = 1;
+      // 更新字数
+      document.getElementById('noteCount').textContent = '1';
     }
 
 
@@ -3979,6 +3986,10 @@
       if (e && e.target !== e.currentTarget) return;
       document.getElementById('modalOverlay').classList.remove('show');
       _selectedDiscussionId = null;
+      // 清除输入，下次打开时重新预填 #
+      document.getElementById('noteInput').value = '';
+      document.getElementById('noteCount').textContent = '0';
+      hideDiscussionSuggest();
     }
 
     var _justPostedId = null;  // 记录刚发的帖子ID，供引导使用
@@ -4012,9 +4023,10 @@
         var box = document.getElementById('discussionSuggest');
         var input = document.getElementById('noteInput');
         var rect = input.getBoundingClientRect();
-        box.style.top = (rect.top - 160) + 'px';
+        // 定位到文本框下方
+        box.style.top = (rect.bottom + 4) + 'px';
         box.style.left = rect.left + 'px';
-        box.style.width = (rect.width) + 'px';
+        box.style.width = Math.max(rect.width, 200) + 'px';
         box.innerHTML = j.data.map(function(d) {
           return '<div onclick="selectDiscussionSuggest(\'' + d.id + '\',\'' + escHtml(d.title) + '\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8a0;transition:background 0.1s;" onmouseover="this.style.background=\'#fef7d0\'" onmouseout="this.style.background=\'\'">💬 ' + escHtml(d.title) + '</div>';
         }).join('');
