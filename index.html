@@ -2488,60 +2488,7 @@
     var votes = [];
     var voteUserVotes = {};
 
-    // 初始化模拟数据
-    function initMockVotes() {
-      votes = [
-        {
-          id: 'vote_1',
-          title: '你最喜欢的校园活动是什么？',
-          options: [
-            { id: 'opt_1', text: '运动会', votes: 45 },
-            { id: 'opt_2', text: '文艺晚会', votes: 62 },
-            { id: 'opt_3', text: '社团招新', votes: 38 },
-            { id: 'opt_4', text: '读书节', votes: 29 }
-          ],
-          multiple: false,
-          endTime: '2026-12-31T23:59:59',
-          createdAt: '2026-01-15T10:30:00',
-          author: '校园墙管理员',
-          authorId: 'admin'
-        },
-        {
-          id: 'vote_2',
-          title: '食堂饭菜满意度调查',
-          options: [
-            { id: 'opt_1', text: '非常满意', votes: 23 },
-            { id: 'opt_2', text: '比较满意', votes: 56 },
-            { id: 'opt_3', text: '一般', votes: 41 },
-            { id: 'opt_4', text: '不满意', votes: 12 }
-          ],
-          multiple: false,
-          endTime: '',
-          createdAt: '2026-02-20T14:00:00',
-          author: '学生会',
-          authorId: 'student_council'
-        },
-        {
-          id: 'vote_3',
-          title: '周末你通常会做什么？（可多选）',
-          options: [
-            { id: 'opt_1', text: '学习', votes: 89 },
-            { id: 'opt_2', text: '运动', votes: 67 },
-            { id: 'opt_3', text: '看电影', votes: 78 },
-            { id: 'opt_4', text: '玩游戏', votes: 54 },
-            { id: 'opt_5', text: '和朋友聚会', votes: 43 }
-          ],
-          multiple: true,
-          endTime: '2026-06-30T23:59:59',
-          createdAt: '2026-06-01T09:00:00',
-          author: '校园墙',
-          authorId: 'wall'
-        }
-      ];
-    }
-
     function openVoteModal() {
-      initMockVotes();
       var overlay = document.getElementById('voteOverlay');
       if (overlay) {
         overlay.style.display = 'flex';
@@ -2571,10 +2518,76 @@
       document.getElementById('votePage' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
 
       if (tab === 'list') {
-        renderVoteList(votes);
+        loadVoteList();
       } else if (tab === 'my') {
-        renderMyVotes();
+        loadMyVotes();
       }
+    }
+
+    function loadVoteList() {
+      var container = document.getElementById('voteListContainer');
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
+
+      var token = localStorage.getItem('userToken');
+      var headers = {};
+      if (token) headers['x-user-token'] = token;
+
+      fetch('/api/votes', {
+        method: 'GET',
+        headers: headers
+      })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            votes = data.data || [];
+            // 填充已投票信息
+            voteUserVotes = {};
+            votes.forEach(function(v) {
+              if (v.userVoted && v.userVoted.length > 0) {
+                voteUserVotes[v.id] = v.userVoted;
+              }
+            });
+            renderVoteList(votes);
+          } else {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
+          }
+        })
+        .catch(function() {
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
+        });
+    }
+
+    function loadMyVotes() {
+      var container = document.getElementById('voteMyContainer');
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
+
+      var token = localStorage.getItem('userToken');
+      var headers = {};
+      if (token) headers['x-user-token'] = token;
+
+      fetch('/api/votes', {
+        method: 'GET',
+        headers: headers
+      })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            var allVotes = data.data || [];
+            var userId = getCurrentUserId();
+            var myVotes = allVotes.filter(function(v) { return v.userId === userId; });
+            votes = allVotes;
+            if (myVotes.length === 0) {
+              container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+            } else {
+              renderVoteList(myVotes, 'voteMyContainer');
+            }
+          } else {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
+          }
+        })
+        .catch(function() {
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
+        });
     }
 
     function addVoteOption() {
@@ -2597,42 +2610,7 @@
       }
     }
 
-    function submitVote() {
-      var title = document.getElementById('voteTitleInput').value.trim();
-      var optionInputs = document.querySelectorAll('.vote-option-input');
-      var options = [];
-      optionInputs.forEach(function(input) {
-        var text = input.value.trim();
-        if (text) {
-          options.push({ id: 'opt_' + Date.now() + '_' + options.length, text: text, votes: 0 });
-        }
-      });
-
-      if (!title) {
-        alert('请输入投票标题');
-        return;
-      }
-      if (options.length < 2) {
-        alert('至少需要两个选项');
-        return;
-      }
-
-      var newVote = {
-        id: 'vote_' + Date.now(),
-        title: title,
-        options: options,
-        multiple: document.getElementById('voteMultiple').checked,
-        endTime: document.getElementById('voteEndTime').value,
-        createdAt: new Date().toISOString(),
-        author: getCurrentUserName() || '匿名用户',
-        authorId: getCurrentUserId() || 'anonymous'
-      };
-
-      votes.unshift(newVote);
-      alert('投票创建成功！');
-      switchVoteTab('list');
-
-      // 清空表单
+    function resetVoteForm() {
       document.getElementById('voteTitleInput').value = '';
       document.getElementById('voteMultiple').checked = false;
       document.getElementById('voteEndTime').value = '';
@@ -2645,9 +2623,65 @@
                            '<button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button></div>';
     }
 
-    function renderVoteList(voteList) {
-      var container = document.getElementById('voteListContainer');
-      if (!container || !voteList || voteList.length === 0) {
+    function submitVote() {
+      var title = document.getElementById('voteTitleInput').value.trim();
+      var optionInputs = document.querySelectorAll('.vote-option-input');
+      var optionTexts = [];
+      optionInputs.forEach(function(input) {
+        var text = input.value.trim();
+        if (text) optionTexts.push(text);
+      });
+
+      if (!title) {
+        alert('请输入投票标题');
+        return;
+      }
+      if (optionTexts.length < 2) {
+        alert('至少需要两个选项');
+        return;
+      }
+
+      var token = localStorage.getItem('userToken');
+      if (!token) {
+        alert('请先登录');
+        return;
+      }
+
+      var payload = {
+        title: title,
+        options: optionTexts,
+        multiple: document.getElementById('voteMultiple').checked,
+        endTime: document.getElementById('voteEndTime').value || null
+      };
+
+      fetch('/api/votes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-token': token
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            alert('投票创建成功！');
+            resetVoteForm();
+            switchVoteTab('list');
+          } else {
+            alert(data.msg || '创建失败，请重试');
+          }
+        })
+        .catch(function() {
+          alert('网络错误，请稍后重试');
+        });
+    }
+
+    function renderVoteList(voteList, containerId) {
+      var useId = containerId || 'voteListContainer';
+      var container = document.getElementById(useId);
+      if (!container) return;
+      if (!voteList || voteList.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
         return;
       }
@@ -2655,8 +2689,10 @@
       var html = '';
       voteList.forEach(function(vote) {
         var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
-        var totalVotes = vote.options.reduce(function(sum, opt) { return sum + opt.votes; }, 0);
-        var hasVoted = voteUserVotes[vote.id];
+        var totalVotes = vote.totalVotes !== undefined
+          ? vote.totalVotes
+          : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+        var hasVoted = voteUserVotes[vote.id] && voteUserVotes[vote.id].length > 0;
         var userVotedOptions = hasVoted ? voteUserVotes[vote.id] : [];
 
         html += '<div class="vote-card">';
@@ -2739,31 +2775,33 @@
         return;
       }
 
-      var vote = votes.find(function(v) { return v.id === voteId; });
-      if (vote) {
-        selected.forEach(function(optId) {
-          var opt = vote.options.find(function(o) { return o.id === optId; });
-          if (opt) {
-            opt.votes++;
-          }
-        });
-      }
-
-      renderVoteList(votes);
-    }
-
-    function renderMyVotes() {
-      var container = document.getElementById('voteMyContainer');
-      var myVotes = votes.filter(function(v) {
-        return v.authorId === getCurrentUserId() || v.authorId === 'anonymous';
-      });
-
-      if (!myVotes || myVotes.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+      var token = localStorage.getItem('userToken');
+      if (!token) {
+        alert('请先登录');
         return;
       }
 
-      renderVoteList(myVotes);
+      fetch('/api/votes/' + voteId + '/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-token': token
+        },
+        body: JSON.stringify({ optionIds: selected })
+      })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            alert('投票成功！');
+            // 刷新列表
+            loadVoteList();
+          } else {
+            alert(data.msg || '投票失败，请重试');
+          }
+        })
+        .catch(function() {
+          alert('网络错误，请稍后重试');
+        });
     }
 
     function getCurrentUserName() {

@@ -263,6 +263,14 @@ function writePasskey(data) {
 function readApps() { return all('notice_applications'); }
 function writeApps(data) { dropAndInsert('notice_applications', data); }
 
+// Votes
+function readVotes() { return all('votes'); }
+function writeVotes(data) { dropAndInsert('votes', data); }
+
+// Vote records (who voted on which option)
+function readVoteRecords() { return all('vote_records'); }
+function writeVoteRecords(data) { dropAndInsert('vote_records', data); }
+
 // ===== 已删除内容记录 =====
 function readDeletedItems() { return all('deleted_items'); }
 function writeDeletedItems(data) { dropAndInsert('deleted_items', data); }
@@ -296,4 +304,6 @@ module.exports = {
   readPasskey, writePasskey,
   readApps, writeApps,
   readDeletedItems, writeDeletedItems, addDeletedItem,
+  readVotes, writeVotes,
+  readVoteRecords, writeVoteRecords,
 };

@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
@@ -228,6 +228,14 @@ function ensureDir() {
 function readPosts () { return db.readPosts(); }
 
 function writePosts (posts) { db.writePosts(posts); }
+
+function readVotes () { return db.readVotes(); }
+
+function writeVotes (votes) { db.writeVotes(votes); }
+
+function readVoteRecords () { return db.readVoteRecords(); }
+
+function writeVoteRecords (records) { db.writeVoteRecords(records); }
 
 function readAdmins () { return db.readAdmins(); }
 
@@ -4354,6 +4362,180 @@ app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
   if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
   answers[idx].deleted = true;
   writeQAAnswers(answers);
+  res.json({ ok: true });
+});
+
+// ===== 投票功能 =====
+// 获取投票列表（按时间倒序，可选包含已投票信息）
+app.get('/api/votes', (req, res) => {
+  const votes = readVotes();
+  const records = readVoteRecords();
+
+  const token = req.headers['x-user-token'];
+  let session = null;
+  if (token) {
+    try { session = verifyUserToken(token); } catch (e) { session = null; }
+  }
+
+  const list = votes
+    .filter(v => !v.deleted)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map(v => {
+      const totalVotes = v.options.reduce((s, opt) => s + (opt.votes || 0), 0);
+      const userVoted = session
+        ? records.filter(r => r.voteId === v.id && r.userId === session.id).map(r => r.optionId)
+        : [];
+      return { ...v, totalVotes, userVoted };
+    });
+
+  res.json({ ok: true, data: list });
+});
+
+// 创建投票（需要登录）
+app.post('/api/votes', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { title, options, multiple = false, endTime = null, sensitiveForce = false } = req.body;
+
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+  if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+  for (const opt of options) {
+    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+  }
+
+  // 敏感词检测
+  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  const sensitiveWords = checkSensitive(checkText);
+  if (sensitiveWords.length > 0 && !sensitiveForce) {
+    return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
+  }
+  const blockedNames = checkBullyingNames(checkText);
+  if (blockedNames.length > 0) {
+    return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+  }
+
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+
+  const votes = readVotes();
+  const newVote = {
+    id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId: session.id,
+    author: user.nickname,
+    avatar: user.avatar || '',
+    title: title.trim(),
+    options: options.map((text, idx) => ({
+      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+      text: text.trim(),
+      votes: 0
+    })),
+    multiple: !!multiple,
+    endTime: endTime || null,
+    createdAt: new Date().toISOString(),
+    deleted: false
+  };
+
+  votes.push(newVote);
+  writeVotes(votes);
+  res.json({ ok: true, data: newVote });
+});
+
+// 参与投票（需要登录）
+app.post('/api/votes/:id/vote', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  const { optionIds } = req.body;
+  if (!optionIds || !Array.isArray(optionIds) || optionIds.length === 0) {
+    return res.json({ ok: false, msg: '请选择选项' });
+  }
+
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id && !v.deleted);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+
+  // 检查截止时间
+  if (vote.endTime && new Date(vote.endTime) < new Date()) {
+    return res.json({ ok: false, msg: '投票已结束' });
+  }
+
+  // 检查是否已投票
+  const records = readVoteRecords();
+  const existing = records.find(r => r.voteId === vote.id && r.userId === session.id);
+  if (existing) return res.json({ ok: false, msg: '你已经投过票了' });
+
+  // 校验选项
+  if (!vote.multiple && optionIds.length !== 1) {
+    return res.json({ ok: false, msg: '该投票只能选择一个选项' });
+  }
+  for (const optId of optionIds) {
+    const opt = vote.options.find(o => o.id === optId);
+    if (!opt) return res.json({ ok: false, msg: '选项不存在' });
+    opt.votes = (opt.votes || 0) + 1;
+    records.push({
+      id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      voteId: vote.id,
+      optionId: optId,
+      userId: session.id,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  writeVotes(votes);
+  writeVoteRecords(records);
+
+  const totalVotes = vote.options.reduce((s, opt) => s + (opt.votes || 0), 0);
+  res.json({ ok: true, data: { ...vote, totalVotes, userVoted: optionIds } });
+});
+
+// 删除投票（本人）
+app.delete('/api/votes/:id', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  const votes = readVotes();
+  const idx = votes.findIndex(v => v.id === req.params.id && !v.deleted);
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
+  if (votes[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
+
+  votes[idx].deleted = true;
+  writeVotes(votes);
+  res.json({ ok: true });
+});
+
+// 管理员获取投票列表
+app.get('/api/admin/votes', requireAdmin, (req, res) => {
+  const votes = readVotes();
+  const records = readVoteRecords();
+  const list = votes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({
+    ok: true,
+    data: list.map(v => ({
+      ...v,
+      totalVotes: v.options.reduce((s, o) => s + (o.votes || 0), 0),
+      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length
+    }))
+  });
+});
+
+// 管理员删除投票
+app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
+  const votes = readVotes();
+  const idx = votes.findIndex(v => v.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
+  votes[idx].deleted = true;
+  writeVotes(votes);
   res.json({ ok: true });
 });
 
