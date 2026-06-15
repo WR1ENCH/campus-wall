@@ -18,10 +18,15 @@
   }
 
   /* 背景粒子动画 */
-  .bg-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+  .bg-particles {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  }
   .bg-particles span {
-    position: absolute; display: block; width: 8px; height: 8px;
-    background: rgba(99, 102, 241, 0.15); border-radius: 50%;
+    position: absolute;
+    display: block;
+    width: 8px; height: 8px;
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: 50%;
     animation: float-up 12s linear infinite;
   }
   .bg-particles span:nth-child(1) { left: 10%; width: 4px; height: 4px; animation-delay: 0s; animation-duration: 10s; }
@@ -32,6 +37,7 @@
   .bg-particles span:nth-child(6) { left: 85%; width: 4px; height: 4px; animation-delay: 5s; animation-duration: 12s; }
   .bg-particles span:nth-child(7) { left: 15%; width: 6px; height: 6px; animation-delay: 6s; animation-duration: 16s; }
   .bg-particles span:nth-child(8) { left: 60%; width: 3px; height: 3px; animation-delay: 7s; animation-duration: 10s; }
+
   @keyframes float-up {
     0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
     10% { opacity: 1; }
@@ -42,10 +48,14 @@
   /* 主卡片 */
   .card {
     position: relative; z-index: 1;
-    background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px);
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(20px);
     border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 24px; padding: 60px 48px 48px;
-    max-width: 460px; width: 100%; text-align: center;
+    border-radius: 24px;
+    padding: 60px 48px 48px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
     animation: card-in 0.6s ease-out;
   }
@@ -55,99 +65,141 @@
   }
 
   /* 齿轮图标 */
-  .icon-wrap { width: 100px; height: 100px; margin: 0 auto 28px; position: relative; }
+  .icon-wrap {
+    width: 100px; height: 100px;
+    margin: 0 auto 28px;
+    position: relative;
+  }
   .gear {
-    position: absolute; font-size: 64px; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); animation: spin 4s linear infinite;
+    position: absolute;
+    font-size: 64px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 4s linear infinite;
     filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));
   }
   .gear-small {
-    position: absolute; font-size: 32px; top: 8px; right: -4px;
+    position: absolute;
+    font-size: 32px;
+    top: 8px; right: -4px;
     animation: spin-reverse 3s linear infinite;
     filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
   }
   @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
   @keyframes spin-reverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
 
+  /* 状态标签 */
   .status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(251, 191, 36, 0.15); color: #fbbf24;
-    padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
-    margin-bottom: 20px; border: 1px solid rgba(251, 191, 36, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
   }
   .status-dot {
-    width: 8px; height: 8px; background: #fbbf24; border-radius: 50%;
+    width: 8px; height: 8px;
+    background: #fbbf24;
+    border-radius: 50%;
     animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  h1 { font-size: 28px; color: #f1f5f9; margin-bottom: 12px; font-weight: 700; letter-spacing: -0.5px; }
-  .divider { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin: 0 auto 24px; }
-  .desc { font-size: 15px; color: #94a3b8; line-height: 1.8; margin-bottom: 8px; }
-
-  .custom-msg {
-    background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 12px; padding: 16px 20px; margin: 20px 0;
-    font-size: 14px; color: #c7d2fe; line-height: 1.7; text-align: left; display: none;
+  h1 {
+    font-size: 28px;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
   }
-  .custom-msg-label { font-size: 12px; color: #818cf8; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  .info-row { display: flex; justify-content: center; gap: 24px; margin: 20px 0 0; font-size: 12px; color: #64748b; }
-  .info-item { display: flex; align-items: center; gap: 4px; }
+  .divider {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+    margin: 0 auto 24px;
+  }
 
+  .desc {
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.8;
+    margin-bottom: 8px;
+  }
+
+  /* 自定义消息 */
+  .custom-msg {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #c7d2fe;
+    line-height: 1.7;
+    text-align: left;
+    display: none;
+  }
+  .custom-msg-label {
+    font-size: 12px;
+    color: #818cf8;
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* 信息区 */
+  .info-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 20px 0 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* 自动刷新提示 */
   .refresh-hint {
-    margin-top: 24px; font-size: 12px; color: #475569;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-top: 24px;
+    font-size: 12px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
   .refresh-hint .spinner {
-    width: 12px; height: 12px; border: 2px solid rgba(99, 102, 241, 0.2);
-    border-top-color: #6366f1; border-radius: 50%; animation: spin 1s linear infinite;
+    width: 12px; height: 12px;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 
-  /* 测试人员入口 */
-  .test-entry {
-    margin-top: 28px; padding-top: 24px;
-    border-top: 1px solid rgba(99, 102, 241, 0.15);
+  .footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: #475569;
   }
-  .test-entry-toggle {
-    background: none; border: 1px solid rgba(99, 102, 241, 0.3);
-    color: #818cf8; padding: 8px 20px; border-radius: 8px;
-    font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s;
-  }
-  .test-entry-toggle:hover { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; }
-  .test-form { display: none; margin-top: 16px; text-align: left; }
-  .test-form.active { display: block; }
-  .test-form label { font-size: 12px; color: #818cf8; font-weight: 600; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .test-form input {
-    width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3);
-    background: rgba(15, 23, 42, 0.6); color: #e2e8f0; font-size: 14px; font-family: inherit;
-    outline: none; margin-bottom: 12px; transition: border-color 0.2s;
-  }
-  .test-form input:focus { border-color: #6366f1; }
-  .test-form input::placeholder { color: #475569; }
-  .captcha-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .captcha-row input { flex: 1; margin-bottom: 0; }
-  .captcha-img {
-    height: 40px; border-radius: 6px; cursor: pointer; flex-shrink: 0;
-    border: 1px solid rgba(99, 102, 241, 0.2); background: #1e293b;
-  }
-  .test-submit {
-    width: 100%; padding: 10px; border: none; border-radius: 8px;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: white; font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: inherit; transition: opacity 0.2s;
-  }
-  .test-submit:hover { opacity: 0.9; }
-  .test-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-  .test-error { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 18px; text-align: center; }
-
-  .footer { margin-top: 28px; font-size: 12px; color: #475569; }
   .footer a { color: #6366f1; text-decoration: none; }
   .footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
+<!-- 背景粒子 -->
 <div class="bg-particles">
   <span></span><span></span><span></span><span></span>
   <span></span><span></span><span></span><span></span>
@@ -178,55 +230,30 @@
     <span>页面将自动刷新检查状态</span>
   </div>
 
-  <!-- 测试人员入口 -->
-  <div class="test-entry">
-    <button class="test-entry-toggle" onclick="toggleTestForm()">🔑 测试人员入口</button>
-    <div class="test-form" id="testForm">
-      <label>测试密钥</label>
-      <input type="text" id="testKeyInput" placeholder="请输入测试密钥（如 TW-XXXXXXXX）" maxlength="11" autocomplete="off">
-      <label>验证码</label>
-      <div class="captcha-row">
-        <input type="text" id="captchaInput" placeholder="输入验证码" maxlength="6">
-        <img class="captcha-img" id="captchaImg" onclick="loadCaptcha()" alt="验证码">
-      </div>
-      <button class="test-submit" id="testSubmitBtn" onclick="submitTestKey()">验证并进入</button>
-      <div class="test-error" id="testError"></div>
-    </div>
-  </div>
-
   <div class="footer">
     Made with ❤️ · <a href="/admin.html">校园墙</a>
   </div>
 </div>
 
 <script>
-  let captchaId = '';
-
-  async function loadCaptcha() {
-    try {
-      const res = await fetch('/api/captcha');
-      const json = await res.json();
-      if (json.ok) {
-        captchaId = json.data.id;
-        document.getElementById('captchaImg').src = 'data:image/svg+xml;base64,' + btoa(json.data.svg);
-      }
-    } catch (e) {}
-  }
-
+  // 获取维护信息并显示
   async function loadInfo() {
     try {
       const res = await fetch('/api/maintenance/info');
       const json = await res.json();
       if (json.ok && json.data) {
         const d = json.data;
+        // 显示自定义消息
         if (d.message) {
           document.getElementById('customMsg').style.display = 'block';
           document.getElementById('customMsgText').textContent = d.message;
         }
+        // 显示维护时间
         if (d.updatedAt) {
           document.getElementById('infoRow').style.display = 'flex';
           document.getElementById('maintTime').textContent = '开始于 ' + new Date(d.updatedAt).toLocaleString('zh-CN');
         }
+        // 如果维护已关闭，跳转回首页
         if (!d.enabled) {
           window.location.href = '/';
         }
@@ -234,52 +261,8 @@
     } catch (e) {}
   }
 
-  function toggleTestForm() {
-    const form = document.getElementById('testForm');
-    form.classList.toggle('active');
-    if (form.classList.contains('active') && !captchaId) {
-      loadCaptcha();
-    }
-  }
-
-  async function submitTestKey() {
-    const testKey = document.getElementById('testKeyInput').value.trim();
-    const captchaText = document.getElementById('captchaInput').value.trim();
-    const errEl = document.getElementById('testError');
-    const btn = document.getElementById('testSubmitBtn');
-
-    errEl.textContent = '';
-    if (!testKey) { errEl.textContent = '请输入测试密钥'; return; }
-    if (!captchaText) { errEl.textContent = '请输入验证码'; return; }
-
-    btn.disabled = true;
-    btn.textContent = '验证中…';
-
-    try {
-      const res = await fetch('/api/maintenance/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testKey, captchaId, captchaText })
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        errEl.textContent = json.msg;
-        loadCaptcha();
-        document.getElementById('captchaInput').value = '';
-        return;
-      }
-      // 设置 bypass cookie 并跳转
-      document.cookie = 'maintenance_bypass=' + json.data.token + '; path=/; max-age=' + (4 * 3600);
-      window.location.href = '/';
-    } catch (e) {
-      errEl.textContent = '网络错误，请重试';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '验证并进入';
-    }
-  }
-
   loadInfo();
+  // 每 30 秒自动检查维护状态
   setInterval(loadInfo, 30000);
 </script>
 
