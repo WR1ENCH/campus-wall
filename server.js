@@ -24,6 +24,7 @@ const db = require('./db');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
+const maintenance = require('./maintenance');
 
 // ===== 读取本地 git 版本号 =====
 let cachedGitSha = 'dev';
@@ -260,8 +261,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(__dirname)); // 静态文件服务
 app.use(checkMaintenance); // 维护状态检查
+app.use(express.static(__dirname)); // 静态文件服务
 
 const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
 
@@ -315,29 +316,25 @@ function requireSuper(req, res, next) {
   next();
 }
 
-// 维护状态检查中间件（跳过管理后台相关路径）
+// 维护状态检查中间件
 function checkMaintenance(req, res, next) {
   const reqPath = req.path;
-  // 放行管理后台、静态文件、API 路径
-  if (reqPath.startsWith('/api/admin/') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath === '/' || reqPath.startsWith('/assets/')) {
+  // 仅放行管理后台路径和维护页面自身
+  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance')) {
     return next();
   }
-  // 放行管理员相关其他路径
-  if (reqPath.startsWith('/api/admin')) return next();
-  
+
   try {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
-      // 如果是 HTML 页面请求，重定向到维护页面
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
-      // API 请求返回错误
       return res.json({ ok: false, msg: '系统维护中，暂时无法访问', code: 'MAINTENANCE' });
     }
   } catch (e) {
-    // 文件不存在等，正常放行
+    console.error('[maintenance] 读取维护状态失败:', e.message);
   }
   next();
 }
@@ -5946,7 +5943,24 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
 });
 
 // ===== 维护状态管理 =====
-// 获取当前维护状态
+// 公开接口：维护页面轮询用（不暴露敏感信息）
+app.get('/api/maintenance/info', (req, res) => {
+  try {
+    const data = readMaintenance() || { enabled: false };
+    res.json({
+      ok: true,
+      data: {
+        enabled: data.enabled === true || data.enabled === 'true',
+        message: data.message || null,
+        updatedAt: data.updatedAt || null
+      }
+    });
+  } catch (e) {
+    res.json({ ok: true, data: { enabled: false } });
+  }
+});
+
+// 管理员：获取当前维护状态
 app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   try {
     const data = readMaintenance() || { enabled: false };
@@ -5956,19 +5970,79 @@ app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   }
 });
 
-// 切换维护状态
+// 管理员：切换维护状态（支持自定义消息）
 app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
-  const { enabled } = req.body;
+  const { enabled, message } = req.body;
   if (typeof enabled !== 'boolean') {
     return res.json({ ok: false, msg: '参数无效' });
   }
   const data = {
     enabled,
+    message: enabled && message ? String(message).slice(0, 500) : null,
     updatedAt: new Date().toISOString(),
     updatedBy: req.admin.name || req.admin.id
   };
   writeMaintenance(data);
   res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
+});
+
+// ===== 测试密钥管理（委托 maintenance 模块）=====
+
+// 管理员：生成测试密钥
+app.post('/api/admin/maintenance/test-key/create', requireAdmin, (req, res) => {
+  try {
+    const result = maintenance.createTestKey();
+    res.json({ ok: true, data: result });
+  } catch (e) {
+    res.json({ ok: false, msg: '生成失败: ' + e.message });
+  }
+});
+
+// 管理员：获取测试密钥列表
+app.get('/api/admin/maintenance/test-key/list', requireAdmin, (req, res) => {
+  try {
+    const keys = maintenance.listTestKeys();
+    res.json({ ok: true, data: keys });
+  } catch (e) {
+    res.json({ ok: false, msg: '获取失败' });
+  }
+});
+
+// 管理员：删除测试密钥
+app.delete('/api/admin/maintenance/test-key/:key', requireAdmin, (req, res) => {
+  try {
+    maintenance.deleteTestKey(req.params.key);
+    res.json({ ok: true, msg: '已删除' });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败' });
+  }
+});
+
+// 公开：验证测试密钥 + 验证码，通过后返回临时访问令牌
+app.post('/api/maintenance/verify', (req, res) => {
+  const { testKey, captchaId, captchaText } = req.body;
+
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId);
+
+  // 验证测试密钥
+  const result = maintenance.verifyTestKey(testKey);
+  if (!result.valid) {
+    return res.json({ ok: false, msg: result.msg });
+  }
+
+  // 签发临时访问令牌（有效期 4 小时）
+  const token = signToken({
+    type: 'maintenance_bypass',
+    issuedAt: Date.now(),
+    loginAt: Date.now()
+  });
+
+  res.json({ ok: true, msg: '验证通过，正在进入…', data: { token } });
 });
 
 app.listen(PORT, () => {

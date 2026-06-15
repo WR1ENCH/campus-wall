@@ -4291,6 +4291,16 @@
                   🔗
                 </button>
               </div>
+              <div class="note-comment-input" style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;gap:4px;">
+                <input type="text" id="commentInput_${post.id}" placeholder="写评论..." maxlength="100" 
+                       style="flex:1;padding:4px 8px;border:1px dashed #ccc;border-radius:4px;font-size:12px;background:rgba(255,255,255,0.6);"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();submitCommentFromCard('${post.id}')}">
+                <button class="note-comment-btn" onclick="submitCommentFromCard('${post.id}')" 
+                        style="padding:4px 8px;border:none;border-radius:4px;background:#92400e;color:white;font-size:12px;cursor:pointer;"
+                        title="发表评论">
+                  💬
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -4307,6 +4317,10 @@
               <span>⚠️</span>
               <span>🔗</span>
             </span>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;gap:4px;">
+            <input type="text" placeholder="写评论..." style="flex:1;padding:4px 8px;border:1px dashed #ccc;border-radius:4px;font-size:12px;background:rgba(255,255,255,0.6);">
+            <button style="padding:4px 8px;border:none;border-radius:4px;background:#92400e;color:white;font-size:12px;">💬</button>
           </div>
         `;
         tempContainer.appendChild(temp);
@@ -4358,6 +4372,50 @@
           renderNotes(currentFilter);
           if (post.liked) showToast('❤️ 已点赞！');
         }
+      }
+    }
+
+    async function submitCommentFromCard(postId) {
+      const input = document.getElementById('commentInput_' + postId);
+      if (!input) return;
+      const content = input.value.trim();
+      
+      if (!content) {
+        showToast('⚠️ 评论内容不能为空');
+        return;
+      }
+      if (content.length > 100) {
+        showToast('⚠️ 评论不能超过100字');
+        return;
+      }
+      if (!currentUser) {
+        showToast('⚠️ 请先登录');
+        showLoginModal(true);
+        return;
+      }
+      
+      try {
+        const res = await fetch(API + '/api/posts/' + postId + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          input.value = '';
+          showToast('💬 评论已发布');
+          // 更新本地评论计数
+          const post = posts.find(p => p.id === postId);
+          if (post) {
+            post.comments = (post.comments || 0) + 1;
+            post.commentsCount = (post.commentsCount || 0) + 1;
+          }
+        } else {
+          showToast(json.msg || '⚠️ 评论失败');
+        }
+      } catch (e) {
+        console.error('[评论] 出错', e);
+        showToast('❌ 网络错误');
       }
     }
 
