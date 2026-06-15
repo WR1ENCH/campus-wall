@@ -3,268 +3,185 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔧 系统维护中 · 校园墙</title>
+<title>系统维护中 - 校园墙</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    overflow: hidden;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; overflow: hidden;
   }
-
-  /* 背景粒子动画 */
-  .bg-particles {
-    position: fixed; inset: 0; z-index: 0; overflow: hidden;
-  }
+  .bg-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
   .bg-particles span {
-    position: absolute;
-    display: block;
-    width: 8px; height: 8px;
-    background: rgba(99, 102, 241, 0.15);
-    border-radius: 50%;
+    position: absolute; display: block; width: 8px; height: 8px;
+    background: rgba(99,102,241,0.15); border-radius: 50%;
     animation: float-up 12s linear infinite;
   }
-  .bg-particles span:nth-child(1) { left: 10%; width: 4px; height: 4px; animation-delay: 0s; animation-duration: 10s; }
-  .bg-particles span:nth-child(2) { left: 25%; width: 6px; height: 6px; animation-delay: 2s; animation-duration: 14s; }
-  .bg-particles span:nth-child(3) { left: 40%; width: 3px; height: 3px; animation-delay: 4s; animation-duration: 11s; }
-  .bg-particles span:nth-child(4) { left: 55%; width: 7px; height: 7px; animation-delay: 1s; animation-duration: 13s; }
-  .bg-particles span:nth-child(5) { left: 70%; width: 5px; height: 5px; animation-delay: 3s; animation-duration: 15s; }
-  .bg-particles span:nth-child(6) { left: 85%; width: 4px; height: 4px; animation-delay: 5s; animation-duration: 12s; }
-  .bg-particles span:nth-child(7) { left: 15%; width: 6px; height: 6px; animation-delay: 6s; animation-duration: 16s; }
-  .bg-particles span:nth-child(8) { left: 60%; width: 3px; height: 3px; animation-delay: 7s; animation-duration: 10s; }
-
+  .bg-particles span:nth-child(1) { left:10%; width:4px; height:4px; animation-delay:0s; animation-duration:10s; }
+  .bg-particles span:nth-child(2) { left:25%; width:6px; height:6px; animation-delay:2s; animation-duration:14s; }
+  .bg-particles span:nth-child(3) { left:40%; width:3px; height:3px; animation-delay:4s; animation-duration:11s; }
+  .bg-particles span:nth-child(4) { left:55%; width:7px; height:7px; animation-delay:1s; animation-duration:13s; }
+  .bg-particles span:nth-child(5) { left:70%; width:5px; height:5px; animation-delay:3s; animation-duration:15s; }
+  .bg-particles span:nth-child(6) { left:85%; width:4px; height:4px; animation-delay:5s; animation-duration:12s; }
   @keyframes float-up {
     0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
+    10% { opacity: 1; } 90% { opacity: 1; }
     100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
   }
-
-  /* 主卡片 */
   .card {
     position: relative; z-index: 1;
-    background: rgba(30, 41, 59, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 24px;
-    padding: 60px 48px 48px;
-    max-width: 460px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+    background: rgba(30,41,59,0.8); backdrop-filter: blur(20px);
+    border: 1px solid rgba(99,102,241,0.2); border-radius: 24px;
+    padding: 60px 48px 48px; max-width: 460px; width: 100%;
+    text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
     animation: card-in 0.6s ease-out;
   }
   @keyframes card-in {
     from { opacity: 0; transform: translateY(30px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-
-  /* 齿轮图标 */
-  .icon-wrap {
-    width: 100px; height: 100px;
-    margin: 0 auto 28px;
-    position: relative;
-  }
-  .gear {
-    position: absolute;
-    font-size: 64px;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    animation: spin 4s linear infinite;
-    filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));
-  }
-  .gear-small {
-    position: absolute;
-    font-size: 32px;
-    top: 8px; right: -4px;
-    animation: spin-reverse 3s linear infinite;
-    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
-  }
-  @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+  .icon-wrap { width: 100px; height: 100px; margin: 0 auto 28px; position: relative; }
+  .gear { position: absolute; font-size: 64px; top: 50%; left: 50%; transform: translate(-50%,-50%); animation: spin 4s linear infinite; }
+  .gear-small { position: absolute; font-size: 32px; top: 8px; right: -4px; animation: spin-reverse 3s linear infinite; }
+  @keyframes spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
   @keyframes spin-reverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-
-  /* 状态标签 */
   .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(251, 191, 36, 0.15);
-    color: #fbbf24;
-    padding: 6px 18px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(251,191,36,0.15); color: #fbbf24;
+    padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    margin-bottom: 20px; border: 1px solid rgba(251,191,36,0.2);
   }
-  .status-dot {
-    width: 8px; height: 8px;
-    background: #fbbf24;
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-  h1 {
-    font-size: 28px;
-    color: #f1f5f9;
-    margin-bottom: 12px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  .divider {
-    width: 50px;
-    height: 3px;
-    background: linear-gradient(90deg, #6366f1, #a855f7);
-    border-radius: 2px;
-    margin: 0 auto 24px;
-  }
-
-  .desc {
-    font-size: 15px;
-    color: #94a3b8;
-    line-height: 1.8;
-    margin-bottom: 8px;
-  }
-
-  /* 自定义消息 */
+  .status-dot { width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  h1 { font-size: 28px; color: #f1f5f9; margin-bottom: 12px; font-weight: 700; }
+  .divider { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin: 0 auto 24px; }
+  .desc { font-size: 15px; color: #94a3b8; line-height: 1.8; margin-bottom: 8px; }
   .custom-msg {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 20px 0;
-    font-size: 14px;
-    color: #c7d2fe;
-    line-height: 1.7;
-    text-align: left;
-    display: none;
+    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 12px; padding: 16px 20px; margin: 20px 0;
+    font-size: 14px; color: #c7d2fe; line-height: 1.7; text-align: left; display: none;
   }
-  .custom-msg-label {
-    font-size: 12px;
-    color: #818cf8;
-    font-weight: 600;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* 信息区 */
-  .info-row {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    margin: 20px 0 0;
-    font-size: 12px;
-    color: #64748b;
-  }
-  .info-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  /* 自动刷新提示 */
+  .custom-msg-label { font-size: 12px; color: #818cf8; font-weight: 600; margin-bottom: 6px; }
+  .info-row { display: flex; justify-content: center; gap: 24px; margin: 20px 0 0; font-size: 12px; color: #64748b; }
   .refresh-hint {
-    margin-top: 24px;
-    font-size: 12px;
-    color: #475569;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    margin-top: 24px; font-size: 12px; color: #475569;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .refresh-hint .spinner {
-    width: 12px; height: 12px;
-    border: 2px solid rgba(99, 102, 241, 0.2);
-    border-top-color: #6366f1;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    width: 12px; height: 12px; border: 2px solid rgba(99,102,241,0.2);
+    border-top-color: #6366f1; border-radius: 50%; animation: spin-sm 1s linear infinite;
   }
-
-  .footer {
-    margin-top: 28px;
-    font-size: 12px;
-    color: #475569;
+  @keyframes spin-sm { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .test-entry { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(99,102,241,0.15); }
+  .test-toggle {
+    background: none; border: 1px solid rgba(99,102,241,0.3);
+    color: #818cf8; padding: 8px 20px; border-radius: 8px;
+    font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s;
   }
+  .test-toggle:hover { background: rgba(99,102,241,0.1); border-color: #6366f1; }
+  .test-form { display: none; margin-top: 16px; text-align: left; }
+  .test-form.active { display: block; }
+  .test-form label { font-size: 12px; color: #818cf8; font-weight: 600; display: block; margin-bottom: 4px; }
+  .test-form input[type="text"] {
+    width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3);
+    background: rgba(15,23,42,0.6); color: #e2e8f0; font-size: 14px; font-family: inherit;
+    outline: none; margin-bottom: 12px; transition: border-color 0.2s;
+  }
+  .test-form input[type="text"]:focus { border-color: #6366f1; }
+  .captcha-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .captcha-row input { flex: 1; margin-bottom: 0 !important; }
+  .captcha-img { height: 40px; border-radius: 6px; cursor: pointer; flex-shrink: 0; border: 1px solid rgba(99,102,241,0.2); background: #1e293b; }
+  .test-submit {
+    width: 100%; padding: 10px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: opacity 0.2s;
+  }
+  .test-submit:hover { opacity: 0.9; }
+  .test-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .test-error { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 18px; text-align: center; }
+  .footer { margin-top: 28px; font-size: 12px; color: #475569; }
   .footer a { color: #6366f1; text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-
-<!-- 背景粒子 -->
 <div class="bg-particles">
-  <span></span><span></span><span></span><span></span>
-  <span></span><span></span><span></span><span></span>
+  <span></span><span></span><span></span><span></span><span></span><span></span>
 </div>
-
 <div class="card">
-  <div class="icon-wrap">
-    <div class="gear">⚙️</div>
-    <div class="gear-small">🔧</div>
-  </div>
+  <div class="icon-wrap"><div class="gear">&#9881;</div><div class="gear-small">&#128295;</div></div>
   <div class="status-badge"><span class="status-dot"></span>维护中</div>
   <h1>系统维护中</h1>
   <div class="divider"></div>
   <p class="desc">校园墙正在进行维护升级</p>
   <p class="desc">暂时无法访问，请稍后再试</p>
-
   <div class="custom-msg" id="customMsg">
-    <div class="custom-msg-label">📢 管理员公告</div>
+    <div class="custom-msg-label">管理员公告</div>
     <div id="customMsgText"></div>
   </div>
-
   <div class="info-row" id="infoRow" style="display:none;">
-    <div class="info-item">🕐 <span id="maintTime"></span></div>
+    <div><span id="maintTime"></span></div>
   </div>
-
-  <div class="refresh-hint">
-    <div class="spinner"></div>
-    <span>页面将自动刷新检查状态</span>
+  <div class="refresh-hint"><div class="spinner"></div><span>页面将自动刷新</span></div>
+  <div class="test-entry">
+    <button class="test-toggle" onclick="toggleTestForm()">测试人员入口</button>
+    <div class="test-form" id="testForm">
+      <label>测试密钥</label>
+      <input type="text" id="testKeyInput" placeholder="请输入测试密钥（如 TW-XXXXXXXX）" maxlength="11" autocomplete="off">
+      <label>验证码</label>
+      <div class="captcha-row">
+        <input type="text" id="captchaInput" placeholder="输入验证码" maxlength="6">
+        <img class="captcha-img" id="captchaImg" onclick="loadCaptcha()" alt="验证码">
+      </div>
+      <button class="test-submit" id="testSubmitBtn" onclick="submitTestKey()">验证并进入</button>
+      <div class="test-error" id="testError"></div>
+    </div>
   </div>
-
-  <div class="footer">
-    Made with ❤️ · <a href="/admin.html">校园墙</a>
-  </div>
+  <div class="footer">校园墙</div>
 </div>
-
 <script>
-  // 获取维护信息并显示
-  async function loadInfo() {
-    try {
-      const res = await fetch('/api/maintenance/info');
-      const json = await res.json();
-      if (json.ok && json.data) {
-        const d = json.data;
-        // 显示自定义消息
-        if (d.message) {
-          document.getElementById('customMsg').style.display = 'block';
-          document.getElementById('customMsgText').textContent = d.message;
-        }
-        // 显示维护时间
-        if (d.updatedAt) {
-          document.getElementById('infoRow').style.display = 'flex';
-          document.getElementById('maintTime').textContent = '开始于 ' + new Date(d.updatedAt).toLocaleString('zh-CN');
-        }
-        // 如果维护已关闭，跳转回首页
-        if (!d.enabled) {
-          window.location.href = '/';
-        }
-      }
-    } catch (e) {}
-  }
-
-  loadInfo();
-  // 每 30 秒自动检查维护状态
-  setInterval(loadInfo, 30000);
+var captchaId = '';
+function loadCaptcha() {
+  fetch('/api/captcha').then(function(r){return r.json()}).then(function(j){
+    if(j.ok){ captchaId=j.data.id; document.getElementById('captchaImg').src='data:image/svg+xml;base64,'+btoa(j.data.svg); }
+  });
+}
+function loadInfo() {
+  fetch('/api/maintenance/info').then(function(r){return r.json()}).then(function(j){
+    if(j.ok&&j.data){
+      if(j.data.message){ document.getElementById('customMsg').style.display='block'; document.getElementById('customMsgText').textContent=j.data.message; }
+      if(j.data.updatedAt){ document.getElementById('infoRow').style.display='flex'; document.getElementById('maintTime').textContent='开始于 '+new Date(j.data.updatedAt).toLocaleString('zh-CN'); }
+      if(!j.data.enabled) window.location.href='/';
+    }
+  });
+}
+function toggleTestForm() {
+  var f=document.getElementById('testForm');
+  f.classList.toggle('active');
+  if(f.classList.contains('active')&&!captchaId) loadCaptcha();
+}
+function submitTestKey() {
+  var testKey=document.getElementById('testKeyInput').value.trim();
+  var captchaText=document.getElementById('captchaInput').value.trim();
+  var errEl=document.getElementById('testError');
+  var btn=document.getElementById('testSubmitBtn');
+  errEl.textContent='';
+  if(!testKey){ errEl.textContent='请输入测试密钥'; return; }
+  if(!captchaText){ errEl.textContent='请输入验证码'; return; }
+  btn.disabled=true; btn.textContent='验证中...';
+  fetch('/api/maintenance/verify',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({testKey:testKey,captchaId:captchaId,captchaText:captchaText})
+  }).then(function(r){return r.json()}).then(function(j){
+    if(!j.ok){ errEl.textContent=j.msg; loadCaptcha(); document.getElementById('captchaInput').value=''; return; }
+    document.cookie='maintenance_bypass='+j.data.token+'; path=/; max-age='+(4*3600);
+    window.location.href='/';
+  }).catch(function(){ errEl.textContent='网络错误'; })
+  .finally(function(){ btn.disabled=false; btn.textContent='验证并进入'; });
+}
+loadInfo();
+setInterval(loadInfo, 30000);
 </script>
-
 </body>
 </html>

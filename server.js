@@ -24,6 +24,7 @@ const db = require('./db');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
+const maintenance = require('./maintenance');
 
 // ===== 读取本地 git 版本号 =====
 let cachedGitSha = 'dev';
@@ -327,6 +328,14 @@ function checkMaintenance(req, res, next) {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
+      // 检查 bypass cookie（测试人员用）
+      const bypassToken = req.cookies && req.cookies.maintenance_bypass;
+      if (bypassToken) {
+        const session = verifySignedToken(bypassToken);
+        if (session && session.type === 'maintenance_bypass' && Date.now() - session.loginAt < 4 * 3600 * 1000) {
+          return next();
+        }
+      }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
@@ -5985,7 +5994,52 @@ app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
   res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
 });
 
-app.listen(PORT, () => {
+// ===== Test Key Management =====
+app.post('/api/admin/maintenance/test-key/create', requireAdmin, function(req, res) {
+  try {
+    var result = maintenance.createTestKey();
+    res.json({ ok: true, data: result });
+  } catch (e) {
+    res.json({ ok: false, msg: 'Error: ' + e.message });
+  }
+});
+
+app.get('/api/admin/maintenance/test-key/list', requireAdmin, function(req, res) {
+  try {
+    var keys = maintenance.listTestKeys();
+    res.json({ ok: true, data: keys });
+  } catch (e) {
+    res.json({ ok: false, msg: 'Error' });
+  }
+});
+
+app.delete('/api/admin/maintenance/test-key/:key', requireAdmin, function(req, res) {
+  try {
+    maintenance.deleteTestKey(req.params.key);
+    res.json({ ok: true, msg: 'Deleted' });
+  } catch (e) {
+    res.json({ ok: false, msg: 'Error' });
+  }
+});
+
+app.post('/api/maintenance/verify', function(req, res) {
+  var testKey = req.body.testKey;
+  var captchaId = req.body.captchaId;
+  var captchaText = req.body.captchaText;
+  var entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: 'Captcha error' });
+  }
+  captchaStore.delete(captchaId);
+  var result = maintenance.verifyTestKey(testKey);
+  if (!result.valid) {
+    return res.json({ ok: false, msg: result.msg });
+  }
+  var token = signToken({ type: 'maintenance_bypass', issuedAt: Date.now(), loginAt: Date.now() });
+  res.json({ ok: true, msg: 'OK', data: { token: token } });
+});
+
+app.listen(PORT, function() {
   fixCertDataOnStart();
   cleanupOldDeletedData();
   console.log(`\n  📌 校园墙服务已启动`);
