@@ -24,6 +24,7 @@ const db = require('./db');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
+const maintenance = require('./maintenance');
 
 // ===== 读取本地 git 版本号 =====
 let cachedGitSha = 'dev';
