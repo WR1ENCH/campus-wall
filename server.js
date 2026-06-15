@@ -260,8 +260,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(__dirname)); // 静态文件服务
 app.use(checkMaintenance); // 维护状态检查
+app.use(express.static(__dirname)); // 静态文件服务
 
 const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
 
