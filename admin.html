@@ -853,6 +853,10 @@
             </label>
           </div>
         </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;color:var(--text-sub);font-weight:500;display:block;margin-bottom:6px;">维护公告（可选）</label>
+          <textarea id="maintenanceMessage" rows="3" maxlength="500" placeholder="输入维护公告，将显示在维护页面上（如：预计 18:00 恢复）" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;transition:border-color 0.2s;color:var(--text);background:var(--bg);"></textarea>
+        </div>
         <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
           ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
         </div>
@@ -3578,13 +3582,15 @@
       const json = await res.json();
       if (!json.ok) throw new Error(json.msg);
       const d = json.data;
-      const enabled = d && d.enabled === true;
+      const enabled = d && (d.enabled === true || d.enabled === 'true');
       document.getElementById('maintenanceToggle').checked = enabled;
       document.getElementById('maintenanceStateText').textContent = enabled ? '🟢 维护模式已开启' : '⚪ 维护模式已关闭';
       document.getElementById('maintenanceStateText').style.color = enabled ? 'var(--success, #22c55e)' : 'var(--text-sub)';
       document.getElementById('maintenanceMetaText').textContent = d && d.updatedAt
         ? '最后更新：' + new Date(d.updatedAt).toLocaleString('zh-CN') + ' · 操作者：' + (d.updatedBy || '-')
         : '暂无操作记录';
+      // 加载维护公告
+      document.getElementById('maintenanceMessage').value = d && d.message ? d.message : '';
     } catch (e) {
       showToast('加载维护状态失败', 'error');
     }
@@ -3593,11 +3599,12 @@
   async function toggleMaintenance() {
     const cb = document.getElementById('maintenanceToggle');
     const enabled = cb.checked;
+    const message = document.getElementById('maintenanceMessage').value.trim();
     try {
       const res = await fetch('/api/admin/maintenance/toggle', {
         method: 'POST',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled })
+        body: JSON.stringify({ enabled, message })
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.msg);
