@@ -24,6 +24,7 @@ const db = require('./db');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('./sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('./bullyingNames');
+const maintenance = require('./maintenance');
 
 // ===== 读取本地 git 版本号 =====
 let cachedGitSha = 'dev';
@@ -327,6 +328,14 @@ function checkMaintenance(req, res, next) {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
+      // 检查是否有维护绕过令牌（测试人员用）
+      const bypassToken = req.cookies && req.cookies.maintenance_bypass;
+      if (bypassToken) {
+        const session = verifySignedToken(bypassToken);
+        if (session && session.type === 'maintenance_bypass' && Date.now() - session.loginAt < 4 * 3600 * 1000) {
+          return next(); // 验证通过，放行
+        }
+      }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
@@ -5983,6 +5992,65 @@ app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
   };
   writeMaintenance(data);
   res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
+});
+
+// ===== 测试密钥管理（委托 maintenance 模块）=====
+
+// 管理员：生成测试密钥
+app.post('/api/admin/maintenance/test-key/create', requireAdmin, (req, res) => {
+  try {
+    const result = maintenance.createTestKey();
+    res.json({ ok: true, data: result });
+  } catch (e) {
+    res.json({ ok: false, msg: '生成失败: ' + e.message });
+  }
+});
+
+// 管理员：获取测试密钥列表
+app.get('/api/admin/maintenance/test-key/list', requireAdmin, (req, res) => {
+  try {
+    const keys = maintenance.listTestKeys();
+    res.json({ ok: true, data: keys });
+  } catch (e) {
+    res.json({ ok: false, msg: '获取失败' });
+  }
+});
+
+// 管理员：删除测试密钥
+app.delete('/api/admin/maintenance/test-key/:key', requireAdmin, (req, res) => {
+  try {
+    maintenance.deleteTestKey(req.params.key);
+    res.json({ ok: true, msg: '已删除' });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败' });
+  }
+});
+
+// 公开：验证测试密钥 + 验证码，通过后返回临时访问令牌
+app.post('/api/maintenance/verify', (req, res) => {
+  const { testKey, captchaId, captchaText } = req.body;
+
+  // 验证码校验
+  const entry = captchaStore.get(captchaId);
+  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    return res.json({ ok: false, msg: '验证码错误' });
+  }
+  captchaStore.delete(captchaId);
+
+  // 验证测试密钥
+  const result = maintenance.verifyTestKey(testKey);
+  if (!result.valid) {
+    return res.json({ ok: false, msg: result.msg });
+  }
+
+  // 签发临时访问令牌（有效期 4 小时）
+  const token = signToken({
+    type: 'maintenance_bypass',
+    issuedAt: Date.now(),
+    loginAt: Date.now()
+  });
+
+  res.json({ ok: true, msg: '验证通过，正在进入…', data: { token } });
 });
 
 app.listen(PORT, () => {
