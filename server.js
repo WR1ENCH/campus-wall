@@ -315,29 +315,25 @@ function requireSuper(req, res, next) {
   next();
 }
 
-// 维护状态检查中间件（跳过管理后台相关路径）
+// 维护状态检查中间件
 function checkMaintenance(req, res, next) {
   const reqPath = req.path;
-  // 放行管理后台、静态文件、API 路径
-  if (reqPath.startsWith('/api/admin/') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath === '/' || reqPath.startsWith('/assets/')) {
+  // 仅放行管理后台路径和维护页面自身
+  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance')) {
     return next();
   }
-  // 放行管理员相关其他路径
-  if (reqPath.startsWith('/api/admin')) return next();
-  
+
   try {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
-      // 如果是 HTML 页面请求，重定向到维护页面
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
-      // API 请求返回错误
       return res.json({ ok: false, msg: '系统维护中，暂时无法访问', code: 'MAINTENANCE' });
     }
   } catch (e) {
-    // 文件不存在等，正常放行
+    console.error('[maintenance] 读取维护状态失败:', e.message);
   }
   next();
 }
