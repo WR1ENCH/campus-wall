@@ -2244,7 +2244,15 @@ app.post('/api/posts', (req, res) => {
     realAvatar = (user && user.avatar) || '🙈';
   }
 
-  const { type, content, captchaId, captchaText, sensitiveForce, images } = req.body;
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous } = req.body;
+
+  // 如果勾选了匿名发布，覆盖为匿名显示
+  let anonymousFlag = false;
+  if (isAnonymous) {
+    realAuthor = '匿名';
+    realAvatar = '🙈';
+    anonymousFlag = true;
+  }
 
   
 // 发帖频率检测（5分钟内最多3篇，超出需验证码）
@@ -2316,7 +2324,7 @@ if (!content || !content.trim()) {
     content: content.trim(),
     avatar: realAvatar,
     author: realAuthor,
-    userId: realUserId,
+    userId: anonymousFlag ? null : realUserId,
     time: new Date().toISOString(),
     likes: 0,
     likedBy: [],
@@ -2325,7 +2333,8 @@ if (!content || !content.trim()) {
     liked: false,
     rotate: (Math.random() - 0.5) * 8,
     zIndex: Math.floor(Math.random() * 5) + 1,
-    images: validImages.length > 0 ? validImages : undefined
+    images: validImages.length > 0 ? validImages : undefined,
+    isAnonymous: anonymousFlag || undefined
   };
 
   posts.unshift(newPost);
@@ -2366,7 +2375,7 @@ if (!content || !content.trim()) {
         parentId: null,
         content: content.trim(),
         author: realAuthor,
-        userId: realUserId,
+        userId: anonymousFlag ? null : realUserId,
         createdAt: new Date().toISOString(),
         likes: 0,
         liked: false,
