@@ -5946,7 +5946,24 @@ app.get('/api/admin/notice-account-stats', requireAdmin, (req, res) => {
 });
 
 // ===== 维护状态管理 =====
-// 获取当前维护状态
+// 公开接口：维护页面轮询用（不暴露敏感信息）
+app.get('/api/maintenance/info', (req, res) => {
+  try {
+    const data = readMaintenance() || { enabled: false };
+    res.json({
+      ok: true,
+      data: {
+        enabled: data.enabled === true || data.enabled === 'true',
+        message: data.message || null,
+        updatedAt: data.updatedAt || null
+      }
+    });
+  } catch (e) {
+    res.json({ ok: true, data: { enabled: false } });
+  }
+});
+
+// 管理员：获取当前维护状态
 app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   try {
     const data = readMaintenance() || { enabled: false };
@@ -5956,14 +5973,15 @@ app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   }
 });
 
-// 切换维护状态
+// 管理员：切换维护状态（支持自定义消息）
 app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
-  const { enabled } = req.body;
+  const { enabled, message } = req.body;
   if (typeof enabled !== 'boolean') {
     return res.json({ ok: false, msg: '参数无效' });
   }
   const data = {
     enabled,
+    message: enabled && message ? String(message).slice(0, 500) : null,
     updatedAt: new Date().toISOString(),
     updatedBy: req.admin.name || req.admin.id
   };
