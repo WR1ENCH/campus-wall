@@ -7,214 +7,132 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 20px; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f5f5f5; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
   }
-  .bg-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
-  .bg-particles span {
-    position: absolute; display: block; width: 8px; height: 8px;
-    background: rgba(99,102,241,0.15); border-radius: 50%;
-    animation: float-up 12s linear infinite;
+  .wrap { max-width: 420px; width: 100%; text-align: center; }
+  .icon { font-size: 48px; margin-bottom: 16px; }
+  h1 { font-size: 22px; color: #333; margin-bottom: 8px; font-weight: 600; }
+  .msg { font-size: 14px; color: #888; line-height: 1.8; }
+  .notice {
+    margin-top: 24px; padding: 14px 18px; background: #fff; border-radius: 8px;
+    border: 1px solid #eee; font-size: 13px; color: #666; line-height: 1.7; text-align: left; display: none;
   }
-  .bg-particles span:nth-child(1) { left:10%; width:4px; height:4px; animation-delay:0s; animation-duration:10s; }
-  .bg-particles span:nth-child(2) { left:25%; width:6px; height:6px; animation-delay:2s; animation-duration:14s; }
-  .bg-particles span:nth-child(3) { left:40%; width:3px; height:3px; animation-delay:4s; animation-duration:11s; }
-  .bg-particles span:nth-child(4) { left:55%; width:7px; height:7px; animation-delay:1s; animation-duration:13s; }
-  .bg-particles span:nth-child(5) { left:70%; width:5px; height:5px; animation-delay:3s; animation-duration:15s; }
-  .bg-particles span:nth-child(6) { left:85%; width:4px; height:4px; animation-delay:5s; animation-duration:12s; }
-  @keyframes float-up {
-    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-    10% { opacity: 1; } 90% { opacity: 1; }
-    100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+  .notice-title { font-size: 12px; color: #999; margin-bottom: 4px; }
+  .time { margin-top: 20px; font-size: 12px; color: #bbb; }
+  .footer { margin-top: 32px; }
+  .test-link {
+    font-size: 13px; color: #999; cursor: pointer; border-bottom: 1px dashed #ccc;
+    display: inline-block; transition: color 0.2s;
   }
-  .card {
-    position: relative; z-index: 1;
-    background: rgba(30,41,59,0.8); backdrop-filter: blur(20px);
-    border: 1px solid rgba(99,102,241,0.2); border-radius: 24px;
-    padding: 60px 48px 48px; max-width: 460px; width: 100%;
-    text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.4);
-    animation: card-in 0.6s ease-out;
-  }
-  @keyframes card-in {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .icon-wrap { width: 100px; height: 100px; margin: 0 auto 28px; position: relative; }
-  .gear { position: absolute; font-size: 64px; top: 50%; left: 50%; transform: translate(-50%,-50%); animation: spin 4s linear infinite; }
-  .gear-small { position: absolute; font-size: 32px; top: 8px; right: -4px; animation: spin-reverse 3s linear infinite; }
-  @keyframes spin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
-  @keyframes spin-reverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(251,191,36,0.15); color: #fbbf24;
-    padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
-    margin-bottom: 20px; border: 1px solid rgba(251,191,36,0.2);
-  }
-  .status-dot { width: 8px; height: 8px; background: #fbbf24; border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-  h1 { font-size: 28px; color: #f1f5f9; margin-bottom: 12px; font-weight: 700; }
-  .divider { width: 50px; height: 3px; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 2px; margin: 0 auto 24px; }
-  .desc { font-size: 15px; color: #94a3b8; line-height: 1.8; margin-bottom: 8px; }
-  .custom-msg {
-    background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
-    border-radius: 12px; padding: 16px 20px; margin: 20px 0;
-    font-size: 14px; color: #c7d2fe; line-height: 1.7; text-align: left; display: none;
-  }
-  .custom-msg-label { font-size: 12px; color: #818cf8; font-weight: 600; margin-bottom: 6px; }
-  .info-row { display: flex; justify-content: center; gap: 24px; margin: 20px 0 0; font-size: 12px; color: #64748b; }
-  .refresh-hint { margin-top: 24px; font-size: 12px; color: #475569; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .refresh-hint .spinner {
-    width: 12px; height: 12px; border: 2px solid rgba(99,102,241,0.2);
-    border-top-color: #6366f1; border-radius: 50%; animation: spin-sm 1s linear infinite;
-  }
-  @keyframes spin-sm { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .test-btn {
-    margin-top: 24px; background: none; border: 1px solid rgba(99,102,241,0.3);
-    color: #818cf8; padding: 8px 20px; border-radius: 8px;
-    font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s;
-  }
-  .test-btn:hover { background: rgba(99,102,241,0.1); border-color: #6366f1; }
-  .footer { margin-top: 20px; font-size: 12px; color: #475569; }
+  .test-link:hover { color: #666; }
 
-  /* Modal overlay */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-    display: none; align-items: center; justify-content: center; padding: 20px;
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.4); display: none;
+    align-items: center; justify-content: center; padding: 20px;
   }
-  .modal-overlay.active { display: flex; }
-  .modal-box {
-    background: #1e293b; border: 1px solid rgba(99,102,241,0.3);
-    border-radius: 16px; padding: 36px 32px; max-width: 400px; width: 100%;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: modal-in 0.3s ease-out;
+  .overlay.active { display: flex; }
+  .dialog {
+    background: #fff; border-radius: 12px; padding: 32px 28px;
+    max-width: 360px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
   }
-  @keyframes modal-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-  .modal-title { font-size: 18px; font-weight: 700; color: #f1f5f9; text-align: center; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 24px; }
-  .modal-field { margin-bottom: 16px; }
-  .modal-field label { font-size: 12px; color: #818cf8; font-weight: 600; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .modal-field input[type="text"] {
-    width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(99,102,241,0.3);
-    background: rgba(15,23,42,0.8); color: #e2e8f0; font-size: 14px; font-family: inherit;
-    outline: none; transition: border-color 0.2s;
+  .dialog h3 { font-size: 16px; color: #333; margin-bottom: 4px; font-weight: 600; }
+  .dialog .sub { font-size: 13px; color: #999; margin-bottom: 20px; }
+  .dialog label { font-size: 12px; color: #999; display: block; margin-bottom: 4px; }
+  .dialog input[type="text"] {
+    width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 14px; outline: none; margin-bottom: 14px; transition: border-color 0.2s;
   }
-  .modal-field input[type="text"]:focus { border-color: #6366f1; }
-  .modal-field input[type="text"]::placeholder { color: #475569; }
-  .captcha-row { display: flex; gap: 8px; align-items: center; }
-  .captcha-row input { flex: 1 !important; }
-  .captcha-img { height: 40px; border-radius: 6px; cursor: pointer; flex-shrink: 0; border: 1px solid rgba(99,102,241,0.2); background: #0f172a; }
-  .modal-submit {
-    width: 100%; padding: 12px; border: none; border-radius: 8px;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: white; font-size: 14px; font-weight: 600; cursor: pointer;
-    font-family: inherit; transition: opacity 0.2s; margin-top: 8px;
+  .dialog input[type="text"]:focus { border-color: #666; }
+  .captcha-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .captcha-row input { flex: 1; margin-bottom: 0; }
+  .captcha-img { height: 36px; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
+  .dialog .btn {
+    width: 100%; padding: 10px; border: none; border-radius: 6px;
+    background: #333; color: #fff; font-size: 14px; cursor: pointer;
+    font-family: inherit; transition: background 0.2s;
   }
-  .modal-submit:hover { opacity: 0.9; }
-  .modal-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-  .modal-error { color: #f87171; font-size: 12px; margin-top: 10px; min-height: 18px; text-align: center; }
-  .modal-close {
-    position: absolute; top: 12px; right: 16px;
-    background: none; border: none; color: #64748b; font-size: 20px;
-    cursor: pointer; line-height: 1;
+  .dialog .btn:hover { background: #555; }
+  .dialog .btn:disabled { background: #ccc; cursor: not-allowed; }
+  .dialog .err { color: #e55; font-size: 12px; margin-top: 8px; min-height: 18px; text-align: center; }
+  .dialog .close-btn {
+    position: absolute; top: 12px; right: 14px; background: none; border: none;
+    font-size: 18px; color: #ccc; cursor: pointer;
   }
-  .modal-close:hover { color: #e2e8f0; }
+  .dialog .close-btn:hover { color: #666; }
 </style>
 </head>
 <body>
-<div class="bg-particles">
-  <span></span><span></span><span></span><span></span><span></span><span></span>
-</div>
-<div class="card">
-  <div class="icon-wrap"><div class="gear">&#9881;</div><div class="gear-small">&#128295;</div></div>
-  <div class="status-badge"><span class="status-dot"></span>维护中</div>
+<div class="wrap">
+  <div class="icon">🔧</div>
   <h1>系统维护中</h1>
-  <div class="divider"></div>
-  <p class="desc">校园墙正在进行维护升级</p>
-  <p class="desc">暂时无法访问，请稍后再试</p>
-  <div class="custom-msg" id="customMsg">
-    <div class="custom-msg-label">管理员公告</div>
-    <div id="customMsgText"></div>
+  <p class="msg">校园墙正在进行维护升级<br>暂时无法访问，请稍后再试</p>
+  <div class="notice" id="notice">
+    <div class="notice-title">公告</div>
+    <div id="noticeText"></div>
   </div>
-  <div class="info-row" id="infoRow" style="display:none;">
-    <div><span id="maintTime"></span></div>
+  <div class="time" id="timeInfo"></div>
+  <div class="footer">
+    <span class="test-link" onclick="openModal()">测试人员入口</span>
   </div>
-  <div class="refresh-hint"><div class="spinner"></div><span>页面将自动刷新</span></div>
-  <button class="test-btn" onclick="openModal()">测试人员入口</button>
-  <div class="footer">校园墙</div>
 </div>
 
-<!-- Test key modal -->
-<div class="modal-overlay" id="testModal" onclick="if(event.target===this)closeModal()">
-  <div class="modal-box" style="position:relative;">
-    <button class="modal-close" onclick="closeModal()">&times;</button>
-    <div class="modal-title">测试人员验证</div>
-    <div class="modal-sub">请输入管理员提供的测试密钥</div>
-    <div class="modal-field">
-      <label>测试密钥</label>
-      <input type="text" id="testKeyInput" placeholder="如 TW-XXXXXXXX" maxlength="11" autocomplete="off">
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="dialog" style="position:relative;">
+    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <h3>测试验证</h3>
+    <div class="sub">请输入管理员提供的测试密钥</div>
+    <label>密钥</label>
+    <input type="text" id="keyInput" placeholder="TW-XXXXXXXX" maxlength="11" autocomplete="off">
+    <label>验证码</label>
+    <div class="captcha-row">
+      <input type="text" id="capInput" placeholder="输入验证码" maxlength="6">
+      <img class="captcha-img" id="capImg" onclick="loadCap()" alt="">
     </div>
-    <div class="modal-field">
-      <label>验证码</label>
-      <div class="captcha-row">
-        <input type="text" id="captchaInput" placeholder="输入验证码" maxlength="6">
-        <img class="captcha-img" id="captchaImg" onclick="loadCaptcha()" alt="验证码">
-      </div>
-    </div>
-    <button class="modal-submit" id="testSubmitBtn" onclick="submitTestKey()">验证并进入</button>
-    <div class="modal-error" id="testError"></div>
+    <button class="btn" id="submitBtn" onclick="submit()">进入</button>
+    <div class="err" id="errMsg"></div>
   </div>
 </div>
 
 <script>
-var captchaId = '';
-function loadCaptcha() {
+var cid = '';
+function loadCap() {
   fetch('/api/captcha').then(function(r){return r.json()}).then(function(j){
-    if(j.ok){ captchaId=j.data.id; document.getElementById('captchaImg').src='data:image/svg+xml;base64,'+btoa(j.data.svg); }
+    if(j.ok){ cid=j.data.id; document.getElementById('capImg').src='data:image/svg+xml;base64,'+btoa(j.data.svg); }
   });
 }
 function loadInfo() {
   fetch('/api/maintenance/info').then(function(r){return r.json()}).then(function(j){
-    if(j.ok&&j.data){
-      if(j.data.message){ document.getElementById('customMsg').style.display='block'; document.getElementById('customMsgText').textContent=j.data.message; }
-      if(j.data.updatedAt){ document.getElementById('infoRow').style.display='flex'; document.getElementById('maintTime').textContent='开始于 '+new Date(j.data.updatedAt).toLocaleString('zh-CN'); }
-      if(!j.data.enabled) window.location.href='/';
-    }
+    if(!j.ok||!j.data) return;
+    if(j.data.message){ document.getElementById('notice').style.display='block'; document.getElementById('noticeText').textContent=j.data.message; }
+    if(j.data.updatedAt){ document.getElementById('timeInfo').textContent='维护开始于 ' + new Date(j.data.updatedAt).toLocaleString('zh-CN'); }
+    if(!j.data.enabled) location.href='/';
   });
 }
-function openModal() {
-  document.getElementById('testModal').classList.add('active');
-  if(!captchaId) loadCaptcha();
-  document.getElementById('testKeyInput').focus();
-}
-function closeModal() {
-  document.getElementById('testModal').classList.remove('active');
-  document.getElementById('testError').textContent='';
-  document.getElementById('testKeyInput').value='';
-  document.getElementById('captchaInput').value='';
-}
-function submitTestKey() {
-  var testKey=document.getElementById('testKeyInput').value.trim();
-  var captchaText=document.getElementById('captchaInput').value.trim();
-  var errEl=document.getElementById('testError');
-  var btn=document.getElementById('testSubmitBtn');
-  errEl.textContent='';
-  if(!testKey){ errEl.textContent='请输入测试密钥'; return; }
-  if(!captchaText){ errEl.textContent='请输入验证码'; return; }
-  btn.disabled=true; btn.textContent='验证中...';
-  fetch('/api/maintenance/verify',{
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({testKey:testKey,captchaId:captchaId,captchaText:captchaText})
-  }).then(function(r){return r.json()}).then(function(j){
-    if(!j.ok){ errEl.textContent=j.msg; loadCaptcha(); document.getElementById('captchaInput').value=''; return; }
-    document.cookie='maintenance_bypass='+j.data.token+'; path=/; max-age='+(4*3600);
-    window.location.href='/';
-  }).catch(function(){ errEl.textContent='网络错误'; })
-  .finally(function(){ btn.disabled=false; btn.textContent='验证并进入'; });
+function openModal() { document.getElementById('modal').classList.add('active'); if(!cid) loadCap(); document.getElementById('keyInput').focus(); }
+function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('errMsg').textContent=''; document.getElementById('keyInput').value=''; document.getElementById('capInput').value=''; }
+function submit() {
+  var k=document.getElementById('keyInput').value.trim();
+  var c=document.getElementById('capInput').value.trim();
+  var e=document.getElementById('errMsg');
+  var b=document.getElementById('submitBtn');
+  e.textContent='';
+  if(!k){e.textContent='请输入密钥';return;}
+  if(!c){e.textContent='请输入验证码';return;}
+  b.disabled=true;b.textContent='验证中...';
+  fetch('/api/maintenance/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testKey:k,captchaId:cid,captchaText:c})})
+  .then(function(r){return r.json()}).then(function(j){
+    if(!j.ok){e.textContent=j.msg;loadCap();document.getElementById('capInput').value='';return;}
+    document.cookie='maintenance_bypass='+j.data.token+';path=/;max-age='+(4*3600);
+    location.href='/';
+  }).catch(function(){e.textContent='网络错误';})
+  .finally(function(){b.disabled=false;b.textContent='进入';});
 }
 loadInfo();
-setInterval(loadInfo, 30000);
+setInterval(loadInfo,30000);
 </script>
 </body>
 </html>
