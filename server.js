@@ -326,7 +326,33 @@ function checkMaintenance(req, res, next) {
 
   try {
     const data = readMaintenance();
-    const enabled = data && (data.enabled === true || data.enabled === 'true');
+    // 自动开启/关闭逻辑
+    let enabled = data && (data.enabled === true || data.enabled === 'true');
+    const now = Date.now();
+    if (data.autoStart && data.autoEnd) {
+      const start = new Date(data.autoStart).getTime();
+      const end = new Date(data.autoEnd).getTime();
+      if (now >= start && now <= end) {
+        enabled = true;
+        // 自动写入状态（仅在状态变化时）
+        if (!enabled) {
+          data.enabled = true;
+          writeMaintenance(data);
+        }
+      } else if (now > end && enabled) {
+        enabled = false;
+        data.enabled = false;
+        writeMaintenance(data);
+      }
+    } else if (data.autoStart && !data.autoEnd) {
+      const start = new Date(data.autoStart).getTime();
+      if (now >= start && !enabled) {
+        enabled = true;
+        data.enabled = true;
+        writeMaintenance(data);
+      }
+    }
+
     if (enabled) {
       // 检查管理员 token — 管理员登录后不受维护模式限制
       const adminToken = req.headers['x-admin-token'];
@@ -347,6 +373,11 @@ function checkMaintenance(req, res, next) {
       // 检查 referer — 从管理后台页面发起的请求放行
       const referer = req.headers.referer || req.headers.referrer || '';
       if (referer.indexOf('/admin.html') !== -1) {
+        return next();
+      }
+      // 放行 notice.html
+      const noticeBypass = data && (data.noticeBypass === true || data.noticeBypass === 'true');
+      if (noticeBypass && reqPath === '/notice.html') {
         return next();
       }
       if (req.accepts('html')) {
@@ -5991,20 +6022,46 @@ app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   }
 });
 
-// 管理员：切换维护状态（支持自定义消息）
+// 管理员：切换维护状态
 app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
-  const { enabled, message } = req.body;
+  const { enabled } = req.body;
   if (typeof enabled !== 'boolean') {
     return res.json({ ok: false, msg: '参数无效' });
   }
+  const current = readMaintenance() || {};
   const data = {
     enabled,
-    message: enabled && message ? String(message).slice(0, 500) : null,
+    autoStart: current.autoStart || null,
+    autoEnd: current.autoEnd || null,
+    noticeBypass: current.noticeBypass || false,
     updatedAt: new Date().toISOString(),
     updatedBy: req.admin.name || req.admin.id
   };
   writeMaintenance(data);
   res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
+});
+
+// 管理员：设置自动开启/关闭时间
+app.post('/api/admin/maintenance/schedule', requireAdmin, (req, res) => {
+  const { autoStart, autoEnd } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.autoStart = autoStart || null;
+  current.autoEnd = autoEnd || null;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: '定时设置已保存', data: current });
+});
+
+// 管理员：切换 notice.html 放行
+app.post('/api/admin/maintenance/notice-bypass', requireAdmin, (req, res) => {
+  const { noticeBypass } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.noticeBypass = !!noticeBypass;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: noticeBypass ? '已放行 notice.html' : '已取消放行', data: current });
 });
 
 // ===== 测试密钥管理（委托 maintenance 模块）=====

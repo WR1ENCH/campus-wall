@@ -846,6 +846,7 @@
             <div>
               <div style="font-size:15px;font-weight:600;color:var(--text);" id="maintenanceStateText">状态：加载中…</div>
               <div style="font-size:12px;color:var(--text-sub);margin-top:4px;" id="maintenanceMetaText"></div>
+              <div id="maintenanceCountdown" style="font-size:12px;color:var(--accent);margin-top:4px;display:none;"></div>
             </div>
             <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
               <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenance()" style="opacity:0;width:0;height:0;">
@@ -853,9 +854,25 @@
             </label>
           </div>
         </div>
-        <div style="margin-bottom:16px;">
-          <label style="font-size:13px;color:var(--text-sub);font-weight:500;display:block;margin-bottom:6px;">维护公告（可选）</label>
-          <textarea id="maintenanceMessage" rows="3" maxlength="500" placeholder="输入维护公告，将显示在维护页面上（如：预计 18:00 恢复）" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;outline:none;transition:border-color 0.2s;color:var(--text);background:var(--bg);"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div>
+            <label style="font-size:13px;color:var(--text-sub);font-weight:500;display:block;margin-bottom:6px;">自动开启时间（可选）</label>
+            <input type="datetime-local" id="maintenanceAutoStart" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;color:var(--text);background:var(--bg);" onchange="saveAutoSchedule()">
+          </div>
+          <div>
+            <label style="font-size:13px;color:var(--text-sub);font-weight:500;display:block;margin-bottom:6px;">自动关闭时间（可选）</label>
+            <input type="datetime-local" id="maintenanceAutoEnd" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;color:var(--text);background:var(--bg);" onchange="saveAutoSchedule()">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);">放行通知页面</div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">开启后 notice.html 在维护期间仍可访问</div>
+          </div>
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
+            <input type="checkbox" id="noticeBypassToggle" onchange="toggleNoticeBypass()" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:28px;transition:0.3s;"></span>
+          </label>
         </div>
         <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
           ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
@@ -3592,6 +3609,8 @@
   }
 
   // ===== 维护模式 =====
+  let maintenanceCountdownTimer = null;
+
   async function loadMaintenanceStatus() {
     try {
       const res = await fetch('/api/admin/maintenance/status', { headers: authHeaders() });
@@ -3605,22 +3624,47 @@
       document.getElementById('maintenanceMetaText').textContent = d && d.updatedAt
         ? '最后更新：' + new Date(d.updatedAt).toLocaleString('zh-CN') + ' · 操作者：' + (d.updatedBy || '-')
         : '暂无操作记录';
-      // 加载维护公告
-      document.getElementById('maintenanceMessage').value = d && d.message ? d.message : '';
+      // 自动开启/关闭时间
+      document.getElementById('maintenanceAutoStart').value = d && d.autoStart ? d.autoStart : '';
+      document.getElementById('maintenanceAutoEnd').value = d && d.autoEnd ? d.autoEnd : '';
+      // 放行通知页面
+      document.getElementById('noticeBypassToggle').checked = d && (d.noticeBypass === true || d.noticeBypass === 'true');
+      // 倒计时
+      updateCountdown(d);
     } catch (e) {
       showToast('加载维护状态失败', 'error');
+    }
+  }
+
+  function updateCountdown(d) {
+    const el = document.getElementById('maintenanceCountdown');
+    if (maintenanceCountdownTimer) { clearInterval(maintenanceCountdownTimer); maintenanceCountdownTimer = null; }
+    if (!d) { el.style.display = 'none'; return; }
+    const enabled = d.enabled === true || d.enabled === 'true';
+    const autoEnd = d.autoEnd ? new Date(d.autoEnd).getTime() : null;
+    if (enabled && autoEnd && autoEnd > Date.now()) {
+      el.style.display = 'block';
+      maintenanceCountdownTimer = setInterval(function() {
+        const diff = autoEnd - Date.now();
+        if (diff <= 0) { el.textContent = '维护模式即将自动关闭…'; el.style.display = 'none'; clearInterval(maintenanceCountdownTimer); return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.textContent = '⏰ 将在 ' + h + '时' + m + '分' + s + '秒后自动关闭';
+      }, 1000);
+    } else {
+      el.style.display = 'none';
     }
   }
 
   async function toggleMaintenance() {
     const cb = document.getElementById('maintenanceToggle');
     const enabled = cb.checked;
-    const message = document.getElementById('maintenanceMessage').value.trim();
     try {
       const res = await fetch('/api/admin/maintenance/toggle', {
         method: 'POST',
         headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled, message })
+        body: JSON.stringify({ enabled })
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.msg);
@@ -3629,6 +3673,40 @@
     } catch (e) {
       showToast(e.message || '操作失败', 'error');
       cb.checked = !enabled;
+    }
+  }
+
+  async function saveAutoSchedule() {
+    const autoStart = document.getElementById('maintenanceAutoStart').value || null;
+    const autoEnd = document.getElementById('maintenanceAutoEnd').value || null;
+    try {
+      const res = await fetch('/api/admin/maintenance/schedule', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoStart, autoEnd })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast('定时设置已保存', 'success');
+    } catch (e) {
+      showToast(e.message || '保存失败', 'error');
+    }
+  }
+
+  async function toggleNoticeBypass() {
+    const checked = document.getElementById('noticeBypassToggle').checked;
+    try {
+      const res = await fetch('/api/admin/maintenance/notice-bypass', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noticeBypass: checked })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast(checked ? '已放行 notice.html' : '已取消放行 notice.html', 'success');
+    } catch (e) {
+      showToast(e.message || '操作失败', 'error');
+      document.getElementById('noticeBypassToggle').checked = !checked;
     }
   }
 
