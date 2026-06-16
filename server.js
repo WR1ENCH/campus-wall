@@ -328,6 +328,14 @@ function checkMaintenance(req, res, next) {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
+      // 检查 bypass cookie（测试人员用）
+      const bypassToken = req.cookies && req.cookies.maintenance_bypass;
+      if (bypassToken) {
+        const session = verifySignedToken(bypassToken);
+        if (session && session.type === 'maintenance_bypass' && Date.now() - session.loginAt < 4 * 3600 * 1000) {
+          return next();
+        }
+      }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
