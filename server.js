@@ -328,6 +328,14 @@ function checkMaintenance(req, res, next) {
     const data = readMaintenance();
     const enabled = data && (data.enabled === true || data.enabled === 'true');
     if (enabled) {
+      // 检查管理员 token — 管理员登录后不受维护模式限制
+      const adminToken = req.headers['x-admin-token'];
+      if (adminToken) {
+        const adminSession = verifySignedToken(adminToken);
+        if (adminSession && adminSession.id && Date.now() - adminSession.loginAt < 24 * 3600 * 1000) {
+          return next();
+        }
+      }
       // 检查 bypass cookie（测试人员用）
       const bypassToken = req.cookies && req.cookies.maintenance_bypass;
       if (bypassToken) {
