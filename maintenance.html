@@ -100,7 +100,7 @@
 var cid = '';
 function loadCap() {
   fetch('/api/captcha').then(function(r){return r.json()}).then(function(j){
-    if(j.ok){ cid=j.data.id; document.getElementById('capImg').src='data:image/svg+xml;base64,'+btoa(j.data.svg); }
+    if(j.ok){ cid=j.data.id; document.getElementById('capImg').src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(j.data.svg))); }
   });
 }
 function loadInfo() {
