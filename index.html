@@ -2321,6 +2321,7 @@
           <div style="display:flex;gap:6px;" id="voteTabBar">
             <button onclick="switchVoteTab('list')" class="vote-tab active" id="voteTabList">全部投票</button>
             <button onclick="switchVoteTab('my')" class="vote-tab" id="voteTabMy">我的投票</button>
+            <button onclick="switchVoteTab('create')" class="vote-tab" id="voteTabCreate">创建投票</button>
           </div>
         </div>
         <button onclick="closeVoteModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
@@ -2331,7 +2332,44 @@
         <div id="voteListContainer"></div>
       </div>
 
-      <!-- 创建投票页 → 已移至管理后台 admin.html -->
+      <!-- 创建投票页 -->
+      <div id="votePageCreate" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#0c4a6e;display:block;margin-bottom:4px;">📝 投票标题</label>
+          <input id="voteTitleInput" maxlength="100" placeholder="输入投票标题（2-100字）" style="width:100%;padding:10px 14px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;background:#f0f9ff;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px;font-weight:600;color:#0c4a6e;display:block;margin-bottom:4px;">🔘 投票选项（至少2个）</label>
+          <div id="voteOptionsContainer">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" class="vote-option-input" placeholder="选项 1" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">
+              <button onclick="addVoteOption()" style="padding:0 12px;border:1.5px dashed #7dd3fc;border-radius:10px;color:#0c4a6e;font-size:14px;cursor:pointer;">+</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <input type="text" class="vote-option-input" placeholder="选项 2" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">
+              <button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="voteMultiple" style="width:16px;height:16px;">
+            <span>允许多选</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="voteAllowCustom" style="width:16px;height:16px;">
+            <span>允许参与者添加自定义选项</span>
+          </label>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#0c4a6e;display:block;margin-bottom:4px;">⏰ 截止时间（可选）</label>
+          <input id="voteEndTime" type="datetime-local" style="width:100%;padding:10px 14px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;background:#f0f9ff;box-sizing:border-box;">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="resetVoteForm()" style="padding:10px 22px;border-radius:10px;border:1.5px solid #94a3b8;background:white;color:#475569;font-size:14px;cursor:pointer;">重置</button>
+          <button onclick="submitVote()" style="padding:10px 28px;border-radius:10px;border:none;background:#0c4a6e;color:white;font-size:14px;cursor:pointer;">发布投票 📊</button>
+        </div>
+      </div>
 
       <!-- 我的投票页 -->
       <div id="votePageMy" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
@@ -2514,7 +2552,7 @@
     }
 
     function switchVoteTab(tab) {
-      var tabs = ['list', 'my'];
+      var tabs = ['list', 'my', 'create'];
       tabs.forEach(function(t) {
         var el = document.getElementById('voteTab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (el) el.classList.remove('active');
@@ -2530,6 +2568,8 @@
         loadVoteList();
       } else if (tab === 'my') {
         loadMyVotes();
+      } else if (tab === 'create') {
+        resetVoteForm();
       }
     }
 
@@ -2622,6 +2662,7 @@
     function resetVoteForm() {
       document.getElementById('voteTitleInput').value = '';
       document.getElementById('voteMultiple').checked = false;
+      document.getElementById('voteAllowCustom').checked = false;
       document.getElementById('voteEndTime').value = '';
       var container = document.getElementById('voteOptionsContainer');
       container.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
@@ -2660,6 +2701,7 @@
         title: title,
         options: optionTexts,
         multiple: document.getElementById('voteMultiple').checked,
+        allowCustom: document.getElementById('voteAllowCustom').checked,
         endTime: document.getElementById('voteEndTime').value || null
       };
 
