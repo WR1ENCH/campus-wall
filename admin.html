@@ -861,6 +861,22 @@
           ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
         </div>
       </div>
+
+      <!-- 测试密钥管理 -->
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);border:1px solid var(--border);max-width:600px;margin-top:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="font-size:32px;">🔑</div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">测试密钥管理</div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">生成密钥供测试人员在维护期间访问站点</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <button class="btn-cancel" style="background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" onclick="createTestKey()">+ 生成新密钥</button>
+          <button class="btn-cancel" style="font-size:12px;padding:6px 12px;" onclick="loadTestKeys()">刷新列表</button>
+        </div>
+        <div id="testKeyList" style="font-size:13px;color:var(--text-sub);">点击"生成新密钥"创建测试密钥</div>
+      </div>
     </div>
 
     <!-- 帖子管理页 -->
@@ -3613,6 +3629,57 @@
     } catch (e) {
       showToast(e.message || '操作失败', 'error');
       cb.checked = !enabled;
+    }
+  }
+
+  // ===== 测试密钥管理 =====
+  async function createTestKey() {
+    try {
+      const res = await fetch('/api/admin/maintenance/test-key/create', {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast('密钥已生成：' + json.data.key, 'success');
+      loadTestKeys();
+    } catch (e) {
+      showToast(e.message || '生成失败', 'error');
+    }
+  }
+
+  async function loadTestKeys() {
+    try {
+      const res = await fetch('/api/admin/maintenance/test-key/list', { headers: authHeaders() });
+      const json = await res.json();
+      const list = document.getElementById('testKeyList');
+      if (!json.ok || !json.data || json.data.length === 0) {
+        list.innerHTML = '<div style="padding:12px;text-align:center;color:#9ca3af;">暂无有效密钥</div>';
+        return;
+      }
+      list.innerHTML = json.data.map(function(k) {
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:8px;margin-bottom:6px;">' +
+          '<div><span style="font-family:monospace;font-size:14px;font-weight:600;color:var(--accent);letter-spacing:1px;">' + k.key + '</span>' +
+          '<span style="font-size:11px;color:var(--text-sub);margin-left:10px;">过期：' + new Date(k.expiresAt).toLocaleString('zh-CN') + '</span></div>' +
+          '<button onclick="deleteTestKey(\'' + k.key + '\')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:4px;">删除</button></div>';
+      }).join('');
+    } catch (e) {
+      showToast('加载密钥列表失败', 'error');
+    }
+  }
+
+  async function deleteTestKey(key) {
+    try {
+      const res = await fetch('/api/admin/maintenance/test-key/' + encodeURIComponent(key), {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast('已删除', 'success');
+      loadTestKeys();
+    } catch (e) {
+      showToast(e.message || '删除失败', 'error');
     }
   }
 
