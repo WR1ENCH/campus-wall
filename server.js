@@ -320,7 +320,7 @@ function requireSuper(req, res, next) {
 function checkMaintenance(req, res, next) {
   const reqPath = req.path;
   // 仅放行管理后台路径和维护页面自身
-  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance')) {
+  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance') || reqPath === '/api/captcha') {
     return next();
   }
 
