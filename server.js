@@ -344,6 +344,11 @@ function checkMaintenance(req, res, next) {
           return next();
         }
       }
+      // 检查 referer — 从管理后台页面发起的请求放行
+      const referer = req.headers.referer || req.headers.referrer || '';
+      if (referer.indexOf('/admin.html') !== -1) {
+        return next();
+      }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
