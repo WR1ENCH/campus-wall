@@ -1,6 +1,7 @@
-fix: 移除发帖框自动填充的'#'
+fix: 管理后台帖子列表匿名用户显示真实身份
 
-发帖弹窗打开时不再自动插入#号，同时字数统计归零。
+loadPosts时同步加载用户列表，渲染时根据isAnonymous标记
+和userId查找真实用户名，显示"🥷 匿名(🔍 真实姓名)"。
 提交身份: wr1Ench_atomcode
 
 Co-Authored-By: AtomCode (deepseek-v4-flash) <noreply@atomgit.com>
