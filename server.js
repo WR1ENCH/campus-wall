@@ -378,7 +378,15 @@ function checkMaintenance(req, res, next) {
       // 放行 notice.html 及其 API 请求
       const noticeBypass = data && (data.noticeBypass === true || data.noticeBypass === 'true');
       if (noticeBypass) {
-        if (reqPath === '/notice.html' || referer.indexOf('/notice.html') !== -1) {
+        if (reqPath === '/notice.html') {
+          return next();
+        }
+        // 放行 notice 相关 API 和公开数据 API
+        if (reqPath === '/api/notices' || reqPath.startsWith('/api/notices/') ||
+            reqPath === '/api/discussions' || reqPath.startsWith('/api/discussions/') ||
+            reqPath === '/api/votes' || reqPath.startsWith('/api/votes/') ||
+            reqPath === '/api/notice/votes' || reqPath === '/api/announcement' ||
+            reqPath === '/api/student-council' || reqPath.startsWith('/api/student-council/')) {
           return next();
         }
       }
