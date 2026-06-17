@@ -2382,7 +2382,7 @@ if (!content || !content.trim()) {
     content: content.trim(),
     avatar: realAvatar,
     author: realAuthor,
-    userId: anonymousFlag ? null : realUserId,
+    userId: realUserId,
     time: new Date().toISOString(),
     likes: 0,
     likedBy: [],
@@ -6143,4 +6143,3 @@ app.listen(PORT, () => {
   console.log(`  → http://localhost:${PORT}/`);
   console.log(`  → http://localhost:${PORT}/admin.html`);
 });
-

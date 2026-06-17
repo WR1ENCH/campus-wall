@@ -3835,8 +3835,13 @@
   // ===== 加载帖子 =====
   async function loadPosts() {
     try {
-      const res = await fetch('/api/posts');
+      const [res, userRes] = await Promise.all([
+        fetch('/api/posts'),
+        fetch('/api/admin/users', { headers: authHeaders() })
+      ]);
       const json = await res.json();
+      const userJson = await userRes.json();
+      if (userJson.ok) allUsers = userJson.data;
       if (!json.ok) throw new Error();
       allPosts = json.data;
       applyFilter();
@@ -3892,7 +3897,7 @@
           <div><input type="checkbox" ${isSelected?'checked':''} onchange="toggleSelect('${post.id}', this)"></div>
           <div><span class="type-badge badge-${post.type}">${typeEmoji(post.type)} ${post.type}</span></div>
           <div class="post-content-cell" title="${escHtml(post.content||'')}">${escHtml(post.content||'')}</div>
-          <div class="post-author-cell">${post.avatar && post.avatar.startsWith('data:') ? avatarImg(post.avatar) + ' ' : (post.avatar && post.avatar.length <= 4 ? post.avatar + ' : ' : '')}${escHtml(post.author||'匿名')}</div>
+          <div class="post-author-cell">${(function(){ var a=post.author||'匿名'; var u=post.userId&&allUsers.find(function(x){return x.id===post.userId}); if(post.isAnonymous&&u){a=u.nickname||u.username||a; return '🥷 匿名(🔍 '+escHtml(a)+')'} if(u&&a==='匿名'){a=u.nickname||u.username||a} return escHtml(a) })()}</div>
           <div class="post-likes-cell">❤️ ${post.likes||0}</div>
           <div class="post-time-cell">${timeStr}</div>
           <div class="post-time-cell" style="font-family:monospace;font-size:11px;">${shortId}</div>
@@ -4017,7 +4022,7 @@
       <div class="detail-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <div class="detail-label">作者</div>
-          <div class="detail-value">${post.avatar && post.avatar.startsWith('data:') ? avatarImg(post.avatar, 24, 24) + ' ' : (post.avatar && post.avatar.length <= 4 ? post.avatar + ' : ' : '')}${escHtml(post.author||'匿名')}</div>
+          <div class="detail-value">${(function(){ var a=post.author||'匿名'; var u=post.userId&&allUsers.find(function(x){return x.id===post.userId}); if(post.isAnonymous&&u){a=u.nickname||u.username||a; return '🥷 匿名(🔍 '+escHtml(a)+')'} if(u&&a==='匿名'){a=u.nickname||u.username||a} return escHtml(a) })()}</div>
         </div>
         <div>
           <div class="detail-label">点赞数</div>

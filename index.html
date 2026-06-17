@@ -4040,9 +4040,10 @@
       const author = currentUser.nickname;
       const userId = currentUser.id;
       try {
+        const token = localStorage.getItem('campus_user_token');
         const res = await fetch(API + '/api/posts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'x-user-token': token } : {}) },
           body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous })
         });
         const json = await res.json();
