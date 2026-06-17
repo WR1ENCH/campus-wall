@@ -329,28 +329,27 @@ function checkMaintenance(req, res, next) {
     // 自动开启/关闭逻辑
     let enabled = data && (data.enabled === true || data.enabled === 'true');
     const now = Date.now();
-    if (data.autoStart && data.autoEnd) {
+    let stateChanged = false;
+    if (data && data.autoStart && data.autoEnd) {
       const start = new Date(data.autoStart).getTime();
       const end = new Date(data.autoEnd).getTime();
-      if (now >= start && now <= end) {
+      if (now >= start && now <= end && !enabled) {
         enabled = true;
-        // 自动写入状态（仅在状态变化时）
-        if (!enabled) {
-          data.enabled = true;
-          writeMaintenance(data);
-        }
+        stateChanged = true;
       } else if (now > end && enabled) {
         enabled = false;
-        data.enabled = false;
-        writeMaintenance(data);
+        stateChanged = true;
       }
-    } else if (data.autoStart && !data.autoEnd) {
+    } else if (data && data.autoStart && !data.autoEnd) {
       const start = new Date(data.autoStart).getTime();
       if (now >= start && !enabled) {
         enabled = true;
-        data.enabled = true;
-        writeMaintenance(data);
+        stateChanged = true;
       }
+    }
+    if (stateChanged) {
+      data.enabled = enabled;
+      writeMaintenance(data);
     }
 
     if (enabled) {
