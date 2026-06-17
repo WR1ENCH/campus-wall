@@ -5295,6 +5295,17 @@ app.get('/api/student-council/check-init', (req, res) => {
   res.json({ ok: true, data: { needInit: !sc } });
 });
 
+// 验证学生会 token 是否有效
+app.get('/api/student-council/me', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: 'token无效' });
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '学生会账号不存在' });
+  res.json({ ok: true, data: { name: sc.name } });
+});
+
 // 首次设置学生会账号
 app.post('/api/student-council/init', (req, res) => {
   if (readSC()) return res.json({ ok: false, msg: '已初始化，请直接登录' });
