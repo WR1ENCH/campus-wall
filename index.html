@@ -4425,12 +4425,10 @@
       }
       document.getElementById('modalOverlay').classList.add('show');
       const inp = document.getElementById('noteInput');
-      inp.value = '#';
+      inp.value = '';
       inp.focus();
-      // 将光标移到 # 后面
-      inp.selectionStart = inp.selectionEnd = 1;
       // 更新字数
-      document.getElementById('noteCount').textContent = '1';
+      document.getElementById('noteCount').textContent = '0';
       // 重置匿名复选框
       const anonChk = document.getElementById('anonymousPost');
       if (anonChk) anonChk.checked = false;
