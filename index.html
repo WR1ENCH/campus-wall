@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -1083,17 +1083,65 @@
       .top-bar.logged-in .user-avatar-sm { font-size: 22px; }
       .top-bar.logged-in .user-logout-sm { font-size: 10px; padding: 3px 7px; }
 
-      /* 移动端 footer 底部栏滚动隐藏/显示 */
-      .footer {
-        transition: transform 0.3s ease, opacity 0.3s ease;
-      }
-      .footer.hidden {
-        transform: translateY(100%);
-        opacity: 0;
-        pointer-events: none;
-      }
+      /* 移动端隐藏底部栏 */
+      .footer { display: none !important; }
+      .wall { padding-bottom: 10px; }
 
-      .wall { padding-bottom: 60px; }
+      /* 汉堡菜单按钮 */
+      .hamburger-btn {
+        display: flex !important; align-items: center; justify-content: center;
+        width: 36px; height: 36px; background: none; border: none;
+        cursor: pointer; padding: 0; flex-shrink: 0;
+      }
+      .hamburger-btn span {
+        display: block; width: 20px; height: 2px; background: #5a4638;
+        position: relative; transition: background 0.3s;
+      }
+      .hamburger-btn span::before, .hamburger-btn span::after {
+        content: ''; position: absolute; left: 0; width: 100%; height: 2px;
+        background: #5a4638; transition: transform 0.3s;
+      }
+      .hamburger-btn span::before { top: -6px; }
+      .hamburger-btn span::after { top: 6px; }
+      .hamburger-btn.active span { background: transparent; }
+      .hamburger-btn.active span::before { top: 0; transform: rotate(45deg); }
+      .hamburger-btn.active span::after { top: 0; transform: rotate(-45deg); }
+
+      /* 侧边导航遮罩 */
+      .side-nav-overlay {
+        display: none; position: fixed; inset: 0; z-index: 999;
+        background: rgba(0,0,0,0.4);
+      }
+      .side-nav-overlay.active { display: block; }
+
+      /* 侧边导航面板 */
+      .side-nav {
+        position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
+        background: #fff; z-index: 1000; transition: left 0.3s ease;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.15); overflow-y: auto;
+      }
+      .side-nav.active { left: 0; }
+      .side-nav-header {
+        padding: 20px 16px 16px; background: linear-gradient(135deg, #8b6f5e, #a08070);
+        color: #fff;
+      }
+      .side-nav-header .nav-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+      .side-nav-header .nav-subtitle { font-size: 12px; opacity: 0.8; }
+      .side-nav-list { padding: 8px 0; }
+      .side-nav-item {
+        display: flex; align-items: center; gap: 12px;
+        padding: 13px 20px; font-size: 15px; color: #333;
+        text-decoration: none; transition: background 0.2s; cursor: pointer;
+        border: none; background: none; width: 100%; text-align: left;
+        font-family: inherit;
+      }
+      .side-nav-item:active { background: #f5f0eb; }
+      .side-nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+      .side-nav-divider { height: 1px; background: #eee; margin: 4px 16px; }
+      .side-nav-footer {
+        padding: 16px 20px; font-size: 11px; color: #999;
+        border-top: 1px solid #eee; margin-top: 4px;
+      }
 
       /* ===== 移动端拍卖弹窗优化 ===== */
       .pickup-modal { width: 96vw; max-height: 90vh; border-radius: 14px; }
@@ -1687,6 +1735,9 @@
 <body>
   <!-- 固定层：顶栏 v2-layout-fix -->
   <div class="top-bar" id="topBar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSideNav()" style="display:none;">
+      <span></span>
+    </button>
     <div class="top-left-group">
       <div class="wall-title">
         <span>📌</span>
@@ -2463,6 +2514,50 @@
         <button class="user-login-confirm" onclick="doSubmitPostCaptcha()">确认</button>
       </div>
     </div>
+  </div>
+
+  <!-- 移动端侧边导航 -->
+  <div class="side-nav-overlay" id="sideNavOverlay" onclick="toggleSideNav()"></div>
+  <div class="side-nav" id="sideNav">
+    <div class="side-nav-header">
+      <div class="nav-title">📌 校园墙</div>
+      <div class="nav-subtitle">探索校园的每一个角落</div>
+    </div>
+    <div class="side-nav-list">
+      <button class="side-nav-item" onclick="toggleSideNav(); window.scrollTo({top:0,behavior:'smooth'});">
+        <span class="nav-icon">🏠</span> 首页
+      </button>
+      <button class="side-nav-item" onclick="toggleSideNav(); openPostModal();">
+        <span class="nav-icon">✏️</span> 发布便签
+      </button>
+      <button class="side-nav-item" onclick="toggleSideNav(); window.open('notice.html','_blank');">
+        <span class="nav-icon">📢</span> 通知公告
+      </button>
+      <div class="side-nav-divider"></div>
+      <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
+        <span class="nav-icon">📝</span> 问题报告
+      </button>
+      <button class="side-nav-item" onclick="toggleSideNav(); window.open('bully.html','_blank');">
+        <span class="nav-icon">🛡️</span> 报告霸凌事件
+      </button>
+      <button class="side-nav-item" onclick="toggleSideNav(); window.open('agreement.html','_blank');">
+        <span class="nav-icon">📄</span> 用户协议
+      </button>
+      <button class="side-nav-item" onclick="toggleSideNav(); window.open('ecosystem.html','_blank');">
+        <span class="nav-icon">🌐</span> 接入校园墙生态
+      </button>
+      <div class="side-nav-divider"></div>
+      <button class="side-nav-item" id="sideNavLogin" onclick="toggleSideNav(); showLoginModal();" style="display:none;">
+        <span class="nav-icon">🔑</span> 登录 / 注册
+      </button>
+      <button class="side-nav-item" id="sideNavProfile" onclick="toggleSideNav(); window.open('credit.html','_blank');" style="display:none;">
+        <span class="nav-icon">👤</span> 我的主页
+      </button>
+      <button class="side-nav-item" id="sideNavLogout" onclick="toggleSideNav(); doUserLogout();" style="display:none;">
+        <span class="nav-icon">🚪</span> 退出登录
+      </button>
+    </div>
+    <div class="side-nav-footer">Powered by wr1Ench</div>
   </div>
 
   <div class="footer">
@@ -6916,54 +7011,53 @@
   <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
   <div id="spotlightTooltip" class="spotlight-tooltip" style="display:none;"></div>
 
-  <!-- 移动端底部栏：默认隐藏，滑动显示，5s自动隐藏，点击常驻 -->
+  <!-- 移动端侧边导航逻辑 -->
   <script>
     (function() {
-      var bar = document.querySelector('.footer');
-      if (!bar) return;
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
-      var timer = null;
-      var pinned = false;
+      // 显示汉堡按钮
+      var hamburger = document.getElementById('hamburgerBtn');
+      if (hamburger) hamburger.style.display = 'flex';
 
-      // 移动端：默认显示底部栏，3秒后自动隐藏
-      bar.classList.remove('hidden');
-
-      function show() {
-        if (pinned) return;
-        bar.classList.remove('hidden');
-        clearTimeout(timer);
-        timer = setTimeout(function() {
-          if (!pinned) bar.classList.add('hidden');
-        }, 3000);
-      }
-
-      // 用户滚动/触摸时显示
-      document.addEventListener('touchstart', show, { passive: true });
-      document.addEventListener('touchmove', show, { passive: true });
-      window.addEventListener('scroll', show, { passive: true });
-
-      // 点击底部栏常驻
-      bar.addEventListener('click', function(e) {
-        e.stopPropagation();
-        pinned = true;
-        bar.classList.remove('hidden');
-        clearTimeout(timer);
-      });
-
-      // 点击其他区域取消常驻
-      document.addEventListener('click', function(e) {
-        if (pinned && !bar.contains(e.target)) {
-          pinned = false;
-          show();
+      // 更新侧边导航登录状态
+      function updateSideNavAuth() {
+        var token = localStorage.getItem('user_token');
+        var loginBtn = document.getElementById('sideNavLogin');
+        var profileBtn = document.getElementById('sideNavProfile');
+        var logoutBtn = document.getElementById('sideNavLogout');
+        if (token) {
+          if (loginBtn) loginBtn.style.display = 'none';
+          if (profileBtn) profileBtn.style.display = 'flex';
+          if (logoutBtn) logoutBtn.style.display = 'flex';
+        } else {
+          if (loginBtn) loginBtn.style.display = 'flex';
+          if (profileBtn) profileBtn.style.display = 'none';
+          if (logoutBtn) logoutBtn.style.display = 'none';
         }
-      });
-
-      // 页面加载3秒后自动隐藏
-      setTimeout(function() {
-        if (!pinned) bar.classList.add('hidden');
-      }, 3000);
+      }
+      updateSideNavAuth();
+      // 监听登录状态变化
+      window.addEventListener('storage', updateSideNavAuth);
     })();
+
+    function toggleSideNav() {
+      var nav = document.getElementById('sideNav');
+      var overlay = document.getElementById('sideNavOverlay');
+      var hamburger = document.getElementById('hamburgerBtn');
+      var isOpen = nav.classList.contains('active');
+      if (isOpen) {
+        nav.classList.remove('active');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+        document.body.style.overflow = '';
+      } else {
+        nav.classList.add('active');
+        overlay.classList.add('active');
+        hamburger.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
   </script>
 
   <script>
