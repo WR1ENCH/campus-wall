@@ -4676,8 +4676,8 @@ app.post('/api/votes/:id/vote', (req, res) => {
   const existingByIp = ipRecords.find(r => r.voteId === vote.id && r.ip === clientIp);
   if (existingByIp) return res.json({ ok: false, msg: '当前网络环境下已有人投过票，请更换网络后重试' });
 
-  // 校验选项
-  if (!vote.multiple && optionIds.length !== 1) {
+  // 校验选项（自定义选项不受单选限制）
+  if (!vote.multiple && optionIds.length !== 1 && !customOption) {
     return res.json({ ok: false, msg: '该投票只能选择一个选项' });
   }
 
