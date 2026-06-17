@@ -1,6 +1,7 @@
-fix: posts表缺少likedBy列导致发帖SQLite报错
+fix: 管理后台帖子列表匿名用户显示真实身份
 
-在db.js自动迁移中添加likedBy、comments、commentsCount列到posts表。
+loadPosts时同步加载用户列表，渲染时根据isAnonymous标记
+和userId查找真实用户名，显示"🥷 匿名(🔍 真实姓名)"。
 提交身份: wr1Ench_atomcode
 
 Co-Authored-By: AtomCode (deepseek-v4-flash) <noreply@atomgit.com>
