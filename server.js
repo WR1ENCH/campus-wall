@@ -267,29 +267,21 @@ app.use(express.static(__dirname)); // 静态文件服务
 // ===== SSE 实时推送 =====
 const sseClients = new Set();
 let sseEventCounter = 0;
-const SSE_KEEPALIVE_MS = 15000;
 
-function sendSSE(res, eventName, payload) {
-  const id = ++sseEventCounter;
-  res.write(`id: ${id}\n`);
-  res.write(`event: ${eventName}\n`);
-  res.write(`data: ${JSON.stringify(payload)}\n\n`);
-}
-
-function broadcastEvent(eventName, payload = {}) {
+function broadcastSSE(eventName, payload = {}) {
   const msg = `id: ${++sseEventCounter}\nevent: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
   for (const client of sseClients) {
     try { client.write(msg); } catch (e) {}
   }
 }
 
-// 定时心跳，防止连接因长时间无数据被中间层断开
+// 心跳保活：每 15 秒给所有连接发一个 ping，防止中间代理断开
 setInterval(() => {
   const pingMsg = `id: ${++sseEventCounter}\nevent: ping\ndata: ${JSON.stringify({ t: Date.now(), clients: sseClients.size })}\n\n`;
   for (const client of sseClients) {
     try { client.write(pingMsg); } catch (e) {}
   }
-}, SSE_KEEPALIVE_MS);
+}, 15000);
 
 app.get('/api/stream', (req, res) => {
   res.writeHead(200, {
@@ -313,11 +305,11 @@ function ensureDir() {
 
 function readPosts () { return db.readPosts(); }
 
-function writePosts (posts) { db.writePosts(posts); broadcastEvent('postUpdate', { t: Date.now() }); }
+function writePosts (posts) { db.writePosts(posts); broadcastSSE('postUpdate', { t: Date.now() }); }
 
 function readVotes () { return db.readVotes(); }
 
-function writeVotes (votes) { db.writeVotes(votes); broadcastEvent('voteUpdate', { t: Date.now() }); }
+function writeVotes (votes) { db.writeVotes(votes); broadcastSSE('voteUpdate', { t: Date.now() }); }
 
 function readVoteRecords () { return db.readVoteRecords(); }
 
@@ -360,14 +352,75 @@ function requireSuper(req, res, next) {
 function checkMaintenance(req, res, next) {
   const reqPath = req.path;
   // 仅放行管理后台路径和维护页面自身
-  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance')) {
+  if (reqPath.startsWith('/api/admin') || reqPath === '/admin.html' || reqPath === '/maintenance.html' || reqPath.startsWith('/api/maintenance') || reqPath === '/api/captcha') {
     return next();
   }
 
   try {
     const data = readMaintenance();
-    const enabled = data && (data.enabled === true || data.enabled === 'true');
+    // 自动开启/关闭逻辑
+    let enabled = data && (data.enabled === true || data.enabled === 'true');
+    const now = Date.now();
+    let stateChanged = false;
+    if (data && data.autoStart && data.autoEnd) {
+      const start = new Date(data.autoStart).getTime();
+      const end = new Date(data.autoEnd).getTime();
+      if (now >= start && now <= end && !enabled) {
+        enabled = true;
+        stateChanged = true;
+      } else if (now > end && enabled) {
+        enabled = false;
+        stateChanged = true;
+      }
+    } else if (data && data.autoStart && !data.autoEnd) {
+      const start = new Date(data.autoStart).getTime();
+      if (now >= start && !enabled) {
+        enabled = true;
+        stateChanged = true;
+      }
+    }
+    if (stateChanged) {
+      data.enabled = enabled;
+      writeMaintenance(data);
+    }
+
     if (enabled) {
+      // 检查管理员 token — 管理员登录后不受维护模式限制
+      const adminToken = req.headers['x-admin-token'];
+      if (adminToken) {
+        const adminSession = verifySignedToken(adminToken);
+        if (adminSession && adminSession.id && Date.now() - adminSession.loginAt < 24 * 3600 * 1000) {
+          return next();
+        }
+      }
+      // 检查 bypass cookie（测试人员用）
+      const bypassToken = req.cookies && req.cookies.maintenance_bypass;
+      if (bypassToken) {
+        const session = verifySignedToken(bypassToken);
+        if (session && session.type === 'maintenance_bypass' && Date.now() - session.loginAt < 4 * 3600 * 1000) {
+          return next();
+        }
+      }
+      // 检查 referer — 从管理后台页面发起的请求放行
+      const referer = req.headers.referer || req.headers.referrer || '';
+      if (referer.indexOf('/admin.html') !== -1) {
+        return next();
+      }
+      // 放行 notice.html 及其 API 请求
+      const noticeBypass = data && (data.noticeBypass === true || data.noticeBypass === 'true');
+      if (noticeBypass) {
+        if (reqPath === '/notice.html') {
+          return next();
+        }
+        // 放行 notice 相关 API 和公开数据 API
+        if (reqPath === '/api/notices' || reqPath.startsWith('/api/notices/') ||
+            reqPath === '/api/discussions' || reqPath.startsWith('/api/discussions/') ||
+            reqPath === '/api/votes' || reqPath.startsWith('/api/votes/') ||
+            reqPath === '/api/notice/votes' || reqPath === '/api/announcement' ||
+            reqPath === '/api/student-council' || reqPath.startsWith('/api/student-council/')) {
+          return next();
+        }
+      }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
       }
@@ -2822,6 +2875,10 @@ function readCreditLogs () { return db.readCreditLogs(); }
 
 function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
 
+// ===== 通知数据读写 =====
+function readNotices () { return db.readNotices(); }
+function writeNotices (notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+
 // ===== 卡密数据读写 =====
 function readCreditCards () { return db.readCreditCards(); }
 function writeCreditCards (cards) { db.writeCreditCards(cards); }
@@ -2882,15 +2939,15 @@ const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 
 function readAnnouncement () { return db.readAnnouncement(); }
 
-function writeAnnouncement (data) { db.writeAnnouncement(data); broadcastEvent('announcementUpdate', { t: Date.now() }); }
+function writeAnnouncement (data) { db.writeAnnouncement(data); broadcastSSE('announcementUpdate', { t: Date.now() }); }
 
 function readDiscussions () { return db.readDiscussions(); }
 
-function writeDiscussions (discussions) { db.writeDiscussions(discussions); broadcastEvent('discussionUpdate', { t: Date.now() }); }
+function writeDiscussions (discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 function readDiscussionComments () { return db.readDiscussionComments(); }
 
-function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); broadcastEvent('discussionUpdate', { t: Date.now() }); }
+function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 // ===== 公告 API =====
 
@@ -4088,9 +4145,9 @@ app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
 
 // ===== Q&A 问答系统 =====
 function readQAQuestions () { return db.readQAQuestions(); }
-function writeQAQuestions (data) { db.writeQAQuestions(data); broadcastEvent('qaUpdate', { t: Date.now() }); }
+function writeQAQuestions (data) { db.writeQAQuestions(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
 function readQAAnswers () { return db.readQAAnswers(); }
-function writeQAAnswers (data) { db.writeQAAnswers(data); broadcastEvent('qaUpdate', { t: Date.now() }); }
+function writeQAAnswers (data) { db.writeQAAnswers(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
 
 // 给用户变更 credit 并记录流水
 function changeCredit(userId, amount, reason) {
@@ -4751,9 +4808,9 @@ const BASE_BID = 300;
 const BID_STEP = 50;
 
 function readPickupAuctions () { return db.readPickupAuctions(); }
-function writePickupAuctions (data) { db.writePickupAuctions(data); broadcastEvent('pickupUpdate', { t: Date.now() }); }
+function writePickupAuctions (data) { db.writePickupAuctions(data); broadcastSSE('pickupUpdate', { t: Date.now() }); }
 function readPickupReports () { return db.readPickupReports(); }
-function writePickupReports (data) { db.writePickupReports(data); broadcastEvent('pickupUpdate', { t: Date.now() }); }
+function writePickupReports (data) { db.writePickupReports(data); broadcastSSE('pickupUpdate', { t: Date.now() }); }
 
 // 获取或创建今天某个时间槽的拍卖
 function getOrCreateAuction(slot, dateStr) {
@@ -5259,7 +5316,7 @@ function readSC () { return db.readSC(); }
 
 function writeSC (data) { db.writeSC(data); }
 
-function writeNotices (data) { db.writeNotices(data); broadcastEvent('noticeUpdate', { t: Date.now() }); }
+function writeNotices (data) { db.writeNotices(data); broadcastSSE('noticeUpdate', { t: Date.now() }); }
 
 function readMaintenance () { return db.readMaintenance(); }
 function writeMaintenance (data) { db.writeMaintenance(data); }
@@ -6010,20 +6067,46 @@ app.get('/api/admin/maintenance/status', requireAdmin, (req, res) => {
   }
 });
 
-// 管理员：切换维护状态（支持自定义消息）
+// 管理员：切换维护状态
 app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
-  const { enabled, message } = req.body;
+  const { enabled } = req.body;
   if (typeof enabled !== 'boolean') {
     return res.json({ ok: false, msg: '参数无效' });
   }
+  const current = readMaintenance() || {};
   const data = {
     enabled,
-    message: enabled && message ? String(message).slice(0, 500) : null,
+    autoStart: current.autoStart || null,
+    autoEnd: current.autoEnd || null,
+    noticeBypass: current.noticeBypass || false,
     updatedAt: new Date().toISOString(),
     updatedBy: req.admin.name || req.admin.id
   };
   writeMaintenance(data);
   res.json({ ok: true, msg: enabled ? '已开启维护模式' : '已关闭维护模式', data });
+});
+
+// 管理员：设置自动开启/关闭时间
+app.post('/api/admin/maintenance/schedule', requireAdmin, (req, res) => {
+  const { autoStart, autoEnd } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.autoStart = autoStart || null;
+  current.autoEnd = autoEnd || null;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: '定时设置已保存', data: current });
+});
+
+// 管理员：切换 notice.html 放行
+app.post('/api/admin/maintenance/notice-bypass', requireAdmin, (req, res) => {
+  const { noticeBypass } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.noticeBypass = !!noticeBypass;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: noticeBypass ? '已放行 notice.html' : '已取消放行', data: current });
 });
 
 // ===== 测试密钥管理（委托 maintenance 模块）=====

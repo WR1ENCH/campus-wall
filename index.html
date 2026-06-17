@@ -4373,9 +4373,10 @@
       }
     }
 
-    async function submitCommentFromCard(postId) {
-      const input = document.getElementById('commentInput_' + postId);
-      if (!input) return;
+    async function submitCommentFromDetail() {
+      const postId = currentDetailId;
+      const input = document.getElementById('detailCommentInput');
+      if (!input || !postId) return;
       const content = input.value.trim();
       
       if (!content) {
@@ -4401,13 +4402,14 @@
         const json = await res.json();
         if (json.ok) {
           input.value = '';
-          showToast('💬 评论已发布');
+          showToast('💬 评论已发布！点击"查看评论"查看');
           // 更新本地评论计数
           const post = posts.find(p => p.id === postId);
           if (post) {
             post.comments = (post.comments || 0) + 1;
             post.commentsCount = (post.commentsCount || 0) + 1;
           }
+          renderNotes(currentFilter);
         } else {
           showToast(json.msg || '⚠️ 评论失败');
         }
@@ -4468,12 +4470,10 @@
       }
       document.getElementById('modalOverlay').classList.add('show');
       const inp = document.getElementById('noteInput');
-      inp.value = '#';
+      inp.value = '';
       inp.focus();
-      // 将光标移到 # 后面
-      inp.selectionStart = inp.selectionEnd = 1;
       // 更新字数
-      document.getElementById('noteCount').textContent = '1';
+      document.getElementById('noteCount').textContent = '0';
       // 重置匿名复选框
       const anonChk = document.getElementById('anonymousPost');
       if (anonChk) anonChk.checked = false;
@@ -4571,6 +4571,7 @@
       if (detailCommentInput) detailCommentInput.value = '';
 
       currentDetailId = id;
+      document.getElementById('detailCommentInput').value = '';
       document.getElementById('noteDetailOverlay').classList.add('show');
     }
 
