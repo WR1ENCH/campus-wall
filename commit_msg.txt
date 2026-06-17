@@ -1,6 +1,6 @@
-fix: 移除发帖框自动填充的'#'
+fix: posts表缺少likedBy列导致发帖SQLite报错
 
-发帖弹窗打开时不再自动插入#号，同时字数统计归零。
+在db.js自动迁移中添加likedBy、comments、commentsCount列到posts表。
 提交身份: wr1Ench_atomcode
 
 Co-Authored-By: AtomCode (deepseek-v4-flash) <noreply@atomgit.com>
