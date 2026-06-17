@@ -264,6 +264,46 @@ app.use((req, res, next) => {
 app.use(checkMaintenance); // 维护状态检查
 app.use(express.static(__dirname)); // 静态文件服务
 
+// ===== SSE 实时推送 =====
+const sseClients = new Set();
+let sseEventCounter = 0;
+const SSE_KEEPALIVE_MS = 15000;
+
+function sendSSE(res, eventName, payload) {
+  const id = ++sseEventCounter;
+  res.write(`id: ${id}\n`);
+  res.write(`event: ${eventName}\n`);
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+function broadcastEvent(eventName, payload = {}) {
+  const msg = `id: ${++sseEventCounter}\nevent: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(msg); } catch (e) {}
+  }
+}
+
+// 定时心跳，防止连接因长时间无数据被中间层断开
+setInterval(() => {
+  const pingMsg = `id: ${++sseEventCounter}\nevent: ping\ndata: ${JSON.stringify({ t: Date.now(), clients: sseClients.size })}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(pingMsg); } catch (e) {}
+  }
+}, SSE_KEEPALIVE_MS);
+
+app.get('/api/stream', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  res.write(`retry: 3000\n`);
+  res.write(`id: ${++sseEventCounter}\nevent: connected\ndata: ${JSON.stringify({ t: Date.now(), clients: sseClients.size + 1 })}\n\n`);
+  sseClients.add(res);
+  req.on('close', () => { sseClients.delete(res); });
+});
+
 const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
 
 // ===== 数据读写 =====
@@ -273,11 +313,11 @@ function ensureDir() {
 
 function readPosts () { return db.readPosts(); }
 
-function writePosts (posts) { db.writePosts(posts); }
+function writePosts (posts) { db.writePosts(posts); broadcastEvent('postUpdate', { t: Date.now() }); }
 
 function readVotes () { return db.readVotes(); }
 
-function writeVotes (votes) { db.writeVotes(votes); }
+function writeVotes (votes) { db.writeVotes(votes); broadcastEvent('voteUpdate', { t: Date.now() }); }
 
 function readVoteRecords () { return db.readVoteRecords(); }
 
@@ -2842,15 +2882,15 @@ const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 
 function readAnnouncement () { return db.readAnnouncement(); }
 
-function writeAnnouncement (data) { db.writeAnnouncement(data); }
+function writeAnnouncement (data) { db.writeAnnouncement(data); broadcastEvent('announcementUpdate', { t: Date.now() }); }
 
 function readDiscussions () { return db.readDiscussions(); }
 
-function writeDiscussions (discussions) { db.writeDiscussions(discussions); }
+function writeDiscussions (discussions) { db.writeDiscussions(discussions); broadcastEvent('discussionUpdate', { t: Date.now() }); }
 
 function readDiscussionComments () { return db.readDiscussionComments(); }
 
-function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); }
+function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); broadcastEvent('discussionUpdate', { t: Date.now() }); }
 
 // ===== 公告 API =====
 
@@ -4048,9 +4088,9 @@ app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
 
 // ===== Q&A 问答系统 =====
 function readQAQuestions () { return db.readQAQuestions(); }
-function writeQAQuestions (data) { db.writeQAQuestions(data); }
+function writeQAQuestions (data) { db.writeQAQuestions(data); broadcastEvent('qaUpdate', { t: Date.now() }); }
 function readQAAnswers () { return db.readQAAnswers(); }
-function writeQAAnswers (data) { db.writeQAAnswers(data); }
+function writeQAAnswers (data) { db.writeQAAnswers(data); broadcastEvent('qaUpdate', { t: Date.now() }); }
 
 // 给用户变更 credit 并记录流水
 function changeCredit(userId, amount, reason) {
@@ -4711,9 +4751,9 @@ const BASE_BID = 300;
 const BID_STEP = 50;
 
 function readPickupAuctions () { return db.readPickupAuctions(); }
-function writePickupAuctions (data) { db.writePickupAuctions(data); }
+function writePickupAuctions (data) { db.writePickupAuctions(data); broadcastEvent('pickupUpdate', { t: Date.now() }); }
 function readPickupReports () { return db.readPickupReports(); }
-function writePickupReports (data) { db.writePickupReports(data); }
+function writePickupReports (data) { db.writePickupReports(data); broadcastEvent('pickupUpdate', { t: Date.now() }); }
 
 // 获取或创建今天某个时间槽的拍卖
 function getOrCreateAuction(slot, dateStr) {
@@ -5219,7 +5259,7 @@ function readSC () { return db.readSC(); }
 
 function writeSC (data) { db.writeSC(data); }
 
-function writeNotices (data) { db.writeNotices(data); }
+function writeNotices (data) { db.writeNotices(data); broadcastEvent('noticeUpdate', { t: Date.now() }); }
 
 function readMaintenance () { return db.readMaintenance(); }
 function writeMaintenance (data) { db.writeMaintenance(data); }

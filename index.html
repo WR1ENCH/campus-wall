@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -5149,11 +5149,145 @@
       refreshStats();
     }, 10000);
 
-    // 定时刷新数据（每 30 秒拉一次最新帖子）
+    // ===== SSE 实时更新（替代轮询） =====
+    let sseStream = null;
+    let sseConnected = false;
+    const debounceTimers = {}; // 各事件类型的防抖计时器
+
+    function debouncedRefresh(eventName, fn, delay) {
+      if (debounceTimers[eventName]) clearTimeout(debounceTimers[eventName]);
+      debounceTimers[eventName] = setTimeout(async () => {
+        try { await fn(); } catch (e) { console.error('SSE refresh error:', eventName, e); }
+      }, delay);
+    }
+
+    function refreshPostDetailIfOpen() {
+      const detailOverlay = document.getElementById('noteDetailOverlay');
+      if (detailOverlay && detailOverlay.classList.contains('show') && currentDetailId) {
+        fetchPosts().then(() => {
+          openNoteDetail(currentDetailId);
+        });
+      }
+    }
+
+    function tryConnectSSE() {
+      if (sseStream) { try { sseStream.close(); } catch (e) {} sseStream = null; }
+      try {
+        sseStream = new EventSource('/api/stream');
+
+        sseStream.addEventListener('connected', (e) => {
+          sseConnected = true;
+          console.log('[SSE] 已连接实时更新通道');
+        });
+
+        sseStream.addEventListener('postUpdate', (e) => {
+          debouncedRefresh('post', async () => {
+            await fetchPosts();
+            renderNotes(currentFilter);
+            refreshPostDetailIfOpen();
+          }, 800);
+        });
+
+        sseStream.addEventListener('discussionUpdate', (e) => {
+          debouncedRefresh('discussion', async () => {
+            try { await loadDiscussions(); } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('announcementUpdate', (e) => {
+          debouncedRefresh('announcement', async () => {
+            try {
+              const res = await fetch('/api/announcement');
+              const json = await res.json();
+              const annText = document.getElementById('announcementText');
+              if (annText) annText.textContent = json.data ? json.data.title || '' : '';
+              const annOverlay = document.getElementById('announcementModal');
+              if (annOverlay && json.data) {
+                document.getElementById('announcementModalContent').textContent = json.data.content || json.data.title || '';
+              }
+            } catch (err) {}
+          }, 500);
+        });
+
+        sseStream.addEventListener('noticeUpdate', (e) => {
+          debouncedRefresh('notice', async () => {
+            try {
+              const res = await fetch('/api/notices');
+              const json = await res.json();
+              const noticeList = document.getElementById('noticeList');
+              if (noticeList && json.ok && json.data && json.data.length) {
+                const first = json.data[0];
+                const existing = noticeList.querySelector('.notice-item');
+                if (existing) existing.textContent = first.title || '';
+              }
+            } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('pickupUpdate', (e) => {
+          debouncedRefresh('pickup', async () => {
+            try {
+              loadPickupSlots();
+              loadPickupScroll();
+            } catch (err) {}
+          }, 1500);
+        });
+
+        sseStream.addEventListener('voteUpdate', (e) => {
+          debouncedRefresh('vote', async () => {
+            try {
+              const voteOverlay = document.getElementById('voteOverlay');
+              if (voteOverlay && voteOverlay.style.display === 'flex') {
+                const activeTab = document.querySelector('.vote-tab.active');
+                if (activeTab && activeTab.textContent.includes('我的')) {
+                  loadMyVotes();
+                } else {
+                  loadVoteList();
+                }
+              }
+            } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('qaUpdate', (e) => {
+          debouncedRefresh('qa', async () => {
+            try {
+              if (typeof loadQAList === 'function') loadQAList(qaCurrentFilter || '');
+              if (typeof loadQADetail === 'function' && qaCurrentQuestionId) loadQADetail(qaCurrentQuestionId);
+            } catch (err) {}
+          }, 1500);
+        });
+
+        sseStream.addEventListener('ping', (e) => {
+          // 心跳包，保持连接
+        });
+
+        sseStream.addEventListener('open', () => {
+          sseConnected = true;
+        });
+
+        sseStream.addEventListener('error', (e) => {
+          sseConnected = false;
+          if (sseStream && sseStream.readyState === EventSource.CLOSED) {
+            console.log('[SSE] 连接断开，5 秒后重连...');
+            setTimeout(tryConnectSSE, 5000);
+          }
+        });
+      } catch (e) {
+        console.error('[SSE] 创建连接失败，回退到轮询：', e);
+      }
+    }
+
+    // 启动 SSE 连接
+    tryConnectSSE();
+
+    // 兜底：若 SSE 不可用，保持每 60 秒刷新一次帖子（比原来的 30 秒更温和）
     setInterval(async () => {
-      await fetchPosts();
-      renderNotes(currentFilter);
-    }, 30000);
+      if (!sseConnected) {
+        await fetchPosts();
+        renderNotes(currentFilter);
+      }
+    }, 60000);
 
     // 窗口大小变化时重新排布
     let resizeTimer;
