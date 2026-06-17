@@ -375,10 +375,12 @@ function checkMaintenance(req, res, next) {
       if (referer.indexOf('/admin.html') !== -1) {
         return next();
       }
-      // 放行 notice.html
+      // 放行 notice.html 及其 API 请求
       const noticeBypass = data && (data.noticeBypass === true || data.noticeBypass === 'true');
-      if (noticeBypass && reqPath === '/notice.html') {
-        return next();
+      if (noticeBypass) {
+        if (reqPath === '/notice.html' || referer.indexOf('/notice.html') !== -1) {
+          return next();
+        }
       }
       if (req.accepts('html')) {
         return res.redirect('/maintenance.html');
