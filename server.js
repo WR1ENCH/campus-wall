@@ -2843,6 +2843,10 @@ function readCreditLogs () { return db.readCreditLogs(); }
 
 function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
 
+// ===== 通知数据读写 =====
+function readNotices () { return db.readNotices(); }
+function writeNotices (notices) { db.writeNotices(notices); }
+
 // ===== 卡密数据读写 =====
 function readCreditCards () { return db.readCreditCards(); }
 function writeCreditCards (cards) { db.writeCreditCards(cards); }
