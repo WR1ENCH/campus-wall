@@ -4747,7 +4747,7 @@
         const percent = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
         html += '<div>';
         html += '<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text);margin-bottom:2px;">';
-        html += '<span>' + escHtml(opt.text) + '</span>';
+        html += '<span>' + (opt.image ? '<img src="' + opt.image + '" style="width:20px;height:20px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">' : '') + escHtml(opt.text) + '</span>';
         html += '<span style="color:var(--text-sub);">' + (opt.votes || 0) + ' 票 · ' + percent + '%</span>';
         html += '</div>';
         html += '<div style="background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#3b82f6,#0c4a6e);width:' + percent + '%;"></div></div>';

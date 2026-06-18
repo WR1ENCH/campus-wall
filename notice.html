@@ -1662,8 +1662,6 @@ body {
     });
     if (options.length < 2) { errEl.textContent = '至少需要2个选项'; return; }
     if (options.length > 20) { errEl.textContent = '最多20个选项'; return; }
-    if (options.length < 2) { errEl.textContent = '\u81F3\u5C11\u9700\u89812\u4E2A\u9009\u9879'; return; }
-    if (options.length > 20) { errEl.textContent = '\u6700\u591A20\u4E2A\u9009\u9879'; return; }
 
     errEl.textContent = '';
     var btn = document.getElementById('voteSubmitBtn');
@@ -1675,7 +1673,7 @@ body {
         headers: { 'Content-Type': 'application/json', 'x-sc-token': localStorage.getItem(SC_TOKEN_KEY) || '' },
         body: JSON.stringify({
           title: title,
-          options: options,
+          options: options.map(function(t, i) { return { text: t, image: optionImages[i] }; }),
           multiple: multiple,
           allowCustom: allowCustom,
           endTime: endTime ? new Date(endTime).toISOString() : null
@@ -1981,7 +1979,7 @@ body {
       vote.options.forEach(function(opt) {
         var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
         html += '<div class="vote-option" style="cursor:default;">';
-        html += '<span class="vote-option-text">' + escHtml(opt.text) + '</span>';
+        html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:20px;height:20px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escHtml(opt.text) + '</span>';
         html += '<span class="vote-option-percent">' + percent + '% (' + (opt.votes || 0) + '票)</span>';
         html += '</div>';
         html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
