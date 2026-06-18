@@ -1619,10 +1619,17 @@ body {
     document.getElementById('voteOverlay').style.display = 'flex';
     document.getElementById('voteError').textContent = '';
     document.getElementById('voteTitle').value = '';
-    document.getElementById('voteOptions').value = '';
     document.getElementById('voteMultiple').checked = false;
     document.getElementById('voteAllowCustom').checked = false;
     document.getElementById('voteEndTime').value = '';
+    // 重置选项输入框
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    rows.forEach(function(r, i) {
+      r.querySelector('.notice-vote-opt-input').value = '';
+      var prev = r.querySelector('.notice-vote-img-preview');
+      if (prev) { prev.style.display = 'none'; prev.querySelector('img').src = ''; }
+    });
+    document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-input')[0].focus();
   };
 
   window.closeVoteModal = function() {
@@ -1686,6 +1693,44 @@ body {
       errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5';
       btn.disabled = false; btn.textContent = '\u2705 \u53D1\u5E03\u6295\u7968';
     }
+  };
+
+  // 投票选项辅助函数
+  window.addNoticeVoteOpt = function(btn) {
+    var row = btn.closest('.notice-vote-opt-row');
+    var newRow = row.cloneNode(true);
+    newRow.querySelector('.notice-vote-opt-input').value = '';
+    var prev = newRow.querySelector('.notice-vote-img-preview');
+    if (prev) { prev.style.display = 'none'; prev.querySelector('img').src = ''; }
+    var addBtn = newRow.querySelector('.notice-vote-add');
+    if (addBtn) addBtn.outerHTML = '<button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>';
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    updateNoticeVotePlh();
+  };
+  window.removeNoticeVoteOpt = function(btn) {
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    if (rows.length <= 2) { showToast('至少需要2个选项', 'error'); return; }
+    btn.closest('.notice-vote-opt-row').remove();
+    updateNoticeVotePlh();
+  };
+  function updateNoticeVotePlh() {
+    document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row').forEach(function(r,i){
+      var inp = r.querySelector('.notice-vote-opt-input');
+      if (inp && !inp.value) inp.placeholder = '选项 ' + (i+1);
+    });
+  }
+  window.handleNoticeVoteImg = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('请选择图片文件', 'error'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('图片不能超过10MB', 'error'); input.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var row = input.closest('.notice-vote-opt-row');
+      var prev = row.querySelector('.notice-vote-img-preview');
+      if (prev) { prev.style.display = 'block'; prev.querySelector('img').src = e.target.result; }
+    };
+    reader.readAsDataURL(file);
   };
 
   // ===== 讨论话题 =====
