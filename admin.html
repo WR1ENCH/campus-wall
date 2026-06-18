@@ -4717,7 +4717,10 @@
       html += '<span class="' + (ended ? 'badge-admin' : '') + '" style="' + (ended ? 'background:#fecaca;color:#991b1b;' : 'background:#bbf7d0;color:#166534;') + 'padding:3px 8px;border-radius:4px;font-size:12px;font-weight:500;">';
       html += vote.deleted ? '已删除' : (ended ? '已结束' : '进行中');
       html += '</span>';
-      if (!vote.deleted) {
+      if (!vote.deleted && !ended) {
+      html += '<button class="btn-del" style="font-size:12px;padding:4px 10px;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;" onclick="adminEndVote(\'' + vote.id + '\', \'' + escHtml(vote.title).replace(/'/g, "\\'") + '\')">⏹ 截止</button>';
+    }
+    if (!vote.deleted) {
         html += '<button class="btn-del" style="font-size:12px;padding:4px 10px;" onclick="adminDeleteVote(\'' + vote.id + '\', \'' + escHtml(vote.title).replace(/'/g, "\\'") + '\')">🗑️ 删除</button>';
       }
       html += '</div>';

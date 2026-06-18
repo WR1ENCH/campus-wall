@@ -4768,6 +4768,22 @@ app.post('/api/votes/:id/vote', (req, res) => {
 });
 
 // 删除投票（仅管理员可删除）
+// 手动截止投票（设置 endTime 为当前时间，投票变为已结束但不删除）
+app.post('/api/votes/:id/end', (req, res) => {
+  const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id && !v.deleted);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.endTime && new Date(vote.endTime) < new Date()) return res.json({ ok: false, msg: '投票已结束' });
+
+  vote.endTime = new Date().toISOString();
+  writeVotes(votes);
+  res.json({ ok: true, msg: '投票已截止' });
+});
+
+// 删除投票（管理员）
 app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
   const idx = votes.findIndex(v => v.id === req.params.id);
