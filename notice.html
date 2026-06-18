@@ -772,8 +772,23 @@ body {
         <input class="form-input" id="voteTitle" maxlength="100" placeholder="请输入投票标题">
       </div>
       <div class="form-group">
-        <label for="voteOptions">投票选项 <span style="font-weight:400;color:var(--text-sub);">（每行一个，至少2项）</span></label>
-        <textarea class="form-input form-textarea" id="voteOptions" rows="4" placeholder="选项1&#10;选项2&#10;选项3"></textarea>
+        <label>投票选项 <span style="font-weight:400;color:var(--text-sub);">（至少2项）</span></label>
+        <div id="noticeVoteOptions">
+          <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+            <input type="text" class="notice-vote-opt-input" placeholder="选项 1" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;">🖼️</button>
+            <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+            <button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>
+          </div>
+          <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+            <input type="text" class="notice-vote-opt-input" placeholder="选项 2" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;">🖼️</button>
+            <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+            <button type="button" onclick="removeNoticeVoteOpt(this)" style="padding:4px 10px;border:1px solid #ff6b6b;border-radius:4px;background:var(--bg);color:#ff6b6b;cursor:pointer;">−</button>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -1617,16 +1632,29 @@ body {
 
   window.doCreateVote = async function() {
     var title = document.getElementById('voteTitle').value.trim();
-    var optionsText = document.getElementById('voteOptions').value.trim();
     var multiple = document.getElementById('voteMultiple').checked;
     var allowCustom = document.getElementById('voteAllowCustom').checked;
     var endTime = document.getElementById('voteEndTime').value || null;
     var errEl = document.getElementById('voteError');
 
-    if (!title) { errEl.textContent = '\u8BF7\u8F93\u5165\u6295\u7968\u6807\u9898'; return; }
-    if (title.length > 100) { errEl.textContent = '\u6807\u9898\u6700\u591A100\u5B57'; return; }
+    if (!title) { errEl.textContent = '请输⼊投票标题'; return; }
+    if (title.length > 100) { errEl.textContent = '标题最多100字'; return; }
 
-    var options = optionsText.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    var options = [];
+    var optionImages = [];
+    rows.forEach(function(row) {
+      var input = row.querySelector('.notice-vote-opt-input');
+      var text = input ? input.value.trim() : '';
+      if (text) {
+        options.push(text);
+        var preview = row.querySelector('.notice-vote-img-preview');
+        var img = preview ? preview.querySelector('img') : null;
+        optionImages.push(img && img.src && img.src.startsWith('data:') ? img.src : null);
+      }
+    });
+    if (options.length < 2) { errEl.textContent = '至少需要2个选项'; return; }
+    if (options.length > 20) { errEl.textContent = '最多20个选项'; return; }
     if (options.length < 2) { errEl.textContent = '\u81F3\u5C11\u9700\u89812\u4E2A\u9009\u9879'; return; }
     if (options.length > 20) { errEl.textContent = '\u6700\u591A20\u4E2A\u9009\u9879'; return; }
 
