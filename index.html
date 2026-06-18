@@ -7104,7 +7104,7 @@
         if (logoutBtn) logoutBtn.style.display = 'flex';
         if (userSection) {
           userSection.style.display = 'flex';
-          var userStr = localStorage.getItem('campus_current_user');
+          var userStr = localStorage.getItem('campus_wall_user');
           if (userStr) {
             try {
               var u = JSON.parse(userStr);
@@ -7144,7 +7144,7 @@
     }
 
     function openProfilePage() {
-      var userStr = localStorage.getItem('campus_current_user');
+      var userStr = localStorage.getItem('campus_wall_user');
       if (userStr) {
         try {
           var u = JSON.parse(userStr);
