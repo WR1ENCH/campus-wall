@@ -1637,7 +1637,7 @@ app.get('/api/admin/zhixue-pending', requireAdmin, (req, res) => {
     avatar: u.avatar,
     certType: u.zhixueCertType || 'zhixue',
     zhixueUsername: u.zhixueUsername,
-    zhixuePassword: u.zhixuePassword || '',
+    zhixuePassword: (u.zhixuePassword ? decryptCert(u.zhixuePassword) : '') || '',
     manualNote: u.zhixueManualNote || '',
     manualImages: u.zhixueManualImages || [],
     submittedAt: u.zhixueSubmittedAt
@@ -1775,7 +1775,7 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
       avatar: u.avatar,
       certType: u.zhixueCertType || 'zhixue',
       zhixueUsername: u.zhixueUsername,
-      zhixuePassword: u.zhixuePassword || '',
+      zhixuePassword: (u.zhixuePassword ? decryptCert(u.zhixuePassword) : '') || '',
       zhixueManualName: u.zhixueManualName,
       status: u.zhixueStatus,
       rejectReason: u.zhixueRejectReason || null,
@@ -4676,8 +4676,8 @@ app.post('/api/votes/:id/vote', (req, res) => {
   const existingByIp = ipRecords.find(r => r.voteId === vote.id && r.ip === clientIp);
   if (existingByIp) return res.json({ ok: false, msg: '当前网络环境下已有人投过票，请更换网络后重试' });
 
-  // 校验选项
-  if (!vote.multiple && optionIds.length !== 1) {
+  // 校验选项（自定义选项不受单选限制）
+  if (!vote.multiple && optionIds.length !== 1 && !customOption) {
     return res.json({ ok: false, msg: '该投票只能选择一个选项' });
   }
 
@@ -5293,6 +5293,17 @@ function writeMaintenance (data) { db.writeMaintenance(data); }
 app.get('/api/student-council/check-init', (req, res) => {
   const sc = readSC();
   res.json({ ok: true, data: { needInit: !sc } });
+});
+
+// 验证学生会 token 是否有效
+app.get('/api/student-council/me', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: 'token无效' });
+  const sc = readSC();
+  if (!sc) return res.json({ ok: false, msg: '学生会账号不存在' });
+  res.json({ ok: true, data: { name: sc.name } });
 });
 
 // 首次设置学生会账号
