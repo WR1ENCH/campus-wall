@@ -2758,10 +2758,12 @@
           if (data.ok) {
             var allVotes = data.data || [];
             var userId = getCurrentUserId();
-            var myVotes = allVotes.filter(function(v) { return v.userId === userId; });
+            var myVotes = allVotes.filter(function(v) {
+              return v.userVoted && v.userVoted.length > 0;
+            });
             votes = allVotes;
             if (myVotes.length === 0) {
-              container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+              container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有参与任何投票</div>';
             } else {
               renderVoteList(myVotes, 'voteMyContainer');
             }
