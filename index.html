@@ -2564,12 +2564,6 @@
       <button class="side-nav-item" onclick="toggleSideNav(); window.scrollTo({top:0,behavior:'smooth'});">
         <span class="nav-icon">🏠</span> 首页
       </button>
-      <button class="side-nav-item" onclick="toggleSideNav(); openPostModal();">
-        <span class="nav-icon">✏️</span> 发布便签
-      </button>
-      <button class="side-nav-item" onclick="toggleSideNav(); window.open('notice.html','_blank');">
-        <span class="nav-icon">📢</span> 通知公告
-      </button>
       <div class="side-nav-divider"></div>
       <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
         <span class="nav-icon">📝</span> 问题报告
@@ -3237,6 +3231,7 @@
           currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
+          updateSideNavAuth();
           updateUserBar();
           checkAnnouncement();
           if (currentUser.zhixueStatus !== 'approved') checkCertResult();
@@ -3354,6 +3349,7 @@
           currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: json.data.zhixueStatus || null };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
+          updateSideNavAuth();
           hideLoginModal();
           updateUserBar();
           showToast('🎉 欢迎回来，' + nickname + '！');
@@ -3402,6 +3398,7 @@
           currentUser = { id, username: u, nickname, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || 'approved' };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
+          updateSideNavAuth();
           hideLoginModal();
           updateUserBar();
           showToast('🎉 智学账号登录成功，欢迎 ' + nickname + '！');
@@ -3454,6 +3451,7 @@
           currentUser = { id, username: u, nickname: n, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: null };
           localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
           localStorage.setItem('campus_user_token', token);
+          updateSideNavAuth();
           hideLoginModal();
           updateUserBar();
           showToast('🎉 注册成功，欢迎 ' + n + '！');
@@ -3498,6 +3496,7 @@
       }
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem('campus_user_token');
+      updateSideNavAuth();
       currentUser = null;
       updateUserBar();
       showToast('已退出登录');
@@ -3545,6 +3544,7 @@
             // token 过期，清除
             localStorage.removeItem(USER_KEY);
             localStorage.removeItem('campus_user_token');
+            updateSideNavAuth();
             currentUser = null;
           } else {
             // 刷新用户数据（含 credit、签到状态、认证状态）
@@ -7050,33 +7050,21 @@
 
   <!-- 移动端侧边导航逻辑 -->
   <script>
-    (function() {
-      if (!window.matchMedia('(max-width: 768px)').matches) return;
-
-      // 显示汉堡按钮
-      var hamburger = document.getElementById('hamburgerBtn');
-      if (hamburger) hamburger.style.display = 'flex';
-
-      // 更新侧边导航登录状态
-      function updateSideNavAuth() {
-        var token = localStorage.getItem('user_token');
-        var loginBtn = document.getElementById('sideNavLogin');
-        var profileBtn = document.getElementById('sideNavProfile');
-        var logoutBtn = document.getElementById('sideNavLogout');
-        if (token) {
-          if (loginBtn) loginBtn.style.display = 'none';
-          if (profileBtn) profileBtn.style.display = 'flex';
-          if (logoutBtn) logoutBtn.style.display = 'flex';
-        } else {
-          if (loginBtn) loginBtn.style.display = 'flex';
-          if (profileBtn) profileBtn.style.display = 'none';
-          if (logoutBtn) logoutBtn.style.display = 'none';
-        }
+    function updateSideNavAuth() {
+      var token = localStorage.getItem('campus_user_token');
+      var loginBtn = document.getElementById('sideNavLogin');
+      var profileBtn = document.getElementById('sideNavProfile');
+      var logoutBtn = document.getElementById('sideNavLogout');
+      if (token) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (profileBtn) profileBtn.style.display = 'flex';
+        if (logoutBtn) logoutBtn.style.display = 'flex';
+      } else {
+        if (loginBtn) loginBtn.style.display = 'flex';
+        if (profileBtn) profileBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
       }
-      updateSideNavAuth();
-      // 监听登录状态变化
-      window.addEventListener('storage', updateSideNavAuth);
-    })();
+    }
 
     function toggleSideNav() {
       var nav = document.getElementById('sideNav');
@@ -7089,12 +7077,21 @@
         hamburger.classList.remove('active');
         document.body.style.overflow = '';
       } else {
+        updateSideNavAuth();
         nav.classList.add('active');
         overlay.classList.add('active');
         hamburger.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
     }
+
+    (function() {
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+      var hamburger = document.getElementById('hamburgerBtn');
+      if (hamburger) hamburger.style.display = 'flex';
+      updateSideNavAuth();
+      window.addEventListener('storage', updateSideNavAuth);
+    })();
   </script>
 
   <script>
