@@ -241,7 +241,7 @@ app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
     // ⚠️ PoW 字段已移除 — 服务端未实现实际 PoW 校验，这些字段无安全意义
-    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
+    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, options, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
@@ -255,7 +255,8 @@ app.use((req, res, next) => {
       ...(reason !== undefined ? { reason } : {}),
       ...(answer !== undefined ? { answer } : {}),
       ...(question !== undefined ? { question } : {}),
-      ...(description !== undefined ? { description } : {})
+      ...(description !== undefined ? { description } : {}),
+      ...(options !== undefined ? { options } : {})
     };
   }
   next();
@@ -4727,6 +4728,9 @@ app.post('/api/votes/:id/vote', (req, res) => {
   }
 
   // 处理自定义选项
+  if (customOption && !vote.allowCustom) {
+    return res.json({ ok: false, msg: '该投票未开启自定义选项' });
+  }
   let finalOptionIds = [...optionIds];
   if (customOption && vote.allowCustom) {
     const trimmed = String(customOption).trim();
