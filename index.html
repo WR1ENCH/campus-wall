@@ -1074,6 +1074,10 @@
       .action-btns .compose-btn { flex: 0 0 auto; }
       .action-btns .notif-btn { font-size: 16px; padding: 4px 8px; }
 
+      /* 移动端详情弹窗按钮：只显示图标 */
+      .note-detail-box .detail-btn-group button .btn-label { display: none; }
+      .note-detail-box .detail-btn-group button { justify-content: center; padding: 5px 10px; font-size: 14px; }
+
       /* 登录后隐藏logo，用户信息替代左位 */
       .top-bar.logged-in { justify-content: flex-start; padding: 10px 16px; }
       .top-bar.logged-in .wall-title { display: none; }
@@ -1819,13 +1823,13 @@
         </div>
         <div class="detail-btn-group">
           <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()">
-            🤍 点赞
+            🤍<span class="btn-label"> 点赞</span>
           </button>
           <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:3px; padding:5px 8px; font-family:inherit; font-size:13px; cursor:pointer; white-space:nowrap; flex:1 1 auto; min-width:0;">
-            🗑️ 删除
+            🗑️<span class="btn-label"> 删除</span>
           </button>
           <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
-            ⚠️ 举报
+            ⚠️<span class="btn-label"> 举报</span>
           </button>
           <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
             💬 详情
@@ -4555,7 +4559,7 @@
       }
 
       const likeBtn = document.getElementById('detailLikeBtn');
-      likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';
+      likeBtn.innerHTML = post.liked ? '❤️<span class="btn-label"> 已赞</span>' : '🤍<span class="btn-label"> 点赞</span>';
       likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
       // 删除按钮：仅帖子作者可见
@@ -4637,7 +4641,7 @@
         post.likes = result.likes;
 
         const likeBtn = document.getElementById('detailLikeBtn');
-        likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';
+        likeBtn.innerHTML = post.liked ? '❤️<span class="btn-label"> 已赞</span>' : '🤍<span class="btn-label"> 点赞</span>';
         likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
         renderNotes(currentFilter);
