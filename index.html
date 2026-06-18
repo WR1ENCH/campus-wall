@@ -1394,27 +1394,30 @@
       padding-top: 14px;
       font-size: 13px; opacity: 0.7;
       flex-wrap: wrap; gap: 8px;
+      width: 100%; box-sizing: border-box; overflow: hidden;
     }
     .note-detail-box .detail-author { display: flex; align-items: center; gap: 6px; }
-    .note-detail-box .detail-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .note-detail-box .detail-btn-group { display: flex; gap: 6px; flex-wrap: wrap; max-width: 100%; justify-content: flex-end; }
 
     .note-detail-box .detail-like-btn {
       background: rgba(0,0,0,0.08); border: none;
-      padding: 5px 10px; border-radius: 3px;
+      padding: 5px 8px; border-radius: 3px;
       font-family: inherit; font-size: 13px; cursor: pointer;
       transition: background 0.15s; white-space: nowrap;
+      flex: 1 1 auto; min-width: 0;
     }
     .note-detail-box .detail-like-btn:hover { background: rgba(0,0,0,0.15); }
     .note-detail-box .detail-like-btn.liked { background: rgba(255,0,0,0.12); }
 
     .note-detail-box .detail-report-btn {
       background: rgba(239,68,68,0.1); border: none;
-      padding: 5px 10px; border-radius: 3px;
+      padding: 5px 8px; border-radius: 3px;
       font-family: inherit; font-size: 13px; cursor: pointer;
       color: #b91c1c; transition: background 0.15s; white-space: nowrap;
+      flex: 1 1 auto; min-width: 0;
     }
     .note-detail-box .detail-report-btn:hover { background: rgba(239,68,68,0.2); }
-    .note-detail-box .detail-link-btn { background: rgba(59,130,246,0.12); border: none; border-radius: 3px; padding: 5px 10px; font-family: inherit; font-size: 13px; cursor: pointer; color: #1d4ed8; transition: background 0.15s; white-space: nowrap; }
+    .note-detail-box .detail-link-btn { background: rgba(59,130,246,0.12); border: none; border-radius: 3px; padding: 5px 8px; font-family: inherit; font-size: 13px; cursor: pointer; color: #1d4ed8; transition: background 0.15s; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
     .note-detail-box .detail-link-btn:hover { background: rgba(59,130,246,0.25); }
 
     .note-detail-box .detail-close {
@@ -1818,24 +1821,24 @@
           <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()">
             🤍 点赞
           </button>
-          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-family:inherit; font-size:13px; cursor:pointer; white-space:nowrap;">
+          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:3px; padding:5px 8px; font-family:inherit; font-size:13px; cursor:pointer; white-space:nowrap; flex:1 1 auto; min-width:0;">
             🗑️ 删除
           </button>
           <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
             ⚠️ 举报
           </button>
           <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
-            💬 查看评论
+            💬 详情
           </button>
         </div>
         <!-- 评论输入框 -->
-        <div class="detail-comment-box" id="detailCommentBox" style="margin-top:12px;padding-top:12px;border-top:1.5px dashed rgba(0,0,0,0.1);">
-          <div style="display:flex;gap:8px;">
+        <div class="detail-comment-box" id="detailCommentBox" style="margin-top:12px;padding-top:12px;border-top:1.5px dashed rgba(0,0,0,0.1);width:100%;box-sizing:border-box;overflow:hidden;">
+          <div style="display:flex;gap:8px;width:100%;box-sizing:border-box;">
             <input type="text" id="detailCommentInput" placeholder="写下你的评论..." maxlength="100"
-                   style="flex:1;padding:8px 10px;border:1.5px dashed #94a3b8;border-radius:6px;font-size:13px;background:rgba(255,255,255,0.5);font-family:inherit;"
+                   style="flex:1;min-width:0;padding:8px 10px;border:1.5px dashed #94a3b8;border-radius:6px;font-size:13px;background:rgba(255,255,255,0.5);font-family:inherit;box-sizing:border-box;"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();submitCommentFromDetail()}">
             <button id="detailCommentSubmitBtn" onclick="submitCommentFromDetail()"
-                    style="padding:8px 16px;border:none;border-radius:6px;background:#92400e;color:white;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;">
+                    style="padding:8px 16px;border:none;border-radius:6px;background:#92400e;color:white;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;flex-shrink:0;">
               💬 发布
             </button>
           </div>
@@ -4402,7 +4405,7 @@
         const json = await res.json();
         if (json.ok) {
           input.value = '';
-          showToast('💬 评论已发布！点击"查看评论"查看');
+          showToast('💬 评论已发布！点击"详情"查看');
           // 更新本地评论计数
           const post = posts.find(p => p.id === postId);
           if (post) {
@@ -5331,8 +5334,8 @@
         // Step 2：查看评论按钮（帖子弹窗内）
         {
           selector: '#detailLinkBtn',
-          title: '💬 查看评论',
-          desc: '点击「💬 查看评论」在完整页面查看帖子评论，也可以在这里与大家互动',
+          title: '💬 详情',
+          desc: '点击「💬 详情」在完整页面查看帖子评论，也可以在这里与大家互动',
           btnText: '下一步',
           position: 'top'
         },
