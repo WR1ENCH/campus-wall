@@ -4197,10 +4197,18 @@
         if (json.ok) {
           // 过滤掉被隐藏的帖子（举报数>20）
           posts = json.data.filter(p => !p.hidden);
-          // 为每个帖子补充前端随机属性（不在后端存，每次刷新不同）
+          // 为每个帖子补充前端稳定属性（用 post.id 生成，保证同一帖子每次属性一致）
           posts.forEach(p => {
-            if (p.rotate === undefined) p.rotate = rand(-4, 4);
-            if (p.zIndex === undefined) p.zIndex = randInt(1, 5);
+            if (p.rotate === undefined || p.zIndex === undefined) {
+              // 用 post.id 生成稳定的伪随机值：同一帖子每次渲染角度/zIndex 不变
+              let h = 0;
+              const id = p.id || String(Date.now());
+              for (let i = 0; i < id.length; i++) h = ((h << 5) - h) + id.charCodeAt(i);
+              const r1 = Math.abs(Math.sin(h)) * 1000;
+              const r2 = Math.abs(Math.sin(h + 1)) * 1000;
+              if (p.rotate === undefined) p.rotate = Math.floor((r1 % 9) - 4);  // -4 到 +4
+              if (p.zIndex === undefined) p.zIndex = Math.floor((r2 % 5) + 1);    // 1 到 5
+            }
             p.time = formatTime(p.time);
           });
         }
@@ -4425,9 +4433,30 @@
     }
 
     // ===== 渲染 =====
-    function renderNotes(filter = '全部') {
+    let _lastRenderedHash = '';
+    let _renderThrottle = 0;
+
+    function computePostsHash(filteredPosts) {
+      return filteredPosts.map(p =>
+        `${p.id}:${p.likes}:${p.liked ? 1 : 0}:${(p.comments || []).length}:${p.commentsCount || 0}:${p.deleted ? 1 : 0}:${p.time}`
+      ).join('|');
+    }
+
+    function renderNotes(filter = '全部', force = false) {
       const grid = document.getElementById('notesGrid');
       const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
+
+      // 内容没变化且非强制，直接跳过，避免闪烁
+      if (!force) {
+        const hash = computePostsHash(filtered);
+        if (hash === _lastRenderedHash) return;
+        _lastRenderedHash = hash;
+      }
+
+      // 渲染节流：200ms 内最多渲染一次
+      const now = Date.now();
+      if (!force && now - _renderThrottle < 200) return;
+      _renderThrottle = now;
 
       if (filtered.length === 0) {
         grid.innerHTML = '<div class="empty-state">🤷 这面墙上还没有这种便利贴，来贴第一张吧！</div>';
@@ -4436,7 +4465,6 @@
       }
 
       grid.style.position = 'relative';
-      grid.innerHTML = '';
 
       // 更新统计
       document.getElementById('todayCount').textContent = posts.length;
@@ -4448,9 +4476,18 @@
       const notesData = filtered.map((post, idx) => {
         const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '💬', pin: 'tape' };
         const sizeInfo = getNoteSize(post.content.length);
+
+        // 用 post.id 生成稳定伪随机数，避免每次渲染位置/角度都变化
+        function stableRand(seedStr) {
+          let h = 0;
+          for (let i = 0; i < seedStr.length; i++) h = ((h << 5) - h) + seedStr.charCodeAt(i);
+          const x = Math.sin(h) * 10000;
+          return x - Math.floor(x);
+        }
+        const stableTape = `${Math.floor(stableRand(post.id + '_tape') * 11 - 5)}deg`;
         const pinHtml = cfg.pin === 'pin'
           ? '<div class="pin"></div>'
-          : `<div class="tape" style="--tape-rotate: ${rand(-5, 5)}deg;"></div>`;
+          : `<div class="tape" style="--tape-rotate: ${stableTape};"></div>`;
 
         const html = `
           <div class="sticky-note ${cfg.color} ${sizeInfo.sizeClass}"
@@ -4513,16 +4550,21 @@
       const gridWidth = grid.clientWidth;
       const packer = new WallPacker(gridWidth);
 
-      let finalHtml = '';
+      // 用 DocumentFragment 一次性替换：避免 innerHTML='' 清空再填充
+      const fragment = document.createDocumentFragment();
       notesData.forEach(data => {
         const pos = packer.place(data.width, data.height);
-        finalHtml += data.html.replace(
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = data.html.replace(
           'style="',
           `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
         );
+        while (wrapper.firstChild) fragment.appendChild(wrapper.firstChild);
       });
 
-      grid.innerHTML = finalHtml;
+      // 先把新内容构建好，再一次性替换（使用 replaceChildren 最安全）
+      while (grid.firstChild) grid.removeChild(grid.firstChild);
+      grid.appendChild(fragment);
       grid.style.height = (packer.totalHeight + 40) + 'px';
     }
 
@@ -5334,6 +5376,7 @@
     // ===== SSE 实时更新（替代轮询） =====
     let sseStream = null;
     let sseConnected = false;
+    let sseIsConnecting = false;
     const debounceTimers = {}; // 各事件类型的防抖计时器
 
     function debouncedRefresh(eventName, fn, delay) {
@@ -5352,10 +5395,21 @@
       }
     }
 
-    function tryConnectSSE() {
-      if (sseStream) { try { sseStream.close(); } catch (e) {} sseStream = null; }
+    function connectSSE() {
+      // 防止重复创建：已经有一个 EventSource 且不是 CLOSED 状态
+      if (sseStream && sseStream.readyState !== EventSource.CLOSED) {
+        return;
+      }
+      if (sseIsConnecting) return; // 已经在重连
+      sseIsConnecting = true;
+
       try {
         sseStream = new EventSource('/api/stream');
+
+        sseStream.addEventListener('open', () => {
+          sseConnected = true;
+          sseIsConnecting = false;
+        });
 
         sseStream.addEventListener('connected', (e) => {
           sseConnected = true;
@@ -5441,35 +5495,53 @@
         });
 
         sseStream.addEventListener('ping', (e) => {
-          // 心跳包，保持连接
-        });
-
-        sseStream.addEventListener('open', () => {
+          // 心跳包，保持连接；同时刷新 sseConnected
           sseConnected = true;
         });
 
         sseStream.addEventListener('error', (e) => {
-          sseConnected = false;
+          // 浏览器 EventSource 会自动重连（当 readyState = CONNECTING 时）
+          // 只有在 CLOSED 状态才需要手动重连
           if (sseStream && sseStream.readyState === EventSource.CLOSED) {
-            console.log('[SSE] 连接断开，5 秒后重连...');
-            setTimeout(tryConnectSSE, 5000);
+            sseConnected = false;
+            sseIsConnecting = false;
+            console.log('[SSE] 连接已断开，5 秒后重连...');
+            setTimeout(connectSSE, 5000);
+          } else {
+            // 浏览器正在自动重连，不立即把 sseConnected 设为 false
+            // 给 3 秒缓冲，避免频繁触发兜底轮询
+            const savedStream = sseStream;
+            setTimeout(() => {
+              if (sseStream === savedStream && sseStream && sseStream.readyState !== EventSource.OPEN) {
+                sseConnected = false;
+              }
+            }, 3000);
           }
         });
       } catch (e) {
+        sseIsConnecting = false;
+        sseConnected = false;
         console.error('[SSE] 创建连接失败，回退到轮询：', e);
       }
     }
 
     // 启动 SSE 连接
-    tryConnectSSE();
+    connectSSE();
 
-    // 兜底：若 SSE 不可用，保持每 60 秒刷新一次帖子（比原来的 30 秒更温和）
+    // 兜底：若 SSE 不可用，保持每 60 秒刷新一次帖子
     setInterval(async () => {
       if (!sseConnected) {
         await fetchPosts();
         renderNotes(currentFilter);
       }
     }, 60000);
+
+    // 页面重新获得焦点时，检查连接是否还活着
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && (!sseStream || sseStream.readyState === EventSource.CLOSED)) {
+        connectSSE();
+      }
+    });
 
     // 窗口大小变化时重新排布
     let resizeTimer;
