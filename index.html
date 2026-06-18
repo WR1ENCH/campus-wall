@@ -1074,6 +1074,10 @@
       .action-btns .compose-btn { flex: 0 0 auto; }
       .action-btns .notif-btn { font-size: 16px; padding: 4px 8px; }
 
+      /* 移动端详情弹窗按钮：只显示图标 */
+      .note-detail-box .detail-btn-group button .btn-label { display: none; }
+      .note-detail-box .detail-btn-group button { justify-content: center; padding: 5px 10px; font-size: 14px; }
+
       /* 登录后隐藏logo，用户信息替代左位 */
       .top-bar.logged-in { justify-content: flex-start; padding: 10px 16px; }
       .top-bar.logged-in .wall-title { display: none; }
@@ -1484,27 +1488,30 @@
       padding-top: 14px;
       font-size: 13px; opacity: 0.7;
       flex-wrap: wrap; gap: 8px;
+      width: 100%; box-sizing: border-box; overflow: hidden;
     }
     .note-detail-box .detail-author { display: flex; align-items: center; gap: 6px; }
-    .note-detail-box .detail-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .note-detail-box .detail-btn-group { display: flex; gap: 6px; flex-wrap: wrap; max-width: 100%; justify-content: flex-end; }
 
     .note-detail-box .detail-like-btn {
       background: rgba(0,0,0,0.08); border: none;
-      padding: 5px 10px; border-radius: 3px;
+      padding: 5px 8px; border-radius: 3px;
       font-family: inherit; font-size: 13px; cursor: pointer;
       transition: background 0.15s; white-space: nowrap;
+      flex: 1 1 auto; min-width: 0;
     }
     .note-detail-box .detail-like-btn:hover { background: rgba(0,0,0,0.15); }
     .note-detail-box .detail-like-btn.liked { background: rgba(255,0,0,0.12); }
 
     .note-detail-box .detail-report-btn {
       background: rgba(239,68,68,0.1); border: none;
-      padding: 5px 10px; border-radius: 3px;
+      padding: 5px 8px; border-radius: 3px;
       font-family: inherit; font-size: 13px; cursor: pointer;
       color: #b91c1c; transition: background 0.15s; white-space: nowrap;
+      flex: 1 1 auto; min-width: 0;
     }
     .note-detail-box .detail-report-btn:hover { background: rgba(239,68,68,0.2); }
-    .note-detail-box .detail-link-btn { background: rgba(59,130,246,0.12); border: none; border-radius: 3px; padding: 5px 10px; font-family: inherit; font-size: 13px; cursor: pointer; color: #1d4ed8; transition: background 0.15s; white-space: nowrap; }
+    .note-detail-box .detail-link-btn { background: rgba(59,130,246,0.12); border: none; border-radius: 3px; padding: 5px 8px; font-family: inherit; font-size: 13px; cursor: pointer; color: #1d4ed8; transition: background 0.15s; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
     .note-detail-box .detail-link-btn:hover { background: rgba(59,130,246,0.25); }
 
     .note-detail-box .detail-close {
@@ -1933,25 +1940,26 @@
         </div>
         <div class="detail-btn-group">
           <button class="detail-like-btn" id="detailLikeBtn" onclick="handleDetailLike()">
-            🤍 点赞
+            🤍<span class="btn-label"> 点赞</span>
           </button>
-          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-family:inherit; font-size:13px; cursor:pointer; white-space:nowrap;">
-            🗑️ 删除
+          <button class="detail-delete-btn" id="detailDeleteBtn" onclick="doDeleteMyPost()" style="display:none; background:#ef4444; color:#fff; border:none; border-radius:3px; padding:5px 8px; font-family:inherit; font-size:13px; cursor:pointer; white-space:nowrap; flex:1 1 auto; min-width:0;">
+            🗑️<span class="btn-label"> 删除</span>
           </button>
           <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
-            ⚠️ 举报
+            ⚠️<span class="btn-label"> 举报</span>
           </button>
           <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
-            💬 查看评论
+            💬 详情
           </button>
         </div>
-        <div class="detail-comment-box" id="detailCommentBox" style="margin-top:12px;padding-top:12px;border-top:1.5px dashed rgba(0,0,0,0.1);">
-          <div style="display:flex;gap:8px;">
+        <!-- 评论输入框 -->
+        <div class="detail-comment-box" id="detailCommentBox" style="margin-top:12px;padding-top:12px;border-top:1.5px dashed rgba(0,0,0,0.1);width:100%;box-sizing:border-box;overflow:hidden;">
+          <div style="display:flex;gap:8px;width:100%;box-sizing:border-box;">
             <input type="text" id="detailCommentInput" placeholder="写下你的评论..." maxlength="100"
-                   style="flex:1;padding:8px 10px;border:1.5px dashed #94a3b8;border-radius:6px;font-size:13px;background:rgba(255,255,255,0.5);font-family:inherit;"
+                   style="flex:1;min-width:0;padding:8px 10px;border:1.5px dashed #94a3b8;border-radius:6px;font-size:13px;background:rgba(255,255,255,0.5);font-family:inherit;box-sizing:border-box;"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();submitCommentFromDetail()}">
             <button id="detailCommentSubmitBtn" onclick="submitCommentFromDetail()"
-                    style="padding:8px 16px;border:none;border-radius:6px;background:#92400e;color:white;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;">
+                    style="padding:8px 16px;border:none;border-radius:6px;background:#92400e;color:white;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;flex-shrink:0;">
               💬 发布
             </button>
           </div>
@@ -4189,10 +4197,18 @@
         if (json.ok) {
           // 过滤掉被隐藏的帖子（举报数>20）
           posts = json.data.filter(p => !p.hidden);
-          // 为每个帖子补充前端随机属性（不在后端存，每次刷新不同）
+          // 为每个帖子补充前端稳定属性（用 post.id 生成，保证同一帖子每次属性一致）
           posts.forEach(p => {
-            if (p.rotate === undefined) p.rotate = rand(-4, 4);
-            if (p.zIndex === undefined) p.zIndex = randInt(1, 5);
+            if (p.rotate === undefined || p.zIndex === undefined) {
+              // 用 post.id 生成稳定的伪随机值：同一帖子每次渲染角度/zIndex 不变
+              let h = 0;
+              const id = p.id || String(Date.now());
+              for (let i = 0; i < id.length; i++) h = ((h << 5) - h) + id.charCodeAt(i);
+              const r1 = Math.abs(Math.sin(h)) * 1000;
+              const r2 = Math.abs(Math.sin(h + 1)) * 1000;
+              if (p.rotate === undefined) p.rotate = Math.floor((r1 % 9) - 4);  // -4 到 +4
+              if (p.zIndex === undefined) p.zIndex = Math.floor((r2 % 5) + 1);    // 1 到 5
+            }
             p.time = formatTime(p.time);
           });
         }
@@ -4417,9 +4433,30 @@
     }
 
     // ===== 渲染 =====
-    function renderNotes(filter = '全部') {
+    let _lastRenderedHash = '';
+    let _renderThrottle = 0;
+
+    function computePostsHash(filteredPosts) {
+      return filteredPosts.map(p =>
+        `${p.id}:${p.likes}:${p.liked ? 1 : 0}:${(p.comments || []).length}:${p.commentsCount || 0}:${p.deleted ? 1 : 0}:${p.time}`
+      ).join('|');
+    }
+
+    function renderNotes(filter = '全部', force = false) {
       const grid = document.getElementById('notesGrid');
       const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
+
+      // 内容没变化且非强制，直接跳过，避免闪烁
+      if (!force) {
+        const hash = computePostsHash(filtered);
+        if (hash === _lastRenderedHash) return;
+        _lastRenderedHash = hash;
+      }
+
+      // 渲染节流：200ms 内最多渲染一次
+      const now = Date.now();
+      if (!force && now - _renderThrottle < 200) return;
+      _renderThrottle = now;
 
       if (filtered.length === 0) {
         grid.innerHTML = '<div class="empty-state">🤷 这面墙上还没有这种便利贴，来贴第一张吧！</div>';
@@ -4428,7 +4465,6 @@
       }
 
       grid.style.position = 'relative';
-      grid.innerHTML = '';
 
       // 更新统计
       document.getElementById('todayCount').textContent = posts.length;
@@ -4440,9 +4476,18 @@
       const notesData = filtered.map((post, idx) => {
         const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '💬', pin: 'tape' };
         const sizeInfo = getNoteSize(post.content.length);
+
+        // 用 post.id 生成稳定伪随机数，避免每次渲染位置/角度都变化
+        function stableRand(seedStr) {
+          let h = 0;
+          for (let i = 0; i < seedStr.length; i++) h = ((h << 5) - h) + seedStr.charCodeAt(i);
+          const x = Math.sin(h) * 10000;
+          return x - Math.floor(x);
+        }
+        const stableTape = `${Math.floor(stableRand(post.id + '_tape') * 11 - 5)}deg`;
         const pinHtml = cfg.pin === 'pin'
           ? '<div class="pin"></div>'
-          : `<div class="tape" style="--tape-rotate: ${rand(-5, 5)}deg;"></div>`;
+          : `<div class="tape" style="--tape-rotate: ${stableTape};"></div>`;
 
         const html = `
           <div class="sticky-note ${cfg.color} ${sizeInfo.sizeClass}"
@@ -4505,16 +4550,21 @@
       const gridWidth = grid.clientWidth;
       const packer = new WallPacker(gridWidth);
 
-      let finalHtml = '';
+      // 用 DocumentFragment 一次性替换：避免 innerHTML='' 清空再填充
+      const fragment = document.createDocumentFragment();
       notesData.forEach(data => {
         const pos = packer.place(data.width, data.height);
-        finalHtml += data.html.replace(
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = data.html.replace(
           'style="',
           `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
         );
+        while (wrapper.firstChild) fragment.appendChild(wrapper.firstChild);
       });
 
-      grid.innerHTML = finalHtml;
+      // 先把新内容构建好，再一次性替换（使用 replaceChildren 最安全）
+      while (grid.firstChild) grid.removeChild(grid.firstChild);
+      grid.appendChild(fragment);
       grid.style.height = (packer.totalHeight + 40) + 'px';
     }
 
@@ -4575,7 +4625,7 @@
         const json = await res.json();
         if (json.ok) {
           input.value = '';
-          showToast('💬 评论已发布！点击"查看评论"查看');
+          showToast('💬 评论已发布！点击"详情"查看');
           // 更新本地评论计数
           const post = posts.find(p => p.id === postId);
           if (post) {
@@ -4583,6 +4633,50 @@
             post.commentsCount = (post.commentsCount || 0) + 1;
           }
           renderNotes(currentFilter);
+        } else {
+          showToast(json.msg || '⚠️ 评论失败');
+        }
+      } catch (e) {
+        console.error('[评论] 出错', e);
+        showToast('❌ 网络错误');
+      }
+    }
+
+    async function submitCommentFromDetail() {
+      if (!currentDetailId) return;
+      const input = document.getElementById('detailCommentInput');
+      if (!input) return;
+      const content = input.value.trim();
+
+      if (!content) {
+        showToast('⚠️ 评论内容不能为空');
+        return;
+      }
+      if (content.length > 100) {
+        showToast('⚠️ 评论不能超过100字');
+        return;
+      }
+      if (!currentUser) {
+        showToast('⚠️ 请先登录');
+        showLoginModal(true);
+        return;
+      }
+
+      try {
+        const res = await fetch(API + '/api/posts/' + currentDetailId + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          input.value = '';
+          showToast('💬 评论已发布');
+          const post = posts.find(p => p.id === currentDetailId);
+          if (post) {
+            post.comments = (post.comments || 0) + 1;
+            post.commentsCount = (post.commentsCount || 0) + 1;
+          }
         } else {
           showToast(json.msg || '⚠️ 评论失败');
         }
@@ -4681,7 +4775,7 @@
       }
 
       const likeBtn = document.getElementById('detailLikeBtn');
-      likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';
+      likeBtn.innerHTML = post.liked ? '❤️<span class="btn-label"> 已赞</span>' : '🤍<span class="btn-label"> 点赞</span>';
       likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
       // 删除按钮：仅帖子作者可见
@@ -4694,6 +4788,10 @@
 
       // 设置帖子ID（显示在左下角）
       document.getElementById('detailPostIdValue').textContent = post.id;
+
+      // 清空评论输入框
+      const detailCommentInput = document.getElementById('detailCommentInput');
+      if (detailCommentInput) detailCommentInput.value = '';
 
       currentDetailId = id;
       document.getElementById('detailCommentInput').value = '';
@@ -4759,7 +4857,7 @@
         post.likes = result.likes;
 
         const likeBtn = document.getElementById('detailLikeBtn');
-        likeBtn.textContent = post.liked ? '❤️ 已赞' : '🤍 点赞';
+        likeBtn.innerHTML = post.liked ? '❤️<span class="btn-label"> 已赞</span>' : '🤍<span class="btn-label"> 点赞</span>';
         likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
         renderNotes(currentFilter);
@@ -5275,11 +5373,175 @@
       refreshStats();
     }, 10000);
 
-    // 定时刷新数据（每 30 秒拉一次最新帖子）
+    // ===== SSE 实时更新（替代轮询） =====
+    let sseStream = null;
+    let sseConnected = false;
+    let sseIsConnecting = false;
+    const debounceTimers = {}; // 各事件类型的防抖计时器
+
+    function debouncedRefresh(eventName, fn, delay) {
+      if (debounceTimers[eventName]) clearTimeout(debounceTimers[eventName]);
+      debounceTimers[eventName] = setTimeout(async () => {
+        try { await fn(); } catch (e) { console.error('SSE refresh error:', eventName, e); }
+      }, delay);
+    }
+
+    function refreshPostDetailIfOpen() {
+      const detailOverlay = document.getElementById('noteDetailOverlay');
+      if (detailOverlay && detailOverlay.classList.contains('show') && currentDetailId) {
+        fetchPosts().then(() => {
+          openNoteDetail(currentDetailId);
+        });
+      }
+    }
+
+    function connectSSE() {
+      // 防止重复创建：已经有一个 EventSource 且不是 CLOSED 状态
+      if (sseStream && sseStream.readyState !== EventSource.CLOSED) {
+        return;
+      }
+      if (sseIsConnecting) return; // 已经在重连
+      sseIsConnecting = true;
+
+      try {
+        sseStream = new EventSource('/api/stream');
+
+        sseStream.addEventListener('open', () => {
+          sseConnected = true;
+          sseIsConnecting = false;
+        });
+
+        sseStream.addEventListener('connected', (e) => {
+          sseConnected = true;
+          console.log('[SSE] 已连接实时更新通道');
+        });
+
+        sseStream.addEventListener('postUpdate', (e) => {
+          debouncedRefresh('post', async () => {
+            await fetchPosts();
+            renderNotes(currentFilter);
+            refreshPostDetailIfOpen();
+          }, 800);
+        });
+
+        sseStream.addEventListener('discussionUpdate', (e) => {
+          debouncedRefresh('discussion', async () => {
+            try { await loadDiscussions(); } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('announcementUpdate', (e) => {
+          debouncedRefresh('announcement', async () => {
+            try {
+              const res = await fetch('/api/announcement');
+              const json = await res.json();
+              const annText = document.getElementById('announcementText');
+              if (annText) annText.textContent = json.data ? json.data.title || '' : '';
+              const annOverlay = document.getElementById('announcementModal');
+              if (annOverlay && json.data) {
+                document.getElementById('announcementModalContent').textContent = json.data.content || json.data.title || '';
+              }
+            } catch (err) {}
+          }, 500);
+        });
+
+        sseStream.addEventListener('noticeUpdate', (e) => {
+          debouncedRefresh('notice', async () => {
+            try {
+              const res = await fetch('/api/notices');
+              const json = await res.json();
+              const noticeList = document.getElementById('noticeList');
+              if (noticeList && json.ok && json.data && json.data.length) {
+                const first = json.data[0];
+                const existing = noticeList.querySelector('.notice-item');
+                if (existing) existing.textContent = first.title || '';
+              }
+            } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('pickupUpdate', (e) => {
+          debouncedRefresh('pickup', async () => {
+            try {
+              loadPickupSlots();
+              loadPickupScroll();
+            } catch (err) {}
+          }, 1500);
+        });
+
+        sseStream.addEventListener('voteUpdate', (e) => {
+          debouncedRefresh('vote', async () => {
+            try {
+              const voteOverlay = document.getElementById('voteOverlay');
+              if (voteOverlay && voteOverlay.style.display === 'flex') {
+                const activeTab = document.querySelector('.vote-tab.active');
+                if (activeTab && activeTab.textContent.includes('我的')) {
+                  loadMyVotes();
+                } else {
+                  loadVoteList();
+                }
+              }
+            } catch (err) {}
+          }, 1000);
+        });
+
+        sseStream.addEventListener('qaUpdate', (e) => {
+          debouncedRefresh('qa', async () => {
+            try {
+              if (typeof loadQAList === 'function') loadQAList(qaCurrentFilter || '');
+              if (typeof loadQADetail === 'function' && qaCurrentQuestionId) loadQADetail(qaCurrentQuestionId);
+            } catch (err) {}
+          }, 1500);
+        });
+
+        sseStream.addEventListener('ping', (e) => {
+          // 心跳包，保持连接；同时刷新 sseConnected
+          sseConnected = true;
+        });
+
+        sseStream.addEventListener('error', (e) => {
+          // 浏览器 EventSource 会自动重连（当 readyState = CONNECTING 时）
+          // 只有在 CLOSED 状态才需要手动重连
+          if (sseStream && sseStream.readyState === EventSource.CLOSED) {
+            sseConnected = false;
+            sseIsConnecting = false;
+            console.log('[SSE] 连接已断开，5 秒后重连...');
+            setTimeout(connectSSE, 5000);
+          } else {
+            // 浏览器正在自动重连，不立即把 sseConnected 设为 false
+            // 给 3 秒缓冲，避免频繁触发兜底轮询
+            const savedStream = sseStream;
+            setTimeout(() => {
+              if (sseStream === savedStream && sseStream && sseStream.readyState !== EventSource.OPEN) {
+                sseConnected = false;
+              }
+            }, 3000);
+          }
+        });
+      } catch (e) {
+        sseIsConnecting = false;
+        sseConnected = false;
+        console.error('[SSE] 创建连接失败，回退到轮询：', e);
+      }
+    }
+
+    // 启动 SSE 连接
+    connectSSE();
+
+    // 兜底：若 SSE 不可用，保持每 60 秒刷新一次帖子
     setInterval(async () => {
-      await fetchPosts();
-      renderNotes(currentFilter);
-    }, 30000);
+      if (!sseConnected) {
+        await fetchPosts();
+        renderNotes(currentFilter);
+      }
+    }, 60000);
+
+    // 页面重新获得焦点时，检查连接是否还活着
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && (!sseStream || sseStream.readyState === EventSource.CLOSED)) {
+        connectSSE();
+      }
+    });
 
     // 窗口大小变化时重新排布
     let resizeTimer;
@@ -5322,8 +5584,8 @@
         // Step 2：查看评论按钮（帖子弹窗内）
         {
           selector: '#detailLinkBtn',
-          title: '💬 查看评论',
-          desc: '点击「💬 查看评论」在完整页面查看帖子评论，也可以在这里与大家互动',
+          title: '💬 详情',
+          desc: '点击「💬 详情」在完整页面查看帖子评论，也可以在这里与大家互动',
           btnText: '下一步',
           position: 'top'
         },
