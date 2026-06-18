@@ -1847,7 +1847,6 @@ body {
 
   // ===== 投票功能 =====
   var _votes = [];
-  var _voteUserVotes = {};
 
   async function loadVoteList() {
     var list = document.getElementById('voteList');
@@ -1883,8 +1882,6 @@ body {
       var totalVotes = vote.totalVotes !== undefined
         ? vote.totalVotes
         : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
-      var hasVoted = _voteUserVotes[vote.id] && _voteUserVotes[vote.id].length > 0;
-      var userVotedOptions = hasVoted ? _voteUserVotes[vote.id] : [];
 
       html += '<div class="vote-card">';
       html += '<div class="vote-card-header">';
@@ -1907,131 +1904,19 @@ body {
       html += '<div class="vote-card-options">';
       vote.options.forEach(function(opt) {
         var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
-        var isSelected = userVotedOptions.indexOf(opt.id) >= 0;
-        var inputType = vote.multiple ? 'checkbox' : 'radio';
-        var disabled = isEnded || hasVoted;
-
-        html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
-        html += '<input type="' + inputType + '" id="vote_' + vote.id + '_opt_' + opt.id + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this,\'' + vote.id + '\',\'' + opt.id + '\',' + vote.multiple + ')">';
-        html += '<span class="vote-option-text" onclick="var inp=document.getElementById(\'vote_' + vote.id + '_opt_' + opt.id + '\');if(!inp.disabled){inp.checked=' + (!isSelected ? 'true' : 'false') + ';handleVoteOptionClick(inp,\'' + vote.id + '\',\'' + opt.id + '\',' + vote.multiple + ');}">' + escHtml(opt.text) + '</span>';
-        html += '<span class="vote-option-percent">' + percent + '%</span>';
+        html += '<div class="vote-option" style="cursor:default;">';
+        html += '<span class="vote-option-text">' + escHtml(opt.text) + '</span>';
+        html += '<span class="vote-option-percent">' + percent + '% (' + (opt.votes || 0) + '票)</span>';
         html += '</div>';
         html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
       });
-
-      // 自定义选项（开启 allowCustom 且未投票且未结束时显示）
-      if (vote.allowCustom && !isEnded && !hasVoted) {
-        var customType = vote.multiple ? 'checkbox' : 'radio';
-        html += '<div class="vote-option vote-option-custom">';
-        html += '<input type="' + customType + '" name="vote_' + vote.id + '" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this,\'' + vote.id + '\',' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
-        html += '<span class="vote-option-text" style="display:flex;flex-direction:column;gap:6px;flex:1;">';
-        html += '<span style="font-size:13px;color:#64748b;font-weight:500;">&#x2795; 添加你的选项</span>';
-        html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项内容..." maxlength="100" onclick="event.stopPropagation()" style="width:100%;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;box-sizing:border-box;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
-        html += '</span>';
-        html += '</div>';
-        html += '<div class="vote-option-bar" style="visibility:hidden;"><div></div></div>';
-      }
-
-      html += '</div>';
-
-      html += '<div class="vote-card-footer">';
-      html += '<span class="vote-participants">';
-      if (hasVoted) {
-        html += '&#x2713; 你已参与投票';
-      } else if (isEnded) {
-        html += '投票已结束';
-      } else {
-        html += '点击选项进行投票';
-      }
-      html += '</span>';
-      if (!isEnded && !hasVoted) {
-        html += '<button class="vote-card-btn" onclick="submitVoteSelection(\'' + vote.id + '\')">确认投票</button>';
-      }
       html += '</div>';
       html += '</div>';
     });
     list.innerHTML = html;
   }
 
-  window.handleVoteOptionClick = function(input, voteId, optId, isMultiple) {
-    if (input && input.disabled) return;
-    var customCheckbox = document.getElementById('customOpt_' + voteId);
-    if (customCheckbox) customCheckbox.checked = false;
-
-    if (!_voteUserVotes[voteId]) _voteUserVotes[voteId] = [];
-
-    if (isMultiple) {
-      if (input.checked) {
-        if (_voteUserVotes[voteId].indexOf(optId) === -1) {
-          _voteUserVotes[voteId].push(optId);
-        }
-      } else {
-        var idx = _voteUserVotes[voteId].indexOf(optId);
-        if (idx !== -1) {
-          _voteUserVotes[voteId].splice(idx, 1);
-        }
-      }
-    } else {
-      _voteUserVotes[voteId] = [optId];
-    }
-  };
-
-  window.handleCustomOptionClick = function(checkbox, voteId, isMultiple) {
-    if (!_voteUserVotes[voteId]) _voteUserVotes[voteId] = [];
-
-    if (isMultiple) {
-      if (checkbox.checked) {
-        var otherInputs = document.querySelectorAll('input[name="vote_' + voteId + '"]');
-        for (var i = 0; i < otherInputs.length; i++) {
-          if (otherInputs[i].id !== 'customOpt_' + voteId) otherInputs[i].checked = false;
-        }
-        _voteUserVotes[voteId] = ['__custom__'];
-      } else {
-        var idx = _voteUserVotes[voteId].indexOf('__custom__');
-        if (idx !== -1) _voteUserVotes[voteId].splice(idx, 1);
-      }
-    } else {
-      _voteUserVotes[voteId] = ['__custom__'];
-    }
-  };
-
-  window.submitVoteSelection = async function(voteId) {
-    var selected = _voteUserVotes[voteId];
-    if (!selected || selected.length === 0) {
-      showToast('请选择或输入投票选项', 'error');
-      return;
-    }
-
-    var customOption = null;
-    var optionIds = selected;
-    if (selected[0] === '__custom__') {
-      var inputEl = document.getElementById('customInput_' + voteId);
-      customOption = inputEl ? inputEl.value.trim() : '';
-      if (!customOption) {
-        showToast('请输入自定义选项内容', 'error');
-        return;
-      }
-      optionIds = [];
-    }
-
-    try {
-      var token = localStorage.getItem('campus_user_token') || '';
-      var res = await fetch('/api/votes/' + voteId + '/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-        body: JSON.stringify(customOption ? { optionIds: optionIds, customOption: customOption } : { optionIds: optionIds })
-      });
-      var json = await res.json();
-      if (json.ok) {
-        showToast('投票成功', 'success');
-        loadVoteList();
-      } else {
-        showToast(json.msg || '投票失败', 'error');
-      }
-    } catch(e) {
-      showToast('网络错误，请稍后重试', 'error');
-    }
-  };
+  // ===== 工具函数 =====
 
   function formatVoteDate(isoStr) {
     if (!isoStr) return '';
@@ -2049,12 +1934,27 @@ body {
   var savedToken = localStorage.getItem(SC_TOKEN_KEY);
   var savedName = localStorage.getItem('sc_name');
   if (savedToken) {
-    currentUser = { token: savedToken, name: savedName || '学生会' };
-    document.getElementById('mainApp').classList.add('show');
-    document.getElementById('userName').textContent = savedName || '\u5B66\u751F\u4F1A';
-    loadNotices();
-    loadDiscussions();
-    loadVoteList();
+    fetch('/api/student-council/me', { headers: { 'x-sc-token': savedToken } })
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.ok) {
+          currentUser = { token: savedToken, name: json.data.name };
+          document.getElementById('mainApp').classList.add('show');
+          document.getElementById('userName').textContent = json.data.name;
+          loadNotices();
+          loadDiscussions();
+          loadVoteList();
+        } else {
+          localStorage.removeItem(SC_TOKEN_KEY);
+          localStorage.removeItem('sc_name');
+          refreshLoginCaptcha();
+          checkInit();
+        }
+      })
+      .catch(function() {
+        refreshLoginCaptcha();
+        checkInit();
+      });
   } else {
     refreshLoginCaptcha();
     checkInit();

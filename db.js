@@ -57,7 +57,8 @@ function migrate() {
   )`);
   // 已有表的列迁移
   const tableMigrations = [
-    { name: 'posts', columns: ['images', 'discussionId'] },
+    { name: 'posts', columns: ['images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
+    { name: 'votes', columns: ['allowCustom'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
