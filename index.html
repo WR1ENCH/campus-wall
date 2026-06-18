@@ -3092,7 +3092,7 @@
  // 智学登录时也需要同意协议，不显示先逛逛
  document.querySelector('.user-agreement-row').style.display = 'flex';
  document.querySelector('.user-login-skip').style.display = tab === 'zhixue' ? 'none' : 'block';
- document.getElementById('userLoginError').textContent'';
+ document.getElementById('userLoginError').textContent = '';
  document.getElementById('agreeRow').classList.remove('error');
  // 切换时关闭协议弹窗
  const popup = document.getElementById('agreePopupOverlay');
@@ -3153,7 +3153,7 @@
  btn.style.background = '#5a3e2b';
  btn.style.cursor = 'pointer';
  btn.style.boxShadow = '0 4px 14px rgba(90,62,43,0.3)';
- cdText.textContent'已阅读完毕，点击上方按钮确认';
+ cdText.textContent = '已阅读完毕，点击上方按钮确认';
  }
  }, 1000);
 
@@ -3162,7 +3162,7 @@
  overlay.remove();
  // 显示注册表单
  document.getElementById('registerForm').style.display = 'block';
- document.getElementById('loginConfirmBtn').textContent'注册账号';
+ document.getElementById('loginConfirmBtn').textContent = '注册账号';
  setTimeout(() => {
  document.getElementById('regUsernameInput').focus();
  document.getElementById('regCaptchaInput').value = '';
@@ -3181,7 +3181,7 @@
 
  function showLoginModal(fromCompose = false) {
  document.getElementById('userLoginOverlay').classList.add('show');
- document.getElementById('userLoginError').textContent'';
+ document.getElementById('userLoginError').textContent = '';
  switchLoginTab('login');
  document.getElementById('loginReadonlyTip').style.display = fromCompose ? 'block' : 'none';
  refreshLoginCaptcha();
@@ -3299,7 +3299,7 @@
  // ===== 找回密码弹窗控制 =====
  function showForgotPwdModal() {
  document.getElementById('forgotPwdOverlay').classList.add('show');
- document.getElementById('forgotPwdError').textContent'';
+ document.getElementById('forgotPwdError').textContent = '';
  document.getElementById('forgotZhixueInput').value = '';
  document.getElementById('forgotNewPwdInput').value = '';
  document.getElementById('forgotConfirmPwdInput').value = '';
@@ -3315,15 +3315,15 @@
  const newPassword = document.getElementById('forgotNewPwdInput').value;
  const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
  if (!zhixueUsername) {
- document.getElementById('forgotPwdError').textContent'请输入绑定的智学网账号';
+ document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网账号';
  return;
  }
  if (!newPassword || newPassword.length < 6) {
- document.getElementById('forgotPwdError').textContent'新密码至少 6 位';
+ document.getElementById('forgotPwdError').textContent = '新密码至少 6 位';
  return;
  }
  if (newPassword !== confirmPassword) {
- document.getElementById('forgotPwdError').textContent'两次输入的密码不一致';
+ document.getElementById('forgotPwdError').textContent = '两次输入的密码不一致';
  return;
  }
  try {
@@ -3340,7 +3340,7 @@
  document.getElementById('forgotPwdError').textContentjson.msg || '操作失败';
  }
  } catch {
- document.getElementById('forgotPwdError').textContent'网络错误，请稍后重试';
+ document.getElementById('forgotPwdError').textContent = '网络错误，请稍后重试';
  }
  }
 
@@ -3362,7 +3362,7 @@
  const agreeRow = document.getElementById('agreeRow');
  agreeRow.classList.remove('error');
  if (!document.getElementById('agreeCheckbox').checked) {
- document.getElementById('userLoginError').textContent'请先阅读并同意《用户协议》';
+ document.getElementById('userLoginError').textContent = '请先阅读并同意《用户协议》';
  agreeRow.classList.add('error');
  return;
  }
@@ -3377,7 +3377,7 @@
  const username = document.getElementById('loginUsernameInput').value.trim();
  const password = document.getElementById('loginPasswordInput').value;
  if (!username || !password) {
- document.getElementById('userLoginError').textContent'请输入账号和密码';
+ document.getElementById('userLoginError').textContent = '请输入账号和密码';
  return;
  }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
@@ -3415,7 +3415,7 @@
  refreshLoginCaptcha();
  }
  } catch {
- document.getElementById('userLoginError').textContent'网络错误，请稍后重试';
+ document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
  }
  }
 
@@ -3425,11 +3425,11 @@
  const captchaId = localStorage.getItem('zhixue_captcha_id');
  const captchaText = document.getElementById('zhixueCaptchaInput').value.trim();
  if (!zhixueUsername || !password) {
- document.getElementById('userLoginError').textContent'请输入绑定的智学网账号和密码';
+ document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
  return;
  }
  if (!captchaText) {
- document.getElementById('userLoginError').textContent'请输入验证码';
+ document.getElementById('userLoginError').textContent = '请输入验证码';
  return;
  }
  try {
@@ -3465,7 +3465,7 @@
  document.getElementById('zhixueCaptchaInput').value = '';
  }
  } catch {
- document.getElementById('userLoginError').textContent'网络错误，请稍后重试';
+ document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
  refreshZhixueCaptcha();
  }
  }
@@ -3476,11 +3476,11 @@
  const nickname = document.getElementById('regNicknameInput').value.trim();
  const captchaText = document.getElementById('regCaptchaInput').value.trim();
  if (!username || !password || !nickname) {
- document.getElementById('userLoginError').textContent'账号、密码、昵称均为必填项';
+ document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
  return;
  }
  if (!currentCaptchaId || !captchaText) {
- document.getElementById('userLoginError').textContent'请输入验证码';
+ document.getElementById('userLoginError').textContent = '请输入验证码';
  return;
  }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
@@ -3517,7 +3517,7 @@
  refreshCaptcha();
  }
  } catch {
- document.getElementById('userLoginError').textContent'网络错误，请稍后重试';
+ document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
  }
  }
 
@@ -3556,7 +3556,7 @@
  var avatarSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  document.getElementById('topUserAvatar').innerHTML = currentUser.avatar && currentUser.avatar !== '🙈' ? currentUser.avatar : avatarSvg;
  document.getElementById('topUserName').textContentcurrentUser.nickname;
- document.getElementById('topUserAccount').textContent'@' + (currentUser.username || '');
+ document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
  document.getElementById('topUserCredit').textContentcurrentUser.credit || 0;
  updateCheckinBtn(currentUser.checkinToday);
  const userProfileUrl = `user.html?id=${currentUser.id}`;
@@ -3635,7 +3635,7 @@
  }
 
  function showAnnouncement(ann) {
- document.getElementById('announcementTitle').innerHTML'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + ann.title;
+ document.getElementById('announcementTitle').innerHTML = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + ann.title;
  const raw = ann.content || '';
  document.getElementById('announcementContent').innerHTML = _renderMd(raw);
  document.getElementById('announcementOverlay').style.display = 'flex';
@@ -4608,7 +4608,7 @@
  inp.value = '';
  inp.focus();
  // 更新字数
- document.getElementById('noteCount').textContent'0';
+ document.getElementById('noteCount').textContent = '0';
  // 重置匿名复选框
  const anonChk = document.getElementById('anonymousPost');
  if (anonChk) anonChk.checked = false;
@@ -4646,7 +4646,7 @@
  avatarEmoji.style.display = '';
  }
  document.getElementById('detailAuthor').textContentpost.author;
- document.getElementById('detailTime').textContent'· ' + post.time;
+ document.getElementById('detailTime').textContent = '· ' + post.time;
  // 管理员认证标识
  const adminBadge = document.getElementById('detailAdminBadge');
  if (post.authorAdminRole === 'super') {
@@ -4829,7 +4829,7 @@
  const closeBtn = document.createElement('button');
  closeBtn.type = 'button';
  closeBtn.className = 'detail-close';
- closeBtn.textContent'×';
+ closeBtn.textContent = '×';
  closeBtn.onclick = () => closeReportModal();
  box.appendChild(closeBtn);
 
@@ -4897,14 +4897,14 @@
  const cancelBtn = document.createElement('button');
  cancelBtn.type = 'button';
  cancelBtn.className = 'btn-cancel';
- cancelBtn.textContent'取消';
+ cancelBtn.textContent = '取消';
  cancelBtn.onclick = () => closeReportModal();
 
  const submitBtn = document.createElement('button');
  submitBtn.type = 'button';
  submitBtn.className = 'btn-danger-sm';
  submitBtn.id = 'reportSubmitBtn';
- submitBtn.textContent'提交举报';
+ submitBtn.textContent = '提交举报';
  submitBtn.onclick = () => doSubmitReport();
 
  btnRow.appendChild(cancelBtn);
@@ -4925,7 +4925,7 @@
  // 防重复点击
  const submitBtn = document.getElementById('reportSubmitBtn');
  if (submitBtn && submitBtn.disabled) return;
- if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent'提交中…'; }
+ if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '提交中…'; }
 
  // <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 只从 select 读值，不依赖任何变量
  const sel = document.getElementById('reportReasonSelect');
@@ -4937,7 +4937,7 @@
  const otherText = otherInput ? otherInput.value : '';
  if (!otherText.trim()) {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请填写具体举报原因');
- if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent'提交举报'; }
+ if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
  return;
  }
  reason = '其他：' + otherText.trim();
@@ -4959,12 +4959,12 @@
  }
  } else {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (json.msg || '举报失败'));
- if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent'提交举报'; }
+ if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
  }
  } catch(e) {
  console.error('[举报] 出错', e);
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 网络错误');
- if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent'提交举报'; }
+ if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
  }
  }
 
@@ -4981,7 +4981,7 @@
  _selectedDiscussionId = null;
  // 清除输入，下次打开时重新预填 #
  document.getElementById('noteInput').value = '';
- document.getElementById('noteCount').textContent'0';
+ document.getElementById('noteCount').textContent = '0';
  const anonChk = document.getElementById('anonymousPost');
  if (anonChk) anonChk.checked = false;
  hideDiscussionSuggest();
@@ -5642,7 +5642,7 @@
  const reason = prompt('请简要说明举报原因（如：涉黄、暴力、诈骗等）：', '违规内容');
  if (!reason) return;
  btn.disabled = true;
- btn.textContent'提交中…';
+ btn.textContent = '提交中…';
  try {
  const res = await fetch('/api/pickup/report-content/' + bidId, {
  method: 'POST',
@@ -5653,7 +5653,7 @@
  if (json.ok) {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 举报已提交，管理员将尽快处理');
  localStorage.setItem('pickup_report_' + bidId, '1');
- btn.textContent'已举报';
+ btn.textContent = '已举报';
  btn.classList.add('reported');
  btn.disabled = true;
  } else {
@@ -5778,7 +5778,7 @@
  }
  const d = json.data;
  // 更新标题
- document.getElementById('pickupSlotTitle').textContent'⏰ ' + (d.slotLabel || d.slot);
+ document.getElementById('pickupSlotTitle').textContent = '⏰ ' + (d.slotLabel || d.slot);
 
  // 显示内容区
  document.getElementById('pickupContentSection').style.display = '';
@@ -5811,7 +5811,7 @@
  if (!isSameSlot) {
  document.getElementById('pickupContent').value = '';
  document.getElementById('pickupAnonymous').checked = false;
- document.getElementById('pickupContentCount').textContent'0';
+ document.getElementById('pickupContentCount').textContent = '0';
  }
  } catch { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 加载时段详情失败'); }
  }
@@ -5900,7 +5900,7 @@
  okBtn.style.background = '#c0392b';
  okBtn.style.cursor = 'pointer';
  okBtn.style.boxShadow = '0 4px 14px rgba(192,57,43,0.35)';
- cdText.textContent'已阅读完毕，点击下方按钮提交出价';
+ cdText.textContent = '已阅读完毕，点击下方按钮提交出价';
  }
  }, 1000);
 
@@ -5928,7 +5928,7 @@
  const { slot, content, anonymous, amount } = bidData;
  const btn = document.getElementById('pickupBidBtn');
  btn.disabled = true;
- btn.textContent'提交中...';
+ btn.textContent = '提交中...';
 
  try {
  const res = await fetch('/api/pickup/bid', {
@@ -5949,11 +5949,11 @@
  document.getElementById('pickupBidError').style.display = '';
  }
  } catch {
- document.getElementById('pickupBidError').textContent'网络错误，请重试';
+ document.getElementById('pickupBidError').textContent = '网络错误，请重试';
  document.getElementById('pickupBidError').style.display = '';
  }
  btn.disabled = false;
- btn.textContent'出价';
+ btn.textContent = '出价';
  }
 
  // 定期刷新（每30秒）
@@ -6127,7 +6127,7 @@
  loadMyQuestions();
  } else if (tab === 'ask') {
  document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
- if (currentUser) document.getElementById('qaAskBountyHint').textContent'当前余额：' + (currentUser.credit || 0) + ' Credits';
+ if (currentUser) document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
  } else if (tab === 'list') {
  document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
  qaCurrentPage = 1;
@@ -6396,8 +6396,8 @@
  document.getElementById('qaAskBounty').value = '0';
  qaImages_ask = [];
  renderQAImgList('qaAskImgList', 'qaAskImgInput', qaImages_ask, 'ask');
- document.getElementById('qaAskTitleCount').textContent'0';
- document.getElementById('qaAskContentCount').textContent'0';
+ document.getElementById('qaAskTitleCount').textContent = '0';
+ document.getElementById('qaAskContentCount').textContent = '0';
  switchQATab('list');
  } else if (json.warning) {
  showSensitiveWarning(
@@ -7212,7 +7212,7 @@
  // 加载更多时显示加载状态
  if (loadMoreBtn) {
  loadMoreBtn.disabled = true;
- loadMoreBtn.textContent'加载中...';
+ loadMoreBtn.textContent = '加载中...';
  }
  } else {
  listEl.innerHTML = '<div class="version-history-loading">加载中...</div>';
@@ -7260,13 +7260,13 @@
  footerEl.style.display = 'block';
  if (loadMoreBtn) {
  loadMoreBtn.disabled = false;
- loadMoreBtn.textContent'加载更多';
+ loadMoreBtn.textContent = '加载更多';
  }
  } else {
  footerEl.style.display = 'block';
  if (loadMoreBtn) {
  loadMoreBtn.disabled = true;
- loadMoreBtn.textContent'已加载全部历史';
+ loadMoreBtn.textContent = '已加载全部历史';
  }
  }
  }
@@ -7278,7 +7278,7 @@
  if (footerEl) footerEl.style.display = 'block';
  if (loadMoreBtn) {
  loadMoreBtn.disabled = true;
- loadMoreBtn.textContent'已加载全部历史';
+ loadMoreBtn.textContent = '已加载全部历史';
  }
  }
  })
@@ -7391,14 +7391,14 @@
  sessionStorage.setItem('local_commit_sha', shortSha);
  sessionStorage.setItem('local_commit_time', String(now));
  } else {
- shaEl.textContent'未知';
+ shaEl.textContent = '未知';
  }
  })
  .catch(function() {
- shaEl.textContent'dev';
+ shaEl.textContent = 'dev';
  });
  } catch (e) {
- shaEl.textContent'dev';
+ shaEl.textContent = 'dev';
  }
  })();
  </script>
