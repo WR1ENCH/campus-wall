@@ -4585,8 +4585,9 @@ app.post('/api/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   // 敏感词检测（兼容 options 为字符串数组或 {text,image} 对象数组）
@@ -4640,8 +4641,9 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
@@ -5531,8 +5533,9 @@ app.post('/api/notice/votes', (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();

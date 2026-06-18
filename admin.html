@@ -4809,6 +4809,7 @@
     fetch('/api/votes', {
       method: 'POST',
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(payload)
     })
       .then(function(resp) { return resp.json(); })
       .then(function(data) {
