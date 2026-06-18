@@ -4589,8 +4589,9 @@ app.post('/api/votes', requireAdmin, (req, res) => {
     if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  // 敏感词检测
-  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  // 敏感词检测（兼容 options 为字符串数组或 {text,image} 对象数组）
+  const optionTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+  const checkText = (title.trim() + ' ' + optionTexts.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
     return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
@@ -4607,11 +4608,16 @@ app.post('/api/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -4655,11 +4661,16 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -5542,11 +5553,16 @@ app.post('/api/notice/votes', (req, res) => {
     author: authorName,
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
