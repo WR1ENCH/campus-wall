@@ -1131,14 +1131,14 @@
         content: ''; position: absolute; top: -50%; right: -30%; width: 120px; height: 120px;
         background: rgba(255,255,255,0.04); border-radius: 50%;
       }
-      .side-nav-header .nav-logo { font-size: 28px; margin-bottom: 8px; filter: grayscale(1); }
+      .side-nav-header .nav-logo { font-size: 28px; margin-bottom: 8px; }
       .side-nav-header .nav-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
       .side-nav-header .nav-subtitle { font-size: 12px; opacity: 0.45; margin-top: 4px; letter-spacing: 0.2px; }
       .side-nav-user {
         padding: 16px 24px; border-bottom: 1px solid #f0f0f0;
         display: flex; align-items: center; gap: 12px;
       }
-      .side-nav-user .user-avatar { font-size: 28px; filter: grayscale(1); }
+      .side-nav-user .user-avatar { font-size: 28px; }
       .side-nav-user .user-info { flex: 1; }
       .side-nav-user .user-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
       .side-nav-user .user-id { font-size: 11px; color: #999; margin-top: 2px; }
@@ -2588,7 +2588,7 @@
       <div class="nav-subtitle">探索校园的每一个角落</div>
     </div>
     <div class="side-nav-user" id="sideNavUser" style="display:none;">
-      <span class="user-avatar" id="sideNavAvatar">🙈</span>
+      <div class="user-avatar" id="sideNavAvatar" style="width:36px;height:36px;border-radius:50%;background:#e5e5e5;color:#333;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;"></div>
       <div class="user-info">
         <div class="user-name" id="sideNavUserName"></div>
         <div class="user-id" id="sideNavUserCredit"></div>
@@ -7108,9 +7108,11 @@
           if (userStr) {
             try {
               var u = JSON.parse(userStr);
-              document.getElementById('sideNavUserName').textContent = u.nickname || u.username || '';
-              document.getElementById('sideNavUserCredit').textContent = '💰 ' + (u.credit || 0) + ' Credit';
-              if (u.avatar) document.getElementById('sideNavAvatar').textContent = u.avatar;
+              var name = u.nickname || u.username || '';
+              document.getElementById('sideNavUserName').textContent = name;
+              document.getElementById('sideNavUserCredit').textContent = (u.credit || 0) + ' Credit';
+              var avatarEl = document.getElementById('sideNavAvatar');
+              avatarEl.textContent = name ? name.charAt(0).toUpperCase() : '?';
             } catch(e) {}
           }
         }
