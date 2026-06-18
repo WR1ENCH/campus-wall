@@ -1110,37 +1110,61 @@
       /* 侧边导航遮罩 */
       .side-nav-overlay {
         display: none; position: fixed; inset: 0; z-index: 999;
-        background: rgba(0,0,0,0.4);
+        background: rgba(0,0,0,0.3); backdrop-filter: blur(2px);
+        opacity: 0; transition: opacity 0.3s ease;
       }
-      .side-nav-overlay.active { display: block; }
+      .side-nav-overlay.active { display: block; opacity: 1; }
 
       /* 侧边导航面板 */
       .side-nav {
-        position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
-        background: #fff; z-index: 1000; transition: left 0.3s ease;
-        box-shadow: 2px 0 12px rgba(0,0,0,0.15); overflow-y: auto;
+        position: fixed; top: 0; left: -300px; width: 300px; height: 100vh;
+        background: #fff; z-index: 1000; transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.08); overflow-y: auto;
+        display: flex; flex-direction: column;
       }
       .side-nav.active { left: 0; }
       .side-nav-header {
-        padding: 20px 16px 16px; background: linear-gradient(135deg, #8b6f5e, #a08070);
-        color: #fff;
+        padding: 28px 24px 20px; background: linear-gradient(145deg, #1a1a2e, #16213e);
+        color: #fff; position: relative; overflow: hidden;
       }
-      .side-nav-header .nav-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-      .side-nav-header .nav-subtitle { font-size: 12px; opacity: 0.8; }
-      .side-nav-list { padding: 8px 0; }
-      .side-nav-item {
+      .side-nav-header::after {
+        content: ''; position: absolute; top: -50%; right: -30%; width: 120px; height: 120px;
+        background: rgba(255,255,255,0.05); border-radius: 50%;
+      }
+      .side-nav-header .nav-logo { font-size: 28px; margin-bottom: 8px; }
+      .side-nav-header .nav-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+      .side-nav-header .nav-subtitle { font-size: 12px; opacity: 0.5; margin-top: 4px; letter-spacing: 0.2px; }
+      .side-nav-user {
+        padding: 16px 24px; border-bottom: 1px solid #f0f0f0;
         display: flex; align-items: center; gap: 12px;
-        padding: 13px 20px; font-size: 15px; color: #333;
-        text-decoration: none; transition: background 0.2s; cursor: pointer;
-        border: none; background: none; width: 100%; text-align: left;
-        font-family: inherit;
       }
-      .side-nav-item:active { background: #f5f0eb; }
-      .side-nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
-      .side-nav-divider { height: 1px; background: #eee; margin: 4px 16px; }
+      .side-nav-user .user-avatar { font-size: 28px; }
+      .side-nav-user .user-info { flex: 1; }
+      .side-nav-user .user-name { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+      .side-nav-user .user-id { font-size: 11px; color: #999; margin-top: 2px; }
+      .side-nav-list { padding: 8px 0; flex: 1; }
+      .side-nav-item {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 24px; font-size: 14px; color: #444;
+        text-decoration: none; transition: all 0.15s ease; cursor: pointer;
+        border: none; background: none; width: 100%; text-align: left;
+        font-family: inherit; position: relative;
+      }
+      .side-nav-item:hover { background: #f8f9fa; color: #1a1a2e; }
+      .side-nav-item:active { background: #f0f1f3; }
+      .side-nav-item .nav-icon {
+        font-size: 17px; width: 22px; text-align: center; opacity: 0.7;
+        transition: opacity 0.15s;
+      }
+      .side-nav-item:hover .nav-icon { opacity: 1; }
+      .side-nav-item .nav-label { font-weight: 450; }
+      .side-nav-divider {
+        height: 1px; background: #f0f0f0; margin: 8px 24px;
+      }
       .side-nav-footer {
-        padding: 16px 20px; font-size: 11px; color: #999;
-        border-top: 1px solid #eee; margin-top: 4px;
+        padding: 16px 24px; font-size: 11px; color: #bbb;
+        border-top: 1px solid #f0f0f0; text-align: center;
+        letter-spacing: 0.3px;
       }
 
       /* ===== 移动端拍卖弹窗优化 ===== */
@@ -2557,35 +2581,51 @@
   <div class="side-nav-overlay" id="sideNavOverlay" onclick="toggleSideNav()"></div>
   <div class="side-nav" id="sideNav">
     <div class="side-nav-header">
-      <div class="nav-title">📌 校园墙</div>
+      <div class="nav-logo">📌</div>
+      <div class="nav-title">校园墙</div>
       <div class="nav-subtitle">探索校园的每一个角落</div>
+    </div>
+    <div class="side-nav-user" id="sideNavUser" style="display:none;">
+      <span class="user-avatar" id="sideNavAvatar">🙈</span>
+      <div class="user-info">
+        <div class="user-name" id="sideNavUserName"></div>
+        <div class="user-id" id="sideNavUserCredit"></div>
+      </div>
     </div>
     <div class="side-nav-list">
       <button class="side-nav-item" onclick="toggleSideNav(); window.scrollTo({top:0,behavior:'smooth'});">
-        <span class="nav-icon">🏠</span> 首页
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">首页</span>
       </button>
       <div class="side-nav-divider"></div>
       <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
-        <span class="nav-icon">📝</span> 问题报告
+        <span class="nav-icon">📝</span>
+        <span class="nav-label">问题报告</span>
       </button>
       <button class="side-nav-item" onclick="toggleSideNav(); window.open('bully.html','_blank');">
-        <span class="nav-icon">🛡️</span> 报告霸凌事件
+        <span class="nav-icon">🛡️</span>
+        <span class="nav-label">报告霸凌事件</span>
       </button>
       <button class="side-nav-item" onclick="toggleSideNav(); window.open('agreement.html','_blank');">
-        <span class="nav-icon">📄</span> 用户协议
+        <span class="nav-icon">📄</span>
+        <span class="nav-label">用户协议</span>
       </button>
       <button class="side-nav-item" onclick="toggleSideNav(); window.open('ecosystem.html','_blank');">
-        <span class="nav-icon">🌐</span> 接入校园墙生态
+        <span class="nav-icon">🌐</span>
+        <span class="nav-label">接入校园墙生态</span>
       </button>
       <div class="side-nav-divider"></div>
       <button class="side-nav-item" id="sideNavLogin" onclick="toggleSideNav(); showLoginModal();" style="display:none;">
-        <span class="nav-icon">🔑</span> 登录 / 注册
+        <span class="nav-icon">🔑</span>
+        <span class="nav-label">登录 / 注册</span>
       </button>
       <button class="side-nav-item" id="sideNavProfile" onclick="toggleSideNav(); window.open('credit.html','_blank');" style="display:none;">
-        <span class="nav-icon">👤</span> 我的主页
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">我的主页</span>
       </button>
       <button class="side-nav-item" id="sideNavLogout" onclick="toggleSideNav(); doUserLogout();" style="display:none;">
-        <span class="nav-icon">🚪</span> 退出登录
+        <span class="nav-icon">🚪</span>
+        <span class="nav-label">退出登录</span>
       </button>
     </div>
     <div class="side-nav-footer">Powered by wr1Ench</div>
@@ -7055,14 +7095,28 @@
       var loginBtn = document.getElementById('sideNavLogin');
       var profileBtn = document.getElementById('sideNavProfile');
       var logoutBtn = document.getElementById('sideNavLogout');
+      var userSection = document.getElementById('sideNavUser');
       if (token) {
         if (loginBtn) loginBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'flex';
         if (logoutBtn) logoutBtn.style.display = 'flex';
+        if (userSection) {
+          userSection.style.display = 'flex';
+          var userStr = localStorage.getItem('campus_current_user');
+          if (userStr) {
+            try {
+              var u = JSON.parse(userStr);
+              document.getElementById('sideNavUserName').textContent = u.nickname || u.username || '';
+              document.getElementById('sideNavUserCredit').textContent = '💰 ' + (u.credit || 0) + ' Credit';
+              if (u.avatar) document.getElementById('sideNavAvatar').textContent = u.avatar;
+            } catch(e) {}
+          }
+        }
       } else {
         if (loginBtn) loginBtn.style.display = 'flex';
         if (profileBtn) profileBtn.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'none';
+        if (userSection) userSection.style.display = 'none';
       }
     }
 
