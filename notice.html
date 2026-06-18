@@ -1899,6 +1899,9 @@ body {
       html += '<span class="vote-status ' + (isEnded ? 'vote-status-ended' : 'vote-status-active') + '">';
       html += isEnded ? '已结束' : '进行中';
       html += '</span>';
+      if (!isEnded) {
+        html += '<button class="vote-card-btn" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:11px;padding:3px 8px;" onclick="endVote(\'' + vote.id + '\')">⏹ 截止</button>';
+      }
       html += '</div>';
 
       html += '<div class="vote-card-options">';
@@ -1915,6 +1918,26 @@ body {
     });
     list.innerHTML = html;
   }
+
+  window.endVote = async function(voteId) {
+    if (!confirm('确认截止此投票？截止后用户无法继续投票。')) return;
+    var token = localStorage.getItem(SC_TOKEN_KEY);
+    try {
+      var res = await fetch('/api/votes/' + voteId + '/end', {
+        method: 'POST',
+        headers: { 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ 投票已截止', 'success');
+        loadVoteList();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) {
+      showToast('❌ 网络错误', 'error');
+    }
+  };
 
   // ===== 工具函数 =====
 

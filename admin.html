@@ -4805,6 +4805,26 @@
       });
   }
 
+  function adminEndVote(id, title) {
+    if (!confirm('确认截止投票「' + title + '」？截止后用户无法继续投票，但仍可查看结果。')) return;
+    fetch('/api/votes/' + encodeURIComponent(id) + '/end', {
+      method: 'POST',
+      headers: authHeaders()
+    })
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          showToast('✅ ' + data.msg, 'success');
+          loadAdminVotes();
+        } else {
+          showToast('❌ ' + (data.msg || '操作失败'), 'error');
+        }
+      })
+      .catch(function() {
+        showToast('❌ 网络错误', 'error');
+      });
+  }
+
   function adminDeleteVote(id, title) {
     if (!confirm('确认删除投票「' + title + '」？删除后前端将不再显示。')) return;
     fetch('/api/votes/' + encodeURIComponent(id), {
