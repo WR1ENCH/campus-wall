@@ -3088,7 +3088,7 @@
  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
  document.getElementById('registerForm').style.display = 'none';
  document.getElementById('zhixueLoginForm').style.display = tab === 'zhixue' ? 'block' : 'none';
- document.getElementById('loginConfirmBtn').textContenttab === 'login' ? '登 录' : tab === 'zhixue' ? '智学登录' : '注册账号';
+ document.getElementById('loginConfirmBtn').textContent = tab === 'login' ? '登 录' : tab === 'zhixue' ? '智学登录' : '注册账号';
  // 智学登录时也需要同意协议，不显示先逛逛
  document.querySelector('.user-agreement-row').style.display = 'flex';
  document.querySelector('.user-login-skip').style.display = tab === 'zhixue' ? 'none' : 'block';
@@ -3145,7 +3145,7 @@
  const cdText = document.getElementById('agreeCountdown');
  const interval = setInterval(() => {
  sec--;
- timerEl.textContentsec;
+ timerEl.textContent = sec;
  if (sec <= 0) {
  clearInterval(interval);
  btn.disabled = false;
@@ -3337,7 +3337,7 @@
  hideForgotPwdModal();
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> ' + (json.msg || '密码重置成功'));
  } else {
- document.getElementById('forgotPwdError').textContentjson.msg || '操作失败';
+ document.getElementById('forgotPwdError').textContent = json.msg || '操作失败';
  }
  } catch {
  document.getElementById('forgotPwdError').textContent = '网络错误，请稍后重试';
@@ -3411,7 +3411,7 @@
  showBannedPopup(json.banInfo || {});
  }
  } else {
- document.getElementById('userLoginError').textContentjson.msg || '登录失败';
+ document.getElementById('userLoginError').textContent = json.msg || '登录失败';
  refreshLoginCaptcha();
  }
  } catch {
@@ -3460,7 +3460,7 @@
  showBannedPopup(json.banInfo || {});
  }
  } else {
- document.getElementById('userLoginError').textContentjson.msg || '登录失败';
+ document.getElementById('userLoginError').textContent = json.msg || '登录失败';
  refreshZhixueCaptcha();
  document.getElementById('zhixueCaptchaInput').value = '';
  }
@@ -3511,7 +3511,7 @@
  _pendingNewbieGuide = true;
  tryStartNewbieGuide();
  } else {
- document.getElementById('userLoginError').textContentjson.msg || '注册失败';
+ document.getElementById('userLoginError').textContent = json.msg || '注册失败';
  // 验证码错误时自动刷新
  document.getElementById('regCaptchaInput').value = '';
  refreshCaptcha();
@@ -3555,9 +3555,9 @@
  if (currentUser) {
  var avatarSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  document.getElementById('topUserAvatar').innerHTML = currentUser.avatar && currentUser.avatar !== '🙈' ? currentUser.avatar : avatarSvg;
- document.getElementById('topUserName').textContentcurrentUser.nickname;
+ document.getElementById('topUserName').textContent = currentUser.nickname;
  document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
- document.getElementById('topUserCredit').textContentcurrentUser.credit || 0;
+ document.getElementById('topUserCredit').textContent = currentUser.credit || 0;
  updateCheckinBtn(currentUser.checkinToday);
  const userProfileUrl = `user.html?id=${currentUser.id}`;
  document.getElementById('topUserNameLink').href = userProfileUrl;
@@ -4061,14 +4061,14 @@
  // 驳回弹窗（仅一次，永久）
  var ackKey = 'cert_rejected_ack_' + currentUser.id;
  if (!localStorage.getItem(ackKey)) {
- document.getElementById('certRejectReasonText').textContentinfo.rejectReason;
+ document.getElementById('certRejectReasonText').textContent = info.rejectReason;
  document.getElementById('certRejectedOverlay').style.display = 'flex';
  localStorage.setItem(ackKey, '1');
  }
  } else if (info.status === 'pending_confirm') {
  // 智学认证确认弹窗
- document.getElementById('certConfirmName').textContentinfo.realName || '(未填写)';
- document.getElementById('certConfirmClass').textContentinfo.className || '(未填写)';
+ document.getElementById('certConfirmName').textContent = info.realName || '(未填写)';
+ document.getElementById('certConfirmClass').textContent = info.className || '(未填写)';
  document.getElementById('certConfirmOverlay').style.display = 'flex';
  } else if (info.status === 'approved' && info.type === 'manual') {
  // 手动认证通过弹窗（仅一次）
@@ -4437,7 +4437,7 @@
  grid.innerHTML = '';
 
  // 更新统计
- document.getElementById('todayCount').textContentposts.length;
+ document.getElementById('todayCount').textContent = posts.length;
 
  const tempContainer = document.createElement('div');
  tempContainer.style.cssText = 'position:absolute;visibility:hidden;top:-9999px;left:-9999px;';
@@ -4631,8 +4631,8 @@
  box.className = 'note-detail-box ' + cfg.color;
  box.style.color = cfg.color === 'note-yellow' ? '#5a4a00' : '#3a2a00';
 
- document.getElementById('detailType').textContentcfg.emoji + ' ' + post.type;
- document.getElementById('detailContent').textContentpost.content;
+ document.getElementById('detailType').textContent = cfg.emoji + ' ' + post.type;
+ document.getElementById('detailContent').textContent = post.content;
  // 设置头像（base64 用 img 标签，emoji 用 span 文本）
  const avatarEl = document.getElementById('detailAvatar');
  const avatarEmoji = document.getElementById('detailAvatarEmoji');
@@ -4645,7 +4645,7 @@
  avatarEmoji.innerHTML(post.avatar && post.avatar.length <= 4) ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  avatarEmoji.style.display = '';
  }
- document.getElementById('detailAuthor').textContentpost.author;
+ document.getElementById('detailAuthor').textContent = post.author;
  document.getElementById('detailTime').textContent = '· ' + post.time;
  // 管理员认证标识
  const adminBadge = document.getElementById('detailAdminBadge');
@@ -4663,7 +4663,7 @@
  const certBadge = document.getElementById('detailCertBadge');
  if (post.authorZhixueStatus === 'approved') {
  const certLabel = post.authorZhixueCertType === 'manual' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> 已认证' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> 已认证';
- certBadge.textContentcertLabel;
+ certBadge.textContent = certLabel;
  certBadge.style.display = '';
  } else {
  certBadge.style.display = 'none';
@@ -4687,7 +4687,7 @@
  }
 
  const likeBtn = document.getElementById('detailLikeBtn');
- likeBtn.innerHTMLpost.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已赞' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞';
+ likeBtn.innerHTML = post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已赞' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞';
  likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
  // 删除按钮：仅帖子作者可见
@@ -4699,7 +4699,7 @@
  }
 
  // 设置帖子ID（显示在左下角）
- document.getElementById('detailPostIdValue').textContentpost.id;
+ document.getElementById('detailPostIdValue').textContent = post.id;
 
  currentDetailId = id;
  document.getElementById('detailCommentInput').value = '';
@@ -4765,7 +4765,7 @@
  post.likes = result.likes;
 
  const likeBtn = document.getElementById('detailLikeBtn');
- likeBtn.innerHTMLpost.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已赞' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞';
+ likeBtn.innerHTML = post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已赞' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞';
  likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
  renderNotes(currentFilter);
@@ -4859,7 +4859,7 @@
  selectOptions.forEach(opt => {
  const o = document.createElement('option');
  o.value = opt.value;
- o.textContentopt.label;
+ o.textContent = opt.label;
  sel.appendChild(o);
  });
  // select 的值变化时直接写入变量
@@ -4994,7 +4994,7 @@
  document.getElementById('noteInput').addEventListener('input', function() {
  const count = this.value.length;
  const el = document.getElementById('noteCount');
- el.textContentcount;
+ el.textContent = count;
  el.style.color = count > 50 ? '#d32f2f' : 'inherit';
 
  var val = this.value;
@@ -5124,7 +5124,7 @@
  const container = document.getElementById('toastContainer');
  const toast = document.createElement('div');
  toast.className = 'toast' + (type ? ' ' + type : '');
- toast.textContentmsg;
+ toast.textContent = msg;
  container.appendChild(toast);
  setTimeout(() => toast.remove(), 2500);
  }
@@ -5216,7 +5216,7 @@
  const res = await fetch('/api/stats');
  const json = await res.json();
  if (json.ok) {
- document.getElementById('onlineCount').textContentjson.data.onlineCount;
+ document.getElementById('onlineCount').textContent = json.data.onlineCount;
  }
  } catch {}
  }
@@ -5788,10 +5788,10 @@
  document.getElementById('pickupPlaceholder').style.display = 'none';
 
  // 统计
- document.getElementById('pickupBidderCount').textContentd.bidderCount;
- document.getElementById('pickupCurrentPrice').textContentd.currentPrice;
- document.getElementById('pickupBasePrice').textContentd.basePrice;
- document.getElementById('pickupBidStep').textContentd.bidStep;
+ document.getElementById('pickupBidderCount').textContent = d.bidderCount;
+ document.getElementById('pickupCurrentPrice').textContent = d.currentPrice;
+ document.getElementById('pickupBasePrice').textContent = d.basePrice;
+ document.getElementById('pickupBidStep').textContent = d.bidStep;
 
  // 设置最低出价（同时段刷新时不覆盖用户已修改的出价）
  const bidInput = document.getElementById('pickupBidAmount');
@@ -5835,7 +5835,7 @@
  // 内容字数统计
  document.addEventListener('input', function(e) {
  if (e.target && e.target.id === 'pickupContent') {
- document.getElementById('pickupContentCount').textContente.target.value.length;
+ document.getElementById('pickupContentCount').textContent = e.target.value.length;
  }
  });
 
@@ -5892,7 +5892,7 @@
  const cdText = document.getElementById('bidConfirmCountdown');
  const interval = setInterval(() => {
  sec--;
- timerEl.textContentsec;
+ timerEl.textContent = sec;
  if (sec <= 0) {
  clearInterval(interval);
  okBtn.disabled = false;
@@ -5945,7 +5945,7 @@
  // 刷新左侧徽标
  loadPickupSlots();
  } else {
- document.getElementById('pickupBidError').textContentjson.msg;
+ document.getElementById('pickupBidError').textContent = json.msg;
  document.getElementById('pickupBidError').style.display = '';
  }
  } catch {
@@ -6265,7 +6265,7 @@
  const ansInput = document.getElementById('qaAnswerInput');
  if (ansInput) {
  ansInput.addEventListener('input', () => {
- document.getElementById('qaAnswerCount').textContentansInput.value.length;
+ document.getElementById('qaAnswerCount').textContent = ansInput.value.length;
  });
  }
  }
@@ -6374,7 +6374,7 @@
  const errEl = document.getElementById('qaAskError');
  errEl.style.display = 'none';
 
- const showErr = (msg) => { errEl.textContentmsg; errEl.style.display = 'block'; };
+ const showErr = (msg) => { errEl.textContent = msg; errEl.style.display = 'block'; };
  if (!title || title.length < 2) return showErr('标题至少2个字');
  if (bounty < 0) return showErr('悬赏不能为负数');
  if (bounty > 0 && bounty > (currentUser.credit || 0)) return showErr('Credits不足，当前余额：' + (currentUser.credit || 0));
@@ -6557,8 +6557,8 @@
 
  async function showQARewardModal(qid, bounty, remaining) {
  qaRewardQuestionId = qid;
- document.getElementById('qaRewardTotal').textContentbounty;
- document.getElementById('qaRewardRemain').textContentremaining;
+ document.getElementById('qaRewardTotal').textContent = bounty;
+ document.getElementById('qaRewardRemain').textContent = remaining;
  document.getElementById('qaRewardAnswers').innerHTML = '<div style="text-align:center;padding:20px;color:#aaa;">加载中...</div>';
  document.getElementById('qaRewardOverlay').style.display = 'flex';
  try {
@@ -6588,7 +6588,7 @@
  '</div>';
  });
  document.getElementById('qaRewardAnswers').innerHTML = html;
- document.getElementById('qaRewardRemain').textContentremaining;
+ document.getElementById('qaRewardRemain').textContent = remaining;
  } catch { document.getElementById('qaRewardAnswers').innerHTML = '<div style="color:#e04;text-align:center;padding:10px;">网络错误</div>'; }
  }
 
@@ -6659,9 +6659,9 @@
  // 绑定字数统计
  document.addEventListener('DOMContentLoaded', function() {
  const titleInput = document.getElementById('qaAskTitle');
- if (titleInput) titleInput.addEventListener('input', () => { document.getElementById('qaAskTitleCount').textContenttitleInput.value.length; });
+ if (titleInput) titleInput.addEventListener('input', () => { document.getElementById('qaAskTitleCount').textContent = titleInput.value.length; });
  const contentInput = document.getElementById('qaAskContent');
- if (contentInput) contentInput.addEventListener('input', () => { document.getElementById('qaAskContentCount').textContentcontentInput.value.length; });
+ if (contentInput) contentInput.addEventListener('input', () => { document.getElementById('qaAskContentCount').textContent = contentInput.value.length; });
  });
 
  // ===== 讨论功能 =====
@@ -6736,7 +6736,7 @@
  const topics = await (await fetch('/api/discussions')).json();
  const topic = (topics.data || []).find(t => t.id === id);
  if (topic) {
- document.getElementById('currentDiscussionTitle').textContenttopic.title;
+ document.getElementById('currentDiscussionTitle').textContent = topic.title;
  }
  await loadDiscussionComments(id);
  }
@@ -7112,7 +7112,7 @@
  try {
  var u = JSON.parse(userStr);
  var name = u.nickname || u.username || '';
- document.getElementById('sideNavUserName').textContentname;
+ document.getElementById('sideNavUserName').textContent = name;
  document.getElementById('sideNavUserCredit').textContent(u.credit || 0) + ' Credit';
  var avatarEl = document.getElementById('sideNavAvatar');
  if (u.avatar && u.avatar !== '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') {
@@ -7373,7 +7373,7 @@
  var TTL = 5 * 60 * 1000;
 
  if (cached && cachedTime && (now - parseInt(cachedTime)) < TTL) {
- shaEl.textContentcached;
+ shaEl.textContent = cached;
  return;
  }
 
@@ -7386,7 +7386,7 @@
  .then(function(data) {
  if (data && data.ok && data.data && data.data.sha) {
  var shortSha = data.data.sha.substring(0, 7);
- shaEl.textContentshortSha;
+ shaEl.textContent = shortSha;
  badgeEl.setAttribute('title', '版本: ' + data.data.sha + '\n' + (data.data.message || ''));
  sessionStorage.setItem('local_commit_sha', shortSha);
  sessionStorage.setItem('local_commit_time', String(now));
