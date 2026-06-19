@@ -4570,7 +4570,7 @@ app.get('/api/votes', (req, res) => {
       const userVoted = session
         ? records.filter(r => r.voteId === v.id && r.userId === session.id).map(r => r.optionId)
         : [];
-      return { ...v, totalVotes, userVoted };
+      return { ...v, totalVotes, userVoted, allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true' };
     });
 
   res.json({ ok: true, data: list });
@@ -4820,7 +4820,8 @@ app.get('/api/admin/votes', requireAdmin, (req, res) => {
     data: list.map(v => ({
       ...v,
       totalVotes: v.options.reduce((s, o) => s + (o.votes || 0), 0),
-      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length
+      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length,
+      allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true'
     }))
   });
 });
