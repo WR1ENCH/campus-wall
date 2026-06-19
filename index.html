@@ -3013,17 +3013,23 @@
         return;
       }
 
-      // 检测是否选择了自定义选项
+      // 检测是否选择了自定义选项（__custom__ 不是唯一元素时忽略）
+      var customIdx = selected.indexOf('__custom__');
+      var hasCustom = customIdx >= 0;
+      var hasNormalOpts = selected.some(function(id) { return id !== '__custom__'; });
+      
       var customOption = null;
-      var optionIds = selected;
-      if (selected[0] === '__custom__') {
+      var optionIds = selected.filter(function(id) { return id !== '__custom__'; });
+      
+      if (hasCustom && !hasNormalOpts) {
+        // 仅自定义选项被选中
         var inputEl = document.getElementById('customInput_' + voteId);
         customOption = inputEl ? inputEl.value.trim() : '';
         if (!customOption) {
           showToast('⚠️ 请输入自定义选项内容', 'error');
           return;
         }
-        optionIds = []; // 自定义选项不走 optionIds，后端用 customOption 生成
+        optionIds = [];
       }
 
       fetch('/api/votes/' + voteId + '/vote', {
