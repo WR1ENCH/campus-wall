@@ -4648,7 +4648,8 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
     if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  const optionTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+  const checkText = (title.trim() + ' ' + optionTexts.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
     return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
@@ -4835,6 +4836,104 @@ app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
   votes[idx].deleted = true;
   writeVotes(votes);
   res.json({ ok: true });
+});
+
+// 编辑投票核心逻辑：根据原文匹配保持票数，新增选项票数为 0
+function _updateVoteOptions(vote, newOptions) {
+  const normalizedNew = newOptions.map(function(opt) {
+    return typeof opt === 'string'
+      ? { text: opt, image: null }
+      : { text: (opt.text || '').trim(), image: opt.image || null };
+  });
+  vote.options = normalizedNew.map(function(newOpt) {
+    const existing = vote.options.find(function(o) {
+      return o.text.trim() === newOpt.text && (o.image || null) === (newOpt.image || null);
+    });
+    return {
+      id: existing ? existing.id : 'opt_' + Math.random().toString(36).slice(2, 8),
+      text: newOpt.text,
+      image: newOpt.image,
+      votes: existing ? (existing.votes || 0) : 0
+    };
+  });
+}
+
+app.put('/api/votes/:id', requireAdmin, (req, res) => {
+  const { title, options, multiple, allowCustom, endTime } = req.body;
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+    if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+    const sensitiveWords = checkSensitive(title.trim());
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '标题包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(title.trim());
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    vote.title = title.trim();
+  }
+  if (options !== undefined) {
+    if (!Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+    if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+    for (const opt of options) {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+      if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    }
+    const optTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+    const sensitiveWords = checkSensitive(optTexts.join(' '));
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '选项包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(optTexts.join(' '));
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    _updateVoteOptions(vote, options);
+  }
+  if (multiple !== undefined) vote.multiple = !!multiple;
+  if (allowCustom !== undefined) vote.allowCustom = !!allowCustom;
+  if (endTime !== undefined) vote.endTime = endTime || null;
+
+  writeVotes(votes);
+  res.json({ ok: true, data: vote });
+});
+
+app.put('/api/admin/votes/:id', requireAdmin, (req, res) => {
+  const { title, options, multiple, allowCustom, endTime } = req.body;
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+    if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+    const sensitiveWords = checkSensitive(title.trim());
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '标题包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(title.trim());
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    vote.title = title.trim();
+  }
+  if (options !== undefined) {
+    if (!Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+    if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+    for (const opt of options) {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+      if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    }
+    const optTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+    const sensitiveWords = checkSensitive(optTexts.join(' '));
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '选项包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(optTexts.join(' '));
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    _updateVoteOptions(vote, options);
+  }
+  if (multiple !== undefined) vote.multiple = !!multiple;
+  if (allowCustom !== undefined) vote.allowCustom = !!allowCustom;
+  if (endTime !== undefined) vote.endTime = endTime || null;
+
+  writeVotes(votes);
+  res.json({ ok: true, data: vote });
 });
 
 // ===== 校园墙拍卖系统 =====
@@ -5544,7 +5643,8 @@ app.post('/api/notice/votes', (req, res) => {
     if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  const optionTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+  const checkText = (title.trim() + ' ' + optionTexts.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
     return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
@@ -5582,6 +5682,60 @@ app.post('/api/notice/votes', (req, res) => {
   votes.push(newVote);
   writeVotes(votes);
   res.json({ ok: true, data: newVote });
+});
+
+// 编辑投票（学生会账号或通知发布者）
+app.put('/api/notice/votes/:id', (req, res) => {
+  const token = req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifySignedToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  const sc = readSC();
+  const users = readUsers();
+  const isSC = sc && sc.id === session.id;
+  const publisher = users.find(u => u.id === session.id && u.noticePublisher);
+  if (!isSC && !publisher) return res.json({ ok: false, msg: '无权限编辑投票' });
+
+  const { title, options, multiple, allowCustom, endTime } = req.body;
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+  // 权限校验：只有该投票的创建者才能编辑
+  if (vote.userId !== 'sc:' + session.id) return res.json({ ok: false, msg: '无权限编辑此投票' });
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+    if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+    const sensitiveWords = checkSensitive(title.trim());
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '标题包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(title.trim());
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    vote.title = title.trim();
+  }
+  if (options !== undefined) {
+    if (!Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+    if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+    for (const opt of options) {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+      if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    }
+    // 敏感词和霸凌姓名检测
+    const optTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+    const sensitiveWords = checkSensitive(optTexts.join(' '));
+    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, warningMsg: '选项包含敏感词，请修改后重试' });
+    const blockedNames = checkBullyingNames(optTexts.join(' '));
+    if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    _updateVoteOptions(vote, options);
+  }
+  if (multiple !== undefined) vote.multiple = !!multiple;
+  if (allowCustom !== undefined) vote.allowCustom = !!allowCustom;
+  if (endTime !== undefined) vote.endTime = endTime || null;
+
+  writeVotes(votes);
+  res.json({ ok: true, data: vote });
 });
 
 
