@@ -4802,6 +4802,49 @@ app.post('/api/votes/:id/end', (req, res) => {
   res.json({ ok: true, msg: '投票已截止' });
 });
 
+// 修改投票（管理员或通知发布者）
+app.put('/api/votes/:id', (req, res) => {
+  const adminToken = req.headers['x-admin-token'];
+  const scToken = req.headers['x-sc-token'];
+  if (!adminToken && !scToken) return res.json({ ok: false, msg: '未登录' });
+  if (adminToken) {
+    const session = verifySignedToken(adminToken);
+    if (!session) return res.json({ ok: false, msg: '登录无效' });
+  }
+  if (scToken) {
+    const session = verifySignedToken(scToken);
+    if (!session) return res.json({ ok: false, msg: '登录无效' });
+  }
+
+  const votes = readVotes();
+  const idx = votes.findIndex(v => v.id === req.params.id && !v.deleted);
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
+
+  const { title, options, multiple, allowCustom, endTime } = req.body;
+  if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+  if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+
+  votes[idx].title = title.trim();
+  votes[idx].options = options.map((opt, i) => {
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    const optImage = typeof opt === 'string' ? null : (opt.image || null);
+    // 保留旧的 id 和 votes 数
+    const oldOpt = votes[idx].options[i];
+    return {
+      id: oldOpt ? oldOpt.id : 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6),
+      text: optText.trim(),
+      image: optImage,
+      votes: oldOpt ? (oldOpt.votes || 0) : 0
+    };
+  });
+  if (multiple !== undefined) votes[idx].multiple = !!multiple;
+  if (allowCustom !== undefined) votes[idx].allowCustom = !!allowCustom;
+  if (endTime !== undefined) votes[idx].endTime = endTime || null;
+
+  writeVotes(votes);
+  res.json({ ok: true, msg: '投票已修改' });
+});
+
 // 删除投票（管理员）
 app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
