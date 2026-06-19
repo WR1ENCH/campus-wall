@@ -703,9 +703,9 @@ setInterval(() => {
   for (const [userId, timestamps] of postRateLimit) {
     const filtered = timestamps.filter(ts => now - ts < 600000);
     if (filtered.length === 0) {
-      postRateLimit.delete(realUserId);
+      postRateLimit.delete(userId);
     } else {
-      postRateLimit.set(realUserId, filtered);
+      postRateLimit.set(userId, filtered);
     }
   }
 }, 60000);
