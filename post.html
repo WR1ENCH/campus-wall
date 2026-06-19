@@ -354,7 +354,7 @@
   <!-- 顶部导航 -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-logo">📌</div>
+      <div class="topbar-logo"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg></div>
       <div class="topbar-title">校园墙</div>
     </div>
   </div>
@@ -373,7 +373,7 @@
   <!-- 评论区域 -->
   <div class="main" id="commentSection" style="display:none;">
     <div class="comment-section">
-      <div class="comment-title">💬 评论</div>
+      <div class="comment-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论</div>
       <div class="comment-input-row" id="commentInputRow">
         <textarea class="comment-input" id="commentInput" placeholder="写下你的评论…" rows="2"></textarea>
         <button class="comment-submit-btn" id="commentSubmitBtn" onclick="submitComment()">发布</button>
@@ -385,7 +385,7 @@
   <!-- 举报弹窗 -->
   <div class="report-overlay" id="reportOverlay">
     <div class="report-box">
-      <div class="report-title">⚠️ 举报帖子</div>
+      <div class="report-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报帖子</div>
       <div id="reportReasons"></div>
       <textarea class="report-textarea" id="reportText" placeholder="补充说明（选填）…" rows="3"></textarea>
       <div class="report-actions">
@@ -424,7 +424,7 @@
     overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
     overlay.innerHTML = `
       <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:reportIn 0.25s ease;">
-        <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;">⚠️ 内容审核提醒</h3>
+        <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
         <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
           安全检测系统发现你编辑的内容包含违禁内容<br>
           如果继续发送，本帖会被标记并等待审核<br>
@@ -454,7 +454,7 @@
     overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
     overlay.innerHTML = `
       <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:reportIn 0.25s ease;">
-        <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;">🛡️ 反欺凌机制已触发</h3>
+        <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 反欺凌机制已触发</h3>
         <p style="margin:16px 0;color:#b71c1c;font-size:15px;line-height:1.8;">
           你已触发反欺凌机制，本贴中似乎存在被霸凌者信息。<br>
           校园墙对于一切霸凌行为零容忍！<br>
@@ -498,7 +498,7 @@
 
   function showNotFound() {
     document.getElementById('mainContent').innerHTML =
-      '<div class="not-found"><div class="icon">🔍</div><p>帖子不存在或已被删除</p><a class="back-link" href="index.html">← 返回校园墙</a></div>';
+      '<div class="not-found"><div class="icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>帖子不存在或已被删除</p><a class="back-link" href="index.html">← 返回校园墙</a></div>';
   }
 
   // ===== 渲染帖子 =====
@@ -512,13 +512,13 @@
       'note-purple': { bg: '#d5b8ff', text: '#3a1a5a' },
     };
     const typeConfig = {
-      '日常':    { emoji: '💬', color: 'note-yellow' },
-      '表白':    { emoji: '💕', color: 'note-pink'   },
-      '树洞':    { emoji: '🌳', color: 'note-green'  },
-      '失物招领': { emoji: '🔍', color: 'note-orange' },
-      '活动':    { emoji: '🎉', color: 'note-blue'   },
+      '日常':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', color: 'note-yellow' },
+      '表白':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', color: 'note-pink'   },
+      '树洞':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg>', color: 'note-green'  },
+      '失物招领': { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', color: 'note-orange' },
+      '活动':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', color: 'note-blue'   },
     };
-    const cfg = typeConfig[post.type] || { emoji: '📌', color: 'note-yellow' };
+    const cfg = typeConfig[post.type] || { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>', color: 'note-yellow' };
     const colors = colorMap[cfg.color] || colorMap['note-yellow'];
     const userId = USER_TOKEN ? JSON.parse(atob(USER_TOKEN)).id : null;
     const isOwner = userId && post.userId && userId === post.userId;
@@ -535,19 +535,19 @@
         <div class="note-content">${escHtml(post.content)}</div>
         <div class="note-footer">
           <div class="note-author">
-            ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${escHtml(post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')}</span>`}
-            <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}${post.authorZhixueStatus === 'approved' ? (post.authorZhixueCertType === 'manual' ? ' 📄已认证' : ' 🎓已认证') : ''}</span>
+            ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${escHtml(post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>`}
+            <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}${post.authorZhixueStatus === 'approved' ? (post.authorZhixueCertType === 'manual' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>已认证' : ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>已认证') : ''}</span>
             <span style="opacity:0.5">· ${formatTime(post.time)}</span>
           </div>
           <div class="note-actions">
             <button class="like-btn${post.liked ? ' liked' : ''}" id="likeBtn" onclick="doLike()">
-              ${post.liked ? '❤️' : '🤍'} ${post.likes || 0}
+              ${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${post.likes || 0}
             </button>
             <div style="position:relative;">
               <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋯</button>
               <div class="menu-dropdown" id="menuDropdown">
-                ${isOwner ? `<div class="menu-item danger" onclick="doDelete()">🗑️ 删除帖子</div>` : ''}
-                <div class="${isOwner ? '' : ''}menu-item" onclick="openReport()" style="${isOwner ? '' : 'color:#ef4444;'}">⚠️ ${isOwner ? '举报' : '举报帖子'}</div>
+                ${isOwner ? `<div class="menu-item danger" onclick="doDelete()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除帖子</div>` : ''}
+                <div class="${isOwner ? '' : ''}menu-item" onclick="openReport()" style="${isOwner ? '' : 'color:#ef4444;'}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${isOwner ? '举报' : '举报帖子'}</div>
               </div>
             </div>
           </div>
@@ -590,17 +590,17 @@
       const canDelete = isCommentAuthor || isPostAuthor;
       return `
         <div class="comment-item" id="comment-${c.id}">
-          <span class="comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '🙈')}</span>
+          <span class="comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>
           <div class="comment-body">
             <div class="comment-author">${escHtml(c.author || '匿名')}</div>
             <div class="comment-text">${escHtml(c.content)}</div>
             <div class="comment-meta">
               <span class="comment-time">${t}</span>
               <span class="comment-like-btn ${c.liked ? 'liked' : ''}" onclick="toggleCommentLike('${c.id}')">
-                ${c.liked ? '❤️' : '🤍'} ${c.likes || 0}
+                ${c.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${c.likes || 0}
               </span>
-              <span class="comment-report-btn" onclick="openCommentReport('${c.id}')">⚠️ 举报</span>
-              ${canDelete ? `<span class="comment-del-btn" onclick="deleteComment('${c.id}')">🗑️ 删除</span>` : ''}
+              <span class="comment-report-btn" onclick="openCommentReport('${c.id}')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报</span>
+              ${canDelete ? `<span class="comment-del-btn" onclick="deleteComment('${c.id}')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</span>` : ''}
             </div>
           </div>
         </div>
@@ -615,15 +615,15 @@
     const btn = document.getElementById('commentSubmitBtn');
     const content = input.value.trim();
     if (!content) { toast('请输入评论内容'); return; }
-    if (SPECIAL_CHAR_REG.test(content)) { toast('⚠️ 评论包含特殊字符，请移除后重试'); return; }
-    if (content.length > 400) { toast('⚠️ 评论超过 400 字限制，请精简后发送'); return; }
+    if (SPECIAL_CHAR_REG.test(content)) { toast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 评论包含特殊字符，请移除后重试'); return; }
+    if (content.length > 400) { toast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 评论超过 400 字限制，请精简后发送'); return; }
 
-    let author = '匿名', avatar = '🙈', userId = null;
+    let author = '匿名', avatar = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', userId = null;
     if (USER_TOKEN) {
       try {
         const u = JSON.parse(atob(USER_TOKEN));
         author = u.nickname || '匿名';
-        avatar = u.avatar || '🙈';
+        avatar = u.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
         userId = u.id;
       } catch {}
     }
@@ -702,7 +702,7 @@
         postData.liked = json.data.liked;
         postData.likes = json.data.likes;
         const btn = document.getElementById('likeBtn');
-        btn.innerHTML = `${postData.liked ? '❤️' : '🤍'} ${postData.likes}`;
+        btn.innerHTML = `${postData.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${postData.likes}`;
         btn.className = 'like-btn' + (postData.liked ? ' liked' : '');
       }
     } catch {
@@ -752,7 +752,7 @@
     menuOpen = false;
     document.getElementById('menuDropdown').classList.remove('show');
     _reportTarget = { type: 'post', id: POST_ID };
-    document.querySelector('.report-title').textContent = '⚠️ 举报帖子';
+    document.querySelector('.report-title').textContent = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报帖子';
     const reasonsHtml = REPORT_REASONS.map(r =>
       `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
         <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
@@ -765,7 +765,7 @@
 
   function openCommentReport(commentId) {
     _reportTarget = { type: 'comment', id: commentId };
-    document.querySelector('.report-title').textContent = '⚠️ 举报评论';
+    document.querySelector('.report-title').textContent = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报评论';
     const reasonsHtml = REPORT_REASONS.map(r =>
       `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
         <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
