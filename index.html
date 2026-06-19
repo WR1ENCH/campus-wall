@@ -2903,7 +2903,7 @@
 
  html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
  html += '<input type="' + inputType + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this, \'' + vote.id + '\', \'' + opt.id + '\', ' + vote.multiple + ')">';
- html += '<span class="vote-option-text">' + escapeHtml(opt.text) + '</span>';
+ html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:24px;height:24px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escapeHtml(opt.text) + '</span>';
  html += '<span class="vote-option-percent">' + percent + '%</span>';
  html += '</div>';
  html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
