@@ -241,7 +241,7 @@ app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
     // ⚠️ PoW 字段已移除 — 服务端未实现实际 PoW 校验，这些字段无安全意义
-    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
+    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, options, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
@@ -255,7 +255,8 @@ app.use((req, res, next) => {
       ...(reason !== undefined ? { reason } : {}),
       ...(answer !== undefined ? { answer } : {}),
       ...(question !== undefined ? { question } : {}),
-      ...(description !== undefined ? { description } : {})
+      ...(description !== undefined ? { description } : {}),
+      ...(options !== undefined ? { options } : {})
     };
   }
   next();
@@ -263,6 +264,38 @@ app.use((req, res, next) => {
 
 app.use(checkMaintenance); // 维护状态检查
 app.use(express.static(__dirname)); // 静态文件服务
+
+// ===== SSE 实时推送 =====
+const sseClients = new Set();
+let sseEventCounter = 0;
+
+function broadcastSSE(eventName, payload = {}) {
+  const msg = `id: ${++sseEventCounter}\nevent: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(msg); } catch (e) {}
+  }
+}
+
+// 心跳保活：每 15 秒给所有连接发一个 ping，防止中间代理断开
+setInterval(() => {
+  const pingMsg = `id: ${++sseEventCounter}\nevent: ping\ndata: ${JSON.stringify({ t: Date.now(), clients: sseClients.size })}\n\n`;
+  for (const client of sseClients) {
+    try { client.write(pingMsg); } catch (e) {}
+  }
+}, 15000);
+
+app.get('/api/stream', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  res.write(`retry: 3000\n`);
+  res.write(`id: ${++sseEventCounter}\nevent: connected\ndata: ${JSON.stringify({ t: Date.now(), clients: sseClients.size + 1 })}\n\n`);
+  sseClients.add(res);
+  req.on('close', () => { sseClients.delete(res); });
+});
 
 const CONTENT_MAX_LENGTH = 50; // 帖子/评论字数上限
 
@@ -273,11 +306,11 @@ function ensureDir() {
 
 function readPosts () { return db.readPosts(); }
 
-function writePosts (posts) { db.writePosts(posts); }
+function writePosts (posts) { db.writePosts(posts); broadcastSSE('postUpdate', { t: Date.now() }); }
 
 function readVotes () { return db.readVotes(); }
 
-function writeVotes (votes) { db.writeVotes(votes); }
+function writeVotes (votes) { db.writeVotes(votes); broadcastSSE('voteUpdate', { t: Date.now() }); }
 
 function readVoteRecords () { return db.readVoteRecords(); }
 
@@ -2845,7 +2878,7 @@ function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
 
 // ===== 通知数据读写 =====
 function readNotices () { return db.readNotices(); }
-function writeNotices (notices) { db.writeNotices(notices); }
+function writeNotices (notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
 
 // ===== 卡密数据读写 =====
 function readCreditCards () { return db.readCreditCards(); }
@@ -2907,15 +2940,15 @@ const ANNOUNCEMENT_FILE = path.join(DATA_DIR, 'announcement.json');
 
 function readAnnouncement () { return db.readAnnouncement(); }
 
-function writeAnnouncement (data) { db.writeAnnouncement(data); }
+function writeAnnouncement (data) { db.writeAnnouncement(data); broadcastSSE('announcementUpdate', { t: Date.now() }); }
 
 function readDiscussions () { return db.readDiscussions(); }
 
-function writeDiscussions (discussions) { db.writeDiscussions(discussions); }
+function writeDiscussions (discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 function readDiscussionComments () { return db.readDiscussionComments(); }
 
-function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); }
+function writeDiscussionComments (comments) { db.writeDiscussionComments(comments); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 // ===== 公告 API =====
 
@@ -4113,9 +4146,9 @@ app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
 
 // ===== Q&A 问答系统 =====
 function readQAQuestions () { return db.readQAQuestions(); }
-function writeQAQuestions (data) { db.writeQAQuestions(data); }
+function writeQAQuestions (data) { db.writeQAQuestions(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
 function readQAAnswers () { return db.readQAAnswers(); }
-function writeQAAnswers (data) { db.writeQAAnswers(data); }
+function writeQAAnswers (data) { db.writeQAAnswers(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
 
 // 给用户变更 credit 并记录流水
 function changeCredit(userId, amount, reason) {
@@ -4537,7 +4570,8 @@ app.get('/api/votes', (req, res) => {
       const userVoted = session
         ? records.filter(r => r.voteId === v.id && r.userId === session.id).map(r => r.optionId)
         : [];
-      return { ...v, totalVotes, userVoted };
+      const isCustom = v.allowCustom == true || v.allowCustom == 1 || v.allowCustom == '1' || String(v.allowCustom) === 'true';
+      return { ...v, totalVotes, userVoted, allowCustom: !!isCustom };
     });
 
   res.json({ ok: true, data: list });
@@ -4553,12 +4587,14 @@ app.post('/api/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  // 敏感词检测
-  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  // 敏感词检测（兼容 options 为字符串数组或 {text,image} 对象数组）
+  const optionTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+  const checkText = (title.trim() + ' ' + optionTexts.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
     return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
@@ -4575,11 +4611,16 @@ app.post('/api/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -4602,8 +4643,9 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
@@ -4623,11 +4665,16 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -4682,6 +4729,9 @@ app.post('/api/votes/:id/vote', (req, res) => {
   }
 
   // 处理自定义选项
+  if (customOption && !vote.allowCustom) {
+    return res.json({ ok: false, msg: '该投票未开启自定义选项' });
+  }
   let finalOptionIds = [...optionIds];
   if (customOption && vote.allowCustom) {
     const trimmed = String(customOption).trim();
@@ -4736,6 +4786,22 @@ app.post('/api/votes/:id/vote', (req, res) => {
 });
 
 // 删除投票（仅管理员可删除）
+// 手动截止投票（设置 endTime 为当前时间，投票变为已结束但不删除）
+app.post('/api/votes/:id/end', (req, res) => {
+  const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id && !v.deleted);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.endTime && new Date(vote.endTime) < new Date()) return res.json({ ok: false, msg: '投票已结束' });
+
+  vote.endTime = new Date().toISOString();
+  writeVotes(votes);
+  res.json({ ok: true, msg: '投票已截止' });
+});
+
+// 删除投票（管理员）
 app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
   const idx = votes.findIndex(v => v.id === req.params.id);
@@ -4755,7 +4821,8 @@ app.get('/api/admin/votes', requireAdmin, (req, res) => {
     data: list.map(v => ({
       ...v,
       totalVotes: v.options.reduce((s, o) => s + (o.votes || 0), 0),
-      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length
+      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length,
+      allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true'
     }))
   });
 });
@@ -4776,9 +4843,9 @@ const BASE_BID = 300;
 const BID_STEP = 50;
 
 function readPickupAuctions () { return db.readPickupAuctions(); }
-function writePickupAuctions (data) { db.writePickupAuctions(data); }
+function writePickupAuctions (data) { db.writePickupAuctions(data); broadcastSSE('pickupUpdate', { t: Date.now() }); }
 function readPickupReports () { return db.readPickupReports(); }
-function writePickupReports (data) { db.writePickupReports(data); }
+function writePickupReports (data) { db.writePickupReports(data); broadcastSSE('pickupUpdate', { t: Date.now() }); }
 
 // 获取或创建今天某个时间槽的拍卖
 function getOrCreateAuction(slot, dateStr) {
@@ -5284,7 +5351,7 @@ function readSC () { return db.readSC(); }
 
 function writeSC (data) { db.writeSC(data); }
 
-function writeNotices (data) { db.writeNotices(data); }
+function writeNotices (data) { db.writeNotices(data); broadcastSSE('noticeUpdate', { t: Date.now() }); }
 
 function readMaintenance () { return db.readMaintenance(); }
 function writeMaintenance (data) { db.writeMaintenance(data); }
@@ -5472,8 +5539,9 @@ app.post('/api/notice/votes', (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
@@ -5494,11 +5562,16 @@ app.post('/api/notice/votes', (req, res) => {
     author: authorName,
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
