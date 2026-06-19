@@ -241,7 +241,7 @@ app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object') {
     // 排除包含 base64、富文本/Markdown 或特殊格式的字段不过滤
     // ⚠️ PoW 字段已移除 — 服务端未实现实际 PoW 校验，这些字段无安全意义
-    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, ...rest } = req.body;
+    const { avatar, manualImages, manualEmail, images, content, title, text, body, reason, answer, question, description, options, ...rest } = req.body;
     req.body = {
       ...sanitizeString(rest),
       ...(avatar !== undefined ? { avatar } : {}),
@@ -255,7 +255,8 @@ app.use((req, res, next) => {
       ...(reason !== undefined ? { reason } : {}),
       ...(answer !== undefined ? { answer } : {}),
       ...(question !== undefined ? { question } : {}),
-      ...(description !== undefined ? { description } : {})
+      ...(description !== undefined ? { description } : {}),
+      ...(options !== undefined ? { options } : {})
     };
   }
   next();
@@ -735,9 +736,9 @@ setInterval(() => {
   for (const [userId, timestamps] of postRateLimit) {
     const filtered = timestamps.filter(ts => now - ts < 600000);
     if (filtered.length === 0) {
-      postRateLimit.delete(realUserId);
+      postRateLimit.delete(userId);
     } else {
-      postRateLimit.set(realUserId, filtered);
+      postRateLimit.set(userId, filtered);
     }
   }
 }, 60000);
@@ -4569,7 +4570,8 @@ app.get('/api/votes', (req, res) => {
       const userVoted = session
         ? records.filter(r => r.voteId === v.id && r.userId === session.id).map(r => r.optionId)
         : [];
-      return { ...v, totalVotes, userVoted };
+      const isCustom = v.allowCustom == true || v.allowCustom == 1 || v.allowCustom == '1' || String(v.allowCustom) === 'true';
+      return { ...v, totalVotes, userVoted, allowCustom: !!isCustom };
     });
 
   res.json({ ok: true, data: list });
@@ -4585,12 +4587,14 @@ app.post('/api/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
-  // 敏感词检测
-  const checkText = (title.trim() + ' ' + options.join(' ')).trim();
+  // 敏感词检测（兼容 options 为字符串数组或 {text,image} 对象数组）
+  const optionTexts = options.map(function(o) { return typeof o === 'string' ? o : (o.text || ''); });
+  const checkText = (title.trim() + ' ' + optionTexts.join(' ')).trim();
   const sensitiveWords = checkSensitive(checkText);
   if (sensitiveWords.length > 0 && !sensitiveForce) {
     return res.json({ ok: false, warning: true, warningMsg: '内容包含敏感词，请修改后重试' });
@@ -4607,11 +4611,16 @@ app.post('/api/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -4634,8 +4643,9 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
@@ -4655,11 +4665,16 @@ app.post('/api/admin/votes', requireAdmin, (req, res) => {
     author: '管理员',
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,
@@ -4714,6 +4729,9 @@ app.post('/api/votes/:id/vote', (req, res) => {
   }
 
   // 处理自定义选项
+  if (customOption && !vote.allowCustom) {
+    return res.json({ ok: false, msg: '该投票未开启自定义选项' });
+  }
   let finalOptionIds = [...optionIds];
   if (customOption && vote.allowCustom) {
     const trimmed = String(customOption).trim();
@@ -4768,6 +4786,22 @@ app.post('/api/votes/:id/vote', (req, res) => {
 });
 
 // 删除投票（仅管理员可删除）
+// 手动截止投票（设置 endTime 为当前时间，投票变为已结束但不删除）
+app.post('/api/votes/:id/end', (req, res) => {
+  const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id && !v.deleted);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.endTime && new Date(vote.endTime) < new Date()) return res.json({ ok: false, msg: '投票已结束' });
+
+  vote.endTime = new Date().toISOString();
+  writeVotes(votes);
+  res.json({ ok: true, msg: '投票已截止' });
+});
+
+// 删除投票（管理员）
 app.delete('/api/votes/:id', requireAdmin, (req, res) => {
   const votes = readVotes();
   const idx = votes.findIndex(v => v.id === req.params.id);
@@ -4787,7 +4821,8 @@ app.get('/api/admin/votes', requireAdmin, (req, res) => {
     data: list.map(v => ({
       ...v,
       totalVotes: v.options.reduce((s, o) => s + (o.votes || 0), 0),
-      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length
+      participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length,
+      allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true'
     }))
   });
 });
@@ -5504,8 +5539,9 @@ app.post('/api/notice/votes', (req, res) => {
   if (!options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
   if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
   for (const opt of options) {
-    if (!opt || typeof opt !== 'string' || !opt.trim()) return res.json({ ok: false, msg: '选项不能为空' });
-    if (opt.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+    if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
   }
 
   const checkText = (title.trim() + ' ' + options.join(' ')).trim();
@@ -5526,11 +5562,16 @@ app.post('/api/notice/votes', (req, res) => {
     author: authorName,
     avatar: '',
     title: title.trim(),
-    options: options.map((text, idx) => ({
-      id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
-      text: text.trim(),
-      votes: 0
-    })),
+    options: options.map((opt, idx) => {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      const optImage = typeof opt === 'string' ? null : (opt.image || null);
+      return {
+        id: 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6),
+        text: optText.trim(),
+        image: optImage,
+        votes: 0
+      };
+    }),
     multiple: !!multiple,
     allowCustom: !!allowCustom,
     endTime: endTime || null,

@@ -2758,10 +2758,12 @@
           if (data.ok) {
             var allVotes = data.data || [];
             var userId = getCurrentUserId();
-            var myVotes = allVotes.filter(function(v) { return v.userId === userId; });
+            var myVotes = allVotes.filter(function(v) {
+              return v.userVoted && v.userVoted.length > 0;
+            });
             votes = allVotes;
             if (myVotes.length === 0) {
-              container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+              container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有参与任何投票</div>';
             } else {
               renderVoteList(myVotes, 'voteMyContainer');
             }
@@ -2906,7 +2908,7 @@
 
           html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
           html += '<input type="' + inputType + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this, \'' + vote.id + '\', \'' + opt.id + '\', ' + vote.multiple + ')">';
-          html += '<span class="vote-option-text">' + escapeHtml(opt.text) + '</span>';
+          html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:24px;height:24px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escapeHtml(opt.text) + '</span>';
           html += '<span class="vote-option-percent">' + percent + '%</span>';
           html += '</div>';
           html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
@@ -3011,17 +3013,23 @@
         return;
       }
 
-      // 检测是否选择了自定义选项
+      // 检测是否选择了自定义选项（__custom__ 不是唯一元素时忽略）
+      var customIdx = selected.indexOf('__custom__');
+      var hasCustom = customIdx >= 0;
+      var hasNormalOpts = selected.some(function(id) { return id !== '__custom__'; });
+      
       var customOption = null;
-      var optionIds = selected;
-      if (selected[0] === '__custom__') {
+      var optionIds = selected.filter(function(id) { return id !== '__custom__'; });
+      
+      if (hasCustom && !hasNormalOpts) {
+        // 仅自定义选项被选中
         var inputEl = document.getElementById('customInput_' + voteId);
         customOption = inputEl ? inputEl.value.trim() : '';
         if (!customOption) {
           showToast('⚠️ 请输入自定义选项内容', 'error');
           return;
         }
-        optionIds = []; // 自定义选项不走 optionIds，后端用 customOption 生成
+        optionIds = [];
       }
 
       fetch('/api/votes/' + voteId + '/vote', {

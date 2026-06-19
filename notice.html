@@ -772,8 +772,23 @@ body {
         <input class="form-input" id="voteTitle" maxlength="100" placeholder="请输入投票标题">
       </div>
       <div class="form-group">
-        <label for="voteOptions">投票选项 <span style="font-weight:400;color:var(--text-sub);">（每行一个，至少2项）</span></label>
-        <textarea class="form-input form-textarea" id="voteOptions" rows="4" placeholder="选项1&#10;选项2&#10;选项3"></textarea>
+        <label>投票选项 <span style="font-weight:400;color:var(--text-sub);">（至少2项）</span></label>
+        <div id="noticeVoteOptions">
+          <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+            <input type="text" class="notice-vote-opt-input" placeholder="选项 1" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;">🖼️</button>
+            <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+            <button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>
+          </div>
+          <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+            <input type="text" class="notice-vote-opt-input" placeholder="选项 2" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+            <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;">🖼️</button>
+            <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+            <button type="button" onclick="removeNoticeVoteOpt(this)" style="padding:4px 10px;border:1px solid #ff6b6b;border-radius:4px;background:var(--bg);color:#ff6b6b;cursor:pointer;">−</button>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -1604,10 +1619,17 @@ body {
     document.getElementById('voteOverlay').style.display = 'flex';
     document.getElementById('voteError').textContent = '';
     document.getElementById('voteTitle').value = '';
-    document.getElementById('voteOptions').value = '';
     document.getElementById('voteMultiple').checked = false;
     document.getElementById('voteAllowCustom').checked = false;
     document.getElementById('voteEndTime').value = '';
+    // 重置选项输入框
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    rows.forEach(function(r, i) {
+      r.querySelector('.notice-vote-opt-input').value = '';
+      var prev = r.querySelector('.notice-vote-img-preview');
+      if (prev) { prev.style.display = 'none'; prev.querySelector('img').src = ''; }
+    });
+    document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-input')[0].focus();
   };
 
   window.closeVoteModal = function() {
@@ -1617,18 +1639,29 @@ body {
 
   window.doCreateVote = async function() {
     var title = document.getElementById('voteTitle').value.trim();
-    var optionsText = document.getElementById('voteOptions').value.trim();
     var multiple = document.getElementById('voteMultiple').checked;
     var allowCustom = document.getElementById('voteAllowCustom').checked;
     var endTime = document.getElementById('voteEndTime').value || null;
     var errEl = document.getElementById('voteError');
 
-    if (!title) { errEl.textContent = '\u8BF7\u8F93\u5165\u6295\u7968\u6807\u9898'; return; }
-    if (title.length > 100) { errEl.textContent = '\u6807\u9898\u6700\u591A100\u5B57'; return; }
+    if (!title) { errEl.textContent = '请输⼊投票标题'; return; }
+    if (title.length > 100) { errEl.textContent = '标题最多100字'; return; }
 
-    var options = optionsText.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
-    if (options.length < 2) { errEl.textContent = '\u81F3\u5C11\u9700\u89812\u4E2A\u9009\u9879'; return; }
-    if (options.length > 20) { errEl.textContent = '\u6700\u591A20\u4E2A\u9009\u9879'; return; }
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    var options = [];
+    var optionImages = [];
+    rows.forEach(function(row) {
+      var input = row.querySelector('.notice-vote-opt-input');
+      var text = input ? input.value.trim() : '';
+      if (text) {
+        options.push(text);
+        var preview = row.querySelector('.notice-vote-img-preview');
+        var img = preview ? preview.querySelector('img') : null;
+        optionImages.push(img && img.src && img.src.startsWith('data:') ? img.src : null);
+      }
+    });
+    if (options.length < 2) { errEl.textContent = '至少需要2个选项'; return; }
+    if (options.length > 20) { errEl.textContent = '最多20个选项'; return; }
 
     errEl.textContent = '';
     var btn = document.getElementById('voteSubmitBtn');
@@ -1640,7 +1673,7 @@ body {
         headers: { 'Content-Type': 'application/json', 'x-sc-token': localStorage.getItem(SC_TOKEN_KEY) || '' },
         body: JSON.stringify({
           title: title,
-          options: options,
+          options: options.map(function(t, i) { return { text: t, image: optionImages[i] }; }),
           multiple: multiple,
           allowCustom: allowCustom,
           endTime: endTime ? new Date(endTime).toISOString() : null
@@ -1658,6 +1691,44 @@ body {
       errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5';
       btn.disabled = false; btn.textContent = '\u2705 \u53D1\u5E03\u6295\u7968';
     }
+  };
+
+  // 投票选项辅助函数
+  window.addNoticeVoteOpt = function(btn) {
+    var row = btn.closest('.notice-vote-opt-row');
+    var newRow = row.cloneNode(true);
+    newRow.querySelector('.notice-vote-opt-input').value = '';
+    var prev = newRow.querySelector('.notice-vote-img-preview');
+    if (prev) { prev.style.display = 'none'; prev.querySelector('img').src = ''; }
+    var addBtn = newRow.querySelector('.notice-vote-add');
+    if (addBtn) addBtn.outerHTML = '<button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>';
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    updateNoticeVotePlh();
+  };
+  window.removeNoticeVoteOpt = function(btn) {
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    if (rows.length <= 2) { showToast('至少需要2个选项', 'error'); return; }
+    btn.closest('.notice-vote-opt-row').remove();
+    updateNoticeVotePlh();
+  };
+  function updateNoticeVotePlh() {
+    document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row').forEach(function(r,i){
+      var inp = r.querySelector('.notice-vote-opt-input');
+      if (inp && !inp.value) inp.placeholder = '选项 ' + (i+1);
+    });
+  }
+  window.handleNoticeVoteImg = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('请选择图片文件', 'error'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { showToast('图片不能超过10MB', 'error'); input.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var row = input.closest('.notice-vote-opt-row');
+      var prev = row.querySelector('.notice-vote-img-preview');
+      if (prev) { prev.style.display = 'block'; prev.querySelector('img').src = e.target.result; }
+    };
+    reader.readAsDataURL(file);
   };
 
   // ===== 讨论话题 =====
@@ -1899,13 +1970,16 @@ body {
       html += '<span class="vote-status ' + (isEnded ? 'vote-status-ended' : 'vote-status-active') + '">';
       html += isEnded ? '已结束' : '进行中';
       html += '</span>';
+      if (!isEnded) {
+        html += '<button class="vote-card-btn" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:11px;padding:3px 8px;" onclick="endVote(\'' + vote.id + '\')">⏹ 截止</button>';
+      }
       html += '</div>';
 
       html += '<div class="vote-card-options">';
       vote.options.forEach(function(opt) {
         var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
         html += '<div class="vote-option" style="cursor:default;">';
-        html += '<span class="vote-option-text">' + escHtml(opt.text) + '</span>';
+        html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:20px;height:20px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escHtml(opt.text) + '</span>';
         html += '<span class="vote-option-percent">' + percent + '% (' + (opt.votes || 0) + '票)</span>';
         html += '</div>';
         html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
@@ -1915,6 +1989,26 @@ body {
     });
     list.innerHTML = html;
   }
+
+  window.endVote = async function(voteId) {
+    if (!confirm('确认截止此投票？截止后用户无法继续投票。')) return;
+    var token = localStorage.getItem(SC_TOKEN_KEY);
+    try {
+      var res = await fetch('/api/votes/' + voteId + '/end', {
+        method: 'POST',
+        headers: { 'x-sc-token': token || '' }
+      });
+      var json = await res.json();
+      if (json.ok) {
+        showToast('✅ 投票已截止', 'success');
+        loadVoteList();
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch(e) {
+      showToast('❌ 网络错误', 'error');
+    }
+  };
 
   // ===== 工具函数 =====
 

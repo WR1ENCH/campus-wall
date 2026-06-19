@@ -1049,8 +1049,23 @@
           <input type="text" id="adminVoteTitle" placeholder="请输入投票标题" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;background:var(--bg);color:var(--text);">
         </div>
         <div style="margin-bottom:10px;">
-          <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--text);">投票选项（每行一个，至少 2 项）</label>
-          <textarea id="adminVoteOptions" placeholder="选项 1&#10;选项 2&#10;选项 3" rows="4" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;box-sizing:border-box;font-family:inherit;background:var(--bg);color:var(--text);"></textarea>
+          <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--text);">投票选项（至少 2 项）</label>
+          <div id="adminVoteOptionsContainer">
+            <div class="vote-option-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+              <input type="text" class="admin-vote-opt-input" placeholder="选项 1" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);">
+              <input type="file" accept="image/*" style="display:none;" onchange="handleVoteOptImage(this)">
+              <button onclick="this.previousElementSibling.click()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;font-size:13px;" title="上传图片">🖼️</button>
+              <span class="vote-opt-img-preview" style="display:none;width:32px;height:32px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+              <button class="vote-opt-add" onclick="addVoteOptionRow(this)" style="padding:6px 12px;border:1px dashed var(--accent);border-radius:6px;background:var(--bg);color:var(--accent);cursor:pointer;font-size:13px;">+</button>
+            </div>
+            <div class="vote-option-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+              <input type="text" class="admin-vote-opt-input" placeholder="选项 2" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);">
+              <input type="file" accept="image/*" style="display:none;" onchange="handleVoteOptImage(this)">
+              <button onclick="this.previousElementSibling.click()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;font-size:13px;" title="上传图片">🖼️</button>
+              <span class="vote-opt-img-preview" style="display:none;width:32px;height:32px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
+              <button onclick="removeVoteOptionRow(this)" style="padding:6px 12px;border:1px solid #ff6b6b;border-radius:6px;background:var(--bg);color:#ff6b6b;cursor:pointer;font-size:13px;">−</button>
+            </div>
+          </div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
@@ -4717,7 +4732,10 @@
       html += '<span class="' + (ended ? 'badge-admin' : '') + '" style="' + (ended ? 'background:#fecaca;color:#991b1b;' : 'background:#bbf7d0;color:#166534;') + 'padding:3px 8px;border-radius:4px;font-size:12px;font-weight:500;">';
       html += vote.deleted ? '已删除' : (ended ? '已结束' : '进行中');
       html += '</span>';
-      if (!vote.deleted) {
+      if (!vote.deleted && !ended) {
+      html += '<button class="btn-del" style="font-size:12px;padding:4px 10px;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;" onclick="adminEndVote(\'' + vote.id + '\', \'' + escHtml(vote.title).replace(/'/g, "\\'") + '\')">⏹ 截止</button>';
+    }
+    if (!vote.deleted) {
         html += '<button class="btn-del" style="font-size:12px;padding:4px 10px;" onclick="adminDeleteVote(\'' + vote.id + '\', \'' + escHtml(vote.title).replace(/'/g, "\\'") + '\')">🗑️ 删除</button>';
       }
       html += '</div>';
@@ -4729,7 +4747,7 @@
         const percent = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
         html += '<div>';
         html += '<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text);margin-bottom:2px;">';
-        html += '<span>' + escHtml(opt.text) + '</span>';
+        html += '<span>' + (opt.image ? '<img src="' + opt.image + '" style="width:20px;height:20px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:3px;">' : '') + escHtml(opt.text) + '</span>';
         html += '<span style="color:var(--text-sub);">' + (opt.votes || 0) + ' 票 · ' + percent + '%</span>';
         html += '</div>';
         html += '<div style="background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#3b82f6,#0c4a6e);width:' + percent + '%;"></div></div>';
@@ -4754,7 +4772,6 @@
 
   function adminCreateVote() {
     const title = (document.getElementById('adminVoteTitle').value || '').trim();
-    const optionsText = (document.getElementById('adminVoteOptions').value || '').trim();
     const multiple = document.getElementById('adminVoteMultiple').checked;
     const allowCustom = document.getElementById('adminVoteAllowCustom').checked;
     const endTime = document.getElementById('adminVoteEndTime').value || null;
@@ -4762,7 +4779,19 @@
     if (!title) { alert('请输入投票标题'); return; }
     if (title.length > 100) { alert('标题最多 100 个字'); return; }
 
-    const options = optionsText.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    const rows = document.querySelectorAll('#adminVoteOptionsContainer .vote-option-row');
+    const options = [];
+    const optionImages = [];
+    rows.forEach(function(row) {
+      const input = row.querySelector('.admin-vote-opt-input');
+      const text = input ? input.value.trim() : '';
+      if (text) {
+        options.push(text);
+        const preview = row.querySelector('.vote-opt-img-preview');
+        const img = preview ? preview.querySelector('img') : null;
+        optionImages.push(img && img.src && img.src.startsWith('data:') ? img.src : null);
+      }
+    });
     if (options.length < 2) { alert('至少需要 2 个选项'); return; }
     if (options.length > 20) { alert('最多 20 个选项'); return; }
     for (const opt of options) {
@@ -4771,7 +4800,7 @@
 
     const payload = {
       title: title,
-      options: options,
+      options: options.map(function(t, i) { return { text: t, image: optionImages[i] }; }),
       multiple: multiple,
       allowCustom: allowCustom,
       endTime: endTime ? new Date(endTime).toISOString() : null
@@ -4787,7 +4816,6 @@
         if (data.ok) {
           alert('投票发布成功！');
           document.getElementById('adminVoteTitle').value = '';
-          document.getElementById('adminVoteOptions').value = '';
           document.getElementById('adminVoteMultiple').checked = false;
           document.getElementById('adminVoteAllowCustom').checked = false;
           document.getElementById('adminVoteEndTime').value = '';
@@ -4799,6 +4827,73 @@
       })
       .catch(function() {
         alert('网络错误，请稍后重试');
+      });
+  }
+
+  function addVoteOptionRow(btn) {
+    const row = btn.closest('.vote-option-row');
+    const newRow = row.cloneNode(true);
+    newRow.querySelector('.admin-vote-opt-input').value = '';
+    const preview = newRow.querySelector('.vote-opt-img-preview');
+    if (preview) { preview.style.display = 'none'; preview.querySelector('img').src = ''; }
+    const addBtn = newRow.querySelector('.vote-opt-add');
+    const delBtn = newRow.querySelector('button:last-child');
+    if (addBtn) { addBtn.outerHTML = '<button onclick="addVoteOptionRow(this)" style="padding:6px 12px;border:1px dashed var(--accent);border-radius:6px;background:var(--bg);color:var(--accent);cursor:pointer;font-size:13px;">+</button>'; }
+    if (!delBtn || delBtn.textContent !== '−') {
+      newRow.innerHTML += '<button onclick="removeVoteOptionRow(this)" style="padding:6px 12px;border:1px solid #ff6b6b;border-radius:6px;background:var(--bg);color:#ff6b6b;cursor:pointer;font-size:13px;">−</button>';
+    }
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    updateVoteOptionPlaceholders();
+  }
+
+  function removeVoteOptionRow(btn) {
+    const rows = document.querySelectorAll('#adminVoteOptionsContainer .vote-option-row');
+    if (rows.length <= 2) { alert('至少需要 2 个选项'); return; }
+    btn.closest('.vote-option-row').remove();
+    updateVoteOptionPlaceholders();
+  }
+
+  function updateVoteOptionPlaceholders() {
+    const rows = document.querySelectorAll('#adminVoteOptionsContainer .vote-option-row');
+    rows.forEach(function(row, i) {
+      const input = row.querySelector('.admin-vote-opt-input');
+      if (input && !input.value) input.placeholder = '选项 ' + (i + 1);
+    });
+  }
+
+  function handleVoteOptImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { alert('图片不能超过 10MB'); input.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const row = input.closest('.vote-option-row');
+      const preview = row.querySelector('.vote-opt-img-preview');
+      if (preview) {
+        preview.style.display = 'block';
+        preview.querySelector('img').src = e.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+  function adminEndVote(id, title) {
+    if (!confirm('确认截止投票「' + title + '」？截止后用户无法继续投票，但仍可查看结果。')) return;
+    fetch('/api/votes/' + encodeURIComponent(id) + '/end', {
+      method: 'POST',
+      headers: authHeaders()
+    })
+      .then(function(resp) { return resp.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          showToast('✅ ' + data.msg, 'success');
+          loadAdminVotes();
+        } else {
+          showToast('❌ ' + (data.msg || '操作失败'), 'error');
+        }
+      })
+      .catch(function() {
+        showToast('❌ 网络错误', 'error');
       });
   }
 
