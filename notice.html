@@ -763,7 +763,7 @@ body {
 <div class="modal-overlay" id="voteOverlay" onclick="if(event.target===this)closeVoteModal()">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:500px;">
     <div class="modal-header">
-      <h3>&#x1F5F3; 发起投票</h3>
+      <h3 id="voteModalTitle">&#x1F5F3; 发起投票</h3>
       <button class="modal-close" onclick="closeVoteModal()">&times;</button>
     </div>
     <div class="modal-body">
@@ -810,7 +810,7 @@ body {
     </div>
     <div class="form-actions" style="padding:16px 20px;border-top:1px solid var(--border);">
       <button class="btn-cancel" onclick="closeVoteModal()">取消</button>
-      <button class="btn-submit" id="voteSubmitBtn" onclick="doCreateVote()">&#x2705; 发布投票</button>
+      <button class="btn-submit" id="voteSubmitBtn" onclick="submitNoticeVote()">&#x2705; 发布投票</button>
     </div>
   </div>
 </div>
@@ -1616,6 +1616,9 @@ body {
   };
 
   window.openVoteModal = function() {
+    window._editingNoticeVoteId = null;
+    document.getElementById('voteModalTitle').innerHTML = '&#x1F5F3; 发起投票';
+    document.getElementById('voteSubmitBtn').innerHTML = '&#x2705; 发布投票';
     document.getElementById('voteOverlay').style.display = 'flex';
     document.getElementById('voteError').textContent = '';
     document.getElementById('voteTitle').value = '';
@@ -1635,6 +1638,143 @@ body {
   window.closeVoteModal = function() {
     document.getElementById('voteOverlay').style.display = 'none';
     document.getElementById('voteError').textContent = '';
+    window._editingNoticeVoteId = null;
+  };
+
+  window.submitNoticeVote = function() {
+    if (window._editingNoticeVoteId) {
+      window.doUpdateVote();
+    } else {
+      window.doCreateVote();
+    }
+  };
+
+  window.openEditNoticeVote = function(voteId) {
+    var vote = null;
+    if (window._votes && window._votes.length > 0) {
+      for (var i = 0; i < window._votes.length; i++) {
+        if (window._votes[i].id === voteId) { vote = window._votes[i]; break; }
+      }
+    }
+    if (!vote) { showToast('未找到投票数据', 'error'); return; }
+
+    window._editingNoticeVoteId = voteId;
+    document.getElementById('voteModalTitle').innerHTML = '&#x270F;&#xFE0F; 编辑投票';
+    document.getElementById('voteSubmitBtn').innerHTML = '&#x1F4BE; 保存修改';
+    document.getElementById('voteOverlay').style.display = 'flex';
+    document.getElementById('voteError').textContent = '';
+
+    // 填充表单
+    document.getElementById('voteTitle').value = vote.title || '';
+    document.getElementById('voteMultiple').checked = !!vote.multiple;
+    document.getElementById('voteAllowCustom').checked = !!vote.allowCustom;
+
+    if (vote.endTime) {
+      try {
+        var d = new Date(vote.endTime);
+        var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+        document.getElementById('voteEndTime').value =
+          d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' +
+          pad(d.getHours()) + ':' + pad(d.getMinutes());
+      } catch(e) {
+        document.getElementById('voteEndTime').value = '';
+      }
+    } else {
+      document.getElementById('voteEndTime').value = '';
+    }
+
+    // 重建选项
+    var container = document.getElementById('noticeVoteOptions');
+    var oldRows = container.querySelectorAll('.notice-vote-opt-row');
+    oldRows.forEach(function(r) { r.remove(); });
+
+    var voteOptions = vote.options || [];
+    var renderCount = Math.max(2, voteOptions.length);
+    for (var i = 0; i < renderCount; i++) {
+      var opt = voteOptions[i];
+      var row = document.createElement('div');
+      row.className = 'notice-vote-opt-row';
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+      var hasImg = opt && opt.image;
+      var imgHtml = hasImg
+        ? ('<span class="notice-vote-img-preview" style="display:block;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img src="' + opt.image + '" style="width:100%;height:100%;object-fit:cover;"></span>')
+        : '<span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>';
+      var btnHtml = i === 0
+        ? '<button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>'
+        : '<button type="button" onclick="removeNoticeVoteOpt(this)" style="padding:4px 10px;border:1px solid #ff6b6b;border-radius:4px;background:var(--bg);color:#ff6b6b;cursor:pointer;">−</button>';
+      row.innerHTML =
+        '<input type="text" class="notice-vote-opt-input" value="' +
+        ((opt && opt.text) || '').replace(/"/g, '&quot;') +
+        '" placeholder="选项 ' + (i + 1) + '" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">' +
+        '<input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">' +
+        '<button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;">🖼️</button>' +
+        imgHtml +
+        btnHtml;
+      container.appendChild(row);
+    }
+  };
+
+  window.doUpdateVote = async function() {
+    var voteId = window._editingNoticeVoteId;
+    if (!voteId) return;
+
+    var title = document.getElementById('voteTitle').value.trim();
+    var multiple = document.getElementById('voteMultiple').checked;
+    var allowCustom = document.getElementById('voteAllowCustom').checked;
+    var endTime = document.getElementById('voteEndTime').value || null;
+    var errEl = document.getElementById('voteError');
+
+    if (!title) { errEl.textContent = '请输⼊投票标题'; return; }
+    if (title.length > 100) { errEl.textContent = '标题最多100字'; return; }
+
+    var rows = document.querySelectorAll('#noticeVoteOptions .notice-vote-opt-row');
+    var options = [];
+    var optionImages = [];
+    rows.forEach(function(row) {
+      var input = row.querySelector('.notice-vote-opt-input');
+      var text = input ? input.value.trim() : '';
+      if (text) {
+        options.push(text);
+        var preview = row.querySelector('.notice-vote-img-preview');
+        var img = preview ? preview.querySelector('img') : null;
+        optionImages.push(img && img.src ? img.src : null);
+      }
+    });
+    if (options.length < 2) { errEl.textContent = '至少需要2个选项'; return; }
+    if (options.length > 20) { errEl.textContent = '最多20个选项'; return; }
+
+    errEl.textContent = '';
+    var btn = document.getElementById('voteSubmitBtn');
+    var originalText = btn.textContent;
+    btn.disabled = true; btn.textContent = '\u66F4\u65B0\u4E2D\u2026';
+
+    try {
+      var token = localStorage.getItem(SC_TOKEN_KEY);
+      var res = await fetch('/api/notice/votes/' + encodeURIComponent(voteId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
+        body: JSON.stringify({
+          title: title,
+          options: options.map(function(t, i) { return { text: t, image: optionImages[i] }; }),
+          multiple: multiple,
+          allowCustom: allowCustom,
+          endTime: endTime ? new Date(endTime).toISOString() : null
+        })
+      });
+      var json = await res.json();
+      if (json.ok) {
+        window._editingNoticeVoteId = null;
+        closeVoteModal();
+        loadVoteList();
+        showToast('\u6295\u7968\u4FEE\u6539\u6210\u529F', 'success');
+      } else {
+        errEl.textContent = json.msg || json.warningMsg || '\u4FEE\u6539\u5931\u8D25';
+        btn.disabled = false; btn.textContent = originalText;
+      }
+    } catch (e) {
+      errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF';
+      btn.disabled = false; btn.textContent = originalText;
+    }
   };
 
   window.doCreateVote = async function() {
@@ -1682,6 +1822,7 @@ body {
       var json = await res.json();
       if (json.ok) {
         closeVoteModal();
+        loadVoteList();
         showToast('\u6295\u7968\u53D1\u5E03\u6210\u529F\uFF01', 'success');
       } else {
         errEl.textContent = json.msg || json.warningMsg || '\u53D1\u5E03\u5931\u8D25';
@@ -1973,6 +2114,7 @@ body {
       if (!isEnded) {
         html += '<button class="vote-card-btn" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:11px;padding:3px 8px;" onclick="endVote(\'' + vote.id + '\')">⏹ 截止</button>';
       }
+      html += '<button class="vote-card-btn" style="background:#dbeafe;color:#1e40af;border:1px solid #60a5fa;font-size:11px;padding:3px 8px;" onclick="openEditNoticeVote(\'' + vote.id + '\')">✏️ 编辑</button>';
       html += '</div>';
 
       html += '<div class="vote-card-options">';
