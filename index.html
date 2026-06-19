@@ -5124,7 +5124,7 @@
  const container = document.getElementById('toastContainer');
  const toast = document.createElement('div');
  toast.className = 'toast' + (type ? ' ' + type : '');
- toast.textContent = msg;
+  toast.innerHTML = msg;
  container.appendChild(toast);
  setTimeout(() => toast.remove(), 2500);
  }
