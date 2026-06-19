@@ -4570,7 +4570,8 @@ app.get('/api/votes', (req, res) => {
       const userVoted = session
         ? records.filter(r => r.voteId === v.id && r.userId === session.id).map(r => r.optionId)
         : [];
-      return { ...v, totalVotes, userVoted, allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true' };
+      const isCustom = v.allowCustom == true || v.allowCustom == 1 || v.allowCustom == '1' || String(v.allowCustom) === 'true';
+      return { ...v, totalVotes, userVoted, allowCustom: !!isCustom };
     });
 
   res.json({ ok: true, data: list });
