@@ -1172,6 +1172,12 @@
  letter-spacing: 0.3px;
  }
 
+	/* ===== 桌面端隐藏侧边导航 ===== */
+	@media (min-width: 769px) {
+		.side-nav, .side-nav-overlay { display: none !important; }
+	}
+
+
  /* ===== 移动端拍卖弹窗优化 ===== */
  .pickup-modal { width: 96vw; max-height: 90vh; border-radius: 14px; }
  .pickup-modal-header {
