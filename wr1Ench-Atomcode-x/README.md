@@ -14,6 +14,7 @@
 
 ```
 wr1Ench-Atomcode-x/
-├── README.md     # 本文件
-└── ...           # 后续工作内容
+├── README.md            # 本文件
+└── patches/             # 补丁记录
+    └── FIX-001-post-not-found.md  # 修复：post.html 显示"帖子不存在"
 ```
