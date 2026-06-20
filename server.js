@@ -2300,8 +2300,10 @@ app.get('/api/posts/:id', (req, res) => {
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
   // 过滤已删除的评论
-  if (post.comments) {
+  if (Array.isArray(post.comments)) {
     post.comments = post.comments.filter(c => !c.deleted);
+  } else {
+    post.comments = [];
   }
   if (post.userId) {
     const users = readUsers();
@@ -2586,7 +2588,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!post) {
     return res.json({ ok: false, msg: '帖子不存在' });
   }
-  if (!post.comments) post.comments = [];
+  if (!Array.isArray(post.comments)) post.comments = [];
   const newComment = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     content: content.trim(),
@@ -2677,7 +2679,7 @@ app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
     return res.json({ ok: false, msg: '无权删除此评论' });
   }
   saveDeletedItem('comment', comment, userId === comment.userId ? 'user' : 'post_author');
-  post.comments = post.comments.filter(c => c.id !== req.params.commentId);
+  post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => c.id !== req.params.commentId);
   post.commentsCount = post.comments.length;
   writePosts(posts);
   res.json({ ok: true });
@@ -3494,7 +3496,7 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     const posts = readPosts();
     const now = new Date().toISOString();
     posts.forEach(post => {
-      if (post.comments) {
+      if (Array.isArray(post.comments)) {
         post.comments.forEach(c => {
           if (c.id === report.targetId && !c.deleted) {
             c.deleted = true;
