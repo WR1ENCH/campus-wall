@@ -55,11 +55,20 @@ function migrate() {
     "userId" TEXT,
     "createdAt" TEXT
   )`);
+  // 创建 trust_score_logs 表（信用分记录）
+  db.exec(`CREATE TABLE IF NOT EXISTS "trust_score_logs" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "amount" INTEGER,
+    "score" INTEGER,
+    "reason" TEXT,
+    "createdAt" TEXT
+  )`);
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
-    { name: 'users', columns: ['uid', 'searchable', 'searchByNickname', 'searchByUsername', 'searchByZhixue', 'searchByUid'] },
+    { name: 'users', columns: ['uid', 'searchable', 'searchByNickname', 'searchByUsername', 'searchByZhixue', 'searchByUid', 'trustScore'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -206,6 +215,10 @@ function writeBullying(data) { dropAndInsert('bullying', data); }
 // Credit logs
 function readCreditLogs() { return all('credit_logs'); }
 function writeCreditLogs(data) { dropAndInsert('credit_logs', data); }
+
+// Trust score logs
+function readTrustScoreLogs() { return all('trust_score_logs'); }
+function writeTrustScoreLogs(data) { dropAndInsert('trust_score_logs', data); }
 
 // Credit cards
 function readCreditCards() { return all('credit_cards'); }
@@ -376,4 +389,5 @@ module.exports = {
   readVotes, writeVotes,
   readVoteRecords, writeVoteRecords,
   readVoteIpRecords, writeVoteIpRecords,
+  readTrustScoreLogs, writeTrustScoreLogs,
 };

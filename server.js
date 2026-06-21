@@ -876,7 +876,8 @@ app.post('/api/user/register', (req, res) => {
     searchByNickname: true,
     searchByUsername: true,
     searchByZhixue: true,
-    searchByUid: true
+    searchByUid: true,
+    trustScore: 100
   };
   users.push(newUser);
   writeUsers(users);
@@ -2203,7 +2204,7 @@ app.get('/api/user/security', (req, res) => {
       searchByUsername: user.searchByUsername !== false,
       searchByZhixue: user.searchByZhixue !== false,
       searchByUid: user.searchByUid !== false,
-      credit: user.credit || 0
+      trustScore: user.trustScore !== undefined ? user.trustScore : 100
     }
   });
 });
@@ -2239,6 +2240,48 @@ app.post('/api/user/security', (req, res) => {
   }
   
   res.json({ ok: true });
+});
+
+// 获取信用分历史
+app.get('/api/user/trust-score-logs', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const logs = readTrustScoreLogs().filter(l => l.userId === session.id).reverse().slice(0, 50);
+  res.json({ ok: true, data: logs });
+});
+
+// 管理员调整用户信用分
+app.post('/api/admin/trust-score/adjust', requireAdmin, requireSuper, (req, res) => {
+  const { userId, amount, reason } = req.body;
+  const num = parseInt(amount);
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num === 0) return res.json({ ok: false, msg: '调整数量不能为0' });
+  if (num < -100 || num > 100) return res.json({ ok: false, msg: '单次调整范围 -100~100' });
+
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+
+  const currentScore = users[idx].trustScore !== undefined ? users[idx].trustScore : 100;
+  const newScore = Math.max(0, Math.min(200, currentScore + num));
+  users[idx].trustScore = newScore;
+  writeUsers(users);
+
+  const logs = readTrustScoreLogs();
+  logs.push({
+    id: 'tsl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    userId,
+    amount: num,
+    score: newScore,
+    reason: reason || '管理员调整',
+    createdAt: new Date().toISOString()
+  });
+  writeTrustScoreLogs(logs);
+
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 调整用户 ' + userId + ' 信用分 ' + (num > 0 ? '+' : '') + num + ' → ' + newScore);
+  res.json({ ok: true, data: { trustScore: newScore } });
 });
 
 // 赠送 Credit 给指定用户
@@ -3079,6 +3122,11 @@ function writeBullying (data) { db.writeBullying(data); }
 function readCreditLogs () { return db.readCreditLogs(); }
 
 function writeCreditLogs (logs) { db.writeCreditLogs(logs); }
+
+// ===== Trust Score 数据读写 =====
+function readTrustScoreLogs () { return db.readTrustScoreLogs(); }
+
+function writeTrustScoreLogs (logs) { db.writeTrustScoreLogs(logs); }
 
 // ===== 通知数据读写 =====
 function readNotices () { return db.readNotices(); }
@@ -6655,6 +6703,11 @@ function assignUIDsToOldUsers() {
     }
     if (users[i].searchByUid === undefined) {
       users[i].searchByUid = true;
+      updated = true;
+    }
+    // 初始化信用分（默认100分）
+    if (users[i].trustScore === undefined) {
+      users[i].trustScore = 100;
       updated = true;
     }
   }

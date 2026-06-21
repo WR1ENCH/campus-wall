@@ -468,9 +468,10 @@
           
           <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:12px;">信用分获取方式</div>
           <div style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.6;">
-            <div>• 每日签到：+100信用分</div>
+            <div>• 初始信用分：100分</div>
             <div>• 发布优质内容：管理员赠送</div>
             <div>• 违反社区规范：扣除信用分</div>
+            <div>• 信用分范围：0-200分</div>
           </div>
           
           <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:12px;">信用分历史</div>
@@ -538,7 +539,7 @@
         document.getElementById('switchSearchByUsername').checked = currentSettings.searchByUsername;
         document.getElementById('switchSearchByZhixue').checked = currentSettings.searchByZhixue;
         document.getElementById('switchSearchByUid').checked = currentSettings.searchByUid;
-        document.getElementById('creditValue').textContent = currentUser.credit || 0;
+        document.getElementById('creditValue').textContent = currentUser.trustScore !== undefined ? currentUser.trustScore : 100;
         
         // 显示内容
         document.getElementById('loadingState').style.display = 'none';
@@ -554,7 +555,7 @@
 
     // ===== 加载信用分历史 =====
     function loadCreditHistory() {
-      fetch('/api/user/credit-logs', {
+      fetch('/api/user/trust-score-logs', {
         headers: { 'X-User-Token': userToken }
       })
       .then(function(res) { return res.json(); })
