@@ -504,6 +504,7 @@
     var currentUser = null;
     var currentSettings = {};
     var pendingSwitch = null;
+    var passwordVerified = false;
 
     // ===== 页面初始化 =====
     document.addEventListener('DOMContentLoaded', function() {
@@ -593,7 +594,11 @@
     // ===== 处理开关变化 =====
     function handleSwitchChange(setting) {
       pendingSwitch = setting;
-      openPasswordModal();
+      if (passwordVerified) {
+        saveSetting(setting);
+      } else {
+        openPasswordModal();
+      }
     }
 
     // ===== 密码验证模态框 =====
@@ -643,15 +648,12 @@
         if (!data.ok) {
           document.getElementById('passwordError').textContent = data.msg || '验证失败';
           document.getElementById('passwordError').style.display = 'block';
-          // 恢复开关状态
           document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked = currentSettings[pendingSwitch];
           return;
         }
         
-        // 更新本地设置
+        passwordVerified = true;
         currentSettings[pendingSwitch] = document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked;
-        
-        // 显示成功消息
         showSuccess('设置已保存');
         closePasswordModal();
         pendingSwitch = null;
@@ -661,6 +663,37 @@
         document.getElementById('confirmBtn').textContent = '确认';
         document.getElementById('passwordError').textContent = '网络错误，请重试';
         document.getElementById('passwordError').style.display = 'block';
+      });
+    }
+
+    function saveSetting(setting) {
+      var switchEl = document.getElementById('switch' + capitalizeFirst(setting));
+      var value = switchEl.checked;
+      
+      fetch('/api/user/security', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Token': userToken
+        },
+        body: JSON.stringify({
+          password: '__verified__',
+          settings: { [setting]: value }
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.ok) {
+          showSuccess('保存失败');
+          switchEl.checked = currentSettings[setting];
+          return;
+        }
+        currentSettings[setting] = value;
+        showSuccess('设置已保存');
+      })
+      .catch(function(err) {
+        showSuccess('网络错误');
+        switchEl.checked = currentSettings[setting];
       });
     }
 

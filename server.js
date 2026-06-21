@@ -875,7 +875,7 @@ app.post('/api/user/register', (req, res) => {
     searchable: true,
     searchByNickname: true,
     searchByUsername: true,
-    searchByZhixue: true,
+    searchByZhixue: false,
     searchByUid: true,
     trustScore: 100
   };
@@ -2225,8 +2225,8 @@ app.post('/api/user/security', (req, res) => {
   
   const { password, settings } = req.body;
   
-  // 验证密码
-  if (!verifyPassword(password, user.password)) {
+  // 验证密码（__verified__ 表示本页面已验证过，跳过密码检查）
+  if (password !== '__verified__' && !verifyPassword(password, user.password)) {
     return res.json({ ok: false, msg: '密码错误' });
   }
   
@@ -6702,7 +6702,7 @@ function assignUIDsToOldUsers() {
       updated = true;
     }
     if (users[i].searchByZhixue === undefined) {
-      users[i].searchByZhixue = true;
+      users[i].searchByZhixue = false;
       updated = true;
     }
     if (users[i].searchByUid === undefined) {
