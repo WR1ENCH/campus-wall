@@ -86,10 +86,12 @@ function tryParse(v) {
   if (v === 'false') return false;
   if (v === '1') return true;
   if (v === '0') return false;
+  // 解析数字字符串
   if (/^-?\d+(\.\d+)?$/.test(v)) {
     const n = Number(v);
     if (isFinite(n)) return Number.isInteger(n) ? n : n;
   }
+  // 尝试解析 JSON 数组或对象
   if ((v.startsWith('[') && v.endsWith(']')) || (v.startsWith('{') && v.endsWith('}'))) {
     try { return JSON.parse(v); } catch { return v; }
   }

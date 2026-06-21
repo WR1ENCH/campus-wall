@@ -130,7 +130,7 @@ function encryptCert(plainText) {
  * @returns {string|null}
  */
 function decryptCert(cipherText) {
-  if (!cipherText || !cipherText.includes(':')) return null;
+  if (typeof cipherText !== 'string' || !cipherText.includes(':')) return null;
   const [ivHex, encHex] = cipherText.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   const enc = Buffer.from(encHex, 'hex');
@@ -2611,8 +2611,8 @@ app.post('/api/posts/:id/comments', (req, res) => {
       targetId: newComment.id,
       postId: post.id,
       reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
-      reportedBy: realUserId,
-      reporterName: realAuthor,
+      reportedBy: userId,
+      reporterName: author,
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
@@ -2715,7 +2715,7 @@ app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
     const comment = (post.comments || []).find(c => c.id === req.params.commentId);
     if (comment && !comment.deleted) {
       saveDeletedItem('comment', comment, 'admin');
-      post.comments = post.comments.filter(c => c.id !== req.params.commentId);
+      post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => c.id !== req.params.commentId);
       post.commentsCount = post.comments.length;
       found = true;
     }
@@ -2742,7 +2742,7 @@ app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
         deletedCount++;
       }
     });
-    post.comments = (post.comments || []).filter(c => !ids.includes(c.id) || c.deleted);
+    post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => !ids.includes(c.id) || c.deleted);
     post.commentsCount = (post.comments || []).length;
   });
   writePosts(posts);
@@ -3596,7 +3596,7 @@ function cleanupOldDeletedData() {
   // 清理帖子内的评论
   var commentCount = 0;
   posts.forEach(function(post) {
-    var oldComments = (post.comments || []).filter(function(c) { return c.deleted; });
+    var oldComments = (Array.isArray(post.comments) ? post.comments : []).filter(function(c) { return c.deleted; });
     if (oldComments.length > 0) {
       oldComments.forEach(function(c) {
         db.addDeletedItem({
@@ -3610,7 +3610,7 @@ function cleanupOldDeletedData() {
           extra: ''
         });
       });
-      post.comments = (post.comments || []).filter(function(c) { return !c.deleted; });
+      post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(function(c) { return !c.deleted; });
       post.commentsCount = (post.comments || []).length;
       commentCount += oldComments.length;
     }
