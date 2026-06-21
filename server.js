@@ -2113,7 +2113,7 @@ app.get('/api/user/search', (req, res) => {
   const { q, type } = req.query;
   
   // 检查用户隐私设置
-  if (!currentUser.searchable) {
+  if (currentUser.searchable === false || currentUser.searchable === 'false' || currentUser.searchable === '0' || currentUser.searchable === 0) {
     return res.json({ ok: false, msg: '搜索功能未开启' });
   }
   

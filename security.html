@@ -386,74 +386,6 @@
       <div class="loading" id="loadingState">加载中...</div>
       
       <div id="securityContent" style="display:none;">
-        <!-- 搜索隐私设置 -->
-        <div class="security-card">
-          <div class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            搜索隐私设置
-          </div>
-          
-          <div class="switch-group">
-            <div class="switch-item">
-              <div>
-                <div class="switch-label">允许被搜索</div>
-                <div class="switch-desc">关闭后其他用户无法搜索到你</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switchSearchable" onchange="handleSwitchChange('searchable')">
-                <span class="slider"></span>
-              </label>
-            </div>
-            
-            <div class="switch-item">
-              <div>
-                <div class="switch-label">通过昵称搜索</div>
-                <div class="switch-desc">允许其他用户通过昵称搜索到你</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switchSearchByNickname" onchange="handleSwitchChange('searchByNickname')">
-                <span class="slider"></span>
-              </label>
-            </div>
-            
-            <div class="switch-item">
-              <div>
-                <div class="switch-label">通过账号搜索</div>
-                <div class="switch-desc">允许其他用户通过账号搜索到你</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switchSearchByUsername" onchange="handleSwitchChange('searchByUsername')">
-                <span class="slider"></span>
-              </label>
-            </div>
-            
-            <div class="switch-item">
-              <div>
-                <div class="switch-label">通过同学认证姓名搜索</div>
-                <div class="switch-desc">允许其他用户通过同学认证绑定的姓名搜索到你</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switchSearchByZhixue" onchange="handleSwitchChange('searchByZhixue')">
-                <span class="slider"></span>
-              </label>
-            </div>
-            
-            <div class="switch-item">
-              <div>
-                <div class="switch-label">通过UID搜索</div>
-                <div class="switch-desc">允许其他用户通过UID搜索到你</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="switchSearchByUid" onchange="handleSwitchChange('searchByUid')">
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
-          
-          <div id="switchError" class="error-msg" style="display:none;"></div>
-          <div id="switchSuccess" class="success-msg" style="display:none;"></div>
-        </div>
-
         <!-- 信用分显示 -->
         <div class="security-card">
           <div class="card-title">
@@ -478,6 +410,76 @@
           <div class="credit-history" id="creditHistory">
             <div class="loading" style="padding:20px;">加载中...</div>
           </div>
+        </div>
+
+        <!-- 安全设置 -->
+        <div class="security-card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            安全设置
+          </div>
+          
+          <div class="switch-group">
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">允许被搜索</div>
+                <div class="switch-desc">关闭后其他用户无法搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchable" onchange="handleSwitchChange('searchable'); toggleSearchSubSwitches();">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div id="searchSubSwitches" style="display:none;">
+              <div class="switch-item">
+                <div>
+                  <div class="switch-label">通过昵称搜索</div>
+                  <div class="switch-desc">允许其他用户通过昵称搜索到你</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switchSearchByNickname" onchange="handleSwitchChange('searchByNickname')">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              
+              <div class="switch-item">
+                <div>
+                  <div class="switch-label">通过账号搜索</div>
+                  <div class="switch-desc">允许其他用户通过账号搜索到你</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switchSearchByUsername" onchange="handleSwitchChange('searchByUsername')">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              
+              <div class="switch-item">
+                <div>
+                  <div class="switch-label">通过同学认证姓名搜索</div>
+                  <div class="switch-desc">允许其他用户通过同学认证绑定的姓名搜索到你</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switchSearchByZhixue" onchange="handleSwitchChange('searchByZhixue')">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              
+              <div class="switch-item">
+                <div>
+                  <div class="switch-label">通过UID搜索</div>
+                  <div class="switch-desc">允许其他用户通过UID搜索到你</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="switchSearchByUid" onchange="handleSwitchChange('searchByUid')">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div id="switchError" class="error-msg" style="display:none;"></div>
+          <div id="switchSuccess" class="success-msg" style="display:none;"></div>
         </div>
       </div>
     </div>
@@ -544,6 +546,9 @@
         // 显示内容
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('securityContent').style.display = 'block';
+        
+        // 根据"允许被搜索"状态显示/隐藏子开关
+        toggleSearchSubSwitches();
         
         // 加载信用分历史
         loadCreditHistory();
@@ -682,6 +687,11 @@
       setTimeout(function() {
         successDiv.style.display = 'none';
       }, 3000);
+    }
+
+    function toggleSearchSubSwitches() {
+      var searchable = document.getElementById('switchSearchable').checked;
+      document.getElementById('searchSubSwitches').style.display = searchable ? 'block' : 'none';
     }
   </script>
 </body>
