@@ -1894,11 +1894,11 @@
  </div>
  <!-- 右侧区域：用户信息 / 登录入口 -->
  <div class="top-right-area">
+ <div id="userInfoBar" style="display:none;">
+ <div class="user-info-bar">
  <button class="search-btn" onclick="openSearchModal()" title="搜索用户">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
  </button>
- <div id="userInfoBar" style="display:none;">
- <div class="user-info-bar">
  <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
  <span class="user-avatar-sm" id="topUserAvatar" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.2);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
  </a>
@@ -1912,6 +1912,9 @@
  </div>
  </div>
  <div id="loginEntrance" style="display:none;">
+ <button class="search-btn" onclick="openSearchModal()" title="搜索用户">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+ </button>
  <button class="user-logout-sm" onclick="showLoginModal()" style="padding:6px 12px;font-size:12px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> 登录</button>
  </div>
  </div><!-- /top-right-area -->
@@ -2701,7 +2704,7 @@
  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
  <span class="nav-label">接入校园墙生态</span>
  </button>
- <button class="side-nav-item" id="sideNavSecurity" onclick="toggleSideNav(); window.open('security.html','_blank');" style="display:none;">
+ <button class="side-nav-item" id="sideNavSecurity" onclick="toggleSideNav(); location.href='security.html';" style="display:none;">
  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
  <span class="nav-label">安全中心</span>
  </button>
@@ -2724,7 +2727,7 @@
  </span>
  <span class="footer-center">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
- 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">接入校园墙生态</a> · <a href="security.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;" id="footerSecurityLink">安全中心</a>
+ 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">接入校园墙生态</a> · <a href="security.html" style="color:#fff;text-decoration:underline;font-weight:600;" id="footerSecurityLink">安全中心</a>
  </span>
  </div>
 
