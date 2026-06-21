@@ -2204,7 +2204,7 @@ app.get('/api/user/security', (req, res) => {
       searchByUsername: user.searchByUsername !== false,
       searchByZhixue: user.searchByZhixue !== false,
       searchByUid: user.searchByUid !== false,
-      trustScore: user.trustScore !== undefined ? user.trustScore : 100
+      trustScore: (user.trustScore !== undefined && user.trustScore !== null) ? user.trustScore : 100
     }
   });
 });
@@ -6706,7 +6706,7 @@ function assignUIDsToOldUsers() {
       updated = true;
     }
     // 初始化信用分（默认100分）
-    if (users[i].trustScore === undefined) {
+    if (users[i].trustScore === undefined || users[i].trustScore === null) {
       users[i].trustScore = 100;
       updated = true;
     }
