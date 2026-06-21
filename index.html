@@ -7560,9 +7560,9 @@
    var resultsDiv = document.getElementById('searchResults');
    resultsDiv.innerHTML = '<div class="search-empty">搜索中...</div>';
    
-   var token = localStorage.getItem('userToken');
-   if (!token) {
-     resultsDiv.innerHTML = '<div class="search-empty">请先登录</div>';
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) {
+      resultsDiv.innerHTML = '<div class="search-empty">请先登录</div>';
      return;
    }
    
