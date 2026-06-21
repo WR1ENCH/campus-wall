@@ -2129,37 +2129,41 @@ app.get('/api/user/search', (req, res) => {
   switch (type) {
     case 'username':
       results = allUsers.filter(u => {
-        if (!u.username) return false;
-        if (isExactMatch) return u.username === q;
-        return u.username.toLowerCase().includes(q.toLowerCase());
+        var name = String(u.username || '');
+        if (!name) return false;
+        if (isExactMatch) return name === q;
+        return name.toLowerCase().includes(q.toLowerCase());
       });
       break;
     case 'nickname':
       results = allUsers.filter(u => {
-        if (!u.nickname) return false;
-        if (isExactMatch) return u.nickname === q;
-        return u.nickname.toLowerCase().includes(q.toLowerCase());
+        var nick = String(u.nickname || '');
+        if (!nick) return false;
+        if (isExactMatch) return nick === q;
+        return nick.toLowerCase().includes(q.toLowerCase());
       });
       break;
     case 'zhixue':
       results = allUsers.filter(u => {
-        if (!u.zhixueManualName) return false;
-        if (isExactMatch) return u.zhixueManualName === q;
-        return u.zhixueManualName.includes(q);
+        var name = String(u.zhixueManualName || '');
+        if (!name) return false;
+        if (isExactMatch) return name === q;
+        return name.includes(q);
       });
       break;
     case 'uid':
-      // UID只支持精确匹配
-      results = allUsers.filter(u => u.uid === q);
+      results = allUsers.filter(u => String(u.uid || '') === q);
       break;
     default:
-      // 默认搜索所有类型
       results = allUsers.filter(u => {
-        let match = false;
-        if (u.username && u.username.toLowerCase().includes(q.toLowerCase())) match = true;
-        if (u.nickname && u.nickname.toLowerCase().includes(q.toLowerCase())) match = true;
-        if (u.zhixueManualName && u.zhixueManualName.includes(q)) match = true;
-        if (u.uid === q) match = true;
+        var match = false;
+        var username = String(u.username || '');
+        var nickname = String(u.nickname || '');
+        var zhixueName = String(u.zhixueManualName || '');
+        if (username && username.toLowerCase().includes(q.toLowerCase())) match = true;
+        if (nickname && nickname.toLowerCase().includes(q.toLowerCase())) match = true;
+        if (zhixueName && zhixueName.includes(q)) match = true;
+        if (String(u.uid || '') === q) match = true;
         return match;
       });
   }
