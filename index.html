@@ -1106,7 +1106,7 @@
  .hamburger-btn.active span { background: transparent; }
  .hamburger-btn.active span::before { top: 0; transform: rotate(45deg); }
  .hamburger-btn.active span::after { top: 0; transform: rotate(-45deg); }
-
+}
  /* 侧边导航遮罩 */
  .side-nav-overlay {
  display: none; position: fixed; inset: 0; z-index: 999;
@@ -1171,6 +1171,12 @@
  border-top: 1px solid #eee; text-align: center;
  letter-spacing: 0.3px;
  }
+
+	/* ===== 桌面端隐藏侧边导航 ===== */
+	@media (min-width: 769px) {
+		.side-nav, .side-nav-overlay { display: none !important; }
+	}
+
 
  /* ===== 移动端拍卖弹窗优化 ===== */
  .pickup-modal { width: 96vw; max-height: 90vh; border-radius: 14px; }
