@@ -59,6 +59,7 @@ function migrate() {
   const tableMigrations = [
     { name: 'posts', columns: ['images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
+    { name: 'users', columns: ['uid', 'searchable', 'searchByNickname', 'searchByUsername', 'searchByZhixue', 'searchByUid'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];

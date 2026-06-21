@@ -99,6 +99,55 @@ function getDisplayZhixueStatus(user) {
   return status;
 }
 
+// ===== UID生成工具 =====
+/**
+ * 生成8位数字UID，禁止连号和靓号
+ * @returns {string} 8位数字UID
+ */
+function generateUID() {
+  // 禁止的模式：连号、靓号
+  const banned = [
+    /^(\d)\1{7}$/, // 8个相同数字，如11111111
+    /12345678/,    // 正序连号
+    /87654321/,    // 倒序连号
+    /01234567/,    // 包含0的连号
+    /23456789/,    // 从2开始的连号
+  ];
+  
+  let uid;
+  let attempts = 0;
+  const maxAttempts = 1000; // 防止无限循环
+  
+  do {
+    // 生成8位随机数字（第一位不能是0）
+    uid = (Math.floor(Math.random() * 9) + 1).toString();
+    for (let i = 1; i < 8; i++) {
+      uid += Math.floor(Math.random() * 10).toString();
+    }
+    attempts++;
+    
+    // 检查是否在禁止列表中
+    if (banned.some(pattern => pattern.test(uid))) {
+      continue;
+    }
+    
+    // 检查UID是否已存在
+    const users = readUsers();
+    if (users.some(u => u.uid === uid)) {
+      continue;
+    }
+    
+    break;
+  } while (attempts < maxAttempts);
+  
+  if (attempts >= maxAttempts) {
+    console.error('[UID] 生成UID失败，已达到最大尝试次数');
+    return null;
+  }
+  
+  return uid;
+}
+
 // ===== 实名信息对称加密（AES-256-CBC）=====
 // 密钥必须通过环境变量 CERT_ENC_SECRET 设置（64位 hex 即 32 字节）
 // 未设置时每次启动随机生成，重启后已加密的实名数据将无法解密
@@ -805,8 +854,14 @@ app.post('/api/user/register', (req, res) => {
   }
 
   const ip = getClientIP(req);
+  const uid = generateUID();
+  if (!uid) {
+    return res.json({ ok: false, msg: '系统繁忙，请稍后重试' });
+  }
+  
   const newUser = {
     id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+    uid,
     username,
     password: hashPassword(password),
     nickname,
@@ -816,7 +871,12 @@ app.post('/api/user/register', (req, res) => {
     status: 'active',
     postCount: 0,
     bindAdminId: null,
-    bindAdminRole: null
+    bindAdminRole: null,
+    searchable: true,
+    searchByNickname: true,
+    searchByUsername: true,
+    searchByZhixue: true,
+    searchByUid: true
   };
   users.push(newUser);
   writeUsers(users);
@@ -1213,7 +1273,7 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
+  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
 });
 
 // ===== 签到 =====
@@ -1855,7 +1915,7 @@ app.get('/api/users/:id', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   // 不返回密码等敏感信息
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
+  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
 });
 
 // 获取用户完整详情（仅管理员）
@@ -2037,6 +2097,148 @@ app.get('/api/admin/credit/search-user', requireAdmin, requireSuper, (req, res) 
     credit: u.credit || 0
   }));
   res.json({ ok: true, data: matches });
+});
+
+// 用户搜索API（支持模糊和精确匹配）
+app.get('/api/user/search', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const allUsers = readUsers();
+  const currentUser = allUsers.find(u => u.id === session.id);
+  if (!currentUser) return res.json({ ok: false, msg: '用户不存在' });
+  
+  const { q, type } = req.query;
+  
+  // 检查用户隐私设置
+  if (!currentUser.searchable) {
+    return res.json({ ok: false, msg: '搜索功能未开启' });
+  }
+  
+  if (!q || q.trim().length === 0) {
+    return res.json({ ok: false, msg: '请输入搜索关键词' });
+  }
+  
+  let results = [];
+  
+  // 支持模糊和精确匹配
+  const isExactMatch = q.length >= 8 && /^\d{8}$/.test(q); // 8位数字视为UID精确匹配
+  
+  switch (type) {
+    case 'username':
+      results = allUsers.filter(u => {
+        if (!u.username) return false;
+        if (isExactMatch) return u.username === q;
+        return u.username.toLowerCase().includes(q.toLowerCase());
+      });
+      break;
+    case 'nickname':
+      results = allUsers.filter(u => {
+        if (!u.nickname) return false;
+        if (isExactMatch) return u.nickname === q;
+        return u.nickname.toLowerCase().includes(q.toLowerCase());
+      });
+      break;
+    case 'zhixue':
+      results = allUsers.filter(u => {
+        if (!u.zhixueManualName) return false;
+        if (isExactMatch) return u.zhixueManualName === q;
+        return u.zhixueManualName.includes(q);
+      });
+      break;
+    case 'uid':
+      // UID只支持精确匹配
+      results = allUsers.filter(u => u.uid === q);
+      break;
+    default:
+      // 默认搜索所有类型
+      results = allUsers.filter(u => {
+        let match = false;
+        if (u.username && u.username.toLowerCase().includes(q.toLowerCase())) match = true;
+        if (u.nickname && u.nickname.toLowerCase().includes(q.toLowerCase())) match = true;
+        if (u.zhixueManualName && u.zhixueManualName.includes(q)) match = true;
+        if (u.uid === q) match = true;
+        return match;
+      });
+  }
+  
+  // 过滤隐私设置
+  results = results.filter(u => {
+    if (!u.searchable) return false;
+    if (type === 'username' && !u.searchByUsername) return false;
+    if (type === 'nickname' && !u.searchByNickname) return false;
+    if (type === 'zhixue' && !u.searchByZhixue) return false;
+    if (type === 'uid' && !u.searchByUid) return false;
+    return true;
+  });
+  
+  // 限制返回数量，不返回敏感信息
+  const safeResults = results.slice(0, 20).map(u => ({
+    id: u.id,
+    uid: u.uid,
+    username: u.username,
+    nickname: u.nickname,
+    avatar: u.avatar,
+    credit: u.credit || 0
+  }));
+  
+  res.json({ ok: true, data: safeResults });
+});
+
+// 获取安全设置
+app.get('/api/user/security', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  res.json({
+    ok: true,
+    data: {
+      searchable: user.searchable !== false,
+      searchByNickname: user.searchByNickname !== false,
+      searchByUsername: user.searchByUsername !== false,
+      searchByZhixue: user.searchByZhixue !== false,
+      searchByUid: user.searchByUid !== false,
+      credit: user.credit || 0
+    }
+  });
+});
+
+// 更新安全设置
+app.post('/api/user/security', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  
+  const { password, settings } = req.body;
+  
+  // 验证密码
+  if (!verifyPassword(password, user.password)) {
+    return res.json({ ok: false, msg: '密码错误' });
+  }
+  
+  // 更新设置
+  const idx = users.findIndex(u => u.id === user.id);
+  if (idx !== -1) {
+    // 只允许更新安全设置字段
+    const allowedFields = ['searchable', 'searchByNickname', 'searchByUsername', 'searchByZhixue', 'searchByUid'];
+    for (const field of allowedFields) {
+      if (settings[field] !== undefined) {
+        users[idx][field] = settings[field];
+      }
+    }
+    writeUsers(users);
+  }
+  
+  res.json({ ok: true });
 });
 
 // 赠送 Credit 给指定用户
@@ -6419,9 +6621,54 @@ app.post('/api/maintenance/verify', (req, res) => {
   res.json({ ok: true, msg: '验证通过，正在进入…', data: { token } });
 });
 
+// ===== 旧用户UID分配 =====
+function assignUIDsToOldUsers() {
+  const users = readUsers();
+  let updated = false;
+  
+  for (let i = 0; i < users.length; i++) {
+    if (!users[i].uid) {
+      const uid = generateUID();
+      if (uid) {
+        users[i].uid = uid;
+        updated = true;
+        console.log(`[UID] 已为用户 ${users[i].id} 分配UID: ${uid}`);
+      }
+    }
+    
+    // 确保所有用户都有搜索设置字段
+    if (users[i].searchable === undefined) {
+      users[i].searchable = true;
+      updated = true;
+    }
+    if (users[i].searchByNickname === undefined) {
+      users[i].searchByNickname = true;
+      updated = true;
+    }
+    if (users[i].searchByUsername === undefined) {
+      users[i].searchByUsername = true;
+      updated = true;
+    }
+    if (users[i].searchByZhixue === undefined) {
+      users[i].searchByZhixue = true;
+      updated = true;
+    }
+    if (users[i].searchByUid === undefined) {
+      users[i].searchByUid = true;
+      updated = true;
+    }
+  }
+  
+  if (updated) {
+    writeUsers(users);
+    console.log('[UID] 已完成旧用户UID分配和搜索设置初始化');
+  }
+}
+
 app.listen(PORT, () => {
   fixCertDataOnStart();
   cleanupOldDeletedData();
+  assignUIDsToOldUsers();
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);
   console.log(`  → http://localhost:${PORT}/admin.html`);

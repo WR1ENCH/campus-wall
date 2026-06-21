@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全中心 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --note-yellow: #fff9b1;
+      --note-pink: #ffc9de;
+      --note-green: #b5f5c5;
+      --note-blue: #bde0fe;
+      --note-orange: #ffd6a5;
+      --note-purple: #d5b8ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== 砖墙背景 ===== */
+    .wall {
+      min-height: 100vh;
+      background-color: #c4a882;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px, transparent 61px, transparent 120px),
+        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px, transparent 121px, transparent 240px),
+        repeating-linear-gradient(0deg, rgba(180,140,100,0.3) 0px, rgba(200,160,120,0.1) 30px, rgba(170,130,90,0.2) 60px, rgba(190,150,110,0.15) 90px, rgba(175,135,95,0.25) 120px);
+      background-size: 240px 120px;
+      position: relative;
+      padding-bottom: 80px;
+    }
+
+    .wall::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.08) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wall::after {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 15% 30%, rgba(139,111,94,0.15) 0%, transparent 8%),
+        radial-gradient(circle at 75% 65%, rgba(139,111,94,0.1) 0%, transparent 6%),
+        radial-gradient(circle at 45% 15%, rgba(0,0,0,0.03) 0%, transparent 10%),
+        radial-gradient(circle at 85% 85%, rgba(139,111,94,0.12) 0%, transparent 7%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===== 顶部栏 ===== */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(139,111,94,0.92);
+      backdrop-filter: blur(12px);
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 3px solid rgba(0,0,0,0.15);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .wall-title {
+      display: flex; align-items: center; gap: 10px;
+      color: #fff;
+      font-family: 'ZCOOL KuaiLe', cursive;
+      font-size: 22px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .back-btn {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.15);
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* ===== 主内容区域 ===== */
+    .main {
+      max-width: 520px;
+      margin: 30px auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== 安全卡片 ===== */
+    .security-card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.8);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: #3b82f6;
+    }
+
+    /* ===== 开关组 ===== */
+    .switch-group {
+      margin-bottom: 16px;
+    }
+
+    .switch-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .switch-item:last-child {
+      border-bottom: none;
+    }
+
+    .switch-label {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .switch-desc {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
+    /* ===== 开关样式 ===== */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e7eb;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #3b82f6;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    /* ===== 信用分显示 ===== */
+    .credit-display {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .credit-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: #3b82f6;
+      font-family: 'ZCOOL KuaiLe', cursive;
+    }
+
+    .credit-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    /* ===== 信用分历史 ===== */
+    .credit-history {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .credit-history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .credit-history-item:last-child {
+      border-bottom: none;
+    }
+
+    .credit-history-reason {
+      font-size: 13px;
+      color: #374151;
+      flex: 1;
+    }
+
+    .credit-history-amount {
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 12px;
+    }
+
+    .credit-history-amount.positive {
+      color: #22c55e;
+    }
+
+    .credit-history-amount.negative {
+      color: #ef4444;
+    }
+
+    .credit-history-time {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-left: 12px;
+    }
+
+    /* ===== 密码验证模态框 ===== */
+    .password-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .password-modal.active {
+      display: flex;
+    }
+
+    .password-box {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      width: min(90vw, 360px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .password-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .password-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .password-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .password-btn-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .password-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .password-btn.cancel {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .password-btn.cancel:hover {
+      background: #e5e7eb;
+    }
+
+    .password-btn.confirm {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .password-btn.confirm:hover {
+      background: #2563eb;
+    }
+
+    .password-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ===== 加载状态 ===== */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+
+    .error-msg {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .success-msg {
+      color: #22c55e;
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wall">
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+      <div class="wall-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>安全中心</span>
+      </div>
+      <a href="index.html" class="back-btn">返回首页</a>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main" id="mainContent">
+      <div class="loading" id="loadingState">加载中...</div>
+      
+      <div id="securityContent" style="display:none;">
+        <!-- 搜索隐私设置 -->
+        <div class="security-card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            搜索隐私设置
+          </div>
+          
+          <div class="switch-group">
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">允许被搜索</div>
+                <div class="switch-desc">关闭后其他用户无法搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchable" onchange="handleSwitchChange('searchable')">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">通过昵称搜索</div>
+                <div class="switch-desc">允许其他用户通过昵称搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchByNickname" onchange="handleSwitchChange('searchByNickname')">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">通过账号搜索</div>
+                <div class="switch-desc">允许其他用户通过账号搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchByUsername" onchange="handleSwitchChange('searchByUsername')">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">通过同学认证姓名搜索</div>
+                <div class="switch-desc">允许其他用户通过同学认证绑定的姓名搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchByZhixue" onchange="handleSwitchChange('searchByZhixue')">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="switch-item">
+              <div>
+                <div class="switch-label">通过UID搜索</div>
+                <div class="switch-desc">允许其他用户通过UID搜索到你</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switchSearchByUid" onchange="handleSwitchChange('searchByUid')">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div id="switchError" class="error-msg" style="display:none;"></div>
+          <div id="switchSuccess" class="success-msg" style="display:none;"></div>
+        </div>
+
+        <!-- 信用分显示 -->
+        <div class="security-card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg>
+            信用分
+          </div>
+          
+          <div class="credit-display">
+            <div class="credit-value" id="creditValue">0</div>
+            <div class="credit-label">当前信用分</div>
+          </div>
+          
+          <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:12px;">信用分获取方式</div>
+          <div style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.6;">
+            <div>• 每日签到：+100信用分</div>
+            <div>• 发布优质内容：管理员赠送</div>
+            <div>• 违反社区规范：扣除信用分</div>
+          </div>
+          
+          <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:12px;">信用分历史</div>
+          <div class="credit-history" id="creditHistory">
+            <div class="loading" style="padding:20px;">加载中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 密码验证模态框 -->
+  <div class="password-modal" id="passwordModal">
+    <div class="password-box">
+      <div class="password-title">验证密码</div>
+      <input type="password" class="password-input" id="passwordInput" placeholder="请输入密码" onkeypress="if(event.key==='Enter')confirmPassword()">
+      <div id="passwordError" class="error-msg" style="display:none;"></div>
+      <div class="password-btn-group">
+        <button class="password-btn cancel" onclick="closePasswordModal()">取消</button>
+        <button class="password-btn confirm" id="confirmBtn" onclick="confirmPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 全局变量 =====
+    var userToken = localStorage.getItem('userToken');
+    var currentUser = null;
+    var currentSettings = {};
+    var pendingSwitch = null;
+
+    // ===== 页面初始化 =====
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!userToken) {
+        showError('请先登录');
+        return;
+      }
+      loadSecuritySettings();
+    });
+
+    // ===== 加载安全设置 =====
+    function loadSecuritySettings() {
+      fetch('/api/user/security', {
+        headers: { 'X-User-Token': userToken }
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.ok) {
+          showError(data.msg || '加载失败');
+          return;
+        }
+        
+        currentUser = data.data;
+        currentSettings = {
+          searchable: currentUser.searchable !== false,
+          searchByNickname: currentUser.searchByNickname !== false,
+          searchByUsername: currentUser.searchByUsername !== false,
+          searchByZhixue: currentUser.searchByZhixue !== false,
+          searchByUid: currentUser.searchByUid !== false
+        };
+        
+        // 更新UI
+        document.getElementById('switchSearchable').checked = currentSettings.searchable;
+        document.getElementById('switchSearchByNickname').checked = currentSettings.searchByNickname;
+        document.getElementById('switchSearchByUsername').checked = currentSettings.searchByUsername;
+        document.getElementById('switchSearchByZhixue').checked = currentSettings.searchByZhixue;
+        document.getElementById('switchSearchByUid').checked = currentSettings.searchByUid;
+        document.getElementById('creditValue').textContent = currentUser.credit || 0;
+        
+        // 显示内容
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('securityContent').style.display = 'block';
+        
+        // 加载信用分历史
+        loadCreditHistory();
+      })
+      .catch(function(err) {
+        showError('网络错误，请重试');
+      });
+    }
+
+    // ===== 加载信用分历史 =====
+    function loadCreditHistory() {
+      fetch('/api/user/credit-logs', {
+        headers: { 'X-User-Token': userToken }
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.ok || !data.data || data.data.length === 0) {
+          document.getElementById('creditHistory').innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;">暂无记录</div>';
+          return;
+        }
+        
+        var html = '';
+        data.data.slice(0, 20).forEach(function(log) {
+          var amountClass = log.amount >= 0 ? 'positive' : 'negative';
+          var amountText = log.amount >= 0 ? '+' + log.amount : log.amount;
+          var time = new Date(log.createdAt).toLocaleString('zh-CN');
+          
+          html += '<div class="credit-history-item">';
+          html += '<div class="credit-history-reason">' + escapeHtml(log.reason || '未知原因') + '</div>';
+          html += '<div class="credit-history-amount ' + amountClass + '">' + amountText + '</div>';
+          html += '<div class="credit-history-time">' + time + '</div>';
+          html += '</div>';
+        });
+        
+        document.getElementById('creditHistory').innerHTML = html;
+      })
+      .catch(function(err) {
+        document.getElementById('creditHistory').innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;">加载失败</div>';
+      });
+    }
+
+    // ===== 处理开关变化 =====
+    function handleSwitchChange(setting) {
+      pendingSwitch = setting;
+      openPasswordModal();
+    }
+
+    // ===== 密码验证模态框 =====
+    function openPasswordModal() {
+      document.getElementById('passwordModal').classList.add('active');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordError').style.display = 'none';
+      document.getElementById('passwordInput').focus();
+    }
+
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.remove('active');
+      // 恢复开关状态
+      if (pendingSwitch) {
+        document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked = currentSettings[pendingSwitch];
+        pendingSwitch = null;
+      }
+    }
+
+    function confirmPassword() {
+      var password = document.getElementById('passwordInput').value;
+      if (!password) {
+        document.getElementById('passwordError').textContent = '请输入密码';
+        document.getElementById('passwordError').style.display = 'block';
+        return;
+      }
+      
+      document.getElementById('confirmBtn').disabled = true;
+      document.getElementById('confirmBtn').textContent = '验证中...';
+      
+      fetch('/api/user/security', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Token': userToken
+        },
+        body: JSON.stringify({
+          password: password,
+          settings: { [pendingSwitch]: document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked }
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        document.getElementById('confirmBtn').disabled = false;
+        document.getElementById('confirmBtn').textContent = '确认';
+        
+        if (!data.ok) {
+          document.getElementById('passwordError').textContent = data.msg || '验证失败';
+          document.getElementById('passwordError').style.display = 'block';
+          // 恢复开关状态
+          document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked = currentSettings[pendingSwitch];
+          return;
+        }
+        
+        // 更新本地设置
+        currentSettings[pendingSwitch] = document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked;
+        
+        // 显示成功消息
+        showSuccess('设置已保存');
+        closePasswordModal();
+        pendingSwitch = null;
+      })
+      .catch(function(err) {
+        document.getElementById('confirmBtn').disabled = false;
+        document.getElementById('confirmBtn').textContent = '确认';
+        document.getElementById('passwordError').textContent = '网络错误，请重试';
+        document.getElementById('passwordError').style.display = 'block';
+      });
+    }
+
+    // ===== 辅助函数 =====
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showError(msg) {
+      document.getElementById('loadingState').innerHTML = '<div style="color:#ef4444;">' + msg + '</div>';
+    }
+
+    function showSuccess(msg) {
+      var successDiv = document.getElementById('switchSuccess');
+      successDiv.textContent = msg;
+      successDiv.style.display = 'block';
+      setTimeout(function() {
+        successDiv.style.display = 'none';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

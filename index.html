@@ -1759,6 +1759,79 @@
  }
  .top-bar .notif-btn:hover { transform: scale(1.15); }
 
+ /* 搜索按钮和搜索框 */
+ .search-btn {
+   background: none; border: none; cursor: pointer;
+   font-size: 18px; padding: 4px 6px;
+   position: relative; transition: transform 0.2s;
+   vertical-align: middle; color: rgba(255,255,255,0.8);
+ }
+ .search-btn:hover { transform: scale(1.15); color: #fff; }
+
+ /* 搜索弹窗 */
+ .search-overlay {
+   display: none; position: fixed; inset: 0; z-index: 1000;
+   background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+   align-items: flex-start; justify-content: center; padding-top: 100px;
+ }
+ .search-overlay.active { display: flex; }
+ .search-modal {
+   background: #fff; border-radius: 16px; padding: 24px;
+   width: min(90vw, 500px); box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+ }
+ .search-header {
+   display: flex; align-items: center; justify-content: space-between;
+   margin-bottom: 16px;
+ }
+ .search-title { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+ .search-close {
+   background: none; border: none; font-size: 24px; cursor: pointer;
+   color: #6b7280; padding: 4px; line-height: 1;
+ }
+ .search-close:hover { color: #1a1a2e; }
+ .search-input-group {
+   display: flex; gap: 8px; margin-bottom: 16px;
+ }
+ .search-input {
+   flex: 1; padding: 12px 16px; border: 2px solid #e5e7eb;
+   border-radius: 10px; font-size: 15px; outline: none;
+   transition: border-color 0.2s;
+ }
+ .search-input:focus { border-color: #3b82f6; }
+ .search-type-select {
+   padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px;
+   font-size: 14px; background: #fff; cursor: pointer; min-width: 120px;
+ }
+ .search-results {
+   max-height: 400px; overflow-y: auto;
+ }
+ .search-result-item {
+   display: flex; align-items: center; gap: 12px;
+   padding: 12px; border-radius: 10px; cursor: pointer;
+   transition: background 0.15s;
+ }
+ .search-result-item:hover { background: #f3f4f6; }
+ .search-result-avatar {
+   width: 40px; height: 40px; border-radius: 50%;
+   background: #e5e7eb; display: flex; align-items: center;
+   justify-content: center; overflow: hidden; flex-shrink: 0;
+ }
+ .search-result-info { flex: 1; min-width: 0; }
+ .search-result-name {
+   font-weight: 600; color: #1a1a2e; font-size: 15px;
+   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+ }
+ .search-result-username {
+   font-size: 13px; color: #6b7280;
+   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+ }
+ .search-result-uid {
+   font-size: 12px; color: #9ca3af; margin-top: 2px;
+ }
+ .search-empty {
+   text-align: center; padding: 40px 20px; color: #9ca3af;
+ }
+
  /* 通知弹窗列表项 */
  .notif-item {
  border-bottom: 1px solid #e5e7eb;
@@ -1821,6 +1894,9 @@
  </div>
  <!-- 右侧区域：用户信息 / 登录入口 -->
  <div class="top-right-area">
+ <button class="search-btn" onclick="openSearchModal()" title="搜索用户">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+ </button>
  <div id="userInfoBar" style="display:none;">
  <div class="user-info-bar">
  <a href="#" id="topUserAvatarLink" style="text-decoration:none; color:inherit;">
@@ -2625,6 +2701,10 @@
  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
  <span class="nav-label">接入校园墙生态</span>
  </button>
+ <button class="side-nav-item" id="sideNavSecurity" onclick="toggleSideNav(); window.open('security.html','_blank');" style="display:none;">
+ <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+ <span class="nav-label">安全中心</span>
+ </button>
  <div class="side-nav-divider"></div>
  <button class="side-nav-item" id="sideNavLogin" onclick="toggleSideNav(); showLoginModal();" style="display:none;">
  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
@@ -2644,7 +2724,7 @@
  </span>
  <span class="footer-center">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
- 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">接入校园墙生态</a>
+ 校园墙 · Powered by wr1Ench · <a href="agreement.html" target="_blank" style="color:#fff;text-decoration:underline;">用户协议</a> · <a href="report.html" target="_blank" style="color:#fff;text-decoration:underline;">问题报告</a> · <a href="bully.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">报告霸凌事件</a> · <a href="ecosystem.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;">接入校园墙生态</a> · <a href="security.html" target="_blank" style="color:#fff;text-decoration:underline;font-weight:600;" id="footerSecurityLink">安全中心</a>
  </span>
  </div>
 
@@ -3556,6 +3636,7 @@
  const barEl = document.getElementById('userInfoBar');
  const entranceEl = document.getElementById('loginEntrance');
  const topBar = document.getElementById('topBar');
+ const footerSecurityLink = document.getElementById('footerSecurityLink');
  if (currentUser) {
  var avatarSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  document.getElementById('topUserAvatar').innerHTML = currentUser.avatar && currentUser.avatar !== '🙈' ? currentUser.avatar : avatarSvg;
@@ -3569,10 +3650,12 @@
  barEl.style.display = 'block';
  entranceEl.style.display = 'none';
  topBar.classList.add('logged-in');
+ if (footerSecurityLink) footerSecurityLink.style.display = 'inline';
  } else {
  barEl.style.display = 'none';
  entranceEl.style.display = 'block';
  topBar.classList.remove('logged-in');
+ if (footerSecurityLink) footerSecurityLink.style.display = 'none';
  }
  }
 
@@ -7106,9 +7189,11 @@
  var loginBtn = document.getElementById('sideNavLogin');
  var logoutBtn = document.getElementById('sideNavLogout');
  var userSection = document.getElementById('sideNavUser');
+ var securityBtn = document.getElementById('sideNavSecurity');
  if (token) {
  if (loginBtn) loginBtn.style.display = 'none';
  if (logoutBtn) logoutBtn.style.display = 'flex';
+ if (securityBtn) securityBtn.style.display = 'flex';
  if (userSection) {
  userSection.style.display = 'flex';
  var userStr = localStorage.getItem('campus_wall_user');
@@ -7130,6 +7215,7 @@
  } else {
  if (loginBtn) loginBtn.style.display = 'flex';
  if (logoutBtn) logoutBtn.style.display = 'none';
+ if (securityBtn) securityBtn.style.display = 'none';
  if (userSection) userSection.style.display = 'none';
  }
  }
@@ -7401,10 +7487,135 @@
  .catch(function() {
  shaEl.textContent = 'dev';
  });
- } catch (e) {
- shaEl.textContent = 'dev';
+  } catch (e) {
+  shaEl.textContent = 'dev';
+  }
+  })();
+  </script>
+
+ <!-- 搜索弹窗 -->
+ <div class="search-overlay" id="searchOverlay" onclick="closeSearchModal(event)">
+   <div class="search-modal" onclick="event.stopPropagation()">
+     <div class="search-header">
+       <div class="search-title">搜索用户</div>
+       <button class="search-close" onclick="closeSearchModal()">&times;</button>
+     </div>
+     <div class="search-input-group">
+       <input type="text" class="search-input" id="searchInput" placeholder="输入用户名、昵称、UID或同学认证姓名" oninput="handleSearchInput()">
+       <select class="search-type-select" id="searchTypeSelect" onchange="handleSearchInput()">
+         <option value="all">全部</option>
+         <option value="username">账号</option>
+         <option value="nickname">昵称</option>
+         <option value="uid">UID</option>
+         <option value="zhixue">同学认证姓名</option>
+       </select>
+     </div>
+     <div class="search-results" id="searchResults">
+       <div class="search-empty">输入关键词开始搜索</div>
+     </div>
+   </div>
+ </div>
+
+ <script>
+ // ===== 用户搜索功能 =====
+ var searchTimeout = null;
+
+ function openSearchModal() {
+   var overlay = document.getElementById('searchOverlay');
+   if (overlay) {
+     overlay.classList.add('active');
+     document.getElementById('searchInput').focus();
+   }
  }
- })();
+
+ function closeSearchModal(e) {
+   if (e && e.target !== e.currentTarget) return;
+   var overlay = document.getElementById('searchOverlay');
+   if (overlay) {
+     overlay.classList.remove('active');
+     document.getElementById('searchInput').value = '';
+     document.getElementById('searchResults').innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
+   }
+ }
+
+ function handleSearchInput() {
+   clearTimeout(searchTimeout);
+   var query = document.getElementById('searchInput').value.trim();
+   var type = document.getElementById('searchTypeSelect').value;
+   
+   if (!query) {
+     document.getElementById('searchResults').innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
+     return;
+   }
+   
+   searchTimeout = setTimeout(function() {
+     searchUsers(query, type);
+   }, 300);
+ }
+
+ function searchUsers(query, type) {
+   var resultsDiv = document.getElementById('searchResults');
+   resultsDiv.innerHTML = '<div class="search-empty">搜索中...</div>';
+   
+   var token = localStorage.getItem('userToken');
+   if (!token) {
+     resultsDiv.innerHTML = '<div class="search-empty">请先登录</div>';
+     return;
+   }
+   
+   fetch('/api/user/search?q=' + encodeURIComponent(query) + '&type=' + type, {
+     headers: { 'X-User-Token': token }
+   })
+   .then(function(res) { return res.json(); })
+   .then(function(data) {
+     if (!data.ok) {
+       resultsDiv.innerHTML = '<div class="search-empty">' + (data.msg || '搜索失败') + '</div>';
+       return;
+     }
+     
+     if (data.data.length === 0) {
+       resultsDiv.innerHTML = '<div class="search-empty">未找到匹配的用户</div>';
+       return;
+     }
+     
+     var html = '';
+     data.data.forEach(function(user) {
+       html += '<div class="search-result-item" onclick="viewUserProfile(\'' + user.id + '\')">';
+       html += '<div class="search-result-avatar">';
+       if (user.avatar) {
+         html += '<img src="' + user.avatar + '" style="width:100%;height:100%;object-fit:cover;">';
+       } else {
+         html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+       }
+       html += '</div>';
+       html += '<div class="search-result-info">';
+       html += '<div class="search-result-name">' + escapeHtml(user.nickname) + '</div>';
+       html += '<div class="search-result-username">@' + escapeHtml(user.username) + '</div>';
+       if (user.uid) {
+         html += '<div class="search-result-uid">UID: ' + user.uid + '</div>';
+       }
+       html += '</div>';
+       html += '</div>';
+     });
+     
+     resultsDiv.innerHTML = html;
+   })
+   .catch(function(err) {
+     resultsDiv.innerHTML = '<div class="search-empty">网络错误，请重试</div>';
+   });
+ }
+
+ function viewUserProfile(userId) {
+   closeSearchModal();
+   window.open('/user.html?id=' + userId, '_blank');
+ }
+
+ function escapeHtml(text) {
+   if (!text) return '';
+   var div = document.createElement('div');
+   div.textContent = text;
+   return div.innerHTML;
+ }
  </script>
 </body>
 </html>
