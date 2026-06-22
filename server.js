@@ -1276,7 +1276,7 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: Number(user.credit) || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: Number(user.checkinStreak) || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
+  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: Number(user.checkinStreak) || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
 });
 
 // ===== 签到 =====
@@ -2194,7 +2194,7 @@ app.get('/api/user/security', (req, res) => {
       searchByUsername: toBool(user.searchByUsername),
       searchByZhixue: toBool(user.searchByZhixue),
       searchByUid: toBool(user.searchByUid),
-      trustScore: Number(user.trustScore) || 100
+      trustScore: user.trustScore || 100
     }
   });
 });
@@ -6687,24 +6687,24 @@ function assignUIDsToOldUsers() {
       }
     }
     
-    // 确保所有用户都有搜索设置字段
-    if (users[i].searchable === undefined) {
+    // 强制确保所有用户开启被搜索
+    if (users[i].searchable !== true) {
       users[i].searchable = true;
       updated = true;
     }
-    if (users[i].searchByNickname === undefined) {
+    if (users[i].searchByNickname !== true) {
       users[i].searchByNickname = true;
       updated = true;
     }
-    if (users[i].searchByUsername === undefined) {
+    if (users[i].searchByUsername !== true) {
       users[i].searchByUsername = true;
       updated = true;
     }
-    if (users[i].searchByZhixue === undefined) {
-      users[i].searchByZhixue = false;
+    if (users[i].searchByZhixue !== true) {
+      users[i].searchByZhixue = true;
       updated = true;
     }
-    if (users[i].searchByUid === undefined) {
+    if (users[i].searchByUid !== true) {
       users[i].searchByUid = true;
       updated = true;
     }

@@ -7205,7 +7205,7 @@
  var u = JSON.parse(userStr);
  var name = u.nickname || u.username || '';
  document.getElementById('sideNavUserName').textContent = name;
- document.getElementById('sideNavUserCredit').textContent(u.credit || 0) + ' Credit';
+ document.getElementById('sideNavUserCredit').textContent = (u.credit || 0) + ' Credit';
  var avatarEl = document.getElementById('sideNavAvatar');
  if (u.avatar && u.avatar !== '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') {
  avatarEl.innerHTML = '<span style="font-size:22px;">' + u.avatar + '</span>';
