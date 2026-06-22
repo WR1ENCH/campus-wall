@@ -7767,11 +7767,267 @@
  }
 
  function escapeHtml(text) {
-   if (!text) return '';
-   var div = document.createElement('div');
-   div.textContent = text;
-   return div.innerHTML;
- }
- </script>
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ===== 悄悄话功能 =====
+  let whisperSelectedUser = null;
+
+  function openWhisperModal() {
+    if (!currentUser) {
+      showLoginModal();
+      return;
+    }
+    document.getElementById('whisperOverlay').style.display = 'flex';
+    switchWhisperTab('send');
+  }
+
+  function closeWhisperModal() {
+    document.getElementById('whisperOverlay').style.display = 'none';
+    whisperSelectedUser = null;
+    document.getElementById('whisperReceiverInput').value = '';
+    document.getElementById('whisperSelectedUser').style.display = 'none';
+    document.getElementById('whisperContentInput').value = '';
+    updateWhisperCharCount();
+  }
+
+  function switchWhisperTab(tab) {
+    document.querySelectorAll('.whisper-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('whisperTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    
+    document.getElementById('whisperSendPanel').style.display = tab === 'send' ? 'block' : 'none';
+    document.getElementById('whisperInboxPanel').style.display = tab === 'inbox' ? 'block' : 'none';
+    document.getElementById('whisperSentPanel').style.display = tab === 'sent' ? 'block' : 'none';
+    
+    if (tab === 'inbox') loadWhisperInbox();
+    if (tab === 'sent') loadWhisperSent();
+  }
+
+  let whisperSearchTimeout = null;
+
+  async function searchWhisperUsers(query) {
+    if (!query || query.length < 1) {
+      document.getElementById('whisperUserResults').style.display = 'none';
+      return;
+    }
+    
+    clearTimeout(whisperSearchTimeout);
+    whisperSearchTimeout = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/users/search?q=' + encodeURIComponent(query), {
+          credentials: 'include'
+        });
+        const users = await res.json();
+        
+        const resultsDiv = document.getElementById('whisperUserResults');
+        if (!users || users.length === 0) {
+          resultsDiv.innerHTML = '<div style="padding:12px;color:#9ca3af;text-align:center;">未找到用户</div>';
+        } else {
+          resultsDiv.innerHTML = users.slice(0, 5).map(u => 
+            '<div class="whisper-user-result" onclick="selectWhisperUser(\'' + u.uid + '\', \'' + (u.nickname || u.username).replace(/'/g, "\\'") + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'transparent\'">' +
+            '<span style="font-size:20px;">' + (u.avatar || '👤') + '</span>' +
+            '<div>' +
+            '<div style="font-size:14px;font-weight:500;color:#1a1a2e;">' + (u.nickname || u.username) + '</div>' +
+            '<div style="font-size:11px;color:#9ca3af;">UID: ' + u.uid + '</div>' +
+            '</div>' +
+            '</div>'
+          ).join('');
+        }
+        resultsDiv.style.display = 'block';
+      } catch (err) {
+        console.error('搜索用户失败:', err);
+      }
+    }, 300);
+  }
+
+  function selectWhisperUser(uid, name) {
+    whisperSelectedUser = { uid, name };
+    document.getElementById('whisperReceiverInput').value = '';
+    document.getElementById('whisperUserResults').style.display = 'none';
+    
+    const selectedDiv = document.getElementById('whisperSelectedUser');
+    selectedDiv.innerHTML = '已选择: <strong>' + name + '</strong> (UID: ' + uid + ') <span onclick="clearWhisperUser()" style="cursor:pointer;margin-left:8px;color:#9ca3af;">&times;</span>';
+    selectedDiv.style.display = 'block';
+  }
+
+  function clearWhisperUser() {
+    whisperSelectedUser = null;
+    document.getElementById('whisperSelectedUser').style.display = 'none';
+  }
+
+  function updateWhisperCharCount() {
+    const content = document.getElementById('whisperContentInput').value;
+    document.getElementById('whisperCharCount').textContent = content.length;
+  }
+
+  async function sendWhisper() {
+    if (!whisperSelectedUser) {
+      alert('请选择发送对象');
+      return;
+    }
+    
+    const content = document.getElementById('whisperContentInput').value.trim();
+    if (!content) {
+      alert('请输入消息内容');
+      return;
+    }
+    
+    if (content.length > 50) {
+      alert('内容不能超过50字');
+      return;
+    }
+    
+    const notifLevel = document.querySelector('input[name="whisperNotifLevel"]:checked').value;
+    
+    const sendBtn = document.getElementById('whisperSendBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '发送中...';
+    
+    try {
+      const res = await fetch('/api/whispers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: whisperSelectedUser.uid,
+          content: content,
+          notifLevel: notifLevel
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        showToast('悄悄话发送成功！', 'success');
+        closeWhisperModal();
+      } else {
+        showToast(data.error || '发送失败', 'error');
+      }
+    } catch (err) {
+      console.error('发送悄悄话失败:', err);
+      showToast('发送失败，请重试', 'error');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '发送悄悄话';
+    }
+  }
+
+  async function loadWhisperInbox() {
+    const listDiv = document.getElementById('whisperInboxList');
+    listDiv.innerHTML = '<div class="whisper-empty">加载中...</div>';
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers', {
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      const whispers = await res.json();
+      
+      if (!whispers || whispers.length === 0) {
+        listDiv.innerHTML = '<div class="whisper-empty">暂无收到的悄悄话</div>';
+        return;
+      }
+      
+      listDiv.innerHTML = whispers.map(w => 
+        '<div class="whisper-item">' +
+        '<div class="whisper-item-header">' +
+        '<span class="whisper-item-user">来自: ' + w.senderName + '</span>' +
+        '<span class="whisper-item-time">' + formatTime(w.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="whisper-item-content">' + escapeHtml(w.content) + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">' +
+        '<span class="whisper-item-level ' + w.notifLevel + '">' + w.notifLevel + '</span>' +
+        '<button onclick="deleteWhisper(\'' + w.id + '\', \'inbox\')" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;">删除</button>' +
+        '</div>' +
+        '</div>'
+      ).join('');
+    } catch (err) {
+      console.error('加载收件箱失败:', err);
+      listDiv.innerHTML = '<div class="whisper-empty">加载失败</div>';
+    }
+  }
+
+  async function loadWhisperSent() {
+    const listDiv = document.getElementById('whisperSentList');
+    listDiv.innerHTML = '<div class="whisper-empty">加载中...</div>';
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers/sent', {
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      const whispers = await res.json();
+      
+      if (!whispers || whispers.length === 0) {
+        listDiv.innerHTML = '<div class="whisper-empty">暂无发送的悄悄话</div>';
+        return;
+      }
+      
+      listDiv.innerHTML = whispers.map(w => 
+        '<div class="whisper-item">' +
+        '<div class="whisper-item-header">' +
+        '<span class="whisper-item-user">发送给: ' + w.receiverName + '</span>' +
+        '<span class="whisper-item-time">' + formatTime(w.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="whisper-item-content">' + escapeHtml(w.content) + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">' +
+        '<span class="whisper-item-level ' + w.notifLevel + '">' + w.notifLevel + '</span>' +
+        '<button onclick="deleteWhisper(\'' + w.id + '\', \'sent\')" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;">删除</button>' +
+        '</div>' +
+        '</div>'
+      ).join('');
+    } catch (err) {
+      console.error('加载发件箱失败:', err);
+      listDiv.innerHTML = '<div class="whisper-empty">加载失败</div>';
+    }
+  }
+
+  async function deleteWhisper(id, type) {
+    if (!confirm('确定删除这条悄悄话？')) return;
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers/' + id, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        showToast('已删除', 'success');
+        if (type === 'inbox') loadWhisperInbox();
+        if (type === 'sent') loadWhisperSent();
+      } else {
+        showToast(data.error || '删除失败', 'error');
+      }
+    } catch (err) {
+      console.error('删除悄悄话失败:', err);
+      showToast('删除失败', 'error');
+    }
+  }
+
+  function formatTime(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    return date.toLocaleDateString('zh-CN');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  </script>
 </body>
 </html>
