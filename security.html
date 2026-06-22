@@ -504,7 +504,7 @@
     var currentUser = null;
     var currentSettings = {};
     var pendingSwitch = null;
-    var passwordVerified = false;
+    var securityVerifiedToken = null;
 
     // ===== 页面初始化 =====
     document.addEventListener('DOMContentLoaded', function() {
@@ -594,7 +594,7 @@
     // ===== 处理开关变化 =====
     function handleSwitchChange(setting) {
       pendingSwitch = setting;
-      if (passwordVerified) {
+      if (securityVerifiedToken) {
         saveSetting(setting);
       } else {
         openPasswordModal();
@@ -652,7 +652,7 @@
           return;
         }
         
-        passwordVerified = true;
+        securityVerifiedToken = data.securityVerifiedToken;
         currentSettings[pendingSwitch] = document.getElementById('switch' + capitalizeFirst(pendingSwitch)).checked;
         showSuccess('设置已保存');
         closePasswordModal();
@@ -677,7 +677,7 @@
           'X-User-Token': userToken
         },
         body: JSON.stringify({
-          password: '__verified__',
+          securityVerifiedToken: securityVerifiedToken,
           settings: { [setting]: value }
         })
       })

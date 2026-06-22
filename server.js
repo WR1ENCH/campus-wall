@@ -778,6 +778,8 @@ function verifyUserToken(token) {
 
 // ===== 人机验证（SVG 验证码）=====
 const captchaStore = new Map();
+// 安全设置密码验证 token（5分钟有效期）
+const securityVerifiedStore = new Map();
 // 发帖频率限制（5分钟内最多发3篇，超出需验证码）
 const postRateLimit = new Map();
 setInterval(() => {
@@ -2112,26 +2114,19 @@ app.get('/api/user/search', (req, res) => {
   
   const { q, type } = req.query;
   
-  // 检查用户隐私设置
-  if (currentUser.searchable === false || currentUser.searchable === 'false' || currentUser.searchable === '0' || currentUser.searchable === 0) {
-    return res.json({ ok: false, msg: '搜索功能未开启' });
-  }
-  
   if (!q || q.trim().length === 0) {
     return res.json({ ok: false, msg: '请输入搜索关键词' });
   }
   
   let results = [];
   
-  // 支持模糊和精确匹配
-  const isExactMatch = q.length >= 8 && /^\d{8}$/.test(q); // 8位数字视为UID精确匹配
+  const isUidExact = type === 'uid' || (type === 'all' && q.length >= 8 && /^\d{8}$/.test(q));
   
   switch (type) {
     case 'username':
       results = allUsers.filter(u => {
         var name = String(u.username || '');
         if (!name) return false;
-        if (isExactMatch) return name === q;
         return name.toLowerCase().includes(q.toLowerCase());
       });
       break;
@@ -2139,7 +2134,6 @@ app.get('/api/user/search', (req, res) => {
       results = allUsers.filter(u => {
         var nick = String(u.nickname || '');
         if (!nick) return false;
-        if (isExactMatch) return nick === q;
         return nick.toLowerCase().includes(q.toLowerCase());
       });
       break;
@@ -2147,7 +2141,6 @@ app.get('/api/user/search', (req, res) => {
       results = allUsers.filter(u => {
         var name = String(u.zhixueManualName || '');
         if (!name) return false;
-        if (isExactMatch) return name === q;
         return name.includes(q);
       });
       break;
@@ -2168,13 +2161,16 @@ app.get('/api/user/search', (req, res) => {
       });
   }
   
-  // 过滤隐私设置
+  // 过滤隐私设置（'全部'类型需逐字段检查）
   results = results.filter(u => {
     if (!u.searchable) return false;
     if (type === 'username' && !u.searchByUsername) return false;
     if (type === 'nickname' && !u.searchByNickname) return false;
     if (type === 'zhixue' && !u.searchByZhixue) return false;
     if (type === 'uid' && !u.searchByUid) return false;
+    if (type === 'all') {
+      return u.searchByUsername || u.searchByNickname || u.searchByZhixue || u.searchByUid;
+    }
     return true;
   });
   
@@ -2223,10 +2219,18 @@ app.post('/api/user/security', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   
-  const { password, settings } = req.body;
+  const { password, settings, securityVerifiedToken } = req.body;
   
-  // 验证密码（__verified__ 表示本页面已验证过，跳过密码检查）
-  if (password !== '__verified__' && !verifyPassword(password, user.password)) {
+  // 验证密码（securityVerifiedToken 为服务器端短时效 token，或直接输入密码）
+  let passwordVerifiedNow = false;
+  if (securityVerifiedToken) {
+    const entry = securityVerifiedStore.get(session.id);
+    if (!entry || entry.token !== securityVerifiedToken || Date.now() - entry.createdAt > 300000) {
+      return res.json({ ok: false, msg: '验证已过期，请重新输入密码' });
+    }
+  } else if (password && verifyPassword(password, user.password)) {
+    passwordVerifiedNow = true;
+  } else {
     return res.json({ ok: false, msg: '密码错误' });
   }
   
@@ -2243,7 +2247,14 @@ app.post('/api/user/security', (req, res) => {
     writeUsers(users);
   }
   
-  res.json({ ok: true });
+  // 密码验证成功后生成短时效 token，供后续操作免密使用
+  let verifiedToken = null;
+  if (passwordVerifiedNow) {
+    verifiedToken = crypto.randomBytes(16).toString('hex');
+    securityVerifiedStore.set(session.id, { token: verifiedToken, createdAt: Date.now() });
+  }
+  
+  res.json({ ok: true, securityVerifiedToken: verifiedToken });
 });
 
 // 获取信用分历史

@@ -7585,8 +7585,8 @@
      data.data.forEach(function(user) {
        html += '<div class="search-result-item" onclick="viewUserProfile(\'' + user.id + '\')">';
        html += '<div class="search-result-avatar">';
-       if (user.avatar) {
-         html += '<img src="' + user.avatar + '" style="width:100%;height:100%;object-fit:cover;">';
+        if (user.avatar) {
+          html += '<img src="' + escapeHtml(user.avatar) + '" style="width:100%;height:100%;object-fit:cover;">';
        } else {
          html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
        }
