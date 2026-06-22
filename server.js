@@ -6672,6 +6672,164 @@ app.post('/api/maintenance/verify', (req, res) => {
   res.json({ ok: true, msg: '验证通过，正在进入…', data: { token } });
 });
 
+// ===== 悄悄话 API =====
+app.post('/api/whispers', (req, res) => {
+  try {
+    const { receiverId, content, notifLevel } = req.body;
+    const sender = req.user;
+    
+    if (!sender) {
+      return res.status(401).json({ error: '请先登录' });
+    }
+    
+    if (!receiverId || !content) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    if (content.length > 50) {
+      return res.status(400).json({ error: '内容不能超过50字' });
+    }
+    
+    // 敏感词检测
+    const sensitiveCheck = checkSensitive(content);
+    if (sensitiveCheck.blocked) {
+      return res.status(400).json({ error: '内容包含敏感词，发送失败' });
+    }
+    
+    // 查找接收者
+    const users = readUsers();
+    const receiver = users.find(u => u.uid === receiverId || u.id === receiverId);
+    if (!receiver) {
+      return res.status(400).json({ error: '找不到该用户' });
+    }
+    
+    // 不能发给自己
+    if (receiver.uid === sender.uid || receiver.id === sender.id) {
+      return res.status(400).json({ error: '不能给自己发送悄悄话' });
+    }
+    
+    const whisper = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      senderId: sender.uid || sender.id,
+      senderName: sender.nickname || sender.username || sender.id,
+      receiverId: receiver.uid || receiver.id,
+      receiverName: receiver.nickname || receiver.username || receiver.id,
+      content: content,
+      notifLevel: notifLevel || 'T1',
+      createdAt: new Date().toISOString(),
+      deleted: 0
+    };
+    
+    db.addWhisper(whisper);
+    
+    // 发送通知给接收者（使用现有通知系统）
+    const notifData = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      type: 'whisper',
+      title: '收到一条悄悄话',
+      content: content.slice(0, 20) + (content.length > 20 ? '...' : ''),
+      from: sender.nickname || sender.username || sender.id,
+      whisperId: whisper.id,
+      level: notifLevel || 'T1',
+      targetUserId: receiver.uid || receiver.id,
+      createdAt: new Date().toISOString(),
+      deleted: false
+    };
+    
+    // 将通知存入 notices 表
+    const notices = readNotices();
+    notices.push(notifData);
+    writeNotices(notices);
+    
+    res.json({ success: true, whisper });
+  } catch (err) {
+    console.error('[whisper] send error:', err);
+    res.status(500).json({ error: '发送失败' });
+  }
+});
+
+app.get('/api/whispers', (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: '请先登录' });
+    }
+    
+    const whispers = db.readWhispers();
+    const received = whispers.filter(w => 
+      (w.receiverId === user.uid || w.receiverId === user.id) && !w.deleted
+    ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(received);
+  } catch (err) {
+    console.error('[whisper] list error:', err);
+    res.status(500).json({ error: '获取失败' });
+  }
+});
+
+app.get('/api/whispers/sent', (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: '请先登录' });
+    }
+    
+    const whispers = db.readWhispers();
+    const sent = whispers.filter(w => 
+      (w.senderId === user.uid || w.senderId === user.id) && !w.deleted
+    ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(sent);
+  } catch (err) {
+    console.error('[whisper] sent list error:', err);
+    res.status(500).json({ error: '获取失败' });
+  }
+});
+
+app.delete('/api/whispers/:id', (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ error: '请先登录' });
+    }
+    
+    const { id } = req.params;
+    const whispers = db.readWhispers();
+    const whisper = whispers.find(w => w.id === id);
+    
+    if (!whisper) {
+      return res.status(404).json({ error: '悄悄话不存在' });
+    }
+    
+    // 只有发送者或接收者可以删除
+    if (whisper.senderId !== user.uid && whisper.senderId !== user.id &&
+        whisper.receiverId !== user.uid && whisper.receiverId !== user.id) {
+      return res.status(403).json({ error: '无权删除' });
+    }
+    
+    // 软删除
+    whisper.deleted = 1;
+    db.writeWhispers(whispers);
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[whisper] delete error:', err);
+    res.status(500).json({ error: '删除失败' });
+  }
+});
+
+app.get('/api/whispers/admin', requireAdmin, (req, res) => {
+  try {
+    const whispers = db.readWhispers();
+    const all = whispers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(all);
+  } catch (err) {
+    console.error('[whisper] admin list error:', err);
+    res.status(500).json({ error: '获取失败' });
+  }
+});
+
 // ===== 旧用户UID分配 =====
 function assignUIDsToOldUsers() {
   const users = readUsers();
