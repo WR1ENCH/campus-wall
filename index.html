@@ -1873,6 +1873,83 @@
  #notifContent::-webkit-scrollbar { width: 5px; }
  #notifContent::-webkit-scrollbar-track { background: transparent; }
  #notifContent::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+ /* ===== 悄悄话功能 ===== */
+ .whisper-tab {
+ padding: 8px 16px;
+ background: #f3f4f6;
+ border: none;
+ border-radius: 8px;
+ font-size: 13px;
+ font-weight: 500;
+ color: #6b7280;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .whisper-tab:hover {
+ background: #e5e7eb;
+ color: #374151;
+ }
+ .whisper-tab.active {
+ background: #ec4899;
+ color: #fff;
+ }
+
+ .whisper-item {
+ padding: 14px;
+ background: #fdf2f8;
+ border: 1px solid #fbcfe8;
+ border-radius: 12px;
+ margin-bottom: 10px;
+ transition: all 0.15s;
+ }
+ .whisper-item:hover {
+ background: #fce7f3;
+ border-color: #f9a8d4;
+ }
+ .whisper-item-header {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ margin-bottom: 8px;
+ }
+ .whisper-item-user {
+ font-size: 14px;
+ font-weight: 600;
+ color: #9d174d;
+ }
+ .whisper-item-time {
+ font-size: 11px;
+ color: #9ca3af;
+ }
+ .whisper-item-content {
+ font-size: 14px;
+ color: #374151;
+ line-height: 1.5;
+ word-break: break-word;
+ }
+ .whisper-item-level {
+ display: inline-block;
+ padding: 2px 8px;
+ border-radius: 4px;
+ font-size: 10px;
+ font-weight: 600;
+ margin-top: 8px;
+ }
+ .whisper-item-level.T0 { background: #fee2e2; color: #dc2626; }
+ .whisper-item-level.T1 { background: #fef3c7; color: #d97706; }
+ .whisper-item-level.T2 { background: #f3f4f6; color: #6b7280; }
+
+ .whisper-empty {
+ text-align: center;
+ padding: 40px 20px;
+ color: #9ca3af;
+ font-size: 14px;
+ }
+
+ @media (max-width: 768px) {
+ .whisper-tab { padding: 6px 12px; font-size: 12px; }
+ }
  </style>
 </head>
 <body>
@@ -1927,6 +2004,7 @@
  <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="btn-label">讨论区</span></button>
  <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="btn-label">你问我答</span></button>
  <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <span class="btn-label">投票</span></button>
+ <button class="compose-btn" style="background:#fce7f3;color:#9d174d;border:1.5px solid #f9a8d4;" type="button" onclick="openWhisperModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> <span class="btn-label">悄悄话</span></button>
  <button class="notif-btn" id="notifBtn" onclick="openNotifModal()" title="通知" style="background:transparent;border:1.5px solid rgba(0,0,0,0.1);border-radius:4px;font-size:16px;padding:6px 10px;cursor:pointer;position:relative;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notifBadge" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:2px solid #fff;"></span></button>
  </div>
  <!-- 校园墙拍卖滚动栏 -->
@@ -2081,6 +2159,81 @@
  <!-- 右侧：具体内容 -->
  <div id="notifContent" style="flex:1;overflow-y:auto;padding:20px 24px;">
  <div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px;">选择一个通知查看详情</div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ===== 悄悄话弹窗 ===== -->
+ <div class="modal-overlay" id="whisperOverlay" style="display:none;z-index:1000;" onclick="if(event.target===this)closeWhisperModal()">
+ <div class="modal" style="animation:qaIn 0.3s ease;background:#ffffff;border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.2);overflow:hidden;display:flex;flex-direction:column;width:min(94vw,500px);max-height:80vh;">
+ <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0;">
+ <h3 style="margin:0;font-size:18px;font-weight:600;color:#9d174d;">
+ <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 悄悄话
+ </h3>
+ <button class="modal-close" onclick="closeWhisperModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#999;padding:0;line-height:1;">&times;</button>
+ </div>
+ <div style="flex:1;overflow-y:auto;padding:20px;">
+ <!-- Tab切换 -->
+ <div style="display:flex;gap:8px;margin-bottom:16px;">
+ <button class="whisper-tab active" onclick="switchWhisperTab('send')" id="whisperTabSend">发送</button>
+ <button class="whisper-tab" onclick="switchWhisperTab('inbox')" id="whisperTabInbox">收件箱</button>
+ <button class="whisper-tab" onclick="switchWhisperTab('sent')" id="whisperTabSent">发件箱</button>
+ </div>
+ 
+ <!-- 发送面板 -->
+ <div id="whisperSendPanel">
+ <div style="margin-bottom:14px;">
+ <label style="display:block;font-size:13px;font-weight:600;color:#6b7280;margin-bottom:6px;">发送对象</label>
+ <input type="text" id="whisperReceiverInput" placeholder="搜索用户名或UID..." 
+ style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;"
+ oninput="searchWhisperUsers(this.value)">
+ <div id="whisperUserResults" style="display:none;position:absolute;background:#fff;border:1px solid #e5e7eb;border-radius:8px;max-height:150px;overflow-y:auto;width:calc(100% - 40px);z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+ <div id="whisperSelectedUser" style="display:none;margin-top:8px;padding:8px;background:#fce7f3;border-radius:8px;font-size:13px;color:#9d174d;"></div>
+ </div>
+ 
+ <div style="margin-bottom:14px;">
+ <label style="display:block;font-size:13px;font-weight:600;color:#6b7280;margin-bottom:6px;">消息内容</label>
+ <textarea id="whisperContentInput" placeholder="说点什么...（最多50字）" maxlength="50"
+ style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;resize:vertical;outline:none;font-family:inherit;"
+ oninput="updateWhisperCharCount()"></textarea>
+ <div style="text-align:right;font-size:11px;color:#9ca3af;margin-top:4px;">
+ <span id="whisperCharCount">0</span>/50
+ </div>
+ </div>
+ 
+ <div style="margin-bottom:16px;">
+ <label style="display:block;font-size:13px;font-weight:600;color:#6b7280;margin-bottom:6px;">通知等级</label>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;">
+ <label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;">
+ <input type="radio" name="whisperNotifLevel" value="T0" style="cursor:pointer;"> 
+ <span style="color:#ef4444;font-weight:600;">T0</span> 立即弹窗
+ </label>
+ <label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;">
+ <input type="radio" name="whisperNotifLevel" value="T1" checked style="cursor:pointer;"> 
+ <span style="color:#f59e0b;font-weight:600;">T1</span> 通知列表
+ </label>
+ <label style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;">
+ <input type="radio" name="whisperNotifLevel" value="T2" style="cursor:pointer;"> 
+ <span style="color:#6b7280;font-weight:600;">T2</span> 仅标记
+ </label>
+ </div>
+ </div>
+ 
+ <button onclick="sendWhisper()" id="whisperSendBtn"
+ style="width:100%;padding:12px;background:#ec4899;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;">
+ 发送悄悄话
+ </button>
+ </div>
+ 
+ <!-- 收件箱面板 -->
+ <div id="whisperInboxPanel" style="display:none;">
+ <div id="whisperInboxList" style="color:#6b7280;text-align:center;padding:40px 20px;">加载中...</div>
+ </div>
+ 
+ <!-- 发件箱面板 -->
+ <div id="whisperSentPanel" style="display:none;">
+ <div id="whisperSentList" style="color:#6b7280;text-align:center;padding:40px 20px;">加载中...</div>
  </div>
  </div>
  </div>
@@ -7614,11 +7767,270 @@
  }
 
  function escapeHtml(text) {
-   if (!text) return '';
-   var div = document.createElement('div');
-   div.textContent = text;
-   return div.innerHTML;
- }
- </script>
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ===== 悄悄话功能 =====
+  let whisperSelectedUser = null;
+
+  function openWhisperModal() {
+    if (!currentUser) {
+      showLoginModal();
+      return;
+    }
+    document.getElementById('whisperOverlay').style.display = 'flex';
+    switchWhisperTab('send');
+  }
+
+  function closeWhisperModal() {
+    document.getElementById('whisperOverlay').style.display = 'none';
+    whisperSelectedUser = null;
+    document.getElementById('whisperReceiverInput').value = '';
+    document.getElementById('whisperSelectedUser').style.display = 'none';
+    document.getElementById('whisperContentInput').value = '';
+    updateWhisperCharCount();
+  }
+
+  function switchWhisperTab(tab) {
+    document.querySelectorAll('.whisper-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('whisperTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    
+    document.getElementById('whisperSendPanel').style.display = tab === 'send' ? 'block' : 'none';
+    document.getElementById('whisperInboxPanel').style.display = tab === 'inbox' ? 'block' : 'none';
+    document.getElementById('whisperSentPanel').style.display = tab === 'sent' ? 'block' : 'none';
+    
+    if (tab === 'inbox') loadWhisperInbox();
+    if (tab === 'sent') loadWhisperSent();
+  }
+
+  let whisperSearchTimeout = null;
+
+  async function searchWhisperUsers(query) {
+    if (!query || query.length < 1) {
+      document.getElementById('whisperUserResults').style.display = 'none';
+      return;
+    }
+    
+    clearTimeout(whisperSearchTimeout);
+    whisperSearchTimeout = setTimeout(async () => {
+      try {
+        const token = localStorage.getItem('userToken') || '';
+        const res = await fetch('/api/user/search?q=' + encodeURIComponent(query), {
+          credentials: 'include',
+          headers: { 'X-User-Token': token }
+        });
+        const result = await res.json();
+        const users = result.ok ? result.data : [];
+        
+        const resultsDiv = document.getElementById('whisperUserResults');
+        if (!users || users.length === 0) {
+          resultsDiv.innerHTML = '<div style="padding:12px;color:#9ca3af;text-align:center;">未找到用户</div>';
+        } else {
+          resultsDiv.innerHTML = users.slice(0, 5).map(u => 
+            '<div class="whisper-user-result" onclick="selectWhisperUser(\'' + u.uid + '\', \'' + (u.nickname || u.username).replace(/'/g, "\\'") + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'#f3f4f6\'" onmouseout="this.style.background=\'transparent\'">' +
+            '<span style="font-size:20px;">' + (u.avatar || '👤') + '</span>' +
+            '<div>' +
+            '<div style="font-size:14px;font-weight:500;color:#1a1a2e;">' + (u.nickname || u.username) + '</div>' +
+            '<div style="font-size:11px;color:#9ca3af;">UID: ' + u.uid + '</div>' +
+            '</div>' +
+            '</div>'
+          ).join('');
+        }
+        resultsDiv.style.display = 'block';
+      } catch (err) {
+        console.error('搜索用户失败:', err);
+      }
+    }, 300);
+  }
+
+  function selectWhisperUser(uid, name) {
+    whisperSelectedUser = { uid, name };
+    document.getElementById('whisperReceiverInput').value = '';
+    document.getElementById('whisperUserResults').style.display = 'none';
+    
+    const selectedDiv = document.getElementById('whisperSelectedUser');
+    selectedDiv.innerHTML = '已选择: <strong>' + name + '</strong> (UID: ' + uid + ') <span onclick="clearWhisperUser()" style="cursor:pointer;margin-left:8px;color:#9ca3af;">&times;</span>';
+    selectedDiv.style.display = 'block';
+  }
+
+  function clearWhisperUser() {
+    whisperSelectedUser = null;
+    document.getElementById('whisperSelectedUser').style.display = 'none';
+  }
+
+  function updateWhisperCharCount() {
+    const content = document.getElementById('whisperContentInput').value;
+    document.getElementById('whisperCharCount').textContent = content.length;
+  }
+
+  async function sendWhisper() {
+    if (!whisperSelectedUser) {
+      alert('请选择发送对象');
+      return;
+    }
+    
+    const content = document.getElementById('whisperContentInput').value.trim();
+    if (!content) {
+      alert('请输入消息内容');
+      return;
+    }
+    
+    if (content.length > 50) {
+      alert('内容不能超过50字');
+      return;
+    }
+    
+    const notifLevel = document.querySelector('input[name="whisperNotifLevel"]:checked').value;
+    
+    const sendBtn = document.getElementById('whisperSendBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '发送中...';
+    
+    try {
+      const res = await fetch('/api/whispers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          receiverId: whisperSelectedUser.uid,
+          content: content,
+          notifLevel: notifLevel
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        showToast('悄悄话发送成功！', 'success');
+        closeWhisperModal();
+      } else {
+        showToast(data.error || '发送失败', 'error');
+      }
+    } catch (err) {
+      console.error('发送悄悄话失败:', err);
+      showToast('发送失败，请重试', 'error');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '发送悄悄话';
+    }
+  }
+
+  async function loadWhisperInbox() {
+    const listDiv = document.getElementById('whisperInboxList');
+    listDiv.innerHTML = '<div class="whisper-empty">加载中...</div>';
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers', {
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      const whispers = await res.json();
+      
+      if (!whispers || whispers.length === 0) {
+        listDiv.innerHTML = '<div class="whisper-empty">暂无收到的悄悄话</div>';
+        return;
+      }
+      
+      listDiv.innerHTML = whispers.map(w => 
+        '<div class="whisper-item">' +
+        '<div class="whisper-item-header">' +
+        '<span class="whisper-item-user">来自: ' + w.senderName + '</span>' +
+        '<span class="whisper-item-time">' + formatTime(w.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="whisper-item-content">' + escapeHtml(w.content) + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">' +
+        '<span class="whisper-item-level ' + w.notifLevel + '">' + w.notifLevel + '</span>' +
+        '<button onclick="deleteWhisper(\'' + w.id + '\', \'inbox\')" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;">删除</button>' +
+        '</div>' +
+        '</div>'
+      ).join('');
+    } catch (err) {
+      console.error('加载收件箱失败:', err);
+      listDiv.innerHTML = '<div class="whisper-empty">加载失败</div>';
+    }
+  }
+
+  async function loadWhisperSent() {
+    const listDiv = document.getElementById('whisperSentList');
+    listDiv.innerHTML = '<div class="whisper-empty">加载中...</div>';
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers/sent', {
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      const whispers = await res.json();
+      
+      if (!whispers || whispers.length === 0) {
+        listDiv.innerHTML = '<div class="whisper-empty">暂无发送的悄悄话</div>';
+        return;
+      }
+      
+      listDiv.innerHTML = whispers.map(w => 
+        '<div class="whisper-item">' +
+        '<div class="whisper-item-header">' +
+        '<span class="whisper-item-user">发送给: ' + w.receiverName + '</span>' +
+        '<span class="whisper-item-time">' + formatTime(w.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="whisper-item-content">' + escapeHtml(w.content) + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">' +
+        '<span class="whisper-item-level ' + w.notifLevel + '">' + w.notifLevel + '</span>' +
+        '<button onclick="deleteWhisper(\'' + w.id + '\', \'sent\')" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;">删除</button>' +
+        '</div>' +
+        '</div>'
+      ).join('');
+    } catch (err) {
+      console.error('加载发件箱失败:', err);
+      listDiv.innerHTML = '<div class="whisper-empty">加载失败</div>';
+    }
+  }
+
+  async function deleteWhisper(id, type) {
+    if (!confirm('确定删除这条悄悄话？')) return;
+    
+    try {
+      const token = localStorage.getItem('userToken') || '';
+      const res = await fetch('/api/whispers/' + id, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'X-User-Token': token }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        showToast('已删除', 'success');
+        if (type === 'inbox') loadWhisperInbox();
+        if (type === 'sent') loadWhisperSent();
+      } else {
+        showToast(data.error || '删除失败', 'error');
+      }
+    } catch (err) {
+      console.error('删除悄悄话失败:', err);
+      showToast('删除失败', 'error');
+    }
+  }
+
+  function formatTime(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    return date.toLocaleDateString('zh-CN');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+  </script>
 </body>
 </html>

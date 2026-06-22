@@ -64,6 +64,18 @@ function migrate() {
     "reason" TEXT,
     "createdAt" TEXT
   )`);
+  // 创建 whispers 表（悄悄话功能）
+  db.exec(`CREATE TABLE IF NOT EXISTS "whispers" (
+    "id" TEXT PRIMARY KEY,
+    "senderId" TEXT NOT NULL,
+    "senderName" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "receiverName" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "notifLevel" TEXT DEFAULT 'T1',
+    "createdAt" TEXT NOT NULL,
+    "deleted" INTEGER DEFAULT 0
+  )`);
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
@@ -359,6 +371,15 @@ function addDeletedItem(item) {
   dropAndInsert('deleted_items', items);
 }
 
+// ===== 悄悄话 =====
+function readWhispers() { return all('whispers'); }
+function writeWhispers(data) { dropAndInsert('whispers', data); }
+function addWhisper(whisper) {
+  const whispers = all('whispers');
+  whispers.push(whisper);
+  dropAndInsert('whispers', whispers);
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -388,4 +409,5 @@ module.exports = {
   readVoteRecords, writeVoteRecords,
   readVoteIpRecords, writeVoteIpRecords,
   readTrustScoreLogs, writeTrustScoreLogs,
+  readWhispers, writeWhispers, addWhisper,
 };
