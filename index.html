@@ -1873,6 +1873,83 @@
  #notifContent::-webkit-scrollbar { width: 5px; }
  #notifContent::-webkit-scrollbar-track { background: transparent; }
  #notifContent::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+ /* ===== 悄悄话功能 ===== */
+ .whisper-tab {
+ padding: 8px 16px;
+ background: #f3f4f6;
+ border: none;
+ border-radius: 8px;
+ font-size: 13px;
+ font-weight: 500;
+ color: #6b7280;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+ .whisper-tab:hover {
+ background: #e5e7eb;
+ color: #374151;
+ }
+ .whisper-tab.active {
+ background: #ec4899;
+ color: #fff;
+ }
+
+ .whisper-item {
+ padding: 14px;
+ background: #fdf2f8;
+ border: 1px solid #fbcfe8;
+ border-radius: 12px;
+ margin-bottom: 10px;
+ transition: all 0.15s;
+ }
+ .whisper-item:hover {
+ background: #fce7f3;
+ border-color: #f9a8d4;
+ }
+ .whisper-item-header {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ margin-bottom: 8px;
+ }
+ .whisper-item-user {
+ font-size: 14px;
+ font-weight: 600;
+ color: #9d174d;
+ }
+ .whisper-item-time {
+ font-size: 11px;
+ color: #9ca3af;
+ }
+ .whisper-item-content {
+ font-size: 14px;
+ color: #374151;
+ line-height: 1.5;
+ word-break: break-word;
+ }
+ .whisper-item-level {
+ display: inline-block;
+ padding: 2px 8px;
+ border-radius: 4px;
+ font-size: 10px;
+ font-weight: 600;
+ margin-top: 8px;
+ }
+ .whisper-item-level.T0 { background: #fee2e2; color: #dc2626; }
+ .whisper-item-level.T1 { background: #fef3c7; color: #d97706; }
+ .whisper-item-level.T2 { background: #f3f4f6; color: #6b7280; }
+
+ .whisper-empty {
+ text-align: center;
+ padding: 40px 20px;
+ color: #9ca3af;
+ font-size: 14px;
+ }
+
+ @media (max-width: 768px) {
+ .whisper-tab { padding: 6px 12px; font-size: 12px; }
+ }
  </style>
 </head>
 <body>
