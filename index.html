@@ -7817,10 +7817,13 @@
     clearTimeout(whisperSearchTimeout);
     whisperSearchTimeout = setTimeout(async () => {
       try {
-        const res = await fetch('/api/users/search?q=' + encodeURIComponent(query), {
-          credentials: 'include'
+        const token = localStorage.getItem('userToken') || '';
+        const res = await fetch('/api/user/search?q=' + encodeURIComponent(query), {
+          credentials: 'include',
+          headers: { 'X-User-Token': token }
         });
-        const users = await res.json();
+        const result = await res.json();
+        const users = result.ok ? result.data : [];
         
         const resultsDiv = document.getElementById('whisperUserResults');
         if (!users || users.length === 0) {
