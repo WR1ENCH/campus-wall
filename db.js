@@ -94,9 +94,7 @@ function tryParse(v) {
   if (typeof v !== 'string') return v;
   if (v === 'true') return true;
   if (v === 'false') return false;
-  if (v === '1') return true;
-  if (v === '0') return false;
-  // 解析数字字符串
+  // 解析数字字符串（包括 "1" "0" 等）
   if (/^-?\d+(\.\d+)?$/.test(v)) {
     const n = Number(v);
     if (isFinite(n)) return Number.isInteger(n) ? n : n;
