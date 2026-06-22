@@ -91,7 +91,6 @@ function migrate() {
 
 // ---- helpers ----
 function tryParse(v) {
-  if (typeof v === 'number') return v !== 0;
   if (typeof v !== 'string') return v;
   if (v === 'true') return true;
   if (v === 'false') return false;

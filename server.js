@@ -1276,7 +1276,7 @@ app.get('/api/user/me', (req, res) => {
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
+  res.json({ ok: true, data: { id: user.id, uid: user.uid, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: Number(user.credit) || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: Number(user.checkinStreak) || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null } });
 });
 
 // ===== 签到 =====
@@ -1691,8 +1691,8 @@ app.get('/api/user/me/zhixue-info', (req, res) => {
     console.warn('[zhixue-info] 用户', user.id, '状态为 approved 但缺少审核记录，降级为 pending');
   }
 
-  const realName = decryptCert ? decryptCert(user.certRealName) : null;
-  const className = user.certClassName ? (decryptCert ? decryptCert(user.certClassName) : null) : null;
+  const realName = user.zhixueManualName || null;
+  const className = null;
   // 未通过审核或被驳回时，返回编辑所需的预填数据
   let editData = null;
   if (displayStatus !== 'approved' && displayStatus !== 'pending_confirm') {
@@ -1789,15 +1789,6 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   users[userIndex].zhixueRejectReason = null;
   users[userIndex].zhixueRejectedAt = null;
 
-  // 加密存储姓名班级（pending_confirm 时也存，供用户确认时展示）
-  const nameToStore = (realName && realName.trim())
-    ? realName.trim()
-    : (u.zhixueManualName || null);
-  if (nameToStore) {
-    users[userIndex].certRealName = encryptCert(nameToStore);
-  }
-  users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
-
   if (isManual) {
     // 手动认证直接通过，奖励 Credits
     users[userIndex].credit = (users[userIndex].credit || 0) + 300;
@@ -1853,8 +1844,6 @@ app.post('/api/user/deny-zhixue', (req, res) => {
   users[userIndex].zhixueStatus = 'rejected';
   users[userIndex].zhixueRejectReason = '你确认提交的信息并非本人，请重新填写正确的信息';
   users[userIndex].zhixueRejectedAt = new Date().toISOString();
-  users[userIndex].certRealName = null;
-  users[userIndex].certClassName = null;
   writeUsers(users);
 
   res.json({ ok: true, msg: '已标记为未通过，请重新提交认证信息' });
@@ -1903,8 +1892,6 @@ app.post('/api/admin/zhixue/:userId/reset', requireAdmin, (req, res) => {
   u.zhixueReviewedBy = null;
   u.zhixueRejectReason = null;
   u.zhixueRejectedAt = null;
-  u.certRealName = null;
-  u.certClassName = null;
   u.zhixuePassword = u._origPassword || null; // 保留密码以便重新审核
   writeUsers(users);
 
@@ -2163,13 +2150,13 @@ app.get('/api/user/search', (req, res) => {
   
   // 过滤隐私设置（'全部'类型需逐字段检查）
   results = results.filter(u => {
-    if (!u.searchable) return false;
-    if (type === 'username' && !u.searchByUsername) return false;
-    if (type === 'nickname' && !u.searchByNickname) return false;
-    if (type === 'zhixue' && !u.searchByZhixue) return false;
-    if (type === 'uid' && !u.searchByUid) return false;
+    if (!toBool(u.searchable)) return false;
+    if (type === 'username' && !toBool(u.searchByUsername)) return false;
+    if (type === 'nickname' && !toBool(u.searchByNickname)) return false;
+    if (type === 'zhixue' && !toBool(u.searchByZhixue)) return false;
+    if (type === 'uid' && !toBool(u.searchByUid)) return false;
     if (type === 'all') {
-      return u.searchByUsername || u.searchByNickname || u.searchByZhixue || u.searchByUid;
+      return toBool(u.searchByUsername) || toBool(u.searchByNickname) || toBool(u.searchByZhixue) || toBool(u.searchByUid);
     }
     return true;
   });
@@ -2187,6 +2174,9 @@ app.get('/api/user/search', (req, res) => {
   res.json({ ok: true, data: safeResults });
 });
 
+// SQLite 布尔值判断：0/'0'/false → false，其他 → true
+function toBool(v) { return v !== false && v !== 0 && v !== '0' && v !== 'false' && v != null; }
+
 // 获取安全设置
 app.get('/api/user/security', (req, res) => {
   const token = req.headers['x-user-token'];
@@ -2199,12 +2189,12 @@ app.get('/api/user/security', (req, res) => {
   res.json({
     ok: true,
     data: {
-      searchable: user.searchable !== false,
-      searchByNickname: user.searchByNickname !== false,
-      searchByUsername: user.searchByUsername !== false,
-      searchByZhixue: user.searchByZhixue !== false,
-      searchByUid: user.searchByUid !== false,
-      trustScore: (user.trustScore !== undefined && user.trustScore !== null) ? user.trustScore : 100
+      searchable: toBool(user.searchable),
+      searchByNickname: toBool(user.searchByNickname),
+      searchByUsername: toBool(user.searchByUsername),
+      searchByZhixue: toBool(user.searchByZhixue),
+      searchByUid: toBool(user.searchByUid),
+      trustScore: Number(user.trustScore) || 100
     }
   });
 });
@@ -2472,10 +2462,8 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
   const user = users.find(u => u.id === req.params.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
 
-  // 不返回密码；解密实名信息
-  const { password, certRealName, certClassName, ...safeUser } = user;
-  safeUser.certRealNameDecrypted  = decryptCert(certRealName)  || null;
-  safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+  // 不返回密码；实名信息从 zhixueManualName 读取
+  const { password, ...safeUser } = user;
 
   // 帖子
   const posts = readPosts();
