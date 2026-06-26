@@ -11,6 +11,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^4.22.2",
+    "compression": "^1.7.5",
     "svg-captcha": "^1.4.0"
   },
   "keywords": [],

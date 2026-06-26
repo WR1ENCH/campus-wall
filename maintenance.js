@@ -104,11 +104,17 @@ function listTestKeys() {
   return keys.filter(k => new Date(k.expiresAt).getTime() > now);
 }
 
+// 兼容 read/write 别名
+function read() { return getMaintenanceData(); }
+function write(data) { saveMaintenanceData(data); }
+
 module.exports = {
   getMaintenanceData,
   saveMaintenanceData,
   createTestKey,
   verifyTestKey,
   deleteTestKey,
-  listTestKeys
+  listTestKeys,
+  read,
+  write
 };

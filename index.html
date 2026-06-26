@@ -5,8 +5,9 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>校园墙 · 便利贴</title>
  <link href="https://fonts.googleapis.cn/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
- <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
- <style>
+  <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="spa-transitions.css">
+  <style>
  :root {
  --note-yellow: #fff9b1;
  --note-pink: #ffc9de;
@@ -1867,8 +1868,9 @@
  </div>
  </div>
 
- <!-- 可拖拽墙 -->
- <div class="wall" id="wallOuter">
+  <div id="main-content">
+  <!-- 可拖拽墙 -->
+  <div class="wall" id="wallOuter">
  <div class="notes-area">
  <div class="notes-grid" id="notesGrid"></div>
  </div>
@@ -7404,7 +7406,18 @@
  } catch (e) {
  shaEl.textContent = 'dev';
  }
- })();
- </script>
+  })();
+  </script>
+</div>
+<script src="spa.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    window.router = new SpaRouter({
+      container: '#main-content',
+      transitionDuration: 300,
+      cacheTTL: 60000
+    });
+  });
+</script>
 </body>
 </html>

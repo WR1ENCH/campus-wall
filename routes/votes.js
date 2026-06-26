@@ -1,0 +1,113 @@
+// ===== routes/votes.js - 投票系统 =====
+const { verifyUserToken, verifySignedToken } = require('../lib/crypto');
+const { getClientIP } = require('../lib/helpers');
+const { requireAdmin } = require('../lib/middleware');
+const { broadcastSSE } = require('../lib/sse');
+const db = require('../db');
+const { check: checkSensitive } = require('../sensitiveWords');
+const { check: checkBullyingNames } = require('../bullyingNames');
+
+function readVotes() { return db.readVotes(); }
+function writeVotes(votes) { db.writeVotes(votes); broadcastSSE('voteUpdate', { t: Date.now() }); }
+function readVoteRecords() { return db.readVoteRecords(); }
+function writeVoteRecords(records) { db.writeVoteRecords(records); }
+function readVoteIpRecords() { return db.readVoteIpRecords(); }
+function writeVoteIpRecords(records) { db.writeVoteIpRecords(records); }
+function readUsers() { return db.readUsers(); }
+function writeUsers(users) { db.writeUsers(users); }
+function readSC() { return db.readSC(); }
+function readNotices() { return db.readNotices(); }
+function writeNotices(notices) { db.writeNotices(notices); }
+
+function _updateVoteOptions(vote, newOptions) {
+  const oldOptions = vote.options || [];
+  const newOpts = newOptions.map((opt, idx) => {
+    const optText = typeof opt === 'string' ? opt : (opt.text || '');
+    const optImage = typeof opt === 'string' ? null : (opt.image || null);
+    const existing = oldOptions[idx];
+    return { id: existing ? existing.id : 'opt_' + idx + '_' + Math.random().toString(36).slice(2, 6), text: optText.trim(), image: optImage, votes: existing ? existing.votes : 0 };
+  });
+  vote.options = newOpts;
+}
+
+module.exports = function(app) {
+  app.get('/api/votes', (req, res) => {
+    const votes = readVotes().filter(v => !v.deleted);
+    res.json({ ok: true, data: votes });
+  });
+  app.post('/api/votes', requireAdmin, (req, res) => {
+    const { title, options, multiple, allowCustom, endTime } = req.body;
+    if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
+    const votes = readVotes();
+    votes.push({ id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+  app.post('/api/admin/votes', requireAdmin, (req, res) => {
+    const { title, options, multiple, allowCustom, endTime } = req.body;
+    if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
+    const votes = readVotes();
+    votes.push({ id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+  app.post('/api/votes/:id/vote', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+    const { optionId, customText } = req.body;
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id);
+    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+    if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+    const records = readVoteRecords();
+    if (records.find(r => r.voteId === vote.id && r.userId === session.id)) return res.json({ ok: false, msg: '你已经投过票了' });
+    if (optionId) {
+      const opt = vote.options.find(o => o.id === optionId);
+      if (opt) opt.votes++;
+    }
+    if (vote.allowCustom && customText) {
+      vote.options.push({ id: 'opt_custom_' + Date.now().toString(36), text: customText.trim(), votes: 1 });
+    }
+    records.push({ id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, optionId: optionId || null, userId: session.id, createdAt: new Date().toISOString() });
+    writeVoteRecords(records);
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+  app.put('/api/votes/:id', (req, res) => {
+    const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录' });
+    const session = verifySignedToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const { title, options } = req.body;
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id);
+    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+    if (title) vote.title = title.trim();
+    if (options) _updateVoteOptions(vote, options);
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+  app.put('/api/votes/:id', requireAdmin, (req, res) => {
+    const { title, options, multiple, allowCustom, endTime } = req.body;
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id);
+    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+    if (title) vote.title = title.trim();
+    if (options) _updateVoteOptions(vote, options);
+    if (multiple !== undefined) vote.multiple = !!multiple;
+    if (allowCustom !== undefined) vote.allowCustom = !!allowCustom;
+    if (endTime !== undefined) vote.endTime = endTime || null;
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+  app.delete('/api/votes/:id', requireAdmin, (req, res) => {
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id);
+    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+    vote.deleted = true;
+    writeVotes(votes);
+    res.json({ ok: true });
+  });
+};

@@ -1,0 +1,484 @@
+const { verifyUserToken, verifySignedToken } = require('../lib/crypto');
+const { getClientIP } = require('../lib/helpers');
+const { broadcastSSE } = require('../lib/sse');
+const { captchaStore, postRateLimit } = require('../lib/state');
+const db = require('../db');
+const { check: checkSensitive } = require('../sensitiveWords');
+const { check: checkBullyingNames } = require('../bullyingNames');
+
+const CONTENT_MAX_LENGTH = 50;
+
+function readPosts() { return db.readPosts(); }
+function writePosts(posts) { db.writePosts(posts); broadcastSSE('postUpdate', { t: Date.now() }); }
+function readUsers() { return db.readUsers(); }
+function writeUsers(users) { db.writeUsers(users); }
+function readReports() { return db.readReports(); }
+function writeReports(reports) { db.writeReports(reports); }
+function readAdmins() { return db.readAdmins(); }
+function readDiscussions() { return db.readDiscussions(); }
+function writeDiscussions(discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
+function readDiscussionComments() { return db.readDiscussionComments(); }
+function writeDiscussionComments(comments) { db.writeDiscussionComments(comments); broadcastSSE('discussionUpdate', { t: Date.now() }); }
+function readNotices() { return db.readNotices(); }
+function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+
+function saveDeletedItem(type, item, deletedBy, extra) {
+  db.addDeletedItem({
+    id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: type,
+    content: typeof item.content === 'string' ? item.content.substring(0, 500) : '',
+    author: item.author || item.nickname || item.createdBy || '未知',
+    userId: item.userId || item.createdBy || null,
+    deletedAt: new Date().toISOString(),
+    deletedBy: deletedBy,
+    extra: extra || ''
+  });
+}
+
+function deleteSyncedDiscComment(postId) {
+  try {
+    var comments = readDiscussionComments();
+    var matched = comments.filter(function(c) { return c.syncPostId === postId; });
+    if (matched.length > 0) {
+      matched.forEach(function(c) { saveDeletedItem('disc_comment', c, 'system'); });
+      comments = comments.filter(function(c) { return c.syncPostId !== postId; });
+      writeDiscussionComments(comments);
+    }
+  } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
+}
+
+function incUserPostCount(nickname) {
+  const users = readUsers();
+  const user = users.find(u => u.nickname === nickname);
+  if (user) {
+    user.postCount = (user.postCount || 0) + 1;
+    writeUsers(users);
+  }
+}
+
+function requireAdmin(req, res, next) {
+  const token = req.headers['x-admin-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录，请先登录', code: 'NOT_LOGIN' });
+  const session = verifySignedToken(token);
+  if (!session || !session.id || !session.loginAt) {
+    return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
+  }
+  if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
+    return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+  }
+  req.admin = session;
+  next();
+}
+
+module.exports = function(app) {
+
+app.get('/api/posts', (req, res) => {
+  const posts = readPosts();
+  // 过滤已删除的帖子（普通用户不可见）
+  const activePosts = posts.filter(p => !p.deleted);
+  const users = readUsers();
+  const admins = readAdmins(); // 用于验证管理员绑定是否仍有效
+  // 为每个帖子附加作者的管理员角色信息
+  const postsWithAdmin = activePosts.map(p => {
+    if (p.userId) {
+      const author = users.find(u => u.id === p.userId);
+      if (author) {
+        // 认证状态校验：approved 必须有审核记录
+        let zhixueStatus = author.zhixueStatus || null;
+        if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
+          zhixueStatus = null;
+        }
+        // 管理员绑定有效性校验：管理员账号必须仍存在
+        let adminRole = null;
+        let adminId = null;
+        if (author.bindAdminId && author.bindAdminRole) {
+          const boundAdmin = admins.find(a => a.id === author.bindAdminId);
+          if (boundAdmin) {
+            adminRole = author.bindAdminRole;
+            adminId = author.bindAdminId;
+          }
+        }
+        return {
+          ...p,
+          authorAdminRole: adminRole,
+          authorBindAdminId: adminId,
+          authorZhixueStatus: zhixueStatus,
+          authorZhixueCertType: author.zhixueCertType || null
+        };
+      }
+    }
+    return p;
+  });
+  res.json({ ok: true, data: postsWithAdmin });
+});
+
+app.get('/api/posts/:id', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+  // 过滤已删除的评论
+  if (Array.isArray(post.comments)) {
+    post.comments = post.comments.filter(c => !c.deleted);
+  } else {
+    post.comments = [];
+  }
+  if (post.userId) {
+    const users = readUsers();
+    const author = users.find(u => u.id === post.userId);
+    if (author) {
+      let zhixueStatus = author.zhixueStatus || null;
+      if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
+        zhixueStatus = null;
+      }
+      return res.json({ ok: true, data: { ...post, authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
+    }
+  }
+  res.json({ ok: true, data: post });
+});
+
+app.post('/api/posts', (req, res) => {
+  // 验证用户 Token（可选：没 token 以匿名身份发帖，有 token 必须有效）
+  let realUserId = null;
+  let realAuthor = '匿名';
+  let realAvatar = '🙈';
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+    realUserId = session.id;
+    realAuthor = session.nickname || '匿名';
+    // 从用户数据中获取头像
+    const allUsers = readUsers();
+    const user = allUsers.find(u => u.id === session.id);
+    realAvatar = (user && user.avatar) || '🙈';
+  }
+
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous } = req.body;
+
+  // 如果勾选了匿名发布，覆盖为匿名显示
+  let anonymousFlag = false;
+  if (isAnonymous) {
+    realAuthor = '匿名';
+    realAvatar = '🙈';
+    anonymousFlag = true;
+  }
+
+  
+// 发帖频率检测（5分钟内最多3篇，超出需验证码）
+if (realUserId) {
+  const now = Date.now();
+  const timestamps = postRateLimit.get(realUserId) || [];
+  const recentPosts = timestamps.filter(ts => now - ts < 300000);
+  if (recentPosts.length >= 3) {
+    const entry = captchaStore.get(captchaId);
+    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+      return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
+    }
+    // 验证码通过，清除限制，重新计时
+    postRateLimit.delete(realUserId);
+    captchaStore.delete(captchaId);
+  }
+  // 记录本次发帖
+  postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 保留最近20条
+}
+if (!content || !content.trim()) {
+    return res.json({ ok: false, msg: '内容不能为空' });
+  }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    return res.json({ ok: false, msg: '内容不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
+  }
+  if (!type) {
+    return res.json({ ok: false, msg: '请选择类型' });
+  }
+
+  // 敏感词检测（sensitiveForce=true 时跳过检查，但后续仍会生成举报）
+  const sensitiveWords = checkSensitive(content);
+  const hasSensitive = sensitiveWords.length > 0;
+
+  // 有敏感词且用户未确认 → 不保存，返回警告
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
+
+  // 霸凌保护姓名检测（始终阻止，不支持 force 绕过）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({
+      ok: false,
+      bullying: true,
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
+    });
+  }
+
+  const posts = readPosts();
+
+  // 验证图片（base64 data URL，每张≤2MB，最多4张）
+  var validImages = [];
+  var maxImageSize = 2 * 1024 * 1024;
+  if (Array.isArray(images)) {
+    images.forEach(function(img) {
+      if (typeof img === 'string' && img.startsWith('data:') && img.length <= maxImageSize && validImages.length < 4) {
+        validImages.push(img);
+      }
+    });
+  }
+
+  const newPost = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type,
+    content: content.trim(),
+    avatar: realAvatar,
+    author: realAuthor,
+    userId: realUserId,
+    time: new Date().toISOString(),
+    likes: 0,
+    likedBy: [],
+    comments: 0,
+    commentsCount: 0,
+    liked: false,
+    rotate: (Math.random() - 0.5) * 8,
+    zIndex: Math.floor(Math.random() * 5) + 1,
+    images: validImages.length > 0 ? validImages : undefined,
+    isAnonymous: anonymousFlag || undefined
+  };
+
+  posts.unshift(newPost);
+  writePosts(posts);
+
+  // 敏感词命中：自动生成举报记录挂到后台
+  if (hasSensitive) {
+    const reports = readReports();
+    reports.push({
+      id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: 'sensitive_post',
+      targetId: newPost.id,
+      postId: newPost.id,
+      reason: '系统自动检测：内容包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reportedBy: realUserId,
+      reporterName: realAuthor,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    writeReports(reports);
+  }
+
+  // 更新注册用户的发贴数
+  if (realUserId && realAuthor) {
+    incUserPostCount(realAuthor);
+  }
+
+  // 同步到讨论区（如果用户指定了话题）
+  const syncDiscussionId = req.body.syncDiscussionId;
+  if (syncDiscussionId && realUserId) {
+    var discussions = readDiscussions();
+    var disc = discussions.find(function(d) { return d.id === syncDiscussionId; });
+    if (disc && !disc.deleted) {
+      var discComments = readDiscussionComments();
+      var newDiscComment = {
+        id: 'dc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        discussionId: syncDiscussionId,
+        parentId: null,
+        content: content.trim(),
+        author: realAuthor,
+        userId: anonymousFlag ? null : realUserId,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        liked: false,
+        reportCount: 0,
+        syncPostId: newPost.id
+      };
+      discComments.push(newDiscComment);
+      writeDiscussionComments(discComments);
+      disc.commentCount = (disc.commentCount || 0) + 1;
+      writeDiscussions(discussions);
+    }
+  }
+
+  res.json({
+    ok: true,
+    data: newPost,
+    warning: false,
+    warningMsg: undefined
+  });
+});
+
+app.put('/api/posts/:id', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+
+  const { content, pinned } = req.body;
+  if (content !== undefined) post.content = content;
+  if (pinned !== undefined) post.pinned = pinned;
+
+  writePosts(posts);
+  res.json({ ok: true, data: post });
+});
+
+app.delete('/api/posts/:id', requireAdmin, (req, res) => {
+  let posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+
+  saveDeletedItem('post', post, 'admin');
+  posts = posts.filter(p => p.id !== req.params.id);
+  writePosts(posts);
+  deleteSyncedDiscComment(req.params.id);
+  res.json({ ok: true });
+});
+
+app.post('/api/posts/:id/like', (req, res) => {
+  // 获取点赞者身份
+  let likerId = getClientIP(req); // 匿名用户用 IP
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) likerId = session.id;
+  }
+
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+
+  if (!post) {
+    return res.json({ ok: false, msg: '帖子不存在' });
+  }
+
+  // 初始化 likedBy 数组（兼容旧数据）
+  if (!Array.isArray(post.likedBy)) post.likedBy = [];
+
+  const idx = post.likedBy.indexOf(likerId);
+  if (idx === -1) {
+    post.likedBy.push(likerId);
+  } else {
+    post.likedBy.splice(idx, 1);
+  }
+
+  post.likes = post.likedBy.length;
+  post.liked = post.likedBy.includes(likerId);
+
+  writePosts(posts);
+
+  res.json({ ok: true, data: { liked: post.liked, likes: post.likes } });
+});
+
+app.post('/api/posts/:id/comments', (req, res) => {
+  // 验证用户 Token
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录后再评论', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+
+  // 从 Token 中获取用户信息，禁止从 req.body 读取
+  const author = session.nickname || '匿名';
+  const userId = session.id;
+  // 获取用户头像
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id);
+  const avatar = (user && user.avatar) || '🙈';
+
+  const { content } = req.body;
+  if (!content || !content.trim()) {
+    return res.json({ ok: false, msg: '评论内容不能为空' });
+  }
+  if (content.length > CONTENT_MAX_LENGTH) {
+    return res.json({ ok: false, msg: '评论不能超过 ' + CONTENT_MAX_LENGTH + ' 字' });
+  }
+  // 敏感词检测（sensitiveForce=true 时跳过检查，后续仍会生成举报）
+  const sensitiveForce = req.body.sensitiveForce === true;
+  const sensitiveWords = checkSensitive(content);
+  const hasSensitive = sensitiveWords.length > 0;
+
+  // 有敏感词且用户未确认 → 不保存，返回警告
+  if (hasSensitive && !sensitiveForce) {
+    return res.json({
+      ok: false,
+      warning: true,
+      warningMsg: '内容包含敏感词，请修改后重试'
+    });
+  }
+
+  // 霸凌保护姓名检测（始终阻止）
+  const blockedNames = checkBullyingNames(content);
+  if (blockedNames.length > 0) {
+    return res.json({
+      ok: false,
+      bullying: true,
+      warningMsg: '内容涉及受保护人员姓名，无法发送'
+    });
+  }
+
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) {
+    return res.json({ ok: false, msg: '帖子不存在' });
+  }
+  if (!Array.isArray(post.comments)) post.comments = [];
+  const newComment = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    content: content.trim(),
+    author: author || '匿名',
+    avatar: avatar || '🙈',
+    userId: userId || null,
+    time: new Date().toISOString(),
+    likes: 0,
+    liked: false
+  };
+  post.comments.push(newComment);
+  post.commentsCount = post.comments.length;
+
+  // 敏感词命中：自动生成举报记录（仅在 sensitiveForce 时执行）
+  if (hasSensitive) {
+    const reports = readReports();
+    reports.push({
+      id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: 'sensitive_comment',
+      targetId: newComment.id,
+      postId: post.id,
+      reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reportedBy: userId,
+      reporterName: author,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    });
+    writeReports(reports);
+  }
+
+  writePosts(posts);
+  res.json({
+    ok: true,
+    data: newComment,
+    warning: false,
+    warningMsg: undefined
+  });
+});
+
+app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
+  const userId = req.headers['x-user-token'] ? (() => {
+    const s = verifySignedToken(req.headers['x-user-token']);
+    return s ? s.id : null;
+  })() : null;
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.postId);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+  if (!comment) return res.json({ ok: false, msg: '评论不存在' });
+  if (comment.deleted) return res.json({ ok: false, msg: '评论已被删除' });
+  const isCommentAuthor = userId && comment.userId && userId === comment.userId;
+  const isPostAuthor = userId && post.userId && userId === post.userId;
+  if (!isCommentAuthor && !isPostAuthor) {
+    return res.json({ ok: false, msg: '无权删除此评论' });
+  }
+  saveDeletedItem('comment', comment, userId === comment.userId ? 'user' : 'post_author');
+  post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => c.id !== req.params.commentId);
+  post.commentsCount = post.comments.length;
+  writePosts(posts);
+  res.json({ ok: true });
+});
+
+};

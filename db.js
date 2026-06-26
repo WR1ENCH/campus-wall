@@ -3,6 +3,7 @@
 
 const Database = require('better-sqlite3');
 const path = require('path');
+const cache = require('./lib/cache');
 
 const DB_PATH = path.join(__dirname, 'data', 'campus.db');
 let db;
@@ -55,9 +56,44 @@ function migrate() {
     "userId" TEXT,
     "createdAt" TEXT
   )`);
+  // 创建 trust_score_logs 表
+  db.exec(`CREATE TABLE IF NOT EXISTS "trust_score_logs" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "amount" INTEGER,
+    "score" INTEGER,
+    "reason" TEXT,
+    "createdAt" TEXT
+  )`);
+  // 创建 whispers 表
+  db.exec(`CREATE TABLE IF NOT EXISTS "whispers" (
+    "id" TEXT PRIMARY KEY,
+    "senderId" TEXT NOT NULL,
+    "senderName" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "receiverName" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "notifLevel" TEXT DEFAULT 'T1',
+    "createdAt" TEXT NOT NULL,
+    "deleted" INTEGER DEFAULT 0
+  )`);
+  // ===== 数据库索引 =====
+  const INDEXES = [
+    'CREATE INDEX IF NOT EXISTS idx_posts_deleted ON posts(deleted)',
+    'CREATE INDEX IF NOT EXISTS idx_posts_userId ON posts(userId)',
+    'CREATE INDEX IF NOT EXISTS idx_posts_time ON posts("time" DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)',
+    'CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status)',
+    'CREATE INDEX IF NOT EXISTS idx_discussions_deleted ON discussions(deleted)',
+    'CREATE INDEX IF NOT EXISTS idx_discussion_comments_discussionId ON discussion_comments(discussionId)',
+    'CREATE INDEX IF NOT EXISTS idx_qa_questions_status ON qa_questions(status)',
+  ];
+  for (const sql of INDEXES) {
+    try { db.exec(sql); } catch (e) { /* index may already exist */ }
+  }
   // 已有表的列迁移
   const tableMigrations = [
-    { name: 'posts', columns: ['images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
+    { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
   ];
   for (const t of tableMigrations) {
@@ -347,6 +383,133 @@ function addDeletedItem(item) {
   dropAndInsert('deleted_items', items);
 }
 
+// ===== 缓存集成 =====
+function invalidateCache(table) {
+  cache.invalidate(table);
+  cache.invalidate(table + '_count');
+}
+
+// ===== 新增 SQL 过滤查询 =====
+
+function getPosts(opts = {}) {
+  const d = getDb();
+  let sql = 'SELECT * FROM posts WHERE 1=1';
+  const params = [];
+  if (opts.deleted !== undefined) { sql += ' AND IFNULL(deleted,0) = ?'; params.push(opts.deleted ? 1 : 0); }
+  if (opts.type) { sql += ' AND type = ?'; params.push(opts.type); }
+  if (opts.userId) { sql += ' AND userId = ?'; params.push(opts.userId); }
+  if (opts.today) { sql += ' AND date("time") = ?'; params.push(opts.today); }
+  sql += ' ORDER BY "time" DESC';
+  if (opts.limit) { sql += ' LIMIT ?'; params.push(opts.limit); }
+  if (opts.offset) { sql += ' OFFSET ?'; params.push(opts.offset); }
+  const rows = d.prepare(sql).all(...params);
+  for (const row of rows) { for (const k of Object.keys(row)) row[k] = tryParse(row[k]); }
+  return rows;
+}
+
+function getPostCount(opts = {}) {
+  const d = getDb();
+  let sql = 'SELECT COUNT(*) as cnt FROM posts WHERE 1=1';
+  const params = [];
+  if (opts.deleted !== undefined) { sql += ' AND IFNULL(deleted,0) = ?'; params.push(opts.deleted ? 1 : 0); }
+  if (opts.type) { sql += ' AND type = ?'; params.push(opts.type); }
+  if (opts.today) { sql += ' AND date("time") = ?'; params.push(opts.today); }
+  const row = d.prepare(sql).get(...params);
+  return row ? row.cnt : 0;
+}
+
+function getUsers(opts = {}) {
+  const d = getDb();
+  let sql = 'SELECT * FROM users WHERE 1=1';
+  const params = [];
+  if (opts.status) { sql += ' AND status = ?'; params.push(opts.status); }
+  if (opts.search) { sql += ' AND (username LIKE ? OR nickname LIKE ?)'; params.push(`%${opts.search}%`, `%${opts.search}%`); }
+  sql += ' ORDER BY rowid DESC';
+  if (opts.limit) { sql += ' LIMIT ?'; params.push(opts.limit); }
+  if (opts.offset) { sql += ' OFFSET ?'; params.push(opts.offset); }
+  const rows = d.prepare(sql).all(...params);
+  for (const row of rows) { for (const k of Object.keys(row)) row[k] = tryParse(row[k]); }
+  return rows;
+}
+
+function getReports(opts = {}) {
+  const d = getDb();
+  let sql = 'SELECT * FROM reports WHERE 1=1';
+  const params = [];
+  if (opts.status) { sql += ' AND status = ?'; params.push(opts.status); }
+  sql += ' ORDER BY rowid DESC';
+  if (opts.limit) { sql += ' LIMIT ?'; params.push(opts.limit); }
+  if (opts.offset) { sql += ' OFFSET ?'; params.push(opts.offset); }
+  const rows = d.prepare(sql).all(...params);
+  for (const row of rows) { for (const k of Object.keys(row)) row[k] = tryParse(row[k]); }
+  return rows;
+}
+
+function queryRows(table, where, params = []) {
+  try {
+    const rows = getDb().prepare(`SELECT * FROM "${table}" WHERE ${where}`).all(...params);
+    for (const row of rows) { for (const k of Object.keys(row)) row[k] = tryParse(row[k]); }
+    return rows;
+  } catch { return []; }
+}
+
+function countRows(table, where, params = []) {
+  try {
+    const row = getDb().prepare(`SELECT COUNT(*) as cnt FROM "${table}" WHERE ${where}`).get(...params);
+    return row ? row.cnt : 0;
+  } catch { return 0; }
+}
+
+// ===== 新增增量写入 =====
+
+function insertRow(table, row) {
+  const d = getDb();
+  const cols = Object.keys(row);
+  const ph = cols.map(() => '?').join(',');
+  const vals = cols.map(c => toSqlValue(row[c]));
+  d.prepare(`INSERT INTO "${table}" (${cols.map(c => '"' + c + '"').join(',')}) VALUES (${ph})`).run(vals);
+  invalidateCache(table);
+}
+
+function updateRow(table, id, updates) {
+  const d = getDb();
+  const cols = Object.keys(updates);
+  const setClause = cols.map(c => `"${c}" = ?`).join(',');
+  const vals = cols.map(c => toSqlValue(updates[c]));
+  d.prepare(`UPDATE "${table}" SET ${setClause} WHERE id = ?`).run(...vals, id);
+  invalidateCache(table);
+}
+
+function deleteRow(table, id) {
+  getDb().prepare(`DELETE FROM "${table}" WHERE id = ?`).run(id);
+  invalidateCache(table);
+}
+
+function insertPost(post) {
+  insertRow('posts', post);
+}
+
+function updatePost(id, updates) {
+  updateRow('posts', id, updates);
+}
+
+function softDeletePost(id, deletedAt, deletedBy) {
+  updateRow('posts', id, { deleted: 1, deletedAt, deletedBy });
+}
+
+function insertUser(user) {
+  insertRow('users', user);
+}
+
+function updateUser(id, updates) {
+  updateRow('users', id, updates);
+}
+
+// ===== 悄悄话 =====
+function readWhispers() { return all('whispers'); }
+function writeWhispers(data) { dropAndInsert('whispers', data); }
+function addWhisper(whisper) { insertRow('whispers', whisper); }
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -375,4 +538,15 @@ module.exports = {
   readVotes, writeVotes,
   readVoteRecords, writeVoteRecords,
   readVoteIpRecords, writeVoteIpRecords,
+  readWhispers, writeWhispers, addWhisper,
+  // 新增 SQL 过滤查询
+  getById,
+  getPosts, getPostCount,
+  getUsers,
+  getReports,
+  queryRows, countRows,
+  // 新增增量写入
+  insertPost, updatePost, softDeletePost,
+  insertUser, updateUser,
+  insertRow, updateRow, deleteRow,
 };
