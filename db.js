@@ -77,6 +77,267 @@ function migrate() {
     "createdAt" TEXT NOT NULL,
     "deleted" INTEGER DEFAULT 0
   )`);
+  // ===== 核心业务表 =====
+  db.exec(`CREATE TABLE IF NOT EXISTS "admins" (
+    "id" TEXT PRIMARY KEY,
+    "password" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "role" TEXT DEFAULT 'admin',
+    "createdAt" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "users" (
+    "id" TEXT PRIMARY KEY,
+    "username" TEXT UNIQUE,
+    "password" TEXT NOT NULL,
+    "nickname" TEXT,
+    "avatar" TEXT,
+    "uid" TEXT,
+    "regIp" TEXT,
+    "createdAt" TEXT,
+    "status" TEXT DEFAULT 'active',
+    "postCount" INTEGER DEFAULT 0,
+    "bindAdminId" TEXT,
+    "bindAdminRole" TEXT,
+    "credit" INTEGER DEFAULT 0,
+    "checkedInDate" TEXT,
+    "checkinStreak" INTEGER DEFAULT 0,
+    "banUntil" TEXT,
+    "zhixueStatus" TEXT,
+    "certData" TEXT,
+    "zhixueReviewedBy" TEXT,
+    "zhixueReviewedAt" TEXT,
+    "noticePublisher" INTEGER DEFAULT 0
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "posts" (
+    "id" TEXT PRIMARY KEY,
+    "content" TEXT,
+    "author" TEXT,
+    "avatar" TEXT,
+    "userId" TEXT,
+    "time" TEXT,
+    "type" TEXT DEFAULT 'text',
+    "deleted" INTEGER DEFAULT 0,
+    "pinned" INTEGER DEFAULT 0,
+    "images" TEXT,
+    "isAnonymous" INTEGER DEFAULT 0,
+    "likes" INTEGER DEFAULT 0,
+    "likedBy" TEXT,
+    "comments" TEXT,
+    "commentsCount" INTEGER DEFAULT 0,
+    "discussionId" TEXT,
+    "rotate" INTEGER DEFAULT 0,
+    "zIndex" INTEGER DEFAULT 0,
+    "liked" TEXT,
+    "deletedAt" TEXT,
+    "deletedBy" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "login_logs" (
+    "id" TEXT PRIMARY KEY,
+    "type" TEXT,
+    "account" TEXT,
+    "success" INTEGER,
+    "ip" TEXT,
+    "ua" TEXT,
+    "time" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "reports" (
+    "id" TEXT PRIMARY KEY,
+    "type" TEXT,
+    "targetId" TEXT,
+    "postId" TEXT,
+    "reason" TEXT,
+    "reportedBy" TEXT,
+    "reporterName" TEXT,
+    "createdAt" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "handledBy" TEXT,
+    "handledAt" TEXT,
+    "action" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "feedbacks" (
+    "id" TEXT PRIMARY KEY,
+    "type" TEXT,
+    "description" TEXT,
+    "contact" TEXT,
+    "images" TEXT,
+    "time" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "handledBy" TEXT,
+    "handledAt" TEXT,
+    "handleNote" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "bullying" (
+    "id" TEXT PRIMARY KEY,
+    "reporterRole" TEXT,
+    "victimName" TEXT,
+    "bullyType" TEXT,
+    "description" TEXT,
+    "involved" TEXT,
+    "location" TEXT,
+    "incidentTime" TEXT,
+    "contact" TEXT,
+    "anonymous" INTEGER DEFAULT 0,
+    "images" TEXT,
+    "time" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "handledBy" TEXT,
+    "handledAt" TEXT,
+    "handleNote" TEXT,
+    "userId" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "credit_logs" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "amount" INTEGER,
+    "reason" TEXT,
+    "createdAt" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "credit_cards" (
+    "id" TEXT PRIMARY KEY,
+    "code" TEXT UNIQUE,
+    "value" INTEGER,
+    "status" TEXT DEFAULT 'active',
+    "createdBy" TEXT,
+    "createdAt" TEXT,
+    "usedBy" TEXT,
+    "usedAt" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "announcement" (
+    "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "title" TEXT,
+    "content" TEXT,
+    "createdAt" TEXT,
+    "updatedAt" TEXT,
+    "publishedAt" TEXT,
+    "publishedBy" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "discussions" (
+    "id" TEXT PRIMARY KEY,
+    "title" TEXT,
+    "expiresAt" TEXT,
+    "deleted" INTEGER DEFAULT 0,
+    "createdAt" TEXT,
+    "createdBy" TEXT,
+    "commentCount" INTEGER DEFAULT 0
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "discussion_comments" (
+    "id" TEXT PRIMARY KEY,
+    "discussionId" TEXT,
+    "parentId" TEXT,
+    "content" TEXT,
+    "author" TEXT,
+    "avatar" TEXT,
+    "userId" TEXT,
+    "createdAt" TEXT,
+    "deleted" INTEGER DEFAULT 0,
+    "syncPostId" TEXT,
+    "likes" INTEGER DEFAULT 0,
+    "likedBy" TEXT,
+    "hidden" INTEGER DEFAULT 0
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "qa_questions" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "author" TEXT,
+    "avatar" TEXT,
+    "title" TEXT,
+    "content" TEXT,
+    "bounty" INTEGER DEFAULT 0,
+    "deadline" TEXT,
+    "status" TEXT DEFAULT 'open',
+    "acceptedAnswerId" TEXT,
+    "distributedCredits" INTEGER DEFAULT 0,
+    "createdAt" TEXT,
+    "deleted" INTEGER DEFAULT 0,
+    "images" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "qa_answers" (
+    "id" TEXT PRIMARY KEY,
+    "questionId" TEXT,
+    "userId" TEXT,
+    "author" TEXT,
+    "avatar" TEXT,
+    "content" TEXT,
+    "likes" INTEGER DEFAULT 0,
+    "likedBy" TEXT,
+    "accepted" INTEGER DEFAULT 0,
+    "reward" INTEGER DEFAULT 0,
+    "createdAt" TEXT,
+    "deleted" INTEGER DEFAULT 0,
+    "images" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "pickup_auctions" (
+    "id" TEXT PRIMARY KEY,
+    "slot" INTEGER,
+    "date" TEXT,
+    "userId" TEXT,
+    "content" TEXT,
+    "anonymous" INTEGER DEFAULT 0,
+    "amount" INTEGER DEFAULT 0,
+    "time" TEXT,
+    "reviewStatus" TEXT DEFAULT 'pending_review',
+    "isHighest" INTEGER DEFAULT 0,
+    "approvalStatus" TEXT,
+    "bids" TEXT,
+    "status" TEXT DEFAULT 'open',
+    "createdAt" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "pickup_reports" (
+    "id" TEXT PRIMARY KEY,
+    "bidId" TEXT,
+    "slot" INTEGER,
+    "content" TEXT,
+    "reason" TEXT,
+    "reporterId" TEXT,
+    "reporterName" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "time" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "student_council" (
+    "_key" TEXT PRIMARY KEY,
+    "_value" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "notices" (
+    "id" TEXT PRIMARY KEY,
+    "title" TEXT,
+    "content" TEXT,
+    "author" TEXT,
+    "auto" INTEGER DEFAULT 0,
+    "level" TEXT DEFAULT 'T1',
+    "createdAt" TEXT,
+    "deleted" INTEGER DEFAULT 0,
+    "pinned" INTEGER DEFAULT 0,
+    "synced" INTEGER DEFAULT 0,
+    "targetUserId" TEXT,
+    "images" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "notice_passkey" (
+    "_key" TEXT PRIMARY KEY,
+    "_value" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "notice_applications" (
+    "id" TEXT PRIMARY KEY,
+    "name" TEXT,
+    "department" TEXT,
+    "contact" TEXT,
+    "reason" TEXT,
+    "userId" TEXT,
+    "userNickname" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "createdAt" TEXT,
+    "reviewedAt" TEXT,
+    "reviewedBy" TEXT
+  )`);
+  // trust_tokens 表（由 writeTrustTokens 内联创建，此处也提前创建）
+  db.exec(`CREATE TABLE IF NOT EXISTS "trust_tokens" (
+    "_key" TEXT,
+    "userId" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TEXT,
+    "expiresAt" TEXT
+  )`);
+  // maintenance 表（由 writeMaintenance 内联创建，这里提前创建确保迁移一致性）
+  db.exec(`CREATE TABLE IF NOT EXISTS "maintenance" ("_key" TEXT PRIMARY KEY, "_value" TEXT)`);
   // ===== 数据库索引 =====
   const INDEXES = [
     'CREATE INDEX IF NOT EXISTS idx_posts_deleted ON posts(deleted)',

@@ -1554,79 +1554,7 @@
  }
  .report-box .detail-close:hover { background: rgba(0,0,0,0.12); }
 
- /* ===== 聚光灯引导 ===== */
- .spotlight-overlay {
- position: fixed; inset: 0; z-index: 9998;
- pointer-events: none;
- }
- .spotlight-overlay svg { position: absolute; inset: 0; width: 100%; height: 100%; }
- .spotlight-ring {
- fill: none;
- stroke: #f0a500;
- stroke-width: 3;
- filter: drop-shadow(0 0 6px rgba(240,165,0,0.8));
- }
- @keyframes ringPulse {
- 0%, 100% { stroke-width: 3; opacity: 1; }
- 50% { stroke-width: 5; opacity: 0.7; }
- }
- .spotlight-ring.animating { animation: ringPulse 1.2s ease-in-out infinite; }
-
- /* 气泡 */
- .spotlight-tooltip {
- position: fixed; z-index: 9999; pointer-events: auto;
- background: #fff; border-radius: 16px;
- padding: 18px 20px 14px;
- box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.1);
- border: 2px solid rgba(240,165,0,0.35);
- max-width: 280px; min-width: 220px;
- animation: tooltipIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
- }
- @keyframes tooltipIn {
- from { opacity: 0; transform: scale(0.88) translateY(8px); }
- to { opacity: 1; transform: scale(1) translateY(0); }
- }
- .spotlight-step-num {
- font-size: 11px; color: #aaa; margin-bottom: 4px; font-weight: 600;
- letter-spacing: 0.5px;
- }
- .spotlight-title {
- font-size: 16px; font-weight: 700; color: #3a2a00;
- margin-bottom: 6px; font-family: 'ZCOOL KuaiLe', cursive;
- }
- .spotlight-desc { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 12px; }
- .spotlight-btns { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
- .spotlight-skip {
- font-size: 12px; color: #aaa; cursor: pointer; padding: 6px 8px;
- border: none; background: none; font-family: inherit;
- }
- .spotlight-skip:hover { color: #888; }
- .spotlight-next {
- background: linear-gradient(135deg, #f0a500 0%, #f08000 100%);
- color: #fff; border: none; border-radius: 20px;
- padding: 7px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
- font-family: 'Noto Sans SC', sans-serif;
- box-shadow: 0 3px 10px rgba(240,128,0,0.35);
- transition: transform 0.15s;
- }
- .spotlight-next:hover { transform: scale(1.05); }
- .spotlight-done {
- background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
- color: #fff; border: none; border-radius: 20px;
- padding: 7px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
- font-family: 'Noto Sans SC', sans-serif;
- box-shadow: 0 3px 10px rgba(34,197,94,0.35);
- transition: transform 0.15s;
- }
- .spotlight-done:hover { transform: scale(1.05); }
-
- /* 箭头 */
- .spotlight-arrow {
- position: fixed; z-index: 9999; pointer-events: none;
- }
- .spotlight-arrow svg { display: block; }
-
- /* ===== 讨论弹窗 ===== */
+/* ===== 讨论弹窗 ===== */
  .discussion-overlay {
  display: none; position: fixed; inset: 0; z-index: 3000;
  background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
@@ -2185,48 +2113,7 @@
  </div>
  </div>
 
- <!-- ===== 同学认证引导弹窗 ===== -->
- <div class="modal-overlay" id="certGuideOverlay" style="display:none; animation: qaOverlayIn 0.3s ease;">
- <div class="modal cert-guide-modal" onclick="event.stopPropagation()" style="max-width:420px; animation: qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
- <div style="text-align:center; padding:24px 24px 0;">
- <div style="font-size:48px; margin-bottom:8px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
- <div style="font-size:18px; font-weight:700; color:var(--text-main); margin-bottom:4px;">完成同学认证</div>
- <div style="font-size:13px; color:var(--text-sub); line-height:1.8; margin-top:12px; text-align:left;">
- <div style="background:rgba(34,197,94,0.06); border-radius:12px; padding:14px 16px; margin-bottom:12px;">
- <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
- <span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg></span>
- <span>完成认证后立即获得 <b style="color:#22c55e;">300 Credits</b> 奖励，可用于拍卖展示位</span>
- </div>
- <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
- <span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span>
- <span>认证后可通过<b>智学网账号快速登录</b>，无需每次都输入校园墙密码</span>
- </div>
- <div style="display:flex;align-items:flex-start;gap:8px;">
- <span style="font-size:16px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
- <span>忘记密码时可通过<b>智学网账号辅助恢复</b>，避免找不回账号</span>
- </div>
- </div>
- <div style="font-size:12px; color:rgba(139,111,94,0.5); text-align:center;">
- 认证信息仅用于确认同学身份，不会公开
- </div>
- </div>
- </div>
- <div style="display:flex; gap:10px; padding:20px 24px 24px; justify-content:center;">
- <button onclick="hideCertGuide('later')" style="padding:10px 20px; border:1px solid #ddd6c0; border-radius:10px;
- background:#fff; color:var(--text-sub); font-size:14px; cursor:pointer; transition:all 0.2s;"
- onmouseover="this.style.background='#fdf6e3'" onmouseout="this.style.background='#fff'">
- 稍后再说
- </button>
- <button onclick="goCertify()" style="padding:10px 24px; border:none; border-radius:10px;
- background:#22c55e; color:#fff; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s;"
- onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'">
- <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> 去认证
- </button>
- </div>
- </div>
- </div>
-
- <!-- ===== 认证驳回弹窗 ===== -->
+<!-- ===== 认证驳回弹窗 ===== -->
  <div class="modal-overlay" id="certRejectedOverlay" style="display:none; animation: qaOverlayIn 0.3s ease;">
  <div class="modal" style="max-width:420px; animation: qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
  <div class="modal-header"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 同学认证被驳回</div>
@@ -2236,7 +2123,7 @@
  <div id="certRejectReasonText" style="font-size:13px;"></div>
  </div>
  <p style="font-size:13px;color:var(--text-sub);margin-bottom:18px;">你可以修改认证信息后重新提交审核。</p>
- <button onclick="goCertify()" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 重新填写认证信息</button>
+ <button onclick="hideCertRejected();if(currentUser&&currentUser.id)window.open('user.html?id='+currentUser.id,'_blank')" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 重新填写认证信息</button>
  <button onclick="hideCertRejected()" style="display:block;margin:10px auto 0;padding:8px 16px;border:none;background:none;color:var(--text-sub);font-size:13px;cursor:pointer;">稍后再说</button>
  </div>
  </div>
@@ -3223,22 +3110,6 @@
 
  // ===== 信任此浏览器 =====
  let _pendingTrustUser = null; // 登录成功后暂存用户信息
- let _pendingNewbieGuide = false; // 等弹窗全部关闭后触发新手引导
-
- // 当信任浏览器 + 同学认证两个弹窗都关闭后，才启动新手引导
- function tryStartNewbieGuide() {
- if (!_pendingNewbieGuide) return;
- var trustOpen = document.getElementById('trustBrowserOverlay');
- var certOpen = document.getElementById('certGuideOverlay');
- if ((!trustOpen || trustOpen.style.display !== 'flex') &&
- (!certOpen || certOpen.style.display !== 'flex')) {
- _pendingNewbieGuide = false;
- _spotlight.step = 0;
- localStorage.removeItem('newbieGuideShown');
- setTimeout(function() { showNewbieGuide(); }, 400);
- }
- }
-
  function showTrustBrowserModal() {
  document.getElementById('trustBrowserOverlay').style.display = 'flex';
  }
@@ -3250,7 +3121,6 @@
  hideTrustBrowserModal();
  if (!agree || !_pendingTrustUser) {
  _pendingTrustUser = null;
- tryStartNewbieGuide();
  return;
  }
  // 生成信任令牌（随机字符串）
@@ -3264,7 +3134,6 @@
  });
  } catch {}
  _pendingTrustUser = null;
- tryStartNewbieGuide();
  }
 
  // 自动登录：页面加载时检查信任令牌
@@ -3274,7 +3143,7 @@
  try {
  const res = await fetch('/api/user/auto-login', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ trustToken })
  });
  const json = await res.json();
@@ -3335,7 +3204,7 @@
  try {
  const res = await fetch('/api/user/forgot-password', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ zhixueUsername, newPassword, confirmPassword })
  });
  const json = await res.json();
@@ -3392,7 +3261,7 @@
  const captchaText = document.getElementById('loginCaptchaInput').value.trim();
  const res = await fetch('/api/user/login', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ username, password, captchaId, captchaText })
  });
  const json = await res.json();
@@ -3441,7 +3310,7 @@
  try {
  const res = await fetch('/api/user/zhixue-login', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ zhixueUsername, password, captchaId, captchaText })
  });
  const json = await res.json();
@@ -3494,7 +3363,7 @@
  try {
  const res = await fetch('/api/user/register', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ username, password, nickname, captchaId: currentCaptchaId, captchaText })
  });
  const json = await res.json();
@@ -3513,9 +3382,6 @@
  showTrustBrowserModal();
  }
  checkCertResult();
- // 等信任浏览器 + 同学认证两个弹窗都关闭后再触发新手引导
- _pendingNewbieGuide = true;
- tryStartNewbieGuide();
  } else {
  document.getElementById('userLoginError').textContent = json.msg || '注册失败';
  // 验证码错误时自动刷新
@@ -3541,7 +3407,7 @@
  if (trustToken) {
  fetch('/api/user/revoke-trust', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ trustToken })
  }).catch(() => {});
  localStorage.removeItem('campus_trust_token');
@@ -4020,31 +3886,6 @@
  _renderMd(item.content) + '</div>';
  };
 
- // ===== 同学认证引导 =====
- function showCertGuide() {
- // 当天已点过「稍后再说」→ 不再弹出
- const dismissed = localStorage.getItem('cert_guide_dismissed');
- if (dismissed === new Date().toISOString().slice(0, 10)) return;
- const overlay = document.getElementById('certGuideOverlay');
- if (!overlay) return;
- overlay.style.display = 'flex';
- }
- function hideCertGuide(action) {
- document.getElementById('certGuideOverlay').style.display = 'none';
- // 「稍后再说」：记录时间戳，当天不再弹出
- if (action === 'later') {
- localStorage.setItem('cert_guide_dismissed', new Date().toISOString().slice(0, 10));
- }
- tryStartNewbieGuide();
- }
- function goCertify() {
- document.getElementById('certGuideOverlay').style.display = 'none';
- document.getElementById('certRejectedOverlay').style.display = 'none';
- tryStartNewbieGuide();
- if (currentUser && currentUser.id) {
- window.open('user.html?id=' + currentUser.id, '_blank');
- }
- }
 
  // ===== 认证结果弹窗 =====
  let _certResultChecked = false;
@@ -4059,8 +3900,8 @@
  headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
  });
  const json = await resp.json();
- if (!json.ok) { showCertGuide(); return; }
- if (!json.data) { showCertGuide(); return; } // 无认证数据
+ if (!json.ok) { return; }
+ if (!json.data) { return; } // 无认证数据
  const info = json.data;
 
  if (info.status === 'rejected' && info.rejectReason) {
@@ -4085,22 +3926,20 @@
  }
  } else if (info.status !== 'approved') {
  // 其他非通过状态 → 显示认证引导
- showCertGuide();
+ 
  }
  } catch (e) {
  console.warn('检查认证结果失败', e);
- showCertGuide();
+ 
  }
  }
 
  function hideCertRejected() {
  document.getElementById('certRejectedOverlay').style.display = 'none';
- tryStartNewbieGuide();
  }
 
  function hideCertApproved() {
  document.getElementById('certApprovedOverlay').style.display = 'none';
- tryStartNewbieGuide();
  }
 
  async function doConfirmZhixue() {
@@ -4114,7 +3953,6 @@
  document.getElementById('certConfirmOverlay').style.display = 'none';
  currentUser.zhixueStatus = 'approved';
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + json.msg, 'success');
- tryStartNewbieGuide();
  } else {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (json.msg || '操作失败'), 'error');
  }
@@ -4317,7 +4155,7 @@
  try {
  const res = await fetch(API + '/api/posts', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({
  type, content,
  avatar: currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
@@ -4581,7 +4419,7 @@
  try {
  const res = await fetch(API + '/api/posts/' + postId + '/comments', {
  method: 'POST',
- headers: { 'Content-Type': 'application/json' },
+ headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
  body: JSON.stringify({ content })
  });
  const json = await res.json();
@@ -4619,9 +4457,6 @@
  const anonChk = document.getElementById('anonymousPost');
  if (anonChk) anonChk.checked = false;
  }
-
-
-
 
  // ===== 帖子详情弹窗（风格同登录窗口）=====
  let currentDetailId = null;
@@ -4993,8 +4828,6 @@
  hideDiscussionSuggest();
  }
 
- var _justPostedId = null; // 记录刚发的帖子ID，供引导使用
-
  // 发帖字数实时统计 & #话题自动补全
  var _suggestTimer = null;
  document.getElementById('noteInput').addEventListener('input', function() {
@@ -5109,7 +4942,6 @@
  newPost.rotate = rand(-4, 4);
  newPost.zIndex = randInt(1, 5);
  posts.unshift(newPost);
- _justPostedId = newPost.id; // 记录刚发的帖子ID
  input.value = '';
  postImages = [];
  _selectedDiscussionId = null;
@@ -5117,10 +4949,6 @@
  closeModal();
  renderNotes(currentFilter);
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
- // 发帖成功后，如果引导在第1步，重新渲染以高亮刚发的帖子
- if (_spotlight && _spotlight.container && _spotlight.container.style.display === 'block') {
- setTimeout(_renderSpotlightStep, 300);
- }
  } else {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 发帖失败，请检查服务器');
  }
@@ -5309,252 +5137,23 @@
  renderNotes();
  })();
 
- // ===== 聚光灯引导 =====
- var _spotlight = {
- step: 0,
- steps: [
- // Step 0：发帖
- {
- selector: '.compose-btn',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 发帖 · 贴一张便利贴',
- desc: '点击「<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 贴一张」按钮，写下你想分享的内容，支持匿名发布哦~',
- openModal: true,
- btnText: '知道了，去写',
- position: 'bottom'
- },
- // Step 1：刚发的帖子（动态）
- {
- selector: '',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> 帖子已发布！',
- desc: '你的便利贴已贴到墙上～<br>点击它查看帖子详情与评论',
- btnText: '点击查看',
- position: 'top',
- dynamicSelector: true
- },
- // Step 2：查看评论按钮（帖子弹窗内）
- {
- selector: '#detailLinkBtn',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 查看评论',
- desc: '点击「<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 查看评论」在完整页面查看帖子评论，也可以在这里与大家互动',
- btnText: '下一步',
- position: 'top'
- },
- // Step 3：点赞按钮
- {
- selector: '#detailLikeBtn',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞',
- desc: '喜欢一条帖子？点下方的<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>送出你的赞，被点赞的人会收到通知',
- btnText: '下一步',
- position: 'top'
- },
- // Step 4（关闭弹窗后）：签到按钮
- {
- selector: '#checkinBtn',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 每日签到',
- desc: '每天签到可获得 <b>100 Credits</b>！<br>坚持连续签到还有连击奖励，Credits 可用于拍卖展示位',
- btnText: '下一步',
- position: 'bottom'
- },
- // Step 5：Credits 余额
- {
- selector: '.user-logout-sm[onclick*="credit.html"]',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> Credits 余额',
- desc: '这里显示你的 Credits 余额。<br>点击可进入明细页面查看收支记录与充值入口',
- btnText: '下一步',
- position: 'bottom'
- },
- // Step 6：拍卖滚动栏
- {
- selector: '.pickup-label',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> 校园墙拍卖拍卖',
- desc: '通过 Credits 竞价，赢得滚动栏展示位！<br>内容将在当前时段内循环展示给所有人看',
- btnText: '下一步',
- position: 'bottom'
- },
- // Step 7：讨论区
- {
- selector: 'button[onclick="openDiscussionModal()"]',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 讨论区',
- desc: '发起或参与话题讨论，支持嵌套回复。<br>每次最多同时开 3 个活跃话题，到期自动关闭',
- btnText: '下一步',
- position: 'bottom'
- },
- // Step 8：你问我答
- {
- selector: 'button[onclick="openQAModal()"]',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 你问我答',
- desc: '提出问题并设置 Credits 悬赏，回答者竞争奖励。<br>采纳最佳答案后自动发放悬赏金',
- btnText: '下一步',
- position: 'bottom'
- },
- // Step 9：个人主页 / 同学认证入口
- {
- selector: '#topUserAvatar',
- title: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 个人主页 & 同学认证',
- desc: '点击头像进入个人主页，可编辑资料和上传头像。<br>完成同学认证后可使用<b>智学快捷登录</b>和<b>找回密码</b>',
- btnText: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 完成引导！',
- position: 'bottom'
- }
- ],
- container: null,
- tooltip: null,
- ring: null,
- arrow: null
- };
+	// ===== SSE 实时同步 =====
+	(function initSSE() {
+	try {
+		const es = new EventSource('/api/stream');
+		es.addEventListener('postUpdate', () => {
+			fetchPosts().then(() => renderNotes(currentFilter));
+		});
+		es.addEventListener('connected', () => {
+			console.log('[SSE] 已连接');
+		});
+		es.onerror = () => {};
+	} catch(e) {
+		console.warn('[SSE] 初始化失败:', e.message);
+	}
+	})();
 
- function _getRect(selector) {
- var el = document.querySelector(selector);
- if (!el) return null;
- var r = el.getBoundingClientRect();
- return { top: r.top, left: r.left, width: r.width, height: r.height,
- right: r.right, bottom: r.bottom };
- }
-
- function _getTooltipPos(r, position) {
- var vw = window.innerWidth, vh = window.innerHeight;
- var tw = 280, th = 170;
- var gap = 14, ringPad = 8;
- var x, y;
- if (position === 'bottom') {
- x = Math.min(Math.max(r.left + r.width / 2 - tw / 2, 12), vw - tw - 12);
- y = r.bottom + gap + ringPad;
- if (y + th > vh - 10) y = r.top - th - gap - ringPad;
- } else {
- y = Math.max(r.top - th - gap - ringPad, 10);
- x = Math.min(Math.max(r.left + r.width / 2 - tw / 2, 12), vw - tw - 12);
- if (y < 10) y = r.bottom + gap + ringPad;
- }
- return { x: x, y: y };
- }
-
- function _buildSVG(W, H, rx, ry, rw, rh) {
- var pad = 8;
- var x1 = Math.max(0, rx - pad), y1 = Math.max(0, ry - pad);
- var x2 = Math.min(W, rx + rw + pad), y2 = Math.min(H, ry + rh + pad);
- var r = Math.min(16, (x2 - x1) / 2, (y2 - y1) / 2);
- var d = 'M' + (x1 + r) + ',' + y1 +
- 'h' + (x2 - x1 - 2 * r) +
- 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r +
- 'v' + (y2 - y1 - 2 * r) +
- 'a' + r + ',' + r + ' 0 0 1 ' + (-r) + ',' + r +
- 'h' + (-(x2 - x1 - 2 * r)) +
- 'a' + r + ',' + r + ' 0 0 1 ' + (-r) + ',' + (-r) +
- 'v' + (-(y2 - y1 - 2 * r)) +
- 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + (-r) + ' Z';
- return '<svg width="' + W + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' +
- '<defs><mask id="spotlightMask"><rect width="100%" height="100%" fill="white"/>' +
- '<rect x="' + x1 + '" y="' + y1 + '" width="' + (x2 - x1) + '" height="' + (y2 - y1) + '" rx="' + r + '" fill="black"/></mask></defs>' +
- '<rect width="100%" height="100%" fill="rgba(0,0,0,0.62)" mask="url(#spotlightMask)"/>' +
- '<rect class="spotlight-ring animating" x="' + (rx - 4) + '" y="' + (ry - 4) + '" width="' + (rw + 8) + '" height="' + (rh + 8) + '" rx="' + (r + 2) + '"/></svg>';
- }
-
- function _renderSpotlightStep() {
- var s = _spotlight;
- var info = s.steps[s.step];
- if (!info) { _endSpotlight(); return; }
-
- // 动态选择器：第2步高亮刚发的帖子
- if (info.dynamicSelector) {
- if (_justPostedId) {
- info._realSelector = '[data-id="' + _justPostedId + '"]';
- } else {
- var first = document.querySelector('.sticky-note');
- info._realSelector = first ? '.sticky-note' : null;
- }
- }
- var selector = info._realSelector || info.selector;
- if (!selector) { hideNewbieGuide(); return; }
-
- var r = _getRect(selector);
- if (!r || r.width === 0) {
- hideNewbieGuide();
- return;
- }
- var vw = window.innerWidth, vh = window.innerHeight;
- var tp = _getTooltipPos(r, info.position || 'bottom');
- var isLast = s.step === s.steps.length - 1;
- var pct = Math.round(((s.step + 1) / s.steps.length) * 100);
- s.container.innerHTML = _buildSVG(vw, vh, r.left, r.top, r.width, r.height);
- s.tooltip.style.cssText =
- 'left:' + tp.x + 'px;top:' + tp.y + 'px;width:' + tp.w + 'px;';
- s.tooltip.innerHTML =
- '<div class="spotlight-step-num" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
- '<span style="flex:1;height:4px;background:#f0e8c8;border-radius:2px;overflow:hidden;">' +
- '<span style="display:block;height:100%;width:' + pct + '%;background:linear-gradient(90deg,#f0a500,#f08000);border-radius:2px;transition:width .3s;"></span></span>' +
- '<span>' + (s.step + 1) + '&thinsp;/&thinsp;' + s.steps.length + '</span></div>' +
- '<div class="spotlight-title">' + info.title + '</div>' +
- '<div class="spotlight-desc">' + info.desc + '</div>' +
- '<div class="spotlight-btns">' +
- (isLast
- ? '<button class="spotlight-done" onclick="hideNewbieGuide()">' + info.btnText + '</button>'
- : '<button class="spotlight-next" onclick="_nextSpotlight()">' + info.btnText + '</button>') +
- '</div>';
- }
-
- function _nextSpotlight() {
- var s = _spotlight, step = s.step;
- var info = s.steps[step];
-
- // step 0：打开发帖模态框
- if (step === 0 && info.openModal) {
- closeNoteDetail();
- openModal();
- }
- // step 1：点击刚发的帖子，打开详情页
- if (step === 1) {
- var selector = info._realSelector || info.selector;
- var card = document.querySelector(selector);
- if (card) { card.click(); }
- }
- // step 3（点赞按钮）完成后：关闭帖子详情弹窗 + 发帖弹窗，回首页引导签到等
- if (step === 3) {
- closeNoteDetail();
- closeModal();
- s.step = step + 1;
- s.container.style.display = 'block';
- s.tooltip.style.display = 'block';
- setTimeout(_renderSpotlightStep, 700);
- return;
- }
-
- s.step = step + 1;
- s.container.style.display = 'block';
- s.tooltip.style.display = 'block';
- setTimeout(_renderSpotlightStep, 200);
- }
-
- function showNewbieGuide() {
- if (localStorage.getItem('newbieGuideForceOff') === '1') return;
- var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
- if (!curUser) return;
- // 同一用户只触发一次；不同用户或首次注册重新触发
- if (localStorage.getItem('newbieGuideShown') === curUser.username) return;
- if (!_spotlight.container) {
- _spotlight.container = document.getElementById('spotlightOverlay');
- _spotlight.tooltip = document.getElementById('spotlightTooltip');
- }
- // 强制重置到第一步，用新对象替代防止污染
- _spotlight = { step: 0, steps: _spotlight.steps,
- container: _spotlight.container, tooltip: _spotlight.tooltip };
- _spotlight.container.style.display = 'block';
- _spotlight.tooltip.style.display = 'block';
- setTimeout(_renderSpotlightStep, 120);
- }
-
- function hideNewbieGuide() {
- if (!_spotlight.container) {
- _spotlight.container = document.getElementById('spotlightOverlay');
- _spotlight.tooltip = document.getElementById('spotlightTooltip');
- }
- var curUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
- if (curUser && curUser.username) {
- localStorage.setItem('newbieGuideShown', curUser.username);
- }
- _spotlight.container.style.display = 'none';
- _spotlight.tooltip.style.display = 'none';
- }
-
- // ===== 校园墙拍卖系统 =====
+	// ===== 校园墙拍卖系统 =====
  let pickupSelectedSlot = null;
  let pickupSlotsData = [];
 
@@ -6695,7 +6294,7 @@
 
  function escHtml(str) {
  if (!str) return '';
- return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
  }
 
  // 格式化 datetime-local 时间为本地可读字符串
@@ -7096,10 +6695,6 @@
  </div>
  </div>
  </div>
-
- <!-- 聚光灯引导遮罩 + 气泡 -->
- <div id="spotlightOverlay" class="spotlight-overlay" style="display:none;"></div>
- <div id="spotlightTooltip" class="spotlight-tooltip" style="display:none;"></div>
 
  <!-- 移动端侧边导航逻辑 -->
  <script>

@@ -2,11 +2,56 @@
 const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verifySignedToken, makeUserToken, verifyUserToken, getDisplayZhixueStatus } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
-const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit } = require('../lib/state');
+const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers } = require('../lib/state');
 const db = require('../db');
+const nodeCrypto = require('crypto');
 const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+
+// ===== 本地数据访问包装（兼容旧式 readXxx/writeXxx 调用模式） =====
+function readUsers() { return db.readUsers(); }
+function writeUsers(users) { db.writeUsers(users); }
+function readTrustTokens() { return db.readTrustTokens(); }
+function writeTrustTokens(tokens) { db.writeTrustTokens(tokens); }
+function readCreditLogs() { return db.readCreditLogs(); }
+function writeCreditLogs(logs) { db.writeCreditLogs(logs); }
+function readCreditCards() { return db.readCreditCards(); }
+function writeCreditCards(cards) { db.writeCreditCards(cards); }
+function readApps() { return db.readApps(); }
+function writeApps(apps) { db.writeApps(apps); }
+function readPasskey() { return db.readPasskey(); }
+function readPosts() { return db.readPosts(); }
+function writePosts(posts) { db.writePosts(posts); broadcastSSE('postUpdate', { t: Date.now() }); }
+function readAdmins() { return db.readAdmins(); }
+function readNotices() { return db.readNotices(); }
+function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+const CHECKIN_REWARD = 10;
+
+function saveDeletedItem(type, item, deletedBy, extra) {
+  db.addDeletedItem({
+    id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: type,
+    content: typeof item.content === 'string' ? item.content.substring(0, 500) : '',
+    author: item.author || item.nickname || item.createdBy || '未知',
+    userId: item.userId || item.createdBy || null,
+    deletedAt: new Date().toISOString(),
+    deletedBy: deletedBy,
+    extra: extra || ''
+  });
+}
+
+function deleteSyncedDiscComment(postId) {
+  try {
+    var comments = db.readDiscussionComments();
+    var matched = comments.filter(function(c) { return c.syncPostId === postId; });
+    if (matched.length > 0) {
+      matched.forEach(function(c) { saveDeletedItem('disc_comment', c, 'system'); });
+      comments = comments.filter(function(c) { return c.syncPostId !== postId; });
+      db.writeDiscussionComments(comments);
+    }
+  } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
+}
 
 function addLoginLog(type, account, success, ip, ua) {
   const logs = db.readLogs();
@@ -287,7 +332,7 @@ module.exports = function(app) {
         linkedUser = users.find(u => u.id === session.id);
       }
     }
-    const qrToken = crypto.randomBytes(16).toString('hex');
+    const qrToken = nodeCrypto.randomBytes(16).toString('hex');
     qrCodeStore.set(qrToken, {
       userId: linkedUser ? linkedUser.id : null,
       linkedUser: linkedUser || null,
@@ -335,7 +380,7 @@ module.exports = function(app) {
         id: 'mp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
         nickname: '用户' + Math.random().toString(36).slice(2, 6).toUpperCase(),
         avatar: '🙋',
-        token: crypto.randomBytes(24).toString('hex')
+        token: nodeCrypto.randomBytes(24).toString('hex')
       };
       const allUsers = readUsers();
       allUsers.push({

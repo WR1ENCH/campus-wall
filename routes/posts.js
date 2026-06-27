@@ -367,6 +367,15 @@ app.post('/api/posts/:id/like', (req, res) => {
   res.json({ ok: true, data: { liked: post.liked, likes: post.likes } });
 });
 
+// 获取帖子评论列表
+app.get('/api/posts/:id/comments', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+  const comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => !c.deleted);
+  res.json({ ok: true, data: comments });
+});
+
 app.post('/api/posts/:id/comments', (req, res) => {
   // 验证用户 Token
   const token = req.headers['x-user-token'];
@@ -478,6 +487,136 @@ app.delete('/api/posts/:postId/comments/:commentId', (req, res) => {
   post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => c.id !== req.params.commentId);
   post.commentsCount = post.comments.length;
   writePosts(posts);
+  res.json({ ok: true });
+});
+
+// ===== 用户举报帖子 =====
+app.post('/api/posts/:id/report', (req, res) => {
+  const posts = readPosts();
+  const post = posts.find(p => p.id === req.params.id);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+
+  // 获取举报者信息
+  let reporterId = null;
+  let reporterName = '匿名用户';
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) {
+      reporterId = session.id;
+      reporterName = session.nickname || '匿名用户';
+    }
+  }
+
+  const { reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.json({ ok: false, msg: '请选择举报原因' });
+  }
+
+  const reports = readReports();
+  reports.push({
+    id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: 'post',
+    targetId: req.params.id,
+    postId: req.params.id,
+    reason: reason.trim(),
+    reportedBy: reporterId,
+    reporterName: reporterName,
+    createdAt: new Date().toISOString(),
+    status: 'pending'
+  });
+  writeReports(reports);
+
+  res.json({ ok: true, data: { hidden: false } });
+});
+
+// ===== 举报帖子（通用入口，供 post.html 使用） =====
+app.post('/api/reports', (req, res) => {
+  const { postId, reason } = req.body;
+  if (!postId) return res.json({ ok: false, msg: '缺少帖子ID' });
+  if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请选择举报原因' });
+
+  const posts = readPosts();
+  const post = posts.find(p => p.id === postId);
+  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
+
+  let reporterId = null;
+  let reporterName = '匿名用户';
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) {
+      reporterId = session.id;
+      reporterName = session.nickname || '匿名用户';
+    }
+  }
+
+  const reports = readReports();
+  reports.push({
+    id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: 'post',
+    targetId: postId,
+    postId: postId,
+    reason: reason.trim(),
+    reportedBy: reporterId,
+    reporterName: reporterName,
+    createdAt: new Date().toISOString(),
+    status: 'pending'
+  });
+  writeReports(reports);
+
+  res.json({ ok: true });
+});
+
+// ===== 举报评论（帖子内的评论） =====
+app.post('/api/comments/:id/report', (req, res) => {
+  const { postId, reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.json({ ok: false, msg: '请选择举报原因' });
+  }
+
+  // 查找评论所在的帖子
+  const posts = readPosts();
+  let foundComment = null;
+  let foundPostId = null;
+  for (const p of posts) {
+    if (Array.isArray(p.comments)) {
+      const c = p.comments.find(c => c.id === req.params.id);
+      if (c) {
+        foundComment = c;
+        foundPostId = p.id;
+        break;
+      }
+    }
+  }
+  if (!foundComment) return res.json({ ok: false, msg: '评论不存在' });
+
+  // 获取举报者信息
+  let reporterId = null;
+  let reporterName = '匿名用户';
+  const token = req.headers['x-user-token'];
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) {
+      reporterId = session.id;
+      reporterName = session.nickname || '匿名用户';
+    }
+  }
+
+  const reports = readReports();
+  reports.push({
+    id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: 'comment',
+    targetId: req.params.id,
+    postId: foundPostId,
+    reason: reason.trim(),
+    reportedBy: reporterId,
+    reporterName: reporterName,
+    createdAt: new Date().toISOString(),
+    status: 'pending'
+  });
+  writeReports(reports);
+
   res.json({ ok: true });
 });
 

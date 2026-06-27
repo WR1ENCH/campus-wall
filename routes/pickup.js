@@ -12,6 +12,19 @@ function readPickupReports() { return db.readPickupReports(); }
 function writePickupReports(data) { db.writePickupReports(data); }
 function readUsers() { return db.readUsers(); }
 function writeUsers(users) { db.writeUsers(users); }
+function readNotices() { return db.readNotices(); }
+function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+function changeCredit(userId, amount, reason) {
+  const users = readUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return false;
+  user.credit = (user.credit || 0) + amount;
+  writeUsers(users);
+  const logs = db.readCreditLogs();
+  logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), userId, amount, reason, createdAt: new Date().toISOString() });
+  db.writeCreditLogs(logs);
+  return true;
+}
 
 // ===== 校园墙拍卖系统 =====
 const PICKUP_SLOTS = ['00-04', '04-08', '08-12', '12-16', '16-20', '20-23'];
