@@ -875,4 +875,747 @@ app.delete('/api/admin/maintenance/test-key/:key', requireAdmin, (req, res) => {
   }
 });
 
+// ===========================================================================
+// 以下路由在 aeed436「路由拆分 + SPA」重构时从旧 server.js 删除后未迁移，
+// 导致 admin.html 对应模块 404 → 返回 HTML → 前端 "Unexpected token '<'"。
+// 按原逻辑恢复（helper 复用本文件已有定义）。
+// ===========================================================================
+
+// 编辑投票选项：根据原文匹配保持票数，新增选项票数为 0
+function _legacyUpdateVoteOptions(vote, newOptions) {
+  const normalizedNew = newOptions.map(function(opt) {
+    return typeof opt === 'string'
+      ? { text: opt, image: null }
+      : { text: (opt.text || '').trim(), image: opt.image || null };
+  });
+  vote.options = normalizedNew.map(function(newOpt) {
+    const existing = vote.options.find(function(o) {
+      return o.text.trim() === newOpt.text && (o.image || null) === (newOpt.image || null);
+    });
+    return {
+      id: existing ? existing.id : 'opt_' + Math.random().toString(36).slice(2, 8),
+      text: newOpt.text,
+      image: newOpt.image,
+      votes: existing ? (existing.votes || 0) : 0
+    };
+  });
+}
+
+// ===== 同学认证审核 =====
+app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const records = users
+    .filter(u => u.zhixueStatus && ['pending', 'approved', 'rejected', 'pending_confirm'].includes(u.zhixueStatus))
+    .map(u => ({
+      id: u.id, nickname: u.nickname, avatar: u.avatar,
+      certType: u.zhixueCertType || 'zhixue',
+      zhixueUsername: u.zhixueUsername,
+      zhixuePassword: (u.zhixuePassword ? decryptCert(u.zhixuePassword) : '') || '',
+      zhixueManualName: u.zhixueManualName,
+      status: u.zhixueStatus,
+      rejectReason: u.zhixueRejectReason || null,
+      submittedAt: u.zhixueSubmittedAt,
+      reviewedAt: u.zhixueReviewedAt,
+      reviewedBy: u.zhixueReviewedBy
+    }))
+    .sort((a, b) => {
+      const ta = a.submittedAt || a.reviewedAt || '';
+      const tb = b.submittedAt || b.reviewedAt || '';
+      return tb.localeCompare(ta);
+    });
+  res.json({ ok: true, data: records });
+});
+
+app.post('/api/admin/zhixue/:userId/reset', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const userIndex = users.findIndex(u => u.id === req.params.userId);
+  if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+  const u = users[userIndex];
+  if (!u.zhixueStatus || !['approved', 'rejected', 'pending_confirm'].includes(u.zhixueStatus)) {
+    return res.json({ ok: false, msg: '该用户当前状态无需重置' });
+  }
+  u.zhixueStatus = 'pending';
+  u.zhixueReviewedAt = null;
+  u.zhixueReviewedBy = null;
+  u.zhixueRejectReason = null;
+  u.zhixueRejectedAt = null;
+  u.certRealName = null;
+  u.certClassName = null;
+  u.zhixuePassword = u._origPassword || null;
+  writeUsers(users);
+  res.json({ ok: true, msg: '已重置为待审核状态' });
+});
+
+// ===== 用户管理 =====
+app.post('/api/admin/users/batch-delete', requireAdmin, (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.json({ ok: false, msg: '请指定要删除的用户' });
+  }
+  let users = readUsers();
+  let posts = readPosts();
+  let deletedCount = 0;
+  let deletedPostCount = 0;
+  users = users.filter(u => {
+    if (ids.includes(u.id)) {
+      deletedCount++;
+      const before = posts.length;
+      posts = posts.filter(p => p.userId !== u.id && p.author !== u.nickname);
+      deletedPostCount += before - posts.length;
+      return false;
+    }
+    return true;
+  });
+  writeUsers(users);
+  writePosts(posts);
+  res.json({ ok: true, deleted: deletedCount, deletedPosts: deletedPostCount });
+});
+
+app.put('/api/admin/user/:id/status', requireAdmin, (req, res) => {
+  const { status, banDays } = req.body;
+  if (!['active', 'banned'].includes(status)) {
+    return res.json({ ok: false, msg: '状态无效' });
+  }
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  user.status = status;
+  if (status === 'banned') {
+    if (banDays !== undefined && banDays !== null) {
+      const days = parseInt(banDays);
+      if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
+      if (days === 0) { user.banUntil = null; user.banDays = null; }
+      else {
+        const until = new Date();
+        until.setDate(until.getDate() + days);
+        user.banUntil = until.toISOString();
+        user.banDays = days;
+      }
+    }
+  } else {
+    user.banUntil = null;
+    user.banDays = null;
+  }
+  writeUsers(users);
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
+  const userId = req.params.id;
+  const users = readUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  let posts = readPosts();
+  let softDeleted = 0;
+  posts.forEach(p => {
+    if (!p.deleted && (p.userId === userId || p.author === user.nickname)) {
+      saveDeletedItem('post', p, 'system');
+      softDeleted++;
+    }
+  });
+  posts = posts.filter(p => !(p.userId === userId || p.author === user.nickname) || p.deleted);
+  writePosts(posts);
+  const updated = users.filter(u => u.id !== userId);
+  writeUsers(updated);
+  res.json({ ok: true, deletedPosts: softDeleted });
+});
+
+app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  const newPassword = Math.random().toString(36).slice(2, 10);
+  user.password = hashPassword(newPassword);
+  writeUsers(users);
+  res.json({ ok: true, data: { password: newPassword } });
+});
+
+app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  const { password, certRealName, certClassName, ...safeUser } = user;
+  safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
+  safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+  const posts = readPosts();
+  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
+    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+    .slice(0, 20)
+    .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
+  const reports = readReports();
+  const userReports = reports.filter(r => r.targetUserId === user.id || r.targetAuthor === user.nickname)
+    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+    .slice(0, 20)
+    .map(r => ({ id: r.id, time: r.time, reason: r.reason, type: r.type, status: r.status }));
+  res.json({ ok: true, data: { ...safeUser, postCount: userPosts.length, posts: userPosts, reports: userReports } });
+});
+
+// ===== Credit / 卡密管理 =====
+app.post('/api/admin/credit-cards/create', requireAdmin, requireSuper, (req, res) => {
+  const { count, value } = req.body;
+  const num = parseInt(count) || 1;
+  const val = parseInt(value) || 10;
+  if (num < 1 || num > 100) return res.json({ ok: false, msg: '数量范围 1~100' });
+  if (val < 1) return res.json({ ok: false, msg: '面值至少为 1 Credit' });
+  const today = new Date().toISOString().slice(0, 10);
+  const key = req.admin.id + '|' + today;
+  const used = cardCreateLimits.get(key) || 0;
+  if (used + num > CARD_DAILY_LIMIT) {
+    return res.json({ ok: false, msg: '今日创建已达上限（' + CARD_DAILY_LIMIT + ' 张），请明天再试' });
+  }
+  cardCreateLimits.set(key, used + num);
+  const cards = readCreditCards();
+  const now = new Date().toISOString();
+  const newCards = [];
+  for (let i = 0; i < num; i++) {
+    newCards.push({
+      code: generateCardCode(cards.concat(newCards)),
+      value: val, status: 'unused',
+      createdBy: req.admin.id, createdAt: now, usedBy: null, usedAt: null
+    });
+  }
+  writeCreditCards(cards.concat(newCards));
+  console.warn('[AUDIT] 超级管理员 ' + req.admin.id + ' 创建了 ' + num + ' 张卡密，每张 ' + val + ' Credit');
+  res.json({ ok: true, data: { count: num, value: val, cards: newCards.map(c => c.code) } });
+});
+
+app.get('/api/admin/credit/overview', requireAdmin, requireSuper, (req, res) => {
+  const cards = readCreditCards();
+  const totalRedeemed = cards.filter(c => c.status === 'used').reduce((s, c) => s + c.value, 0);
+  const users = readUsers();
+  const inCirculation = users.reduce((s, u) => s + (u.credit || 0), 0);
+  const logs = readCreditLogs();
+  const totalDeducted = logs.filter(l => l.amount < 0).reduce((s, l) => s + Math.abs(l.amount), 0);
+  const chart = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date();
+    day.setDate(day.getDate() - i);
+    const dayStr = day.toISOString().slice(0, 10);
+    const label = i === 0 ? '今天' : (day.getMonth() + 1) + '/' + day.getDate();
+    const dayLogs = logs.filter(l => l.createdAt && l.createdAt.startsWith(dayStr));
+    chart.push({
+      label,
+      issued: dayLogs.reduce((s, l) => s + (l.amount > 0 ? l.amount : 0), 0),
+      redeemed: dayLogs.reduce((s, l) => s + (l.amount < 0 ? Math.abs(l.amount) : 0), 0)
+    });
+  }
+  res.json({ ok: true, data: { totalRedeemed, inCirculation, totalDeducted, chart } });
+});
+
+app.get('/api/admin/credit/search-user', requireAdmin, requireSuper, (req, res) => {
+  const q = (req.query.q || '').trim().toLowerCase();
+  if (!q) return res.json({ ok: true, data: [] });
+  const users = readUsers();
+  const matches = users.filter(u =>
+    (u.username && u.username.toLowerCase().includes(q)) ||
+    (u.nickname && u.nickname.toLowerCase().includes(q))
+  ).slice(0, 20).map(u => ({ id: u.id, username: u.username, nickname: u.nickname, credit: u.credit || 0 }));
+  res.json({ ok: true, data: matches });
+});
+
+app.post('/api/admin/credit/grant', requireAdmin, requireSuper, (req, res) => {
+  const { userId, amount, reason } = req.body;
+  const num = parseInt(amount);
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '赠送数量范围 1~10000' });
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+  users[idx].credit = (users[idx].credit || 0) + num;
+  writeUsers(users);
+  const logs = readCreditLogs();
+  logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId, amount: num, reason: '管理员赠送：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）', createdAt: new Date().toISOString() });
+  writeCreditLogs(logs);
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 赠送 ' + num + ' Credit 给用户 ' + userId);
+  res.json({ ok: true, data: { credit: users[idx].credit } });
+});
+
+app.post('/api/admin/credit/deduct', requireAdmin, requireSuper, (req, res) => {
+  const { userId, amount, reason } = req.body;
+  const num = parseInt(amount);
+  if (!userId) return res.json({ ok: false, msg: '请指定用户' });
+  if (!num || num < 1 || num > 10000) return res.json({ ok: false, msg: '扣除数量范围 1~10000' });
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+  const current = users[idx].credit || 0;
+  if (current < num) return res.json({ ok: false, msg: '用户 Credit 余额不足，当前仅 ' + current });
+  users[idx].credit = current - num;
+  writeUsers(users);
+  const logs = readCreditLogs();
+  logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId, amount: -num, reason: '管理员扣除：' + (reason || '无备注') + '（经办人：' + req.admin.id + '）', createdAt: new Date().toISOString() });
+  writeCreditLogs(logs);
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 扣除用户 ' + userId + ' 的 ' + num + ' Credit');
+  res.json({ ok: true, data: { credit: users[idx].credit } });
+});
+
+// ===== 数据总览 =====
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  const now = Date.now();
+  const oneDayAgo = now - 86400000;
+  const oneWeekAgo = now - 604800000;
+  const stats = {
+    total: posts.length,
+    today: posts.filter(p => new Date(p.time).getTime() >= oneDayAgo).length,
+    week: posts.filter(p => new Date(p.time).getTime() >= oneWeekAgo).length,
+    totalLikes: posts.reduce((sum, p) => sum + (p.likes || 0), 0),
+    byType: {}
+  };
+  ['日常', '表白', '树洞', '失物招领', '活动'].forEach(t => {
+    stats.byType[t] = posts.filter(p => p.type === t).length;
+  });
+  stats.dailyChart = [];
+  for (let i = 6; i >= 0; i--) {
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    dayStart.setDate(dayStart.getDate() - i);
+    const dayEnd = new Date(dayStart.getTime() + 86400000);
+    stats.dailyChart.push({
+      label: i === 0 ? '今天' : `${dayStart.getMonth() + 1}/${dayStart.getDate()}`,
+      count: posts.filter(p => {
+        const t = new Date(p.time).getTime();
+        return t >= dayStart.getTime() && t < dayEnd.getTime();
+      }).length
+    });
+  }
+  res.json({ ok: true, data: stats });
+});
+
+// ===== 评论管理 =====
+app.get('/api/admin/comments', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  const allComments = [];
+  posts.forEach(post => {
+    (post.comments || []).forEach(c => {
+      allComments.push({ ...c, postId: post.id, postAuthor: post.author, postContent: post.content.slice(0, 50) });
+    });
+  });
+  allComments.sort((a, b) => new Date(b.time) - new Date(a.time));
+  res.json({ ok: true, data: allComments });
+});
+
+app.delete('/api/admin/comments/:commentId', requireAdmin, (req, res) => {
+  const posts = readPosts();
+  let found = false;
+  posts.forEach(post => {
+    const comment = (post.comments || []).find(c => c.id === req.params.commentId);
+    if (comment && !comment.deleted) {
+      saveDeletedItem('comment', comment, 'admin');
+      post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => c.id !== req.params.commentId);
+      post.commentsCount = post.comments.length;
+      found = true;
+    }
+  });
+  if (!found) return res.json({ ok: false, msg: '评论不存在或已被删除' });
+  writePosts(posts);
+  const reports = readReports();
+  const remaining = reports.filter(r => r.targetId !== req.params.commentId || r.type !== 'comment');
+  writeReports(remaining);
+  res.json({ ok: true });
+});
+
+app.post('/api/comments/batch-delete', requireAdmin, (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) return res.json({ ok: false, msg: '请提供要删除的评论 ID 列表' });
+  const posts = readPosts();
+  let deletedCount = 0;
+  posts.forEach(post => {
+    (post.comments || []).forEach(c => {
+      if (ids.includes(c.id) && !c.deleted) {
+        saveDeletedItem('comment', c, 'admin');
+        deletedCount++;
+      }
+    });
+    post.comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => !ids.includes(c.id) || c.deleted);
+    post.commentsCount = (post.comments || []).length;
+  });
+  writePosts(posts);
+  const reports = readReports();
+  const remainingReports = reports.filter(r => !ids.includes(r.targetId) || r.type !== 'comment');
+  writeReports(remainingReports);
+  res.json({ ok: true, deleted: deletedCount });
+});
+
+app.post('/api/posts/batch-delete', requireAdmin, (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.json({ ok: false, msg: '请提供要删除的帖子 ID 列表' });
+  }
+  let posts = readPosts();
+  let deletedCount = 0;
+  posts.forEach(p => {
+    if (ids.includes(p.id) && !p.deleted) {
+      saveDeletedItem('post', p, 'admin');
+      deletedCount++;
+    }
+  });
+  posts = posts.filter(p => !ids.includes(p.id) || p.deleted);
+  writePosts(posts);
+  res.json({ ok: true, deleted: deletedCount });
+});
+
+// ===== 举报处理 =====
+app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
+  const { status, action } = req.body;
+  if (!['resolved', 'ignored'].includes(status)) {
+    return res.json({ ok: false, msg: '状态无效' });
+  }
+  const reports = readReports();
+  const report = reports.find(r => r.id === req.params.id);
+  if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
+  report.status = status;
+  report.handledBy = req.admin.id;
+  report.handledAt = new Date().toISOString();
+  if (action) report.action = action;
+  if (action === 'delete_post' && report.postId) {
+    const posts = readPosts();
+    const now = new Date().toISOString();
+    posts.forEach(p => {
+      if (p.id === report.postId && !p.deleted) {
+        p.deleted = true;
+        p.deletedAt = now;
+        p.deletedBy = 'admin';
+      }
+    });
+    writePosts(posts);
+  }
+  if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
+    const posts = readPosts();
+    const now = new Date().toISOString();
+    posts.forEach(post => {
+      if (Array.isArray(post.comments)) {
+        post.comments.forEach(c => {
+          if (c.id === report.targetId && !c.deleted) {
+            c.deleted = true;
+            c.deletedAt = now;
+            c.deletedBy = 'admin';
+          }
+        });
+      }
+    });
+    writePosts(posts);
+  }
+  if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
+    const comments = readDiscussionComments();
+    const now = new Date().toISOString();
+    comments.forEach(c => {
+      if (c.id === report.targetId && !c.deleted) {
+        c.deleted = true;
+        c.deletedAt = now;
+        c.deletedBy = 'admin';
+      }
+    });
+    writeDiscussionComments(comments);
+  }
+  writeReports(reports);
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
+  const { banDays } = req.body;
+  const days = banDays !== undefined ? parseInt(banDays) : 0;
+  if (isNaN(days) || days < 0) return res.json({ ok: false, msg: '天数无效' });
+  const reports = readReports();
+  const report = reports.find(r => r.id === req.params.id);
+  if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
+  const targetUserId = report.reportedBy;
+  if (!targetUserId) return res.json({ ok: false, msg: '该举报没有关联用户（匿名举报）' });
+  const users = readUsers();
+  const user = users.find(u => u.id === targetUserId);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  user.status = 'banned';
+  if (days === 0) { user.banUntil = null; user.banDays = null; }
+  else {
+    const until = new Date();
+    until.setDate(until.getDate() + days);
+    user.banUntil = until.toISOString();
+    user.banDays = days;
+  }
+  writeUsers(users);
+  report.status = 'resolved';
+  report.handledBy = req.admin.id;
+  report.handledAt = new Date().toISOString();
+  report.action = 'ban_user';
+  writeReports(reports);
+  res.json({ ok: true, msg: days === 0 ? '已永久封禁该用户' : '已封禁该用户 ' + days + ' 天', user: { id: user.id, username: user.username, nickname: user.nickname } });
+});
+
+// ===== 已删除内容 =====
+app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
+  const items = readDeletedItems();
+  const posts = items.filter(i => i.type === 'post');
+  const comments = items.filter(i => i.type === 'comment');
+  const discussions = items.filter(i => i.type === 'discussion');
+  const discComments = items.filter(i => i.type === 'disc_comment');
+  res.json({ ok: true, data: { posts: posts.reverse(), postComments: comments.reverse(), discussions: discussions.reverse(), discussionComments: discComments.reverse() } });
+});
+
+// ===== 霸凌状态管理 =====
+app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
+  const { status, handleNote } = req.body;
+  if (!status || !['pending','processing','resolved'].includes(status)) {
+    return res.json({ ok: false, msg: '无效的状态' });
+  }
+  const reports = readBullying();
+  const idx = reports.findIndex(r => r.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
+  reports[idx].status = status;
+  reports[idx].handleNote = handleNote || '';
+  reports[idx].handledBy = req.admin.name || req.admin.id;
+  reports[idx].handledAt = new Date().toISOString();
+  writeBullying(reports);
+  if (status === 'resolved' && reports[idx].userId) {
+    try {
+      const notices = readNotices();
+      notices.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        title: '🛡️ 霸凌举报已确认处理',
+        content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
+        author: '系统', auto: true, level: 'T0', createdAt: new Date().toISOString(), targetUserId: reports[idx].userId
+      });
+      writeNotices(notices);
+    } catch (e) {
+      console.error('发送霸凌处理通知失败:', e.message);
+    }
+  }
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
+  const reports = readBullying();
+  const report = reports.find(r => r.id === req.params.id);
+  if (!report) return res.json({ ok: false, msg: '报告不存在' });
+  res.json({ ok: true, data: report });
+});
+
+// ===== 反馈管理 =====
+app.get('/api/admin/feedback/:id', requireAdmin, (req, res) => {
+  const feedbacks = readFeedbacks();
+  const f = feedbacks.find(x => x.id === req.params.id);
+  if (!f) return res.json({ ok: false, msg: '反馈不存在' });
+  res.json({ ok: true, data: f });
+});
+
+app.post('/api/admin/feedback/:id/handle', requireAdmin, (req, res) => {
+  const { status, note } = req.body;
+  if (!status || !['pending', 'resolved', 'rejected'].includes(status)) {
+    return res.json({ ok: false, msg: '状态无效' });
+  }
+  const feedbacks = readFeedbacks();
+  const idx = feedbacks.findIndex(f => f.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '反馈不存在' });
+  feedbacks[idx].status = status;
+  feedbacks[idx].handledBy = req.admin.id;
+  feedbacks[idx].handledAt = new Date().toISOString();
+  feedbacks[idx].handleNote = note || '';
+  writeFeedbacks(feedbacks);
+  res.json({ ok: true });
+});
+
+// ===== 违禁词管理 =====
+app.post('/api/admin/sensitive-words', requireAdmin, (req, res) => {
+  try {
+    const { word } = req.body;
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
+    const trimmed = word.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
+    let words = [];
+    if (fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
+      words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
+    }
+    if (!Array.isArray(words)) words = [];
+    if (words.includes(trimmed)) return res.json({ ok: false, msg: '该违禁词已存在' });
+    words.push(trimmed);
+    fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
+    reloadSensitive();
+    res.json({ ok: true, data: words });
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+app.delete('/api/admin/sensitive-words/:word', requireAdmin, (req, res) => {
+  try {
+    const word = decodeURIComponent(req.params.word);
+    if (!fs.existsSync(SENSITIVE_CUSTOM_FILE)) {
+      return res.json({ ok: false, msg: '没有自定义违禁词' });
+    }
+    let words = JSON.parse(fs.readFileSync(SENSITIVE_CUSTOM_FILE, 'utf-8'));
+    if (!Array.isArray(words)) words = [];
+    const idx = words.indexOf(word);
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该违禁词' });
+    words.splice(idx, 1);
+    fs.writeFileSync(SENSITIVE_CUSTOM_FILE, JSON.stringify(words, null, 2), 'utf-8');
+    reloadSensitive();
+    res.json({ ok: true, data: words });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
+  }
+});
+
+app.get('/api/admin/sensitive-stats', requireAdmin, (req, res) => {
+  try {
+    const stats = getSensitiveStats();
+    res.json({ ok: true, data: stats });
+  } catch (e) {
+    res.json({ ok: false, msg: '获取统计失败: ' + e.message });
+  }
+});
+
+app.get('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+  try {
+    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: true, data: [] });
+    const list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    res.json({ ok: true, data: Array.isArray(list) ? list : [] });
+  } catch (e) {
+    res.json({ ok: false, msg: '读取白名单失败: ' + e.message });
+  }
+});
+
+app.post('/api/admin/sensitive-whitelist', requireAdmin, (req, res) => {
+  try {
+    const { word } = req.body;
+    if (!word || typeof word !== 'string') return res.json({ ok: false, msg: '请输入有效词语' });
+    const trimmed = word.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '词语不能为空' });
+    if (trimmed.length > 50) return res.json({ ok: false, msg: '词语太长，最多50字' });
+    let list = [];
+    if (fs.existsSync(WHITELIST_FILE)) list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    if (!Array.isArray(list)) list = [];
+    if (list.includes(trimmed)) return res.json({ ok: false, msg: '该词已在白名单中' });
+    list.push(trimmed);
+    saveWhitelist(list);
+    reloadSensitive();
+    res.json({ ok: true, data: list });
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+app.delete('/api/admin/sensitive-whitelist/:word', requireAdmin, (req, res) => {
+  try {
+    const word = decodeURIComponent(req.params.word);
+    if (!fs.existsSync(WHITELIST_FILE)) return res.json({ ok: false, msg: '白名单为空' });
+    let list = JSON.parse(fs.readFileSync(WHITELIST_FILE, 'utf-8'));
+    if (!Array.isArray(list)) list = [];
+    const idx = list.indexOf(word);
+    if (idx === -1) return res.json({ ok: false, msg: '未找到该白名单词' });
+    list.splice(idx, 1);
+    saveWhitelist(list);
+    reloadSensitive();
+    res.json({ ok: true, data: list });
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
+  }
+});
+
+// ===== 霸凌保护姓名管理 =====
+app.get('/api/admin/bullying-names', requireAdmin, (req, res) => {
+  try {
+    const names = getAllBullyingNames();
+    res.json({ ok: true, data: names });
+  } catch (e) {
+    res.json({ ok: false, msg: '读取失败: ' + e.message });
+  }
+});
+
+app.post('/api/admin/bullying-names', requireAdmin, (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || typeof name !== 'string') return res.json({ ok: false, msg: '请输入有效姓名' });
+    const trimmed = name.trim();
+    if (trimmed.length === 0) return res.json({ ok: false, msg: '姓名不能为空' });
+    if (trimmed.length > 30) return res.json({ ok: false, msg: '姓名太长，最多30字' });
+    if (addBullyingName(trimmed)) {
+      res.json({ ok: true, msg: '添加成功' });
+    } else {
+      res.json({ ok: false, msg: '该姓名已在保护名单中' });
+    }
+  } catch (e) {
+    res.json({ ok: false, msg: '添加失败: ' + e.message });
+  }
+});
+
+app.delete('/api/admin/bullying-names/:name', requireAdmin, (req, res) => {
+  try {
+    const name = decodeURIComponent(req.params.name);
+    if (removeBullyingName(name)) {
+      res.json({ ok: true, msg: '删除成功' });
+    } else {
+      res.json({ ok: false, msg: '未找到该姓名' });
+    }
+  } catch (e) {
+    res.json({ ok: false, msg: '删除失败: ' + e.message });
+  }
+});
+
+// ===== 问答管理 =====
+app.get('/api/admin/qa/questions', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const answers = readQAAnswers();
+  const list = questions.filter(q => !q.deleted).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: list.map(q => ({ ...q, answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length })) });
+});
+
+app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const idx = questions.findIndex(q => q.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
+  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
+    changeCredit(questions[idx].userId, questions[idx].bounty, '管理员删除问题退还悬赏');
+  }
+  questions[idx].deleted = true;
+  writeQAQuestions(questions);
+  res.json({ ok: true });
+});
+
+// ===== 投票管理 =====
+app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
+  const votes = readVotes();
+  const idx = votes.findIndex(v => v.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '投票不存在' });
+  votes[idx].deleted = true;
+  writeVotes(votes);
+  res.json({ ok: true });
+});
+
+app.put('/api/admin/votes/:id', requireAdmin, (req, res) => {
+  const { title, options, multiple, allowCustom, endTime } = req.body;
+  const votes = readVotes();
+  const vote = votes.find(v => v.id === req.params.id);
+  if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+  if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+  if (title !== undefined) {
+    if (typeof title !== 'string' || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
+    if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
+    const sw = checkSensitive(title.trim());
+    if (sw.length > 0) return res.json({ ok: false, warning: true, warningMsg: '标题包含敏感词，请修改后重试' });
+    const bn = checkBullyingNames(title.trim());
+    if (bn.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    vote.title = title.trim();
+  }
+  if (options !== undefined) {
+    if (!Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '至少需要2个选项' });
+    if (options.length > 20) return res.json({ ok: false, msg: '最多20个选项' });
+    for (const opt of options) {
+      const optText = typeof opt === 'string' ? opt : (opt.text || '');
+      if (!optText || !optText.trim()) return res.json({ ok: false, msg: '选项不能为空' });
+      if (optText.trim().length > 100) return res.json({ ok: false, msg: '选项最多100个字' });
+    }
+    const optTexts = options.map(o => typeof o === 'string' ? o : (o.text || ''));
+    const sw = checkSensitive(optTexts.join(' '));
+    if (sw.length > 0) return res.json({ ok: false, warning: true, warningMsg: '选项包含敏感词，请修改后重试' });
+    const bn = checkBullyingNames(optTexts.join(' '));
+    if (bn.length > 0) return res.json({ ok: false, bullying: true, warningMsg: '内容涉及受保护人员姓名，无法发送' });
+    _legacyUpdateVoteOptions(vote, options);
+  }
+  if (multiple !== undefined) vote.multiple = !!multiple;
+  if (allowCustom !== undefined) vote.allowCustom = !!allowCustom;
+  if (endTime !== undefined) vote.endTime = endTime || null;
+  writeVotes(votes);
+  res.json({ ok: true, data: vote });
+});
+
 };

@@ -942,6 +942,30 @@ module.exports = function(app) {
   
     res.json({ ok: true, msg: '已标记为未通过，请重新提交认证信息' });
   });
+
+// ===== 用户公开主页（个人中心页 user.html 调用）=====
+// aeed436「路由拆分 + SPA」重构时从旧 server.js 删除后未迁移，导致 user.html
+// 请求 /api/users/:id 与 /api/users/:id/posts 命中 404 返回 HTML，前端
+// JSON 解析报 "Unexpected token '<'"。此处按原逻辑恢复。
+app.get('/api/users/:id', (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
+  // 不返回密码等敏感信息
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
+});
+
+app.get('/api/users/:id/posts', (req, res) => {
+  const users = readUsers();
+  const user = users.find(u => u.id === req.params.id);
+  if (!user) return res.json({ ok: false, msg: '用户不存在' });
+  if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
+  const posts = readPosts();
+  const userPosts = posts.filter(p => !p.deleted && (p.userId === user.id || p.author === user.nickname));
+  res.json({ ok: true, data: userPosts });
+});
+
   app.delete('/api/user/posts/:id', (req, res) => {
     const token = req.headers['x-user-token'];
     if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
