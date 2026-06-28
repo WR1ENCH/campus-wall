@@ -1852,6 +1852,7 @@
  <button class="detail-close" onclick="closeNoteDetail()">×</button>
  <div class="detail-type" id="detailType"></div>
  <div class="detail-content" id="detailContent"></div>
+ <div id="detailImages" style="display:none;flex-wrap:wrap;gap:8px;margin:10px 0;"></div>
  <div class="detail-footer">
  <div class="detail-author">
  <a href="#" id="detailAvatarLink" style="text-decoration:none; color:inherit;display:inline-flex;align-items:center;gap:4px;">
@@ -4300,7 +4301,7 @@
  data-id="${post.id}"
  onclick="openNoteDetail('${post.id}')">
  ${pinHtml}
- <div class="note-type">${cfg.emoji} ${post.type}</div>
+ <div class="note-type">${cfg.emoji} ${post.type}${(post.images && post.images.length) ? ' · 📷' + post.images.length : ''}</div>
  <div class="note-content">${renderPostContent(post)}</div>
  <div class="note-footer" onclick="event.stopPropagation()">
  <div class="note-author">
@@ -4474,6 +4475,19 @@
 
  document.getElementById('detailType').innerHTML = cfg.emoji + ' ' + post.type;
  document.getElementById('detailContent').textContent = post.content;
+ // 帖子附图
+ const detailImagesEl = document.getElementById('detailImages');
+ if (detailImagesEl) {
+ if (Array.isArray(post.images) && post.images.length) {
+ detailImagesEl.style.display = 'flex';
+ detailImagesEl.innerHTML = post.images.map(function(src){
+ return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
+ }).join('');
+ } else {
+ detailImagesEl.style.display = 'none';
+ detailImagesEl.innerHTML = '';
+ }
+ }
  // 设置头像（base64 用 img 标签，emoji 用 span 文本）
  const avatarEl = document.getElementById('detailAvatar');
  const avatarEmoji = document.getElementById('detailAvatarEmoji');
