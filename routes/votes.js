@@ -110,4 +110,37 @@ module.exports = function(app) {
     writeVotes(votes);
     res.json({ ok: true });
   });
+
+  // 管理端投票列表（aeed436 路由拆分时遗漏，admin.html loadAdminVotes 调用）
+  app.get('/api/admin/votes', requireAdmin, (req, res) => {
+    const votes = readVotes();
+    const records = readVoteRecords();
+    const list = votes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({
+      ok: true,
+      data: list.map(v => ({
+        ...v,
+        totalVotes: v.options.reduce((s, o) => s + (o.votes || 0), 0),
+        participantCount: [...new Set(records.filter(r => r.voteId === v.id).map(r => r.userId))].length,
+        allowCustom: v.allowCustom === true || v.allowCustom === 1 || v.allowCustom === '1' || v.allowCustom === 'true'
+      }))
+    });
+  });
+
+  // 截止投票（管理员/学生会）—— aeed436 遗漏，admin.html adminEndVote 调用
+  app.post('/api/votes/:id/end', (req, res) => {
+    const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+    if (!token) return res.json({ ok: false, msg: '未登录' });
+    const session = verifySignedToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录无效' });
+
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id && !v.deleted);
+    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
+    if (vote.endTime && new Date(vote.endTime) < new Date()) return res.json({ ok: false, msg: '投票已结束' });
+
+    vote.endTime = new Date().toISOString();
+    writeVotes(votes);
+    res.json({ ok: true, msg: '投票已截止' });
+  });
 };

@@ -256,4 +256,22 @@ app.delete('/api/qa/answers/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// 我的提问（admin.html/index.html loadMyQuestions 调用，aeed436 路由拆分时遗漏）
+app.get('/api/qa/my-questions', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  settleExpiredQuestions();
+  const questions = readQAQuestions().filter(q => !q.deleted && q.userId === session.id);
+  const answers = readQAAnswers();
+  questions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const result = questions.map(q => ({
+    ...q,
+    answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length,
+    remainingBounty: Math.max(0, (q.bounty || 0) - (q.distributedCredits || 0))
+  }));
+  res.json({ ok: true, data: result });
+});
+
 };

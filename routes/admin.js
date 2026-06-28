@@ -55,6 +55,20 @@ function readCreditCards() { return db.readCreditCards(); }
 function writeCreditCards(cards) { db.writeCreditCards(cards); }
 function readNotices() { return db.readNotices(); }
 function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+// ponytail: 给单个用户发系统通知（/api/user/notifications 按 targetUserId 过滤）。
+// 霸凌举报处仍内联同款逻辑，不改动已工作代码；此处仅服务 aeed436 路由拆分时遗漏的举报/认证通知。
+function pushUserNotice(targetUserId, title, content, level) {
+  if (!targetUserId) return;
+  const notices = readNotices();
+  notices.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    title, content, author: '系统', auto: true,
+    level: level || 'T1',
+    createdAt: new Date().toISOString(),
+    targetUserId
+  });
+  writeNotices(notices);
+}
 function readMaintenance() { return db.readMaintenance(); }
 function writeMaintenance(data) { db.writeMaintenance(data); }
 function readApps() { return db.readApps(); }
@@ -598,6 +612,8 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
     users[userIndex].zhixueReviewedAt = now;
     users[userIndex].zhixueReviewedBy = req.admin.id;
     writeUsers(users);
+    // ponytail: aeed436 路由拆分时遗漏——认证驳回未通知用户
+    pushUserNotice(users[userIndex].id, '❌ 学生认证未通过', '你的学生认证申请已被驳回。原因：' + rejectReason.trim());
     return res.json({ ok: true, msg: '已拒绝该申请' });
   }
 
@@ -634,6 +650,12 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   }
 
   writeUsers(users);
+
+  // ponytail: aeed436 路由拆分时遗漏——认证通过后未通知用户
+  pushUserNotice(users[userIndex].id, isManual ? '✅ 学生认证已通过' : '✅ 学生认证初审通过',
+    isManual
+      ? '你的学生认证已通过审核，获得 300 Credits 奖励！'
+      : '你的智学网认证已通过初审，请进入校园墙确认身份信息以完成认证。');
 
   if (isManual) {
     return res.json({ ok: true, msg: '已通过审核' });
@@ -1309,6 +1331,11 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     writeDiscussionComments(comments);
   }
   writeReports(reports);
+  // ponytail: aeed436 路由拆分时遗漏——举报处理后通知举报人
+  if (status === 'resolved' && report.reportedBy) {
+    pushUserNotice(report.reportedBy, '📋 举报已处理',
+      '你提交的举报（' + (report.reason || '').slice(0, 50) + '…）已由管理员处理完毕。');
+  }
   res.json({ ok: true });
 });
 

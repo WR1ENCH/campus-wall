@@ -4034,6 +4034,7 @@
         <div class="detail-label">内容</div>
         <div class="detail-content">${escHtml(post.content||'')}</div>
       </div>
+      ${(Array.isArray(post.images) && post.images.length) ? `<div class="detail-row"><div class="detail-label">附图（${post.images.length}）</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${post.images.map(img => `<img src="${img}" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open('${img}')">`).join('')}</div></div>` : ''}
       <div class="detail-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div>
           <div class="detail-label">作者</div>

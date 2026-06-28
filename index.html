@@ -5982,6 +5982,8 @@
  '<div class="qa-img-thumb"><img src="' + src + '"><button class="qa-img-del" onclick="removeQAImage(' + i + ',\'' + target + '\')">×</button></div>'
  ).join('');
  if (imgs.length < 3) html += '<label class="qa-img-add" for="' + inputId + '">+</label>';
+ // ponytail: el.innerHTML 会销毁原 <input>，导致 + label 失去 for 目标而点击无反应；每次重建 input
+ html += '<input id="' + inputId + '" type="file" accept="image/*" style="display:none;" onchange="addQAImage(this,\'' + target + '\')">';
  el.innerHTML = html;
  }
 
