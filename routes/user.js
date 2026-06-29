@@ -3,6 +3,7 @@ const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verif
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers } = require('../lib/state');
+const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
 const nodeCrypto = require('crypto');
 const svgCaptcha = require('svg-captcha');
@@ -171,11 +172,11 @@ module.exports = function(app) {
       }
     });
   });
-  app.post('/api/user/login', (req, res) => {
+  app.post('/api/user/login', rateLimitLogin('username'), (req, res) => {
     const { username, password, captchaId, captchaText } = req.body;
     const ip = getClientIP(req);
     const ua = req.headers['user-agent'] || '-';
-  
+
     if (!username || !password) {
       addLoginLog('user', null, false, ip, ua);
       return res.json({ ok: false, msg: '请输入账号和密码' });
@@ -186,11 +187,12 @@ module.exports = function(app) {
       return res.json({ ok: false, msg: '验证码错误' });
     }
     captchaStore.delete(captchaId); // 一次性使用
-  
+
     const users = readUsers();
     const user = users.find(u => u.username === username);
     if (!user || !verifyPassword(password, user.password)) {
       addLoginLog('user', username, false, ip, ua);
+      recordLoginFail(res); // ponytail: 记一次失败，触发 ip|account 限流
       return res.json({ ok: false, msg: '账号或密码错误' });
     }
     // 自动解封：如果 banUntil 已过期
