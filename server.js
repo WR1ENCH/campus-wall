@@ -109,8 +109,10 @@ app.use(express.static(__dirname));
 const { sseClients } = require('./lib/sse');
 
 // ===== 挂载路由模块 =====
-require('./routes/auth')(app);
+// ponytail: admin.js（含 /api/admin/votes/:id 等特化路由）必须在 auth.js（含 /api/admin/:id 通用路由）之前挂载，
+// 否则 PUT/DELETE /api/admin/votes/:id 会被通用路由捕获，返回"管理员不存在"。
 require('./routes/admin')(app);
+require('./routes/auth')(app);
 require('./routes/user')(app);
 require('./routes/posts')(app);
 require('./routes/discussions')(app);

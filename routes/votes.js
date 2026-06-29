@@ -33,7 +33,20 @@ function _updateVoteOptions(vote, newOptions) {
 module.exports = function(app) {
   app.get('/api/votes', (req, res) => {
     const votes = readVotes().filter(v => !v.deleted);
-    res.json({ ok: true, data: votes });
+    // ponytail: 返回当前登录用户在此投票中已选的 optionId 列表，
+    // 前端据此置 hasVoted=true → 隐藏“确认投票”按钮、高亮已选项。旧接口未返回 → 按钮永驻。
+    const token = req.headers['x-user-token'];
+    let userId = null;
+    if (token) { const s = verifyUserToken(token); if (s) userId = s.id; }
+    let data = votes;
+    if (userId) {
+      const myRecords = readVoteRecords().filter(r => r.userId === userId);
+      data = votes.map(v => ({
+        ...v,
+        userVoted: myRecords.filter(r => r.voteId === v.id).map(r => r.optionId).filter(Boolean)
+      }));
+    }
+    res.json({ ok: true, data });
   });
   app.post('/api/votes', requireAdmin, (req, res) => {
     const { title, options, multiple, allowCustom, endTime } = req.body;
@@ -56,21 +69,40 @@ module.exports = function(app) {
     if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
     const session = verifyUserToken(token);
     if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
-    const { optionId, customText } = req.body;
+    // ponytail: 前端 submitVoteSelection 发送 { optionIds:[...], customOption? }，
+    // 旧代码读 { optionId, customText } 字段名不匹配 → 选项票数不增、自定义选项不创建，
+    // 但 vote_record 已写入 → 再投即报“你已经投过票了”。此处对齐字段名并支持多选。
+    const { optionIds, customOption } = req.body;
+    const ids = Array.isArray(optionIds) ? optionIds.filter(Boolean) : [];
+    const customText = typeof customOption === 'string' ? customOption.trim() : '';
+
     const votes = readVotes();
     const vote = votes.find(v => v.id === req.params.id);
     if (!vote) return res.json({ ok: false, msg: '投票不存在' });
     if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
     const records = readVoteRecords();
     if (records.find(r => r.voteId === vote.id && r.userId === session.id)) return res.json({ ok: false, msg: '你已经投过票了' });
-    if (optionId) {
-      const opt = vote.options.find(o => o.id === optionId);
-      if (opt) opt.votes++;
-    }
+
+    // 自定义选项：新建并入栈，记录指向其 id，使 GET 返回的 userVoted 可高亮
+    let customOptId = null;
     if (vote.allowCustom && customText) {
-      vote.options.push({ id: 'opt_custom_' + Date.now().toString(36), text: customText.trim(), votes: 1 });
+      customOptId = 'opt_custom_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      vote.options.push({ id: customOptId, text: customText, votes: 1 });
     }
-    records.push({ id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, optionId: optionId || null, userId: session.id, createdAt: new Date().toISOString() });
+    // 多选逐项计票；单选时 ids 仅 1 项
+    ids.forEach(id => {
+      const opt = vote.options.find(o => o.id === id);
+      if (opt) opt.votes = (opt.votes || 0) + 1;
+    });
+
+    const recordedIds = ids.slice();
+    if (customOptId) recordedIds.push(customOptId);
+    if (recordedIds.length === 0) return res.json({ ok: false, msg: '请选择投票选项' });
+
+    const now = new Date().toISOString();
+    recordedIds.forEach(id => {
+      records.push({ id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, optionId: id, userId: session.id, createdAt: now });
+    });
     writeVoteRecords(records);
     writeVotes(votes);
     res.json({ ok: true });
