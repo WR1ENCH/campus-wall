@@ -249,8 +249,9 @@ app.post('/api/discussions/:id/comments', (req, res) => {
     userId: user.id,
     createdAt: new Date().toISOString(),
     likes: 0,
-    liked: false,
-    reportCount: 0,
+    // ponytail: 去掉 liked/reportCount —— discussion_comments 表无此列，
+    // 首条评论写入时 rows[0] 即新评论，INSERT 列含 liked → SqliteError → 500 "网络错误"。
+    // liked 为按用户态（应由 likedBy 派生），reportCount 从未被读取，均属死字段。
     hidden: false
   };
   comments.push(newComment);
