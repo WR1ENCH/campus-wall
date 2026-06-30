@@ -2648,11 +2648,11 @@
  .then(function(data) {
  if (data.ok) {
  var allVotes = data.data || [];
- var userId = getCurrentUserId();
- var myVotes = allVotes.filter(function(v) { return v.userId === userId; });
+ // ponytail: “我的投票”按参与过滤（userVoted 非空），而非发起者过滤
+ var myVotes = allVotes.filter(function(v) { return v.userVoted && v.userVoted.length > 0; });
  votes = allVotes;
  if (myVotes.length === 0) {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+ container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有参与任何投票</div>';
  } else {
  renderVoteList(myVotes, 'voteMyContainer');
  }
@@ -2846,6 +2846,10 @@
  if (!voteUserVotes[voteId]) {
  voteUserVotes[voteId] = [];
  }
+ // ponytail: 多选下点击已有选项时，自定义标记 __custom__ 残留在数组里 →
+ // submitVoteSelection 误判 selected[0]==='__custom__' 报“请输入自定义选项内容”。
+ var ci = voteUserVotes[voteId].indexOf('__custom__');
+ if (ci !== -1) voteUserVotes[voteId].splice(ci, 1);
 
  if (isMultiple) {
  // 多选：支持勾选和取消勾选
