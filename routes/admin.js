@@ -1059,6 +1059,9 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
   const { password, certRealName, certClassName, ...safeUser } = user;
   safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
   safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+  // ponytail: user/:id/detail 返回的 zhixuePassword 是加密原文，前端直接展示成乱码/哈希；
+  // zhixue-records API 已做 decryptCert，此处对齐。
+  safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
   const posts = readPosts();
   const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
