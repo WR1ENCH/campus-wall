@@ -932,7 +932,10 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
       id: u.id, nickname: u.nickname, avatar: u.avatar,
       certType: u.zhixueCertType || 'zhixue',
       zhixueUsername: u.zhixueUsername,
-      zhixuePassword: (u.zhixuePassword ? decryptCert(u.zhixuePassword) : '') || '',
+      zhixuePassword: (u.zhixuePassword
+        ? (decryptCert(u.zhixuePassword)
+          || (/^[a-f0-9]{32}:[a-f0-9]+$/.test(u.zhixuePassword) ? '（旧密钥加密，无法解密）' : u.zhixuePassword))
+        : '') || '',
       zhixueManualName: u.zhixueManualName,
       status: u.zhixueStatus,
       rejectReason: u.zhixueRejectReason || null,
@@ -1059,6 +1062,9 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
   const { password, certRealName, certClassName, ...safeUser } = user;
   safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
   safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+  // ponytail: user/:id/detail 返回的 zhixuePassword 是加密原文，前端直接展示成乱码/哈希；
+  // zhixue-records API 已做 decryptCert，此处对齐。
+  safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
   const posts = readPosts();
   const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))

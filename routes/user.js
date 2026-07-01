@@ -77,16 +77,21 @@ function generateUID() {
 }
 
 function luhnModN(code) {
+  // ponytail: 必须与 routes/admin.js 的生成算法（CARD_CHARS / mod 32 / Luhn 拆位）
+  // 完全一致，否则每张卡密都通不过校验。旧实现用 mod 10 且无拆位 → "校验码不匹配"。
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const n = chars.length;
+  let factor = 2;
   let sum = 0;
-  for (let i = 0; i < code.length - 1; i++) {
+  for (let i = code.length - 2; i >= 0; i--) {
     const val = chars.indexOf(code[i]);
     if (val === -1) return false;
-    sum += (i % 2 === 0) ? val : val * 2;
+    const add = val * factor;
+    sum += Math.floor(add / n) + (add % n);
+    factor = factor === 2 ? 1 : 2;
   }
-  const checkChar = code[code.length - 1];
-  const expected = chars[(10 - (sum % 10)) % 10];
-  return checkChar === expected;
+  const expected = (n - (sum % n)) % n;
+  return chars[expected] === code[code.length - 1];
 }
 
 const QR_CODE_TTL = 5 * 60 * 1000;

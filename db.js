@@ -469,7 +469,11 @@ function readAdmins() { return all('admins'); }
 function writeAdmins(data) { dropAndInsert('admins', data); }
 
 // Users
-function readUsers() { return all('users'); }
+// ponytail: 历史数据 nickname 可能为数字（如 395），统一转字符串，
+// 避免前端 .charAt(0) / .substring 崩溃。升级路径：写入时校验。
+function readUsers() {
+  return all('users').map(u => ({ ...u, nickname: u.nickname == null ? '' : String(u.nickname) }));
+}
 function writeUsers(data) { dropAndInsert('users', data); }
 
 // Trust tokens
@@ -545,7 +549,11 @@ function writeAnnouncement(data) {
 }
 
 // Discussions
-function readDiscussions() { return all('discussions'); }
+// ponytail: 历史数据 title 可能为数字（如 12313），统一转字符串，
+// 避免前端 escHtml(d.title) / d.title.toLowerCase() 崩溃。升级路径：写入时校验。
+function readDiscussions() {
+  return all('discussions').map(d => ({ ...d, title: d.title == null ? '' : String(d.title) }));
+}
 function writeDiscussions(data) { dropAndInsert('discussions', data); }
 
 // Discussion comments
