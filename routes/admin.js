@@ -932,7 +932,10 @@ app.get('/api/admin/zhixue-records', requireAdmin, (req, res) => {
       id: u.id, nickname: u.nickname, avatar: u.avatar,
       certType: u.zhixueCertType || 'zhixue',
       zhixueUsername: u.zhixueUsername,
-      zhixuePassword: (u.zhixuePassword ? decryptCert(u.zhixuePassword) : '') || '',
+      zhixuePassword: (u.zhixuePassword
+        ? (decryptCert(u.zhixuePassword)
+          || (/^[a-f0-9]{32}:[a-f0-9]+$/.test(u.zhixuePassword) ? '（旧密钥加密，无法解密）' : u.zhixuePassword))
+        : '') || '',
       zhixueManualName: u.zhixueManualName,
       status: u.zhixueStatus,
       rejectReason: u.zhixueRejectReason || null,
