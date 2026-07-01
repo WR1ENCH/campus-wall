@@ -411,6 +411,17 @@
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  // 图片大图预览（点击帖子图片弹出）
+  function showPostImage(idx) {
+    const src = postData && Array.isArray(postData.images) ? postData.images[idx] : null;
+    if (!src) return;
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
+    div.innerHTML = '<img src="' + src + '" style="max-width:90vw;max-height:90vh;border-radius:12px;">';
+    div.onclick = () => div.remove();
+    document.body.appendChild(div);
+  }
+
   function toast(msg, duration = 2000) {
     const el = document.getElementById('toastEl');
     el.textContent = msg;
@@ -535,6 +546,7 @@
       <div class="note-card ${cfg.color}" style="background:${colors.bg};color:${colors.text};">
         <div class="note-type">${cfg.emoji} ${escHtml(post.type)}</div>
         <div class="note-content">${escHtml(post.content)}</div>
+        ${(post.images && post.images.length) ? `<div class="post-images" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">${post.images.map((img, i) => `<img src="${img}" data-idx="${i}" onclick="showPostImage(${i})" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display='none'">`).join('')}</div>` : ''}
         <div class="note-footer">
           <div class="note-author">
             ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${escHtml(post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>`}

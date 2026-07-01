@@ -1,6 +1,6 @@
 const { hashPassword, verifyPassword, makeToken, verifySignedToken } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
-const { requireAdmin, requireSuper } = require('../lib/middleware');
+const { requireAdmin, requireSuper, rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const { readAdmins, writeAdmins, readLogs, writeLogs } = require('../db');
 const { broadcastSSE } = require('../lib/sse');
 
@@ -57,7 +57,7 @@ module.exports = function(app, opts) {
     });
   });
 
-  app.post('/api/admin/login', (req, res) => {
+  app.post('/api/admin/login', rateLimitLogin('id'), (req, res) => {
     const { id, password } = req.body;
     const ip = getClientIP(req);
     const ua = req.headers['user-agent'] || '-';
@@ -69,6 +69,7 @@ module.exports = function(app, opts) {
     const admin = admins.find(a => a.id === id);
     if (!admin || !verifyPassword(password, admin.password)) {
       addLoginLog('admin', id, false, ip, ua);
+      recordLoginFail(res); // ponytail: 记一次失败，触发 ip|account 限流
       return res.json({ ok: false, msg: '账号或密码错误' });
     }
     addLoginLog('admin', admin.name, true, ip, ua);

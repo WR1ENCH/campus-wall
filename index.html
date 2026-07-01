@@ -1852,6 +1852,7 @@
  <button class="detail-close" onclick="closeNoteDetail()">×</button>
  <div class="detail-type" id="detailType"></div>
  <div class="detail-content" id="detailContent"></div>
+ <div id="detailImages" style="display:none;flex-wrap:wrap;gap:8px;margin:10px 0;"></div>
  <div class="detail-footer">
  <div class="detail-author">
  <a href="#" id="detailAvatarLink" style="text-decoration:none; color:inherit;display:inline-flex;align-items:center;gap:4px;">
@@ -2647,11 +2648,11 @@
  .then(function(data) {
  if (data.ok) {
  var allVotes = data.data || [];
- var userId = getCurrentUserId();
- var myVotes = allVotes.filter(function(v) { return v.userId === userId; });
+ // ponytail: “我的投票”按参与过滤（userVoted 非空），而非发起者过滤
+ var myVotes = allVotes.filter(function(v) { return v.userVoted && v.userVoted.length > 0; });
  votes = allVotes;
  if (myVotes.length === 0) {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有发起任何投票</div>';
+ container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有参与任何投票</div>';
  } else {
  renderVoteList(myVotes, 'voteMyContainer');
  }
@@ -2845,6 +2846,10 @@
  if (!voteUserVotes[voteId]) {
  voteUserVotes[voteId] = [];
  }
+ // ponytail: 多选下点击已有选项时，自定义标记 __custom__ 残留在数组里 →
+ // submitVoteSelection 误判 selected[0]==='__custom__' 报“请输入自定义选项内容”。
+ var ci = voteUserVotes[voteId].indexOf('__custom__');
+ if (ci !== -1) voteUserVotes[voteId].splice(ci, 1);
 
  if (isMultiple) {
  // 多选：支持勾选和取消勾选
@@ -4300,7 +4305,7 @@
  data-id="${post.id}"
  onclick="openNoteDetail('${post.id}')">
  ${pinHtml}
- <div class="note-type">${cfg.emoji} ${post.type}</div>
+ <div class="note-type">${cfg.emoji} ${post.type}${(post.images && post.images.length) ? ' · 📷' + post.images.length : ''}</div>
  <div class="note-content">${renderPostContent(post)}</div>
  <div class="note-footer" onclick="event.stopPropagation()">
  <div class="note-author">
@@ -4474,6 +4479,19 @@
 
  document.getElementById('detailType').innerHTML = cfg.emoji + ' ' + post.type;
  document.getElementById('detailContent').textContent = post.content;
+ // 帖子附图
+ const detailImagesEl = document.getElementById('detailImages');
+ if (detailImagesEl) {
+ if (Array.isArray(post.images) && post.images.length) {
+ detailImagesEl.style.display = 'flex';
+ detailImagesEl.innerHTML = post.images.map(function(src){
+ return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
+ }).join('');
+ } else {
+ detailImagesEl.style.display = 'none';
+ detailImagesEl.innerHTML = '';
+ }
+ }
  // 设置头像（base64 用 img 标签，emoji 用 span 文本）
  const avatarEl = document.getElementById('detailAvatar');
  const avatarEmoji = document.getElementById('detailAvatarEmoji');
@@ -5968,6 +5986,8 @@
  '<div class="qa-img-thumb"><img src="' + src + '"><button class="qa-img-del" onclick="removeQAImage(' + i + ',\'' + target + '\')">×</button></div>'
  ).join('');
  if (imgs.length < 3) html += '<label class="qa-img-add" for="' + inputId + '">+</label>';
+ // ponytail: el.innerHTML 会销毁原 <input>，导致 + label 失去 for 目标而点击无反应；每次重建 input
+ html += '<input id="' + inputId + '" type="file" accept="image/*" style="display:none;" onchange="addQAImage(this,\'' + target + '\')">';
  el.innerHTML = html;
  }
 

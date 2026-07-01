@@ -85,6 +85,8 @@ function migrate() {
     "role" TEXT DEFAULT 'admin',
     "createdAt" TEXT
   )`);
+  // ponytail: aeed436 路由拆分后智学/手动认证流程写入这些字段，但建表语句从未声明 →
+  // dropAndInsert 静默丢弃 → 管理员看不到账号密码(#5)、用户确认弹窗无数据(#6)、通知无可读内容。
   db.exec(`CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT PRIMARY KEY,
     "username" TEXT UNIQUE,
@@ -106,6 +108,19 @@ function migrate() {
     "certData" TEXT,
     "zhixueReviewedBy" TEXT,
     "zhixueReviewedAt" TEXT,
+    "zhixueCertType" TEXT,
+    "zhixueUsername" TEXT,
+    "zhixuePassword" TEXT,
+    "zhixueManualName" TEXT,
+    "zhixueManualEmail" TEXT,
+    "zhixueManualNote" TEXT,
+    "zhixueManualImages" TEXT,
+    "zhixueSubmittedAt" TEXT,
+    "zhixueRejectReason" TEXT,
+    "zhixueRejectedAt" TEXT,
+    "zhixueConfirmedAt" TEXT,
+    "certRealName" TEXT,
+    "certClassName" TEXT,
     "noticePublisher" INTEGER DEFAULT 0
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "posts" (
@@ -356,6 +371,8 @@ function migrate() {
   const tableMigrations = [
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
+    // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
+    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -440,7 +457,11 @@ function getById(table, id) {
 // ---- 兼容原 read/write 接口 ----
 
 // Posts
-function readPosts() { return all('posts'); }
+// ponytail: 历史数据存在 content 为数字/非字符串（如 222），统一转字符串，
+// 避免前端 (p.content||'').substring / p.content.toLowerCase 崩溃。升级路径：写入时校验。
+function readPosts() {
+  return all('posts').map(p => ({ ...p, content: p.content == null ? '' : String(p.content) }));
+}
 function writePosts(data) { dropAndInsert('posts', data); }
 
 // Admins
