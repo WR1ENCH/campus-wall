@@ -25,11 +25,11 @@ app.get('/api/student-council/me', (req, res) => {
 app.post('/api/student-council/login', (req, res) => {
   const { id, password, captchaId, captchaText } = req.body;
 
-  // 验证 captcha
+  // 滑块验证码校验
   if (captchaId && captchaText) {
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== captchaText.toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误' });
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
     }
     captchaStore.delete(captchaId);
   }

@@ -6,7 +6,6 @@ const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers }
 const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
 const nodeCrypto = require('crypto');
-const svgCaptcha = require('svg-captcha');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 
@@ -116,23 +115,22 @@ function cleanupQrCodes() {
 }
 
 module.exports = function(app) {
-  app.get('/api/captcha', (req, res) => {
-    const captcha = svgCaptcha.create({ fontSize: 50, width: 150, height: 50, noise: 2 });
-    const id = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    captchaStore.set(id, { text: captcha.text.toLowerCase(), t: Date.now() });
-    res.json({ ok: true, data: { id, svg: captcha.data } });
+  app.post('/api/slider-captcha/grant', (req, res) => {
+    const id = 'sc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    captchaStore.set(id, { verified: true, t: Date.now() });
+    res.json({ ok: true, data: { token: id } });
   });
   app.post('/api/user/register', (req, res) => {
     const { username, password, nickname, captchaId, captchaText } = req.body;
     if (!username || !password || !nickname) {
       return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
     }
-    // 验证码校验
+    // 滑块验证码校验
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误' });
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
     }
-    captchaStore.delete(captchaId); // 一次性使用
+    captchaStore.delete(captchaId);
     if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
       return res.json({ ok: false, msg: '账号需 3-16 位字母、数字、下划线' });
     }
@@ -142,7 +140,7 @@ module.exports = function(app) {
     if (nickname.length < 2 || nickname.length > 12) {
       return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
     }
-  
+
     const users = readUsers();
     if (users.find(u => u.username === username)) {
       return res.json({ ok: false, msg: '账号已被注册' });
@@ -186,12 +184,12 @@ module.exports = function(app) {
       addLoginLog('user', null, false, ip, ua);
       return res.json({ ok: false, msg: '请输入账号和密码' });
     }
-    // 验证码校验
+    // 滑块验证码校验
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误' });
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
     }
-    captchaStore.delete(captchaId); // 一次性使用
+    captchaStore.delete(captchaId);
 
     const users = readUsers();
     const user = users.find(u => u.username === username);
@@ -235,13 +233,13 @@ module.exports = function(app) {
     const ip = getClientIP(req);
     const ua = req.headers['user-agent'] || '-';
   
-    // 验证码校验
+    // 滑块验证码校验
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误' });
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
     }
-    captchaStore.delete(captchaId); // 一次性使用
-  
+    captchaStore.delete(captchaId);
+
     if (!zhixueUsername || !password) {
       addLoginLog('user', null, false, ip, ua);
       return res.json({ ok: false, msg: '请输入绑定的智学网账号和密码' });
@@ -330,7 +328,13 @@ module.exports = function(app) {
     res.json({ ok: true });
   });
   app.get('/api/user/qrcode/generate', (req, res) => {
-    const { userToken } = req.query;
+    const { userToken, captchaId } = req.query;
+    // 滑块验证码校验
+    const entry = captchaStore.get(captchaId);
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
+    }
+    captchaStore.delete(captchaId);
     let linkedUser = null;
     if (userToken) {
       const session = verifyUserToken(userToken);
@@ -1019,10 +1023,10 @@ app.get('/api/users/:id/posts', (req, res) => {
     const session = verifyUserToken(token);
     if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
   
-    // 验证 captcha
+    // 滑块验证码校验
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-      return res.json({ ok: false, msg: '验证码错误' });
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
     }
     captchaStore.delete(captchaId);
   
