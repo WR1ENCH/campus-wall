@@ -4447,7 +4447,8 @@
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">';
       html += '<div><span style="color:#8a7a6a;">认证类型：</span>' + certTypeText(u.zhixueCertType) + '</div>';
       html += '<div><span style="color:#8a7a6a;">认证状态：</span><span class="type-badge ' + certStatusClass(u.zhixueStatus) + '">' + certStatusText(u.zhixueStatus) + '</span></div>';
-      html += '<div><span style="color:#8a7a6a;">智学账号：</span>' + escHtml(u.zhixueUsername || '-') + '</div>';
+      
+	      
       // 认证绑定姓名（解密后）
       if (u.certRealNameDecrypted) {
         html += '<div><span style="color:#8a7a6a;">认证姓名：</span><strong style="color:#065f46;">' + escHtml(u.certRealNameDecrypted) + '</strong></div>';

@@ -27,10 +27,10 @@ app.get('/api/maintenance/info', (req, res) => {
 app.post('/api/maintenance/verify', (req, res) => {
   const { testKey, captchaId, captchaText } = req.body;
 
-  // 验证码校验
+  // 滑块验证码校验
   const entry = captchaStore.get(captchaId);
-  if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
-    return res.json({ ok: false, msg: '验证码错误' });
+  if (!entry || !entry.verified) {
+    return res.json({ ok: false, msg: '请完成人机验证' });
   }
   captchaStore.delete(captchaId);
 

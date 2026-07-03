@@ -7,6 +7,7 @@
  <link href="https://fonts.googleapis.cn/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="spa-transitions.css">
+  <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
   <style>
  :root {
  --note-yellow: #fff9b1;
@@ -811,6 +812,52 @@
  backdrop-filter: blur(4px);
  }
  .modal-overlay.show { display: flex; }
+
+    /* 滑块验证码弹窗动画 */
+    @keyframes sliderFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes sliderModalIn {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* 滑块拼图块平滑跟随 */
+    .sliderContainer .block { 
+      transition: left 0.08s linear; 
+    }
+    .sliderContainer_active .block { 
+      transition: left 0.03s linear; 
+    }
+    /* 滑块按钮跟随 */
+    .sliderContainer .slider { 
+      transition: left 0.08s linear, background 0.2s linear; 
+    }
+    .sliderContainer_active .slider { 
+      transition: left 0.03s linear; 
+    }
+    /* 滑条遮罩跟随 */
+    .sliderContainer .sliderMask { 
+      transition: width 0.08s linear; 
+    }
+    .sliderContainer_active .sliderMask { 
+      transition: width 0.03s linear; 
+    }
+    /* 失败时回弹动画 */
+    .sliderContainer_fail .block,
+    .sliderContainer_fail .slider,
+    .sliderContainer_fail .sliderMask {
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    .sliderContainer .slider { transition: background 0.2s linear; }
+    .sliderContainer_active .slider { transition: none; }
+    .sliderContainer .block { transition: none; }
+    .sliderContainer_active .block { transition: none; }
+    .sliderContainer .sliderMask { transition: none; }
+    .sliderContainer_active .sliderMask { transition: none; }
+
 
  .modal-note {
  width: 90%; max-width: 440px; min-height: 340px;
@@ -1969,20 +2016,13 @@
  placeholder="在墙上显示的名字，2-12字" maxlength="12"
  onkeydown="if(event.key==='Enter') doUserRegister()">
  </div>
- <!-- 验证码 -->
+ <!-- 人机验证 -->
  <div class="user-login-field">
- <label class="user-login-label">验证码</label>
- <div style="display:flex;gap:10px;align-items:center;">
- <input class="user-login-input" id="regCaptchaInput"
- placeholder="输入验证码" maxlength="6"
- style="flex:1;"
- onkeydown="if(event.key==='Enter') doUserRegister()">
- <div id="captchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
- onclick="refreshCaptcha()" title="点击刷新验证码">
- <img id="captchaImg" src="" alt="验证码" style="height:44px;display:block;">
+ <label class="user-login-label">人机验证</label>
+ <div id="registerSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;" onclick="showSliderCaptcha('register')">
+ <span style="color:#999;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg> 点击完成人机验证</span>
+ <span id="registerSliderBadge" style="display:none;color:#22c55e;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 已验证</span>
  </div>
- </div>
- <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg> 点击验证码图片可刷新</div>
  </div>
  </div>
 
@@ -2002,20 +2042,13 @@
  <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:3px;cursor:pointer;"
  onclick="showForgotPwdModal()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> 忘记密码？</div>
  </div>
- <!-- 验证码 -->
+ <!-- 人机验证 -->
  <div class="user-login-field">
- <label class="user-login-label">验证码</label>
- <div style="display:flex;gap:10px;align-items:center;">
- <input class="user-login-input" id="loginCaptchaInput"
- placeholder="输入验证码" maxlength="6"
- style="flex:1;"
- onkeydown="if(event.key==='Enter') doUserLogin()">
- <div id="loginCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
- onclick="refreshLoginCaptcha()" title="点击刷新验证码">
- <img id="loginCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+ <label class="user-login-label">人机验证</label>
+ <div id="loginSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;" onclick="showSliderCaptcha('login')">
+ <span style="color:#999;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg> 点击完成人机验证</span>
+ <span id="loginSliderBadge" style="display:none;color:#22c55e;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 已验证</span>
  </div>
- </div>
- <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg> 点击验证码图片可刷新</div>
  </div>
  </div>
 
@@ -2033,20 +2066,13 @@
  placeholder="输入校园墙账号密码" maxlength="20"
  onkeydown="if(event.key==='Enter') doZhixueLogin()">
  </div>
- <!-- 智学登录验证码 -->
+ <!-- 人机验证 -->
  <div class="user-login-field" id="zhixueCaptchaField">
- <label class="user-login-label" for="zhixueCaptchaInput">人机验证</label>
- <div style="display:flex;gap:8px;align-items:center;">
- <input class="user-login-input" id="zhixueCaptchaInput"
- placeholder="输入验证码" maxlength="6"
- style="flex:1;"
- onkeydown="if(event.key==='Enter') doZhixueLogin()">
- <div id="zhixueCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
- onclick="refreshZhixueCaptcha()" title="点击刷新验证码">
- <img id="zhixueCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+ <label class="user-login-label">人机验证</label>
+ <div id="zhixueSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;" onclick="showSliderCaptcha('zhixue')">
+ <span style="color:#999;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg> 点击完成人机验证</span>
+ <span id="zhixueSliderBadge" style="display:none;color:#22c55e;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 已验证</span>
  </div>
- </div>
- <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg> 点击验证码图片可刷新</div>
  </div>
  </div>
 
@@ -2455,23 +2481,23 @@
  <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
  发帖频率过高，请先完成验证
  </div>
- <div class="user-login-field">
- <label class="user-login-label" for="postCaptchaInput">验证码</label>
- <div style="display:flex;gap:8px;align-items:center;">
- <input class="user-login-input" id="postCaptchaInput"
- placeholder="输入验证码" maxlength="6"
- style="flex:1;"
- onkeydown="if(event.key==='Enter') doSubmitPostCaptcha()">
- <div id="postCaptchaSvgWrap" style="cursor:pointer;border-radius:8px;overflow:hidden;flex-shrink:0;line-height:0;"
- onclick="refreshPostCaptcha()" title="点击刷新验证码">
- <img id="postCaptchaImg" src="" alt="验证码" style="height:44px;display:block;">
+ <div class="user-login-field" id="postSliderCaptchaField" style="margin:0 auto;width:280px;">
+ <div id="postSliderCaptcha"></div>
  </div>
- </div>
- <div style="font-size:11px;color:rgba(90,74,0,0.45);margin-top:4px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg> 点击验证码图片可刷新</div>
- </div>
- <div class="user-login-actions">
+ <div style="margin-top:10px;font-size:12px;color:#999;text-align:center;">拖动滑块完成拼图验证</div>
+ <div class="user-login-actions" style="margin-top:10px;">
  <button class="user-login-skip" onclick="hidePostCaptchaModal()">取消</button>
- <button class="user-login-confirm" onclick="doSubmitPostCaptcha()">确认</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- ===== 共享滑块验证码弹窗 ===== -->
+ <div class="modal-overlay" id="sliderCaptchaOverlay" style="display:none;animation:sliderFadeIn 0.25s ease;z-index:99999;">
+ <div class="modal" style="border:2px solid #fff;border-radius:18px;animation:sliderModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:360px;padding:20px;">
+ <div class="modal-header" style="justify-content:center;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg> 人机验证</div>
+ <div class="modal-body" style="padding:10px 0;">
+ <div id="sharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
+ <div style="margin-top:10px;font-size:12px;color:#999;text-align:center;">拖动滑块完成拼图验证</div>
  </div>
  </div>
  </div>
@@ -2996,14 +3022,12 @@
  const popup = document.getElementById('agreePopupOverlay');
  if (popup) popup.remove();
  if (tab === 'login') {
- refreshLoginCaptcha();
  setTimeout(() => document.getElementById('loginUsernameInput').focus(), 50);
  } else if (tab === 'register') {
  // 切换到注册 → 先弹出协议确认窗口
  showAgreementPopup();
  } else {
  setTimeout(() => document.getElementById('zhixueLoginUsername').focus(), 50);
- refreshZhixueCaptcha();
  }
  }
 
@@ -3063,8 +3087,7 @@
  document.getElementById('loginConfirmBtn').textContent = '注册账号';
  setTimeout(() => {
  document.getElementById('regUsernameInput').focus();
- document.getElementById('regCaptchaInput').value = '';
- refreshCaptcha();
+ 
  }, 50);
  };
  }
@@ -3082,31 +3105,6 @@
  document.getElementById('userLoginError').textContent = '';
  switchLoginTab('login');
  document.getElementById('loginReadonlyTip').style.display = fromCompose ? 'block' : 'none';
- refreshLoginCaptcha();
- }
-
- // 登录验证码刷新
- async function refreshLoginCaptcha() {
- try {
- const resp = await fetch('/api/captcha');
- const json = await resp.json();
- if (json.ok) {
- localStorage.setItem('login_captcha_id', json.data.id);
- document.getElementById('loginCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
- }
- } catch {}
- }
-
- // 智学登录验证码刷新
- async function refreshZhixueCaptcha() {
- try {
- const resp = await fetch('/api/captcha');
- const json = await resp.json();
- if (json.ok) {
- localStorage.setItem('zhixue_captcha_id', json.data.id);
- document.getElementById('zhixueCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
- }
- } catch {}
  }
 
  function hideLoginModal() {
@@ -3224,18 +3222,63 @@
  }
  }
 
- let currentCaptchaId = null;
+ // ===== 滑块验证码 =====
+ var _sliderCaptchaToken = null;
+ var _sliderCaptchaPending = null;
 
- async function refreshCaptcha() {
- try {
- const resp = await fetch('/api/captcha');
- const json = await resp.json();
- if (json.ok) {
- currentCaptchaId = json.data.id;
- document.getElementById('captchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
+ function showSliderCaptcha(purpose) {
+   _sliderCaptchaPending = purpose;
+   var overlay = document.getElementById('sliderCaptchaOverlay');
+   overlay.style.display = 'flex';
+   // 初始化滑块
+   var el = document.getElementById('sharedSliderCaptcha');
+   el.innerHTML = '';
+   // 稍后渲染以确保DOM就绪
+   setTimeout(function() {
+     try {
+       var c = sliderCaptcha({
+         id: 'sharedSliderCaptcha',
+         width: 280,
+         height: 155,
+         offset: 10,   // ponytail: 从默认5放宽到10，容错更高
+         setSrc: function() {
+           return 'slider-captcha/images/Pic' + Math.round(Math.random() * 4) + '.jpg';
+         },
+         onSuccess: function() {
+           console.log('[slider] onSuccess fired, purpose=', _sliderCaptchaPending);
+           // 滑块通过 → 向服务端申请 token
+           fetch('/api/slider-captcha/grant', { method: 'POST' })
+             .then(function(r) { return r.json(); })
+             .then(function(j) {
+               console.log('[slider] grant response:', j);
+               if (j.ok) {
+                 _sliderCaptchaToken = j.data.token;
+                 // 更新对应场景的 UI
+                 var badge = document.getElementById(_sliderCaptchaPending + 'SliderBadge');
+                 if (badge) { badge.style.display = 'inline'; }
+                 var statusEl = document.getElementById(_sliderCaptchaPending + 'SliderStatus');
+                 if (statusEl) { statusEl.style.background = '#f0fdf4'; statusEl.style.cursor = 'default'; statusEl.onclick = null; }
+                 overlay.style.display = 'none';
+                 _sliderCaptchaPending = null;
+               }
+             })
+             .catch(function(err) { console.error('[slider] grant error:', err); });
+         },
+         onFail: function() {
+           console.log('[slider] onFail fired');
+         }
+       });
+     } catch(e) { console.error('slider captcha init error', e); }
+   }, 100);
  }
- } catch {}
- }
+
+ // 关闭弹窗时清理
+ document.getElementById('sliderCaptchaOverlay').addEventListener('click', function(e) {
+   if (e.target === this) {
+     this.style.display = 'none';
+     _sliderCaptchaPending = null;
+   }
+ });
 
  async function doUserLogin() {
  // 检查是否同意用户协议
@@ -3262,12 +3305,13 @@
  }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  try {
- const captchaId = localStorage.getItem('login_captcha_id');
- const captchaText = document.getElementById('loginCaptchaInput').value.trim();
+ if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ const captchaId = _sliderCaptchaToken;
+ const captchaText = '1';
  const res = await fetch('/api/user/login', {
  method: 'POST',
  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ username, password, captchaId, captchaText })
+ body: JSON.stringify({ username, password, captchaId: _sliderCaptchaToken, captchaText: '1' })
  });
  const json = await res.json();
  if (json.ok) {
@@ -3292,7 +3336,6 @@
  }
  } else {
  document.getElementById('userLoginError').textContent = json.msg || '登录失败';
- refreshLoginCaptcha();
  }
  } catch {
  document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
@@ -3302,21 +3345,16 @@
  async function doZhixueLogin() {
  const zhixueUsername = document.getElementById('zhixueLoginUsername').value.trim();
  const password = document.getElementById('zhixueLoginPassword').value;
- const captchaId = localStorage.getItem('zhixue_captcha_id');
- const captchaText = document.getElementById('zhixueCaptchaInput').value.trim();
  if (!zhixueUsername || !password) {
  document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
  return;
  }
- if (!captchaText) {
- document.getElementById('userLoginError').textContent = '请输入验证码';
- return;
- }
+ if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  try {
  const res = await fetch('/api/user/zhixue-login', {
  method: 'POST',
  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ zhixueUsername, password, captchaId, captchaText })
+ body: JSON.stringify({ zhixueUsername, password, captchaId: _sliderCaptchaToken, captchaText: '1' })
  });
  const json = await res.json();
  if (json.ok) {
@@ -3341,12 +3379,9 @@
  }
  } else {
  document.getElementById('userLoginError').textContent = json.msg || '登录失败';
- refreshZhixueCaptcha();
- document.getElementById('zhixueCaptchaInput').value = '';
  }
  } catch {
  document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
- refreshZhixueCaptcha();
  }
  }
 
@@ -3354,22 +3389,18 @@
  const username = document.getElementById('regUsernameInput').value.trim();
  const password = document.getElementById('regPasswordInput').value;
  const nickname = document.getElementById('regNicknameInput').value.trim();
- const captchaText = document.getElementById('regCaptchaInput').value.trim();
  if (!username || !password || !nickname) {
  document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
  return;
  }
- if (!currentCaptchaId || !captchaText) {
- document.getElementById('userLoginError').textContent = '请输入验证码';
- return;
- }
+ if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  if (hasSpecialChars(nickname)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 昵称包含特殊字符，请重新输入'); return; }
  try {
  const res = await fetch('/api/user/register', {
  method: 'POST',
  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ username, password, nickname, captchaId: currentCaptchaId, captchaText })
+ body: JSON.stringify({ username, password, nickname, captchaId: _sliderCaptchaToken, captchaText: '1' })
  });
  const json = await res.json();
  if (json.ok) {
@@ -3390,8 +3421,7 @@
  } else {
  document.getElementById('userLoginError').textContent = json.msg || '注册失败';
  // 验证码错误时自动刷新
- document.getElementById('regCaptchaInput').value = '';
- refreshCaptcha();
+ 
  }
  } catch {
  document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
@@ -4122,22 +4152,36 @@
  return null;
  }
 
- // ===== 发帖验证码弹窗 =====
- async function refreshPostCaptcha() {
- try {
- const resp = await fetch('/api/captcha');
- const json = await resp.json();
- if (json.ok) {
- localStorage.setItem('post_captcha_id', json.data.id);
- document.getElementById('postCaptchaImg').src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(json.data.svg)));
- }
- } catch {}
- }
-
- async function showPostCaptchaModal() {
+async function showPostCaptchaModal() {
  document.getElementById('postCaptchaOverlay').classList.add('show');
- document.getElementById('postCaptchaInput').value = '';
- await refreshPostCaptcha();
+ // 初始化滑块验证
+ var el = document.getElementById('postSliderCaptcha');
+ el.innerHTML = '';
+ setTimeout(function() {
+   try {
+     sliderCaptcha({
+       id: 'postSliderCaptcha',
+       width: 280,
+       height: 155,
+       offset: 10,
+       setSrc: function() { return 'slider-captcha/images/Pic' + Math.round(Math.random() * 4) + '.jpg'; },
+       onSuccess: function() {
+         console.log('[slider-post] onSuccess');
+         fetch('/api/slider-captcha/grant', { method: 'POST' })
+           .then(function(r) { return r.json(); })
+           .then(function(j) {
+             console.log('[slider-post] grant:', j);
+             if (j.ok) {
+               _sliderCaptchaToken = j.data.token;
+               doSubmitPostCaptcha();
+             }
+           })
+           .catch(function(err) { console.error('[slider-post] grant error:', err); });
+       },
+       onFail: function() { console.log('[slider-post] onFail'); }
+     });
+   } catch(e) { console.error('slider captcha init error', e); }
+ }, 100);
  }
 
  function hidePostCaptchaModal() {
@@ -4146,17 +4190,12 @@
  }
 
  async function doSubmitPostCaptcha() {
- const captchaText = document.getElementById('postCaptchaInput').value.trim();
- if (!captchaText) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请输入验证码');
- return;
- }
+ if (!_sliderCaptchaToken) { return; }
  if (!pendingPostData) {
  hidePostCaptchaModal();
  return;
  }
  const { type, content, sensitiveForce, images, isAnonymous } = pendingPostData;
- const captchaId = localStorage.getItem('post_captcha_id');
  try {
  const res = await fetch(API + '/api/posts', {
  method: 'POST',
@@ -4168,8 +4207,8 @@
  userId: currentUser.id,
  sensitiveForce,
  images: images || [],
- captchaId,
- captchaText,
+ captchaId: _sliderCaptchaToken,
+ captchaText: '1',
  isAnonymous
  })
  });
@@ -4177,11 +4216,17 @@
  if (json.ok) {
  hidePostCaptchaModal();
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 发帖成功！');
- loadPosts();
+ // ponytail: loadPosts 不存在，直接清理编辑窗口
+ try {
+ document.getElementById('noteInput').value = '';
+ postImages = [];
+ _selectedDiscussionId = null;
+ renderPostImages();
+ closeModal();
+ } catch(e) { console.error('post cleanup error:', e); }
+ _sliderCaptchaToken = null;
  } else if (json.needCaptcha) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 验证码错误');
- refreshPostCaptcha();
- document.getElementById('postCaptchaInput').value = '';
+ showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 验证失败');
  } else {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + (json.msg || '发帖失败'));
  hidePostCaptchaModal();
@@ -7024,6 +7069,7 @@
   })();
   </script>
 </div>
+<script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 <script src="spa.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {

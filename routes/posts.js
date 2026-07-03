@@ -172,7 +172,7 @@ if (realUserId) {
   const recentPosts = timestamps.filter(ts => now - ts < 300000);
   if (recentPosts.length >= 3) {
     const entry = captchaStore.get(captchaId);
-    if (!entry || entry.text !== (captchaText || '').toLowerCase()) {
+    if (!entry || !entry.verified) {
       return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
     }
     // 验证码通过，清除限制，重新计时

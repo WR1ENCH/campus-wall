@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
+    "compression": "^1.7.5",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^4.22.2",
-    "compression": "^1.7.5",
-    "svg-captcha": "^1.4.0"
+    "slider-captcha": "^1.0.0"
   },
   "keywords": [],
   "author": "",

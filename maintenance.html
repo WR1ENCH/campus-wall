@@ -62,7 +62,54 @@
     font-size: 18px; color: #ccc; cursor: pointer;
   }
   .dialog .close-btn:hover { color: #666; }
-</style>
+
+    /* 滑块验证码弹窗动画 */
+    @keyframes sliderFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes sliderModalIn {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* 滑块拼图块平滑跟随 */
+    .sliderContainer .block { 
+      transition: left 0.08s linear; 
+    }
+    .sliderContainer_active .block { 
+      transition: left 0.03s linear; 
+    }
+    /* 滑块按钮跟随 */
+    .sliderContainer .slider { 
+      transition: left 0.08s linear, background 0.2s linear; 
+    }
+    .sliderContainer_active .slider { 
+      transition: left 0.03s linear; 
+    }
+    /* 滑条遮罩跟随 */
+    .sliderContainer .sliderMask { 
+      transition: width 0.08s linear; 
+    }
+    .sliderContainer_active .sliderMask { 
+      transition: width 0.03s linear; 
+    }
+    /* 失败时回弹动画 */
+    .sliderContainer_fail .block,
+    .sliderContainer_fail .slider,
+    .sliderContainer_fail .sliderMask {
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    .sliderContainer .slider { transition: background 0.2s linear; }
+    .sliderContainer_active .slider { transition: none; }
+    .sliderContainer .block { transition: none; }
+    .sliderContainer_active .block { transition: none; }
+    .sliderContainer .sliderMask { transition: none; }
+    .sliderContainer_active .sliderMask { transition: none; }
+
+  </style>
+<link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
 </head>
 <body>
 <div class="wrap">
@@ -86,10 +133,17 @@
     <div class="sub">请输入管理员提供的测试密钥</div>
     <label>密钥</label>
     <input type="text" id="keyInput" placeholder="TW-XXXXXXXX" maxlength="11" autocomplete="off">
-    <label>验证码</label>
-    <div class="captcha-row">
-      <input type="text" id="capInput" placeholder="输入验证码" maxlength="6">
-      <img class="captcha-img" id="capImg" onclick="loadCap()" alt="">
+    <label>人机验证</label>
+    <div id="maintenanceSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;border:1px solid #ddd;" onclick="showSliderCaptcha()">
+      <span style="color:#999;font-size:13px;">🔒 点击完成人机验证</span>
+      <span id="maintenanceSliderBadge" style="display:none;color:#22c55e;font-size:13px;">✅ 已验证</span>
+    </div>
+    <div id="sliderCaptchaOverlay" style="display:none;animation:sliderFadeIn 0.25s ease;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+      <div style="background:#fff;border-radius:18px;border:2px solid #fff;animation:sliderModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);padding:24px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <h3 style="margin-bottom:16px;">人机验证</h3>
+        <div id="sharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
+        <div style="margin-top:10px;font-size:12px;color:#999;">拖动滑块完成拼图验证</div>
+      </div>
     </div>
     <button class="btn" id="submitBtn" onclick="submit()">进入</button>
     <div class="err" id="errMsg"></div>
@@ -97,11 +151,39 @@
 </div>
 
 <script>
-var cid = '';
-function loadCap() {
-  fetch('/api/captcha').then(function(r){return r.json()}).then(function(j){
-    if(j.ok){ cid=j.data.id; document.getElementById('capImg').src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(j.data.svg))); }
-  });
+var _sliderCaptchaToken = null;
+function showSliderCaptcha() {
+  var overlay = document.getElementById('sliderCaptchaOverlay');
+  overlay.style.display = 'flex';
+  var el = document.getElementById('sharedSliderCaptcha');
+  el.innerHTML = '';
+  setTimeout(function() {
+    try {
+      sliderCaptcha({
+        id: 'sharedSliderCaptcha',
+        width: 280, height: 155,
+        offset: 10,
+        setSrc: function() { return 'slider-captcha/images/Pic' + Math.round(Math.random() * 4) + '.jpg'; },
+        onSuccess: function() {
+          console.log('[slider-maint] onSuccess');
+          fetch('/api/slider-captcha/grant', { method: 'POST' })
+            .then(function(r) { return r.json(); })
+            .then(function(j) {
+              console.log('[slider-maint] grant:', j);
+              if (j.ok) {
+                _sliderCaptchaToken = j.data.token;
+                var badge = document.getElementById('maintenanceSliderBadge');
+                if (badge) { badge.style.display = 'inline'; }
+                var statusEl = document.getElementById('maintenanceSliderStatus');
+                if (statusEl) { statusEl.style.background = '#f0fdf4'; statusEl.style.cursor = 'default'; statusEl.onclick = null; }
+                overlay.style.display = 'none';
+              }
+            }).catch(function(err) { console.error('[slider-maint] grant error:', err); });
+        },
+        onFail: function() { console.log('[slider-maint] onFail'); }
+      });
+    } catch(e) {}
+  }, 100);
 }
 function loadInfo() {
   fetch('/api/maintenance/info').then(function(r){return r.json()}).then(function(j){
@@ -111,18 +193,17 @@ function loadInfo() {
     if(!j.data.enabled) location.href='/';
   });
 }
-function openModal() { document.getElementById('modal').classList.add('active'); if(!cid) loadCap(); document.getElementById('keyInput').focus(); }
+function openModal() { document.getElementById('modal').classList.add('active');  document.getElementById('keyInput').focus(); }
 function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('errMsg').textContent=''; document.getElementById('keyInput').value=''; document.getElementById('capInput').value=''; }
 function submit() {
   var k=document.getElementById('keyInput').value.trim();
-  var c=document.getElementById('capInput').value.trim();
   var e=document.getElementById('errMsg');
   var b=document.getElementById('submitBtn');
   e.textContent='';
   if(!k){e.textContent='请输入密钥';return;}
-  if(!c){e.textContent='请输入验证码';return;}
+  if(!_sliderCaptchaToken){e.textContent='请先完成人机验证';return;}
   b.disabled=true;b.textContent='验证中...';
-  fetch('/api/maintenance/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testKey:k,captchaId:cid,captchaText:c})})
+  fetch('/api/maintenance/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testKey:k,captchaId:_sliderCaptchaToken,captchaText:'1'})})
   .then(function(r){return r.json()}).then(function(j){
     if(!j.ok){e.textContent=j.msg;loadCap();document.getElementById('capInput').value='';return;}
     document.cookie='maintenance_bypass='+j.data.token+';path=/;max-age='+(4*3600);
@@ -133,5 +214,6 @@ function submit() {
 loadInfo();
 setInterval(loadInfo,30000);
 </script>
+<script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 </body>
 </html>
