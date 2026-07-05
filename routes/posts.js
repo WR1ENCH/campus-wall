@@ -5,6 +5,7 @@ const { captchaStore, postRateLimit } = require('../lib/state');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const maintenance = require('../maintenance');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -170,7 +171,7 @@ if (realUserId) {
   const now = Date.now();
   const timestamps = postRateLimit.get(realUserId) || [];
   const recentPosts = timestamps.filter(ts => now - ts < 300000);
-  if (recentPosts.length >= 3) {
+  if (recentPosts.length >= 3 && !maintenance.isBotTesting()) {
     const entry = captchaStore.get(captchaId);
     if (!entry || !entry.verified) {
       return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });

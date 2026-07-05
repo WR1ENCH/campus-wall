@@ -8,6 +8,7 @@ const db = require('../db');
 const nodeCrypto = require('crypto');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const maintenance = require('../maintenance');
 
 // ===== 本地数据访问包装（兼容旧式 readXxx/writeXxx 调用模式） =====
 function readUsers() { return db.readUsers(); }
@@ -125,12 +126,14 @@ module.exports = function(app) {
     if (!username || !password || !nickname) {
       return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
     }
-    // 滑块验证码校验
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, msg: '请完成人机验证' });
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
     }
-    captchaStore.delete(captchaId);
     if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
       return res.json({ ok: false, msg: '账号需 3-16 位字母、数字、下划线' });
     }
@@ -184,12 +187,14 @@ module.exports = function(app) {
       addLoginLog('user', null, false, ip, ua);
       return res.json({ ok: false, msg: '请输入账号和密码' });
     }
-    // 滑块验证码校验
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, msg: '请完成人机验证' });
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
     }
-    captchaStore.delete(captchaId);
 
     const users = readUsers();
     const user = users.find(u => u.username === username);
@@ -233,12 +238,14 @@ module.exports = function(app) {
     const ip = getClientIP(req);
     const ua = req.headers['user-agent'] || '-';
   
-    // 滑块验证码校验
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, msg: '请完成人机验证' });
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
     }
-    captchaStore.delete(captchaId);
 
     if (!zhixueUsername || !password) {
       addLoginLog('user', null, false, ip, ua);
@@ -329,12 +336,14 @@ module.exports = function(app) {
   });
   app.get('/api/user/qrcode/generate', (req, res) => {
     const { userToken, captchaId } = req.query;
-    // 滑块验证码校验
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, msg: '请完成人机验证' });
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
     }
-    captchaStore.delete(captchaId);
     let linkedUser = null;
     if (userToken) {
       const session = verifyUserToken(userToken);
@@ -1023,12 +1032,14 @@ app.get('/api/users/:id/posts', (req, res) => {
     const session = verifyUserToken(token);
     if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
   
-    // 滑块验证码校验
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, msg: '请完成人机验证' });
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
     }
-    captchaStore.delete(captchaId);
   
     if (!name || !name.trim()) return res.json({ ok: false, msg: '请填写申请人姓名' });
     if (!department || !department.trim()) return res.json({ ok: false, msg: '请填写部门/组织' });

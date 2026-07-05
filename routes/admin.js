@@ -870,6 +870,16 @@ app.post('/api/admin/maintenance/notice-bypass', requireAdmin, (req, res) => {
   res.json({ ok: true, msg: noticeBypass ? '已放行 notice.html' : '已取消放行', data: current });
 });
 
+app.post('/api/admin/maintenance/bot-testing', requireAdmin, (req, res) => {
+  const { botTesting } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.botTesting = !!botTesting;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: botTesting ? 'Bot-Testing 已开启（验证码已禁用）' : 'Bot-Testing 已关闭（验证码已恢复）', data: current });
+});
+
 app.post('/api/admin/maintenance/test-key/create', requireAdmin, (req, res) => {
   try {
     const result = maintenance.createTestKey();

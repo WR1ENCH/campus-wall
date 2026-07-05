@@ -874,6 +874,16 @@
             <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:28px;transition:0.3s;"></span>
           </label>
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);">Bot-Testing 模式</div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">开启后禁用人机验证（滑块验证码），方便自动化测试</div>
+          </div>
+          <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
+            <input type="checkbox" id="botTestingToggle" onchange="toggleBotTesting()" style="opacity:0;width:0;height:0;">
+            <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:28px;transition:0.3s;"></span>
+          </label>
+        </div>
         <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
           ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
         </div>
@@ -3644,6 +3654,8 @@
       document.getElementById('maintenanceAutoEnd').value = d && d.autoEnd ? d.autoEnd : '';
       // 放行通知页面
       document.getElementById('noticeBypassToggle').checked = d && (d.noticeBypass === true || d.noticeBypass === 'true');
+      // Bot-Testing 模式
+      document.getElementById('botTestingToggle').checked = d && (d.botTesting === true || d.botTesting === 'true');
       // 倒计时
       updateCountdown(d);
     } catch (e) {
@@ -3722,6 +3734,23 @@
     } catch (e) {
       showToast(e.message || '操作失败', 'error');
       document.getElementById('noticeBypassToggle').checked = !checked;
+    }
+  }
+
+  async function toggleBotTesting() {
+    const checked = document.getElementById('botTestingToggle').checked;
+    try {
+      const res = await fetch('/api/admin/maintenance/bot-testing', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botTesting: checked })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast(checked ? 'Bot-Testing 已开启（验证码已禁用）' : 'Bot-Testing 已关闭（验证码已恢复）', 'success');
+    } catch (e) {
+      showToast(e.message || '操作失败', 'error');
+      document.getElementById('botTestingToggle').checked = !checked;
     }
   }
 
