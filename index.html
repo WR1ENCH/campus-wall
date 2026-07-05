@@ -3225,8 +3225,41 @@
  // ===== 滑块验证码 =====
  var _sliderCaptchaToken = null;
  var _sliderCaptchaPending = null;
+ var _botTesting = false;
+
+ // 检查 botTesting 状态并自动获取 token
+ function checkBotTestingAndGrant() {
+   fetch('/api/admin/maintenance/status', { headers: { 'x-admin-token': '' } })
+     .then(function(r) { return r.json(); })
+     .then(function(j) {
+       if (j.ok && j.data && (j.data.botTesting === true || j.data.botTesting === 'true')) {
+         _botTesting = true;
+         // 自动获取 captcha token
+         fetch('/api/slider-captcha/grant', { method: 'POST' })
+           .then(function(r) { return r.json(); })
+           .then(function(j) {
+             if (j.ok) {
+               _sliderCaptchaToken = j.data.token;
+               // 隐藏所有滑块验证码 UI
+               ['login', 'register', 'zhixue'].forEach(function(purpose) {
+                 var badge = document.getElementById(purpose + 'SliderBadge');
+                 if (badge) { badge.style.display = 'inline'; badge.textContent = '✅ Bot-Testing'; }
+                 var statusEl = document.getElementById(purpose + 'SliderStatus');
+                 if (statusEl) { statusEl.style.background = '#f0fdf4'; statusEl.style.cursor = 'default'; statusEl.onclick = null; }
+               });
+               console.log('[bot-testing] 已自动获取 captcha token');
+             }
+           });
+       }
+     })
+     .catch(function() {});
+ }
+
+ // 页面加载时检查 botTesting
+ checkBotTestingAndGrant();
 
  function showSliderCaptcha(purpose) {
+   if (_botTesting) return; // botTesting 模式下不显示滑块
    _sliderCaptchaPending = purpose;
    var overlay = document.getElementById('sliderCaptchaOverlay');
    overlay.style.display = 'flex';
@@ -3305,7 +3338,7 @@
  }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  try {
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  const captchaId = _sliderCaptchaToken;
  const captchaText = '1';
  const res = await fetch('/api/user/login', {
@@ -3349,7 +3382,7 @@
  document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
  return;
  }
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  try {
  const res = await fetch('/api/user/zhixue-login', {
  method: 'POST',
@@ -3393,7 +3426,7 @@
  document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
  return;
  }
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  if (hasSpecialChars(nickname)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 昵称包含特殊字符，请重新输入'); return; }
  try {
@@ -4190,7 +4223,7 @@ async function showPostCaptchaModal() {
  }
 
  async function doSubmitPostCaptcha() {
- if (!_sliderCaptchaToken) { return; }
+ if (!_sliderCaptchaToken && !_botTesting) { return; }
  if (!pendingPostData) {
  hidePostCaptchaModal();
  return;
