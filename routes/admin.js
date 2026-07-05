@@ -13,6 +13,34 @@ const crypto = require('crypto');
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const SENSITIVE_CUSTOM_FILE = path.join(DATA_DIR, 'sensitive_custom.json');
 
+// Admin 路由速率限制（每分钟最多60 次请求）
+const adminRateLimit = new Map();
+const ADMIN_RATE_WINDOW = 60000;
+const ADMIN_RATE_MAX = 60;
+
+function checkAdminRateLimit(req, res, next) {
+  const ip = getClientIP(req);
+  const now = Date.now();
+  const timestamps = adminRateLimit.get(ip) || [];
+  const recent = timestamps.filter(t => now - t < ADMIN_RATE_WINDOW);
+  if (recent.length >= ADMIN_RATE_MAX) {
+    return res.status(429).json({ ok: false, msg: '请求过于频繁，请稍后再试' });
+  }
+  recent.push(now);
+  adminRateLimit.set(ip, recent);
+  next();
+}
+
+// 定期清理过期记录
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of adminRateLimit) {
+    const recent = timestamps.filter(t => now - t < ADMIN_RATE_WINDOW);
+    if (recent.length === 0) adminRateLimit.delete(ip);
+    else adminRateLimit.set(ip, recent);
+  }
+}, 60000);
+
 function hasAdmins() { return db.readAdmins().length > 0; }
 
 function generateUID() {
@@ -870,7 +898,7 @@ app.post('/api/admin/maintenance/notice-bypass', requireAdmin, (req, res) => {
   res.json({ ok: true, msg: noticeBypass ? '已放行 notice.html' : '已取消放行', data: current });
 });
 
-app.post('/api/admin/maintenance/bot-testing', requireAdmin, (req, res) => {
+app.post('/api/admin/maintenance/bot-testing', requireAdmin, checkAdminRateLimit, (req, res) => {
   const { botTesting } = req.body;
   const current = readMaintenance() || { enabled: false };
   current.botTesting = !!botTesting;
