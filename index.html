@@ -3229,7 +3229,7 @@
 
  // 检查 botTesting 状态并自动获取 token
  function checkBotTestingAndGrant() {
-   fetch('/api/admin/maintenance/status', { headers: { 'x-admin-token': '' } })
+   fetch('/api/maintenance/info')
      .then(function(r) { return r.json(); })
      .then(function(j) {
        if (j.ok && j.data && (j.data.botTesting === true || j.data.botTesting === 'true')) {

@@ -189,12 +189,13 @@ module.exports = function(app, opts) {
         ok: true,
         data: {
           enabled: data.enabled === true || data.enabled === 'true',
+          botTesting: data.botTesting === true || data.botTesting === 'true',
           message: data.message || null,
           updatedAt: data.updatedAt || null
         }
       });
     } catch (e) {
-      res.json({ ok: true, data: { enabled: false } });
+      res.json({ ok: true, data: { enabled: false, botTesting: false } });
     }
   });
 
