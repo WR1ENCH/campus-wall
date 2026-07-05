@@ -3227,6 +3227,24 @@
  var _sliderCaptchaPending = null;
  var _botTesting = false;
 
+ // 隐藏滑块验证码 UI
+ function hideSliderUI() {
+   ['login', 'register', 'zhixue'].forEach(function(purpose) {
+     var badge = document.getElementById(purpose + 'SliderBadge');
+     if (badge) { badge.style.display = 'inline'; badge.textContent = '✅ Bot-Testing'; }
+     var statusEl = document.getElementById(purpose + 'SliderStatus');
+     if (statusEl) {
+       statusEl.style.background = '#f0fdf4';
+       statusEl.style.cursor = 'default';
+       statusEl.onclick = null;
+       // 隐藏整个滑块状态区域
+       var parent = statusEl.parentElement;
+       if (parent) { parent.style.display = 'none'; }
+     }
+   });
+   console.log('[bot-testing] 已隐藏滑块验证码 UI');
+ }
+
  // 检查 botTesting 状态并自动获取 token
  function checkBotTestingAndGrant() {
    fetch('/api/maintenance/info')
@@ -3240,13 +3258,8 @@
            .then(function(j) {
              if (j.ok) {
                _sliderCaptchaToken = j.data.token;
-               // 隐藏所有滑块验证码 UI
-               ['login', 'register', 'zhixue'].forEach(function(purpose) {
-                 var badge = document.getElementById(purpose + 'SliderBadge');
-                 if (badge) { badge.style.display = 'inline'; badge.textContent = '✅ Bot-Testing'; }
-                 var statusEl = document.getElementById(purpose + 'SliderStatus');
-                 if (statusEl) { statusEl.style.background = '#f0fdf4'; statusEl.style.cursor = 'default'; statusEl.onclick = null; }
-               });
+               // 延迟隐藏 UI，确保 DOM 已加载
+               setTimeout(hideSliderUI, 100);
                console.log('[bot-testing] 已自动获取 captcha token');
              }
            });
@@ -3256,7 +3269,11 @@
  }
 
  // 页面加载时检查 botTesting
- checkBotTestingAndGrant();
+ if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', checkBotTestingAndGrant);
+ } else {
+   checkBotTestingAndGrant();
+ }
 
  function showSliderCaptcha(purpose) {
    if (_botTesting) return; // botTesting 模式下不显示滑块
