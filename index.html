@@ -3828,34 +3828,6 @@
  }
  } catch(e) { /* ignore */ }
 
- // 获取用户个人通知（系统自动发送的专属通知）
- try {
- var token = localStorage.getItem('campus_user_token');
- if (token) {
- var userNotifRes = await fetch('/api/user/notifications', {
- headers: { 'x-user-token': token }
- });
- var userNotifJson = await userNotifRes.json();
- if (userNotifJson.ok && userNotifJson.data) {
- (userNotifJson.data || []).forEach(function(n) {
- var nid = 'sys_' + n.id;
- var nu = _notifUnreadCheck(nid);
- items.push({
- id: nid,
- icon: n.title.includes('拍卖') ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>' : n.title.includes('霸凌') ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
- title: n.title,
- time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
- isNew: nu,
- content: n.content || '',
- type: '系统通知',
- level: n.level || 'T1'
- });
- if (nu) unreadCount++;
- });
- }
- }
- } catch(e) { /* ignore */ }
-
  // 获取认证信息
  var token = localStorage.getItem('campus_user_token');
  if (token) {
