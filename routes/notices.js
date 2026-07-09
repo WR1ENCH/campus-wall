@@ -33,8 +33,13 @@ module.exports = function(app) {
   app.get('/api/notices', (req, res) => {
     const notices = readNotices();
     const active = notices.filter(n => !n.deleted && !n.targetUserId);
-    const list = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
-    res.json({ ok: true, data: list });
+    const sorted = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    const total = sorted.length;
+    const list = sorted.slice(offset, offset + limit);
+    res.json({ ok: true, data: list, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   });
   app.post('/api/notices', (req, res) => {
     const token = req.headers['x-sc-token'];
@@ -150,6 +155,13 @@ module.exports = function(app) {
     notice.title = title.trim();
     notice.content = content.trim();
     if (author && author.trim()) notice.author = author.trim();
+    var validImages = [];
+    if (Array.isArray(images)) {
+      images.forEach(function(img) {
+        if (typeof img === 'string' && img.startsWith('data:') && img.length <= 10*1024*1024) validImages.push(img);
+      });
+    }
+    notice.images = validImages.length > 0 ? validImages : undefined;
     if (level) notice.level = level === 'T0' ? 'T0' : 'T1';
     notice.updatedAt = new Date().toISOString();
     writeNotices(notices);

@@ -343,6 +343,14 @@ function migrate() {
     "reviewedAt" TEXT,
     "reviewedBy" TEXT
   )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "user_notifications" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "notificationId" TEXT NOT NULL,
+    "read" INTEGER DEFAULT 0,
+    "createdAt" TEXT,
+    "readAt" TEXT
+  )`);
   // trust_tokens 表（由 writeTrustTokens 内联创建，此处也提前创建）
   db.exec(`CREATE TABLE IF NOT EXISTS "trust_tokens" (
     "_key" TEXT,
@@ -800,6 +808,20 @@ function readWhispers() { return all('whispers'); }
 function writeWhispers(data) { dropAndInsert('whispers', data); }
 function addWhisper(whisper) { insertRow('whispers', whisper); }
 
+// ===== 用户通知未读状态 =====
+function readUserNotifications() { return all('user_notifications'); }
+function writeUserNotifications(data) { dropAndInsert('user_notifications', data); }
+function addUserNotification(notification) { insertRow('user_notifications', notification); }
+function markNotificationRead(userId, notificationId) {
+  const d = getDb();
+  d.prepare('UPDATE "user_notifications" SET "read" = 1, "readAt" = ? WHERE "userId" = ? AND "notificationId" = ?').run(new Date().toISOString(), userId, notificationId);
+}
+function getUnreadCount(userId) {
+  const d = getDb();
+  const row = d.prepare('SELECT COUNT(*) as cnt FROM "user_notifications" WHERE "userId" = ? AND "read" = 0').get(userId);
+  return row ? row.cnt : 0;
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -829,6 +851,7 @@ module.exports = {
   readVoteRecords, writeVoteRecords,
   readVoteIpRecords, writeVoteIpRecords,
   readWhispers, writeWhispers, addWhisper,
+  readUserNotifications, writeUserNotifications, addUserNotification, markNotificationRead, getUnreadCount,
   // 新增 SQL 过滤查询
   getById,
   getPosts, getPostCount,

@@ -27,6 +27,8 @@ function writePosts(posts) { db.writePosts(posts); broadcastSSE('postUpdate', { 
 function readAdmins() { return db.readAdmins(); }
 function readNotices() { return db.readNotices(); }
 function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
+function readUserNotifications() { return db.readUserNotifications(); }
+function getUnreadCount(userId) { return db.getUnreadCount(userId); }
 const CHECKIN_REWARD = 10;
 
 function saveDeletedItem(type, item, deletedBy, extra) {
@@ -1124,5 +1126,35 @@ app.get('/api/users/:id/posts', (req, res) => {
     writeUsers(users);
   
     res.json({ ok: true, data: notif });
+  });
+  // ===== 用户通知未读状态 API =====
+  app.get('/api/user/notifications/unread-count', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const count = getUnreadCount(session.id);
+    res.json({ ok: true, data: { count } });
+  });
+
+  app.post('/api/user/notifications/mark-read', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const { notificationId } = req.body;
+    if (!notificationId) return res.json({ ok: false, msg: '缺少通知ID' });
+    markNotificationRead(session.id, notificationId);
+    res.json({ ok: true, msg: '已标记为已读' });
+  });
+
+  app.post('/api/user/notifications/mark-all-read', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const notifications = readUserNotifications().filter(n => n.userId === session.id && !n.read);
+    notifications.forEach(n => markNotificationRead(session.id, n.notificationId));
+    res.json({ ok: true, msg: '全部已标记为已读' });
   });
 };
