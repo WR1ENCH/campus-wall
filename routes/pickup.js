@@ -320,6 +320,28 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
           // 拒绝：标记为rejected，退还冻结的credit
           auction.bids[bi].reviewStatus = 'rejected';
           changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '校园墙拍卖内容审核未通过 - 退还出价 ' + auction.bids[bi].amount + ' Credits');
+          // 发送 T1 通知
+          const bid = auction.bids[bi];
+          const slotLabelStr = slotLabel(auction.slot);
+          const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+          const notices = readNotices();
+          notices.push({
+            id: notificationId,
+            title: '❌ 拍卖内容未通过审核',
+            content: '你在 ' + auction.date + ' ' + slotLabelStr + ' 时段提交的拍卖内容未通过审核，已退还 ' + bid.amount + ' Credits。\n\n📝 内容：' + (bid.content || '(未填写)'),
+            author: '系统',
+            auto: true,
+            level: 'T1',
+            createdAt: new Date().toISOString(),
+            targetUserId: bid.userId
+          });
+          writeNotices(notices);
+          db.addUserNotification({
+            notificationId,
+            userId: bid.userId,
+            read: 0,
+            createdAt: new Date().toISOString()
+          });
         }
         writePickupAuctions(auctions);
         return res.json({ ok: true, msg: action === 'approve' ? '已通过审核' : '已拒绝并退还 ' + auction.bids[bi].amount + ' Credits' });
@@ -448,6 +470,21 @@ app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) =
     reports[rIdx].resolvedAt = new Date().toISOString();
     reports[rIdx].resolvedBy = req.admin.username;
     writePickupReports(reports);
+    // 通知举报人
+    if (report.reporterId) {
+      try {
+        const nid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const notices = readNotices();
+        notices.push({
+          id: nid, title: '📋 拍卖内容举报已驳回',
+          content: '你对拍卖栏"' + report.slotLabel + '"时段内容的举报经管理员核实，未发现违规行为，已驳回。',
+          author: '系统', auto: true, level: 'T1',
+          createdAt: new Date().toISOString(), targetUserId: report.reporterId
+        });
+        writeNotices(notices);
+        db.addUserNotification({ notificationId: nid, userId: report.reporterId, read: 0, createdAt: new Date().toISOString() });
+      } catch (e) { console.error('发送拍卖举报驳回通知失败:', e.message); }
+    }
     return res.json({ ok: true, msg: '举报已驳回' });
   }
 
@@ -507,6 +544,22 @@ app.post('/api/admin/pickup/report-action/:reportId', requireAdmin, (req, res) =
   reports[rIdx].resolvedAt = new Date().toISOString();
   reports[rIdx].resolvedBy = req.admin.username;
   writePickupReports(reports);
+
+  // 通知举报人
+  if (report.reporterId) {
+    try {
+      const nid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const notices = readNotices();
+      notices.push({
+        id: nid, title: '📋 拍卖内容举报已确认',
+        content: '你对拍卖栏"' + report.slotLabel + '"时段内容的举报经管理员核实，确认违规，相关内容已下架。' + banMsg,
+        author: '系统', auto: true, level: 'T1',
+        createdAt: new Date().toISOString(), targetUserId: report.reporterId
+      });
+      writeNotices(notices);
+      db.addUserNotification({ notificationId: nid, userId: report.reporterId, read: 0, createdAt: new Date().toISOString() });
+    } catch (e) { console.error('发送拍卖举报确认通知失败:', e.message); }
+  }
 
   res.json({
     ok: true,
