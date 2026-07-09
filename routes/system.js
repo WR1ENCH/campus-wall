@@ -4,6 +4,7 @@ const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const { onlineUsers } = require('../lib/state');
 const db = require('../db');
+const hotness = require('../lib/hotness');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName } = require('../bullyingNames');
 const maintenance = require('../maintenance');
@@ -57,7 +58,7 @@ module.exports = function(app, opts) {
     res.json({ ok: true });
   });
 
-  // 统计接口（含今日帖数、在线人数）
+  // 统计接口（含今日帖数、在线人数、全站热度）
   app.get('/api/stats', (req, res) => {
     // 清理过期
     const now = Date.now();
@@ -68,8 +69,15 @@ module.exports = function(app, opts) {
     const posts = readPosts();
     const today = new Date().toISOString().slice(0, 10);
     const todayPosts = posts.filter(p => p.time && p.time.startsWith(today)).length;
-    res.json({ ok: true, data: { todayPosts, onlineCount: onlineUsers.size } });
+    res.json({ ok: true, data: { todayPosts, onlineCount: onlineUsers.size, hotValue: hotness.getCachedHotness() } });
   });
+
+  // 全站热度周期重算：每 5 分钟计算一次（算法见 lib/hotness.js 注释）
+  setInterval(() => {
+    hotness.recompute();
+  }, 5 * 60 * 1000);
+  // 启动时立即算一次初始值
+  hotness.recompute();
 
   // 版本号接口（返回本地 git 哈希）
   app.get('/api/version', (req, res) => {

@@ -5137,9 +5137,12 @@ async function showPostCaptchaModal() {
  try {
  const res = await fetch('/api/stats');
  const json = await res.json();
- if (json.ok) {
- document.getElementById('onlineCount').textContent = json.data.onlineCount;
- }
+  if (json.ok) {
+  document.getElementById('onlineCount').textContent = json.data.onlineCount;
+  if (json.data.hotValue !== undefined) {
+    document.getElementById('hotCount').textContent = json.data.hotValue;
+  }
+  }
  } catch {}
  }
 
