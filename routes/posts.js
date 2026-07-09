@@ -528,6 +528,33 @@ app.post('/api/posts/:id/report', (req, res) => {
   });
   writeReports(reports);
 
+  // 发送举报成功通知给举报人
+  if (reporterId) {
+    try {
+      const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const notices = readNotices();
+      notices.push({
+        id: notificationId,
+        title: '📋 举报已收到',
+        content: '你对帖子"' + (post.title || '').substring(0, 30) + '..."的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
+        author: '系统',
+        auto: true,
+        level: 'T1',
+        createdAt: new Date().toISOString(),
+        targetUserId: reporterId
+      });
+      writeNotices(notices);
+      db.addUserNotification({
+        notificationId,
+        userId: reporterId,
+        read: 0,
+        createdAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error('发送举报通知失败:', e.message);
+    }
+  }
+
   res.json({ ok: true, data: { hidden: false } });
 });
 
