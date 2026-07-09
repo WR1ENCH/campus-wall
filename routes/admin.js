@@ -13,6 +13,34 @@ const crypto = require('crypto');
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const SENSITIVE_CUSTOM_FILE = path.join(DATA_DIR, 'sensitive_custom.json');
 
+// Admin 路由速率限制（每分钟最多60 次请求）
+const adminRateLimit = new Map();
+const ADMIN_RATE_WINDOW = 60000;
+const ADMIN_RATE_MAX = 60;
+
+function checkAdminRateLimit(req, res, next) {
+  const ip = getClientIP(req);
+  const now = Date.now();
+  const timestamps = adminRateLimit.get(ip) || [];
+  const recent = timestamps.filter(t => now - t < ADMIN_RATE_WINDOW);
+  if (recent.length >= ADMIN_RATE_MAX) {
+    return res.status(429).json({ ok: false, msg: '请求过于频繁，请稍后再试' });
+  }
+  recent.push(now);
+  adminRateLimit.set(ip, recent);
+  next();
+}
+
+// 定期清理过期记录
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of adminRateLimit) {
+    const recent = timestamps.filter(t => now - t < ADMIN_RATE_WINDOW);
+    if (recent.length === 0) adminRateLimit.delete(ip);
+    else adminRateLimit.set(ip, recent);
+  }
+}, 60000);
+
 function hasAdmins() { return db.readAdmins().length > 0; }
 
 function generateUID() {
@@ -59,15 +87,23 @@ function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeU
 // 霸凌举报处仍内联同款逻辑，不改动已工作代码；此处仅服务 aeed436 路由拆分时遗漏的举报/认证通知。
 function pushUserNotice(targetUserId, title, content, level) {
   if (!targetUserId) return;
+  const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const notices = readNotices();
   notices.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: notificationId,
     title, content, author: '系统', auto: true,
     level: level || 'T1',
     createdAt: new Date().toISOString(),
     targetUserId
   });
   writeNotices(notices);
+  // 同时写入 user_notifications 表
+  db.addUserNotification({
+    notificationId,
+    userId: targetUserId,
+    read: 0,
+    createdAt: new Date().toISOString()
+  });
 }
 function readMaintenance() { return db.readMaintenance(); }
 function writeMaintenance(data) { db.writeMaintenance(data); }
@@ -461,7 +497,7 @@ app.post('/api/admin/bullying/:id/handle', requireAdmin, (req, res) => {
         content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
         author: '系统',
         auto: true,
-    level: 'T0',
+            level: 'T0',
         createdAt: new Date().toISOString(),
       targetUserId: reports[idx].userId
       });
@@ -868,6 +904,16 @@ app.post('/api/admin/maintenance/notice-bypass', requireAdmin, (req, res) => {
   current.updatedBy = req.admin.name || req.admin.id;
   writeMaintenance(current);
   res.json({ ok: true, msg: noticeBypass ? '已放行 notice.html' : '已取消放行', data: current });
+});
+
+app.post('/api/admin/maintenance/bot-testing', requireAdmin, checkAdminRateLimit, (req, res) => {
+  const { botTesting } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  current.botTesting = !!botTesting;
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: botTesting ? 'Bot-Testing 已开启（验证码已禁用）' : 'Bot-Testing 已关闭（验证码已恢复）', data: current });
 });
 
 app.post('/api/admin/maintenance/test-key/create', requireAdmin, (req, res) => {
@@ -1400,14 +1446,26 @@ app.post('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   writeBullying(reports);
   if (status === 'resolved' && reports[idx].userId) {
     try {
+      const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const notices = readNotices();
       notices.push({
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        id: notificationId,
         title: '🛡️ 霸凌举报已确认处理',
         content: '你提交的霸凌事件报告经管理员核实已确认，相关处理正在进行中。\n\n处理备注：' + (handleNote || '无') + '\n\n如情况仍未改善，请重新提交报告或联系学校相关部门。',
-        author: '系统', auto: true, level: 'T0', createdAt: new Date().toISOString(), targetUserId: reports[idx].userId
+        author: '系统',
+        auto: true,
+        level: 'T0',
+        createdAt: new Date().toISOString(),
+        targetUserId: reports[idx].userId
       });
       writeNotices(notices);
+      // 同时写入 user_notifications 表
+      db.addUserNotification({
+        notificationId,
+        userId: reports[idx].userId,
+        read: 0,
+        createdAt: new Date().toISOString()
+      });
     } catch (e) {
       console.error('发送霸凌处理通知失败:', e.message);
     }

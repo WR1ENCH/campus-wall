@@ -2,6 +2,7 @@ const { signToken, verifySignedToken, hashPassword, verifyPassword } = require('
 const { broadcastSSE } = require('../lib/sse');
 const { captchaStore } = require('../lib/state');
 const db = require('../db');
+const maintenance = require('../maintenance');
 
 function readSC() { return db.readSC(); }
 function writeSC(data) { db.writeSC(data); }
@@ -25,8 +26,8 @@ app.get('/api/student-council/me', (req, res) => {
 app.post('/api/student-council/login', (req, res) => {
   const { id, password, captchaId, captchaText } = req.body;
 
-  // 滑块验证码校验
-  if (captchaId && captchaText) {
+  // 滑块验证码校验（Bot-Testing 模式下跳过）
+  if (captchaId && captchaText && !maintenance.isBotTesting()) {
     const entry = captchaStore.get(captchaId);
     if (!entry || !entry.verified) {
       return res.json({ ok: false, msg: '请完成人机验证' });

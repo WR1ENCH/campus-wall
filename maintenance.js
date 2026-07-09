@@ -39,6 +39,23 @@ function saveMaintenanceData(patch) {
 }
 
 /**
+ * 获取 botTesting 状态
+ * @returns {boolean}
+ */
+function isBotTesting() {
+  const data = getMaintenanceData();
+  return data.botTesting === true || data.botTesting === 'true';
+}
+
+/**
+ * 设置 botTesting 状态
+ * @param {boolean} enabled
+ */
+function setBotTesting(enabled) {
+  saveMaintenanceData({ botTesting: !!enabled });
+}
+
+/**
  * 创建新的测试密钥（管理员操作）
  * @returns {{ key: string, expiresAt: string }}
  */
@@ -115,6 +132,8 @@ module.exports = {
   verifyTestKey,
   deleteTestKey,
   listTestKeys,
+  isBotTesting,
+  setBotTesting,
   read,
   write
 };
