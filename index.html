@@ -3702,7 +3702,6 @@
  }
 
  // 检查认证通知
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var cRes = await fetch('/api/user/me/zhixue-info', { headers: { 'x-user-token': token } });
  var cJson = await cRes.json();
@@ -3829,7 +3828,6 @@
  } catch(e) { /* ignore */ }
 
  // 获取认证信息
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var certRes = await fetch('/api/user/me/zhixue-info', {
  headers: { 'x-user-token': token }
