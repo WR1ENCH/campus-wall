@@ -41,6 +41,24 @@ module.exports = function(app) {
     const list = sorted.slice(offset, offset + limit);
     res.json({ ok: true, data: list, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   });
+  // 获取用户专属通知（包括公共通知和用户特定通知）
+  app.get('/api/user/notices', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    
+    const notices = readNotices();
+    // 公共通知 + 用户专属通知
+    const active = notices.filter(n => !n.deleted && (!n.targetUserId || n.targetUserId === session.id));
+    const sorted = active.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    const total = sorted.length;
+    const list = sorted.slice(offset, offset + limit);
+    res.json({ ok: true, data: list, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  });
   app.post('/api/notices', (req, res) => {
     const token = req.headers['x-sc-token'];
     if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });

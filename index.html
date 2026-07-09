@@ -3685,7 +3685,10 @@
  }
 
  // 检查学生会通知（含T0）
- var nRes = await fetch('/api/notices');
+ var token = localStorage.getItem('campus_user_token');
+ var nUrl = token ? '/api/user/notices' : '/api/notices';
+ var nHeaders = token ? { 'x-user-token': token } : {};
+ var nRes = await fetch(nUrl, { headers: nHeaders });
  var nJson = await nRes.json();
  if (nJson.ok && nJson.data) {
  (nJson.data || []).forEach(function(n) {
@@ -3801,7 +3804,10 @@
 
  // 获取学生会通知
  try {
- var notifRes = await fetch('/api/notices');
+ var token = localStorage.getItem('campus_user_token');
+ var notifUrl = token ? '/api/user/notices' : '/api/notices';
+ var notifHeaders = token ? { 'x-user-token': token } : {};
+ var notifRes = await fetch(notifUrl, { headers: notifHeaders });
  var notifJson = await notifRes.json();
  if (notifJson.ok && notifJson.data) {
  (notifJson.data || []).forEach(function(n) {
