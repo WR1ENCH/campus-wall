@@ -3714,7 +3714,6 @@
 
  // 检查通知申请审核结果
  try {
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var nrRes = await fetch('/api/user/notice-app-notification', { headers: { 'x-user-token': token } });
  var nrJson = await nrRes.json();
