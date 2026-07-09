@@ -160,19 +160,26 @@ module.exports = function(app, opts) {
     // 发送 T1 通知
     if (reporterUserId) {
       try {
+        const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         const notices = readNotices();
         notices.push({
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          id: notificationId,
           title: '🛡️ 霸凌举报已收到',
           content: '你的霸凌事件报告已提交给管理员审核。\n\n我们将尽快核实并处理，请保持联系方式畅通。\n\n感谢你对校园安全的关注！',
           author: '系统',
           auto: true,
-      level: 'T1',
-          auto: true,
+          level: 'T1',
           createdAt: new Date().toISOString(),
         targetUserId: reporterUserId
         });
         writeNotices(notices);
+        // 同时写入 user_notifications 表
+        db.addUserNotification({
+          notificationId,
+          userId: reporterUserId,
+          read: 0,
+          createdAt: new Date().toISOString()
+        });
       } catch (e) {
         console.error('发送霸凌举报通知失败:', e.message);
       }
@@ -189,12 +196,13 @@ module.exports = function(app, opts) {
         ok: true,
         data: {
           enabled: data.enabled === true || data.enabled === 'true',
+          botTesting: data.botTesting === true || data.botTesting === 'true',
           message: data.message || null,
           updatedAt: data.updatedAt || null
         }
       });
     } catch (e) {
-      res.json({ ok: true, data: { enabled: false } });
+      res.json({ ok: true, data: { enabled: false, botTesting: false } });
     }
   });
 

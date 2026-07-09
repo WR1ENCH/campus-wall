@@ -14,12 +14,13 @@ app.get('/api/maintenance/info', (req, res) => {
       ok: true,
       data: {
         enabled: data.enabled === true || data.enabled === 'true',
+        botTesting: data.botTesting === true || data.botTesting === 'true',
         message: data.message || null,
         updatedAt: data.updatedAt || null
       }
     });
   } catch (e) {
-    res.json({ ok: true, data: { enabled: false } });
+    res.json({ ok: true, data: { enabled: false, botTesting: false } });
   }
 });
 
@@ -27,12 +28,17 @@ app.get('/api/maintenance/info', (req, res) => {
 app.post('/api/maintenance/verify', (req, res) => {
   const { testKey, captchaId, captchaText } = req.body;
 
-  // 滑块验证码校验
-  const entry = captchaStore.get(captchaId);
-  if (!entry || !entry.verified) {
-    return res.json({ ok: false, msg: '请完成人机验证' });
+  // 检查是否开启 Bot-Testing 模式
+  const botTesting = maintenance.isBotTesting();
+  
+  // 滑块验证码校验（Bot-Testing 模式下跳过）
+  if (!botTesting) {
+    const entry = captchaStore.get(captchaId);
+    if (!entry || !entry.verified) {
+      return res.json({ ok: false, msg: '请完成人机验证' });
+    }
+    captchaStore.delete(captchaId);
   }
-  captchaStore.delete(captchaId);
 
   // 验证测试密钥
   const result = maintenance.verifyTestKey(testKey);

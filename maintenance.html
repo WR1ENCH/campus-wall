@@ -152,7 +152,10 @@
 
 <script>
 var _sliderCaptchaToken = null;
+var _botTesting = false;
+
 function showSliderCaptcha() {
+  if (_botTesting) return;
   var overlay = document.getElementById('sliderCaptchaOverlay');
   overlay.style.display = 'flex';
   var el = document.getElementById('sharedSliderCaptcha');
@@ -185,12 +188,43 @@ function showSliderCaptcha() {
     } catch(e) {}
   }, 100);
 }
+
+function updateSliderUI() {
+  var sliderStatus = document.getElementById('maintenanceSliderStatus');
+  var sliderLabel = sliderStatus ? sliderStatus.previousElementSibling : null;
+  if (_botTesting) {
+    if (sliderStatus) {
+      sliderStatus.style.display = 'none';
+    }
+    if (sliderLabel && sliderLabel.textContent === '人机验证') {
+      sliderLabel.style.display = 'none';
+    }
+    _sliderCaptchaToken = 'bot-testing-bypass';
+  } else {
+    if (sliderStatus) {
+      sliderStatus.style.display = 'flex';
+    }
+    if (sliderLabel && sliderLabel.textContent === '人机验证') {
+      sliderLabel.style.display = 'block';
+    }
+  }
+}
+
 function loadInfo() {
   fetch('/api/maintenance/info').then(function(r){return r.json()}).then(function(j){
     if(!j.ok||!j.data) return;
     if(j.data.message){ document.getElementById('notice').style.display='block'; document.getElementById('noticeText').textContent=j.data.message; }
     if(j.data.updatedAt){ document.getElementById('timeInfo').textContent='维护开始于 ' + new Date(j.data.updatedAt).toLocaleString('zh-CN'); }
     if(!j.data.enabled) location.href='/';
+    // 获取 botTesting 状态
+    fetch('/api/admin/maintenance/status', { headers: { 'x-admin-token': localStorage.getItem('adminToken') || '' } })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (j.ok && j.data) {
+          _botTesting = j.data.botTesting === true || j.data.botTesting === 'true';
+          updateSliderUI();
+        }
+      }).catch(function() {});
   });
 }
 function openModal() { document.getElementById('modal').classList.add('active');  document.getElementById('keyInput').focus(); }
@@ -201,7 +235,7 @@ function submit() {
   var b=document.getElementById('submitBtn');
   e.textContent='';
   if(!k){e.textContent='请输入密钥';return;}
-  if(!_sliderCaptchaToken){e.textContent='请先完成人机验证';return;}
+  if(!_botTesting && !_sliderCaptchaToken){e.textContent='请先完成人机验证';return;}
   b.disabled=true;b.textContent='验证中...';
   fetch('/api/maintenance/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testKey:k,captchaId:_sliderCaptchaToken,captchaText:'1'})})
   .then(function(r){return r.json()}).then(function(j){

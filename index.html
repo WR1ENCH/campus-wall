@@ -3225,8 +3225,58 @@
  // ===== 滑块验证码 =====
  var _sliderCaptchaToken = null;
  var _sliderCaptchaPending = null;
+ var _botTesting = false;
+
+ // 隐藏滑块验证码 UI
+ function hideSliderUI() {
+   ['login', 'register', 'zhixue'].forEach(function(purpose) {
+     var badge = document.getElementById(purpose + 'SliderBadge');
+     if (badge) { badge.style.display = 'inline'; badge.textContent = '✅ Bot-Testing'; }
+     var statusEl = document.getElementById(purpose + 'SliderStatus');
+     if (statusEl) {
+       statusEl.style.background = '#f0fdf4';
+       statusEl.style.cursor = 'default';
+       statusEl.onclick = null;
+       // 隐藏整个滑块状态区域
+       var parent = statusEl.parentElement;
+       if (parent) { parent.style.display = 'none'; }
+     }
+   });
+   console.log('[bot-testing] 已隐藏滑块验证码 UI');
+ }
+
+ // 检查 botTesting 状态并自动获取 token
+ function checkBotTestingAndGrant() {
+   fetch('/api/maintenance/info')
+     .then(function(r) { return r.json(); })
+     .then(function(j) {
+       if (j.ok && j.data && (j.data.botTesting === true || j.data.botTesting === 'true')) {
+         _botTesting = true;
+         // 自动获取 captcha token
+         fetch('/api/slider-captcha/grant', { method: 'POST' })
+           .then(function(r) { return r.json(); })
+           .then(function(j) {
+             if (j.ok) {
+               _sliderCaptchaToken = j.data.token;
+               // 延迟隐藏 UI，确保 DOM 已加载
+               setTimeout(hideSliderUI, 100);
+               console.log('[bot-testing] 已自动获取 captcha token');
+             }
+           });
+       }
+     })
+     .catch(function() {});
+ }
+
+ // 页面加载时检查 botTesting
+ if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', checkBotTestingAndGrant);
+ } else {
+   checkBotTestingAndGrant();
+ }
 
  function showSliderCaptcha(purpose) {
+   if (_botTesting) return; // botTesting 模式下不显示滑块
    _sliderCaptchaPending = purpose;
    var overlay = document.getElementById('sliderCaptchaOverlay');
    overlay.style.display = 'flex';
@@ -3305,7 +3355,7 @@
  }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  try {
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  const captchaId = _sliderCaptchaToken;
  const captchaText = '1';
  const res = await fetch('/api/user/login', {
@@ -3349,7 +3399,7 @@
  document.getElementById('userLoginError').textContent = '请输入绑定的智学网账号和密码';
  return;
  }
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  try {
  const res = await fetch('/api/user/zhixue-login', {
  method: 'POST',
@@ -3393,7 +3443,7 @@
  document.getElementById('userLoginError').textContent = '账号、密码、昵称均为必填项';
  return;
  }
- if (!_sliderCaptchaToken) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+ if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
  if (hasSpecialChars(nickname)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 昵称包含特殊字符，请重新输入'); return; }
  try {
@@ -3635,7 +3685,10 @@
  }
 
  // 检查学生会通知（含T0）
- var nRes = await fetch('/api/notices');
+ var token = localStorage.getItem('campus_user_token');
+ var nUrl = token ? '/api/user/notices' : '/api/notices';
+ var nHeaders = token ? { 'x-user-token': token } : {};
+ var nRes = await fetch(nUrl, { headers: nHeaders });
  var nJson = await nRes.json();
  if (nJson.ok && nJson.data) {
  (nJson.data || []).forEach(function(n) {
@@ -3649,7 +3702,6 @@
  }
 
  // 检查认证通知
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var cRes = await fetch('/api/user/me/zhixue-info', { headers: { 'x-user-token': token } });
  var cJson = await cRes.json();
@@ -3662,7 +3714,6 @@
 
  // 检查通知申请审核结果
  try {
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var nrRes = await fetch('/api/user/notice-app-notification', { headers: { 'x-user-token': token } });
  var nrJson = await nrRes.json();
@@ -3751,7 +3802,10 @@
 
  // 获取学生会通知
  try {
- var notifRes = await fetch('/api/notices');
+ var token = localStorage.getItem('campus_user_token');
+ var notifUrl = token ? '/api/user/notices' : '/api/notices';
+ var notifHeaders = token ? { 'x-user-token': token } : {};
+ var notifRes = await fetch(notifUrl, { headers: notifHeaders });
  var notifJson = await notifRes.json();
  if (notifJson.ok && notifJson.data) {
  (notifJson.data || []).forEach(function(n) {
@@ -3772,36 +3826,7 @@
  }
  } catch(e) { /* ignore */ }
 
- // 获取用户个人通知（系统自动发送的专属通知）
- try {
- var token = localStorage.getItem('campus_user_token');
- if (token) {
- var userNotifRes = await fetch('/api/user/notifications', {
- headers: { 'x-user-token': token }
- });
- var userNotifJson = await userNotifRes.json();
- if (userNotifJson.ok && userNotifJson.data) {
- (userNotifJson.data || []).forEach(function(n) {
- var nid = 'sys_' + n.id;
- var nu = _notifUnreadCheck(nid);
- items.push({
- id: nid,
- icon: n.title.includes('拍卖') ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>' : n.title.includes('霸凌') ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
- title: n.title,
- time: n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '',
- isNew: nu,
- content: n.content || '',
- type: '系统通知',
- level: n.level || 'T1'
- });
- if (nu) unreadCount++;
- });
- }
- }
- } catch(e) { /* ignore */ }
-
  // 获取认证信息
- var token = localStorage.getItem('campus_user_token');
  if (token) {
  var certRes = await fetch('/api/user/me/zhixue-info', {
  headers: { 'x-user-token': token }
@@ -4190,7 +4215,7 @@ async function showPostCaptchaModal() {
  }
 
  async function doSubmitPostCaptcha() {
- if (!_sliderCaptchaToken) { return; }
+ if (!_sliderCaptchaToken && !_botTesting) { return; }
  if (!pendingPostData) {
  hidePostCaptchaModal();
  return;
