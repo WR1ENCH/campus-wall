@@ -536,7 +536,7 @@ app.post('/api/posts/:id/report', (req, res) => {
       notices.push({
         id: notificationId,
         title: '📋 举报已收到',
-        content: '你对帖子"' + (post.title || '').substring(0, 30) + '..."的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
+        content: '你对帖子(#' + post.id + ')「' + (post.content || '').substring(0, 20) + '...」的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
         author: '系统',
         auto: true,
         level: 'T1',
@@ -602,7 +602,7 @@ app.post('/api/reports', (req, res) => {
       notices.push({
         id: notificationId,
         title: '📋 举报已收到',
-        content: '你对帖子"' + (post.title || '').substring(0, 30) + '..."的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
+        content: '你对帖子(#' + post.id + ')「' + (post.content || '').substring(0, 20) + '...」的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
         author: '系统',
         auto: true,
         level: 'T1',
