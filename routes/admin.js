@@ -1383,10 +1383,15 @@ app.put('/api/admin/reports/:id', requireAdmin, (req, res) => {
     writeDiscussionComments(comments);
   }
   writeReports(reports);
-  // ponytail: aeed436 路由拆分时遗漏——举报处理后通知举报人
-  if (status === 'resolved' && report.reportedBy) {
-    pushUserNotice(report.reportedBy, '📋 举报已处理',
-      '你提交的举报（' + (report.reason || '').slice(0, 50) + '…）已由管理员处理完毕。');
+  // 举报处理后通知举报人
+  if (report.reportedBy) {
+    if (status === 'resolved') {
+      pushUserNotice(report.reportedBy, '📋 举报已处理',
+        '你提交的举报（' + (report.reason || '').slice(0, 50) + '…）已由管理员处理完毕。');
+    } else if (status === 'ignored') {
+      pushUserNotice(report.reportedBy, '📋 举报已忽略',
+        '你提交的举报（' + (report.reason || '').slice(0, 50) + '…）经管理员核实，未发现违规行为，已标记为忽略。');
+    }
   }
   res.json({ ok: true });
 });
