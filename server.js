@@ -101,7 +101,12 @@ app.use((req, res, next) => {
     !MOBILE_UA.test(req.headers['user-agent'] || '')
   ) {
     const sep = req.originalUrl.includes('?') ? '&' : '?';
-    const target = req.originalUrl + sep + 'mf=1';
+    let target = req.originalUrl + sep + 'mf=1';
+    // 仅允许同源安全字符，杜绝反射型 XSS（CodeQL: 用户可控值直接写入 iframe src）
+    if (!/^\/[A-Za-z0-9_./?&=%+-]*$/.test(target)) {
+      target = '/?mf=1';
+    }
+    target = encodeURI(target);
     res.set('Content-Type', 'text/html; charset=utf-8');
     return res.send(
       '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">' +
