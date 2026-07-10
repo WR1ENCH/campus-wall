@@ -86,10 +86,14 @@ campus-wall/
    - `express.json({ limit: '50mb' })`
    - `inputSanitize`（`lib/middleware.js`）— 全局特殊字符过滤
    - `createCheckMaintenance(...)` — 维护模式闸门
-6. SPA 片段中间件：仅当 `GET` 且 `X-SPA-Request: 1` 时，按 `PAGE_MAP` 返回 `pages/*.html` 片段。
-7. `express.static(__dirname)` — 静态文件（含根目录完整 html 页）。
-8. 挂载 13 个 routes 模块（**顺序有强约束，见 3.4**）。
-9. `app.listen(PORT)`。
+6. **桌面端强制移动端 UI（iframe 设备框）**：在维护闸门之后、SPA 片段中间件之前，插入一个中间件 `FRAME_PAGES` + `MOBILE_UA` 判断：
+   - 对**桌面 UA** 且**非 SPA 片段**且**未带 `?mf=1`** 的前台整页 HTML 请求（`/`、`/index.html`、`/post.html`、`/user.html`、`/notice.html`、`/report.html`、`/bully.html`、`/knowledge.html`、`/ecosystem.html`、`/agreement.html`、`/apply-notice.html`、`/credit.html`、`/featured.html`、`/launch.html`、`/maintenance.html`，**不含 `admin.html`**），直接返回一段外壳 HTML：一个居中、宽 `768px` 的 `<iframe>`，其 `src` 指向原 URL 加 `?mf=1`。
+   - iframe 内部视口宽度为 768px，因此 `@media (max-width:768px)` 与 `vw` 单位全部按移动端渲染，**真实手机（命中 `MOBILE_UA`）不套框、直接原生渲染**。
+   - 桌面浏览器会**忽略** `<meta name="viewport">`，故单纯改 viewport 无法触发移动端布局；iframe 框是本项目的唯一生效方案。
+7. SPA 片段中间件：仅当 `GET` 且 `X-SPA-Request: 1` 时，按 `PAGE_MAP` 返回 `pages/*.html` 片段。
+8. `express.static(__dirname)` — 静态文件（含根目录完整 html 页）。
+9. 挂载 13 个 routes 模块（**顺序有强约束，见 3.4**）。
+10. `app.listen(PORT)`。
 
 ### 3.2 认证与 Token（`lib/crypto.js`）
 
@@ -537,6 +541,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 8. **SSE 事件名**：`postUpdate` / `noticeUpdate` / `ping`，前端若接实时推送需监听这些 event。
 9. **敏感词库**：`sensitiveWords.js` 加载 `tencent_sensitive_words.enc`（需 `SENSITIVE_KEY` 解密），另含自定义 `sensitive_custom.json`。改词库走后台接口或文件，不要硬编码。
 10. **滑块验证码**：`POST /api/slider-captcha/grant` 返回 `captchaId`，存于 `captchaStore`（5 分钟 TTL），后续接口需带 `captchaId` + `captchaText`。
+11. **桌面端强制移动端 UI（3.1 第 6 项）**：前台页面在桌面浏览器会被 `server.js` 的 iframe 设备框包裹（内切 `?mf=1` 真实页）。**后台 `admin.html` 不受影响**，仍走桌面布局。要新增需强制移动端的前台页，必须在 `server.js` 的 `FRAME_PAGES` 中登记，否则桌面端会显示桌面布局。改 CSS 断点（`max-width:768px` / `min-width:769px`）时需同步此逻辑。
 
 ---
 
