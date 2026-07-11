@@ -646,3 +646,73 @@ server.js
 ## 13. 一句话速记（给 AI Agent）
 
 > 这是一个 **Node+Express+SQLite** 的原生前端校园墙。**所有路由全挂在 `app` 上**（无 router 子模块），**`admin.js` 必须在 `auth.js` 前挂载**，**请求体特殊字符被全局过滤但白名单字段保留**，**三类 token 头是 `x-user-token`/`x-admin-token`/`x-sc-token`**，**数据走 `db.js` 的 read/write 接口且多为整表重写**，**内存 Map 重启即丢**，**实时用 SSE `broadcastSSE`**。改代码前先用 codegraph 探索相关符号。
+
+---
+
+## 14. 通知系统深度分析：自动触发通知
+
+> 本节聚焦于「系统/业务事件**自动**产生的通知」，与「管理员/发布者**手动**发布」的通知（notices.js `POST /api/notices`）区分开。结论均来自实查 `routes/*.js` + `db.js`。
+
+### 14.1 双重存储模型（核心认知）
+
+自动触发通知同时写入**两张表**，二者靠 `notificationId` 外键关联：
+
+| 表 | 字段 | 角色 |
+|----|------|------|
+| `notices` | id, title, content, author, `auto`, level, createdAt, deleted, pinned, synced, **targetUserId**, images | 通知**正文**。`auto:true` 标记该条为自动触发；`targetUserId` 为空=公共通知，有值=用户专属 |
+| `user_notifications` | id, **userId**, **notificationId**(外键), read, createdAt, readAt | **已读桥接表**。只记「哪个用户哪条通知、是否已读」，不存正文 |
+
+`db.js:346` 建表；`addUserNotification`(`db.js:822`)、`markNotificationRead`(`db.js:823`)、`getUnreadCount`(`db.js:827`) 是桥接表唯一操作入口。
+
+### 14.2 三条读取/下发通道（注意语义差异！）
+
+| 端点 | 代码位置 | 数据来源 | 已读过滤 |
+|------|----------|----------|----------|
+| `GET /api/user/notices` | `notices.js:45` / `user.js` 同逻辑 | `notices` 表按 `!targetUserId \|\| targetUserId===我` 过滤 | **不过滤已读**（列全量，含公共通知） |
+| `GET /api/user/notifications` | `user.js:1024` | `notices` 表按 `targetUserId===我` 过滤（**不含公共通知**） | 不过滤已读 |
+| `GET /api/user/notifications/unread-count` | `user.js:1138` | `user_notifications` 表 `read=0` 计数 | — |
+| `POST .../mark-read` / `mark-all-read` | `user.js:1147/1158` | 只改 `user_notifications.read` | — |
+| `GET /api/user/notice-app-notification` | `user.js:1120` | **不走表**，读 `user._noticeAppNotification` 字段，**一次性读取即删除** | — |
+
+**关键设计点（易踩坑）**：
+- 列表类端点（`/notices`、`/notifications`）只按 `targetUserId` 过滤，**完全不读 `user_notifications.read`**。因此「标记已读」**只影响未读红点计数（badge）**，不改变列表里该通知是否展示。二者是解耦的。
+- 未读计数**只依赖桥接表行数**。自动触发时若只写了 `notices` 却漏写 `user_notifications`，该通知会出现在列表但**不计入红点**；反之若只写桥接表漏写 `notices`，红点有数但列表看不到内容。
+- `notice-app-notification` 是**完全独立**的通道（发布权限申请自动通过时写入 `user._noticeAppNotification`，`user.js:1078`），既不在 `notices` 表也不在 `user_notifications` 表，且读取一次即删除。
+
+### 14.3 自动触发点完整清单
+
+每一条自动通知的写入都是 **`notices.push({...targetUserId})` + `db.addUserNotification({notificationId,userId,read:0})`** 两步（霸凌/拍卖/举报受理场景）或走 `pushUserNotice()` 封装（认证/举报处理场景）。
+
+| # | 触发事件 | 触发位置 | 接收人 | 标题/级别 | 写入方式 |
+|---|----------|----------|--------|-----------|----------|
+| 1 | 用户提交帖子举报成功 | `posts.js:540` | 举报人 `reporterId` | 📋 举报已收到 (T1) | 内联 |
+| 2 | 管理员处理举报=resolved | `admin.js:1378` `pushUserNotice` | 举报人 `report.reportedBy` | 📋 举报已处理 (T1) | 封装函数 |
+| 3 | 管理员处理举报=ignored | `admin.js:1381` `pushUserNotice` | 举报人 | 📋 举报已忽略 (T1) | 封装函数 |
+| 4 | 提交霸凌事件举报 | `system.js:175` | 举报人 `reporterUserId` | 🛡️ 霸凌举报已收到 (T1) | 内联 |
+| 5 | 管理员确认处理霸凌(resolved) | `admin.js:1443` | 举报人 `reports[idx].userId` | 🛡️ 霸凌举报已确认处理 (**T0**) | 内联 |
+| 6 | 学生认证被驳回 | `admin.js:641` `pushUserNotice` | 申请人 | ❌ 学生认证未通过 (T1) | 封装函数 |
+| 7 | 学生认证通过/初审通过 | `admin.js:680` `pushUserNotice` | 申请人 | ✅ 学生认证已通过 (T1) | 封装函数 |
+| 8 | 拍卖内容审核通过 | `pickup.js:300` | 出价人 `bid.userId` | 🏆 拍卖内容已通过审核 (**T0**) | 内联 |
+| 9 | 拍卖内容审核未通过(退还 credit) | `pickup.js:327` | 出价人 | ❌ 拍卖内容未通过审核 (T1) | 内联 |
+| 10 | 拍卖举报被驳回 | `pickup.js:486` | 举报人 `report.reporterId` | 📋 拍卖内容举报已驳回 (T1) | 内联 |
+| 11 | 拍卖举报确认违规(下架+封禁) | `pickup.js:561` | 举报人 | 📋 拍卖内容举报已确认 (T1) | 内联 |
+| 12 | 通知发布权限申请自动通过(通行码正确) | `user.js:1078` | 申请人 | 写入 `user._noticeAppNotification`（特殊通道） | 字段写入 |
+
+### 14.4 写入模式的代码异味（给后续维护者）
+
+自动通知的写入**没有统一抽象**，存在明显重复：
+- **`pushUserNotice(targetUserId,title,content,level)`**（`admin.js:77`）是较规整的封装：先 `notices.push({id,title,content,author:'系统',auto:true,level,createdAt,targetUserId})`，再 `db.addUserNotification(...)`。被认证驳回/通过、举报处理(admin.js:1378/1381/641/680) 复用。
+- 但**霸凌确认(`admin.js:1443`)、霸凌受理(`system.js:175`)、帖子举报受理(`posts.js:540`)、拍卖审核/举报(`pickup.js` 三处)**全部是**复制粘贴同款逻辑**的 `notices.push`+`addUserNotification`，且字段命名/缩进风格不统一（如 `targetUserId` 有的缩进错位）。
+- **建议**：抽一个 `emitUserNotice(targetUserId, {title, content, level})` 公共函数（放 `admin.js` 或 `lib/`），所有自动触发点统一调用，避免「漏写桥接表 / 风格漂移」类 bug。改动时注意 `pushUserNotice` 当前定义在 `admin.js`，其它 route 文件需 `require` 进该函数。
+
+### 14.5 实时下发
+
+- 写入 `notices` 一律走 `writeNotices(notices)`（`notices.js:10`），其内部在写库后调用 `broadcastSSE('noticeUpdate', { t: Date.now() })`。
+- 前端/小程序监听 SSE 事件名 **`noticeUpdate`** 即可即时刷新通知（与 `postUpdate`/`voteUpdate` 并列，见 3.6）。`notice-app-notification` 不走 SSE，需前端轮询或登录后主动拉一次。
+
+### 14.6 小结（给 AI Agent 的速记）
+
+- 自动通知 = `notices`(正文,`auto:true`,带`targetUserId`) + `user_notifications`(已读桥) **双写**。
+- 红点计数只看桥接表；列表只看 `notices.targetUserId`；二者**解耦**，标记已读不隐藏列表项。
+- 自动触发点集中在 5 个文件：posts.js(举报受理)、admin.js(认证/举报处理/霸凌确认/pushUserNotice)、system.js(霸凌受理)、pickup.js(拍卖审核+拍卖举报)、user.js(发布权限申请特殊通道)。
+- 写新自动通知：调用/补一个 `emitUserNotice` 风格的封装，确保**双写**且 `auto:true`。
