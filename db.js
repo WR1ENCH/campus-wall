@@ -383,12 +383,43 @@ function migrate() {
     "content" TEXT,
     "assignedAt" TEXT
   )`);
+  // 处罚 / 申诉 / 举报唯一ID 表
+  db.exec(`CREATE TABLE IF NOT EXISTS "punishments" (
+    "punishmentId" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "level" TEXT DEFAULT 'T1',
+    "reason" TEXT,
+    "measures" TEXT,
+    "durationDays" INTEGER DEFAULT 0,
+    "status" TEXT DEFAULT 'active',
+    "sourceReportId" TEXT,
+    "appealUsed" INTEGER DEFAULT 0,
+    "appealStatus" TEXT DEFAULT 'none',
+    "createdAt" TEXT,
+    "expiresAt" TEXT,
+    "revokedAt" TEXT,
+    "revokedBy" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "appeals" (
+    "id" TEXT PRIMARY KEY,
+    "punishmentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "content" TEXT,
+    "status" TEXT DEFAULT 'pending',
+    "createdAt" TEXT,
+    "handledAt" TEXT,
+    "handledBy" TEXT,
+    "resultNote" TEXT
+  )`);
+
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
+    // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
+    { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -531,6 +562,18 @@ function writeLogs(data) { dropAndInsert('login_logs', data); }
 // Reports
 function readReports() { return all('reports'); }
 function writeReports(data) { dropAndInsert('reports', data); }
+
+// Punishments (新版处罚)
+function readPunishments() { return all('punishments'); }
+function writePunishments(data) { dropAndInsert('punishments', data); }
+function insertPunishment(p) { insertRow('punishments', p); }
+function updatePunishment(id, updates) { updateRow('punishments', id, updates); }
+
+// Appeals (申诉)
+function readAppeals() { return all('appeals'); }
+function writeAppeals(data) { dropAndInsert('appeals', data); }
+function insertAppeal(a) { insertRow('appeals', a); }
+function updateAppeal(id, updates) { updateRow('appeals', id, updates); }
 
 // Feedbacks
 function readFeedbacks() { return all('feedbacks'); }
@@ -858,6 +901,8 @@ module.exports = {
   readTrustTokens, writeTrustTokens,
   readLogs, writeLogs,
   readReports, writeReports,
+  readPunishments, writePunishments, insertPunishment, updatePunishment,
+  readAppeals, writeAppeals, insertAppeal, updateAppeal,
   readFeedbacks, writeFeedbacks,
   readBullying, writeBullying,
   readCreditLogs, writeCreditLogs,

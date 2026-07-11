@@ -43,9 +43,10 @@ campus-wall/
 ├── zhixue.js                     # 智学网自动登录模块（可选，加载失败不致命）
 ├── sensitiveWords.js             # 敏感词库加载（含 tencent_sensitive_words.enc 解密）
 ├── crypto_words.js / bullyingNames.js  # 加密词库 / 霸凌名称库
+├── safety.html                   # 安全中心页面（我的举报 + 处罚 + 申诉）
 ├── spa.js                        # 前端 SPA 无刷新路由（class SpaRouter）
 ├── *.html                        # 前端页面（index.html 是主壳，其余是完整独立页 + SPA 片段）
-├── pages/                        # SPA 页面片段（wall/user/post/notice/report/bully/knowledge/ecosystem/admin）
+├── pages/                        # SPA 页面片段（wall/user/post/notice/report/bully/knowledge/ecosystem/admin/safety）
 ├── assets/                       # 截图等静态资源
 ├── lib/                          # 后端公共模块
 │   ├── crypto.js                 # 密码哈希/Token 签名/实名 AES 加密
@@ -54,17 +55,20 @@ campus-wall/
 │   ├── sse.js                    # SSE 实时推送（broadcastSSE）
 │   ├── cache.js                  # 极简缓存（get/set）
 │   ├── helpers.js                # getClientIP 等工具
-│   └── hotness.js                # 帖子热度计算
+│   ├── hotness.js                # 帖子热度计算
+│   └── penalty.js                # 处罚核心逻辑（getActivePunishment/isFeatureBlocked 等）
 ├── routes/                       # 后端 API 模块（每个文件 module.exports = function(app){...}）
 │   ├── admin.js                  # 后台管理（最大，152 符号）
 │   ├── auth.js                   # 管理员初始化/登录/改密/列表
 │   ├── user.js                   # 用户注册/登录/资料/认证/积分/扫码
-│   ├── posts.js                  # 帖子/评论/点赞/举报
+│   ├── posts.js                  # 帖子/评论/点赞/举报（委托 report.js 处理举报）
 │   ├── discussions.js            # 讨论区
 │   ├── qa.js                     # QA 悬赏问答
 │   ├── votes.js                  # 投票
 │   ├── notices.js                # 校园通知 + 公告
-│   ├── pickup.js                 # 失物/捡漏拍卖
+│   ├── pickup.js                 # 失物/捡漏拍卖（含委托统一举报）
+│   ├── penalty.js                # 处罚/申诉/安全中心 API
+│   ├── reports.js                # 统一举报入口（REPO- ID + 证据快照）
 │   ├── student-council.js        # 学生会登录
 │   ├── maintenance.js            # 维护模式公开接口
 │   └── system.js                 # 版本/统计/心跳/霸凌举报/SSE 流
@@ -92,12 +96,12 @@ campus-wall/
    - `inputSanitize`（`lib/middleware.js`）— 全局特殊字符过滤
    - `createCheckMaintenance(...)` — 维护模式闸门
 6. **桌面端强制移动端 UI（iframe 设备框）**：在维护闸门之后、SPA 片段中间件之前，插入一个中间件 `FRAME_PAGES` + `MOBILE_UA` 判断：
-   - 对**桌面 UA** 且**非 SPA 片段**且**未带 `?mf=1`** 的前台整页 HTML 请求（`/`、`/index.html`、`/post.html`、`/user.html`、`/notice.html`、`/report.html`、`/bully.html`、`/knowledge.html`、`/ecosystem.html`、`/agreement.html`、`/apply-notice.html`、`/credit.html`、`/featured.html`、`/launch.html`、`/maintenance.html`，**不含 `admin.html`**），直接返回一段外壳 HTML：一个居中、宽 `768px` 的 `<iframe>`，其 `src` 指向原 URL 加 `?mf=1`。
+   - 对**桌面 UA** 且**非 SPA 片段**且**未带 `?mf=1`** 的前台整页 HTML 请求（`/`、`/index.html`、`/post.html`、`/user.html`、`/notice.html`、`/report.html`、`/bully.html`、`/knowledge.html`、`/ecosystem.html`、`/agreement.html`、`/apply-notice.html`、`/credit.html`、`/featured.html`、`/launch.html`、`/maintenance.html`、`/safety.html`，**不含 `admin.html`**），直接返回一段外壳 HTML：一个居中、宽 `768px` 的 `<iframe>`，其 `src` 指向原 URL 加 `?mf=1`。
    - iframe 内部视口宽度为 768px，因此 `@media (max-width:768px)` 与 `vw` 单位全部按移动端渲染，**真实手机（命中 `MOBILE_UA`）不套框、直接原生渲染**。
    - 桌面浏览器会**忽略** `<meta name="viewport">`，故单纯改 viewport 无法触发移动端布局；iframe 框是本项目的唯一生效方案。
 7. SPA 片段中间件：仅当 `GET` 且 `X-SPA-Request: 1` 时，按 `PAGE_MAP` 返回 `pages/*.html` 片段。
 8. `express.static(__dirname)` — 静态文件（含根目录完整 html 页）。
-9. 挂载 13 个 routes 模块（**顺序有强约束，见 3.4**）。
+9. 挂载 15 个 routes 模块（**顺序有强约束，见 3.4**）。
 10. `app.listen(PORT)`。
 
 ### 3.2 认证与 Token（`lib/crypto.js`）
@@ -132,11 +136,15 @@ Token 格式：`base64(JSON payload) + '.' + base64(HMAC-SHA256(payload, TOKEN_S
 server.js 中挂载顺序：
 
 ```
-admin → auth → user → posts → discussions → qa → votes → notices
-→ pickup → student-council → maintenance → system
+admin → penalty → reports → auth → user → posts → discussions → qa → votes
+→ notices → pickup → student-council → maintenance → system
 ```
 
-**重要**：`routes/admin.js` 必须在 `routes/auth.js` **之前**挂载。原因：`admin.js` 注册了特化路由 `/api/admin/votes/:id`（及类似），而 `auth.js` 注册了通用路由 `/api/admin/:id`。若顺序相反，`PUT/DELETE /api/admin/votes/:id` 会被通用 `/api/admin/:id` 捕获，返回「管理员不存在」。改动挂载顺序前务必理解此冲突。
+**重要**：`routes/admin.js` 必须在 `routes/auth.js` **之前**挂载。原因：`admin.js` 注册了特化路由 `/api/admin/votes/:id`（及类似），而 `auth.js` 注册了通用路由 `/api/admin/:id`。若顺序相反，`PUT/DELETE /api/admin/votes/:id` 会被通用 `/api/admin/:id` 捕获，返回「管理员不存在」。
+
+**顺序约束**：`routes/penalty.js` 和 `routes/reports.js` 在 `routes/admin.js` **之后但必须在 `routes/auth.js` 之前**挂载。因为 `penalty.js` 注册了 `/api/admin/punishments` 等前缀，`reports.js` 注册了 `/api/admin/reports/detail`。若在 `auth.js` 之后挂载，`/api/admin/punishments` 会被 `auth.js` 的 `/api/admin/:id` 捕获。
+
+改动挂载顺序前务必理解此冲突。
 
 ### 3.5 内存状态（`lib/state.js`）
 
@@ -207,7 +215,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
-| `reports` | id, type, targetId, postId, reason, reportedBy, reporterName, createdAt, status('pending'/...), handledBy, handledAt, action | 举报 |
+| `reports` | id, reportId(REPO-), type, targetId, postId, reason, reportedBy, reporterName, reportedUserId, evidenceContent(JSON快照), createdAt, status('pending'/...), handledResult, punishmentId, handledBy, handledAt, action | 举报统一入口 |
 | `feedbacks` | id, type, description, contact, images, time, status, handledBy, handleNote | 用户反馈 |
 | `bullying` | id, reporterRole, victimName, bullyType, description, involved, location, incidentTime, contact, anonymous, images, time, status, handledBy, handleNote, userId | 霸凌举报 |
 | `credit_logs` | id, userId, amount, reason, createdAt | 积分变动日志 |
@@ -237,6 +245,8 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `trust_tokens` | _key, userId, userAgent, createdAt, expiresAt | 浏览器信任令牌 |
 | `deleted_items` | _id, id, type, content, author, userId, deletedAt, deletedBy, extra | 软删除内容归档 |
 | `maintenance` | _key(PK), _value | 维护模式状态（key-value） |
+| `punishments` | id(PK), punishmentId(PUNI-), userId, level('T0'/'T1'), measures(JSON), reason, durationDays, expiresAt, createdAt, revokedAt, revokedBy, status('active'/...), sourceReportId, appealUsed, appealStatus | 处罚记录 |
+| `appeals` | id(PK), punishmentId, userId, content, status('pending'/...), createdAt, handledAt, handledBy, resultNote | 申诉记录 |
 
 > 索引：posts(deleted/userId/time)、users(id)、reports(status) 等（见 db.js `INDEXES`）。
 
@@ -394,19 +404,40 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/pickup/review/:bidId` | 管理员 | 审核出价 |
 | POST | `/api/admin/pickup/report-action/:reportId` | 管理员 | 处理举报 |
 
-### 5.10 举报 / 反馈 / 霸凌（posts/system/admin）
+### 5.10 统一举报（routes/reports.js + admin.js 委托）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| POST | `/api/reports` | 用户 | 提交举报 |
+| POST | `/api/reports` | 用户/匿名 | 统一举报入口（生成 REPO- ID + 证据快照） |
+| GET | `/api/reports/:reportId` | 举报人/管理员 | 举报详情 |
+| GET | `/api/user/my-reports` | 用户 | 我的举报记录 |
+| GET | `/api/admin/reports` | 管理员 | 举报列表（丰富化含举报人/被举报人/证据） |
+| POST | `/api/admin/reports/:id/handle` | 管理员 | 处理举报（无违规/违规→关联处罚/传统resolved/ignored） |
 | POST | `/api/feedback` | 用户 | 提交反馈 |
 | POST | `/api/bullying-report` | 用户 | 霸凌举报 |
-| GET | `/api/admin/reports` | 管理员 | 举报列表 |
-| POST | `/api/admin/reports/:id/handle` | 管理员 | 处理举报 |
-| PUT | `/api/admin/reports/:id` | 管理员 | 更新举报 |
-| POST | `/api/admin/reports/:id/ban-user` | 管理员 | 封禁被举报用户 |
 | GET | `/api/admin/deleted-content` | 管理员 | 已删除内容 |
 
-### 5.11 后台管理 — 用户 / 内容管理（admin.js）
+### 5.11 处罚/申诉/安全中心（routes/penalty.js + lib/penalty.js）
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/user/punishments` | 用户 | 我的处罚列表（active + history 分组） |
+| GET | `/api/user/punishments/:id` | 用户 | 处罚详情（含证据快照、可申诉状态） |
+| POST | `/api/user/punishments/:id/appeal` | 用户 | 提交申诉（一次机会，生成 APP- ID） |
+| GET | `/api/user/safety-center` | 用户 | 安全中心聚合数据（activePunishment + history + myReports） |
+| GET | `/api/admin/punishments` | 管理员 | 处罚列表（含丰富信息） |
+| GET | `/api/admin/punishments/:id` | 管理员 | 处罚详情（含举报证据） |
+| POST | `/api/admin/punishments` | 管理员 | 创建处罚（生成 PUNI- ID，发 T0/T1 通知） |
+| POST | `/api/admin/punishments/:id/revoke` | 管理员 | 撤销处罚（置 revoked，发通知） |
+| POST | `/api/admin/punishments/:id/appeal-action` | 管理员 | 处理申诉（approved→revoke 或 rejected） |
+
+**处罚类型**：
+- `T0` — 全面限制（禁止所有交互功能），measures 不生效
+- `T1` — 部分限制（按 measures 数组选择性禁功能）
+
+**措施（FEATURES）**：`whisper`(悄悄话), `anonymous_post`(匿名发帖/拍卖), `qa`(问答), `post`(发帖/讨论), `vote`(投票), `auction`(拍卖)
+
+**isFeatureBlocked** — 核心校验函数（`lib/penalty.js`）：在 posts/discussions/qa/votes/pickup 的写操作前调用。若用户有 active punishment 且对应 feature 被限制 → 返回 `{ blocked: true, punishment }`，否则 `{ blocked: false }`。前端可据此展示弹窗。
+
+### 5.12 后台管理 — 用户 / 内容管理（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/users` | 管理员 | 用户列表 |
@@ -425,7 +456,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/stats` | 管理员 | 后台统计 |
 | GET | `/api/admin/whispers` | 管理员 | 私信列表 |
 
-### 5.12 后台管理 — 安全 / 敏感词（admin.js）
+### 5.13 后台管理 — 安全 / 敏感词（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/sensitive-words` | 管理员 | 敏感词列表 |
@@ -441,7 +472,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/bullying-names` | 管理员 | 加名称 |
 | DELETE | `/api/admin/bullying-names/:name` | 管理员 | 删名称 |
 
-### 5.13 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）
+### 5.14 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/feedbacks` | 管理员 | 反馈列表 |
@@ -458,7 +489,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/zhixue/:userId/reset` | 管理员 | 重置认证 |
 | GET | `/api/admin/credit-logs` | 管理员 | 积分日志 |
 
-### 5.14 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）
+### 5.15 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/credit/overview` | 超级 | 积分总览 |
@@ -469,7 +500,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/credit-cards/create` | 超级 | 生成单张卡密 |
 | POST | `/api/admin/credit-cards/batch-create` | 超级 | 批量生成卡密 |
 
-### 5.15 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
+### 5.16 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/notice-applications` | 管理员 | 通知发布申请列表 |
@@ -489,7 +520,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/maintenance/test-key/list` | 管理员 | 测试密钥列表 |
 | DELETE | `/api/admin/maintenance/test-key/:key` | 管理员 | 删测试密钥 |
 
-### 5.16 系统 / 通用（system.js + maintenance.js + slider）
+### 5.17 系统 / 通用（system.js + maintenance.js + slider）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/version` | 无 | git 版本号（sha + message） |
@@ -507,7 +538,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ### 6.1 页面模型
 - `index.html` 是**主壳**：含完整 HTML、CSS、以及所有页面逻辑（约 360KB，单个大文件承载前台全部交互）。内有 `<div id="main-content">`（约 1846 行）作为 SPA 内容容器。
-- 根目录的 `admin.html / user.html / post.html / notice.html / report.html / bully.html / knowledge.html / ecosystem.html` 是**各自完整独立可访问的页面**（直接浏览器打开即可用）。
+- 根目录的 `admin.html / user.html / post.html / notice.html / report.html / bully.html / knowledge.html / ecosystem.html / safety.html` 是**各自完整独立可访问的页面**（直接浏览器打开即可用）。
 - `pages/*.html` 是对应页面的**片段**（仅 `<div class="...">` 内容），供 SPA 内部导航时注入 `#main-content`。
 - 导航流程：点击 `<a data-spa href="/post.html">` → `spa.js` 拦截 → 带 `X-SPA-Request: 1` 请求 `/post.html` → server.js 返回 `pages/post.html` 片段 → 注入容器并做过渡动画。
 
@@ -646,3 +677,73 @@ server.js
 ## 13. 一句话速记（给 AI Agent）
 
 > 这是一个 **Node+Express+SQLite** 的原生前端校园墙。**所有路由全挂在 `app` 上**（无 router 子模块），**`admin.js` 必须在 `auth.js` 前挂载**，**请求体特殊字符被全局过滤但白名单字段保留**，**三类 token 头是 `x-user-token`/`x-admin-token`/`x-sc-token`**，**数据走 `db.js` 的 read/write 接口且多为整表重写**，**内存 Map 重启即丢**，**实时用 SSE `broadcastSSE`**。改代码前先用 codegraph 探索相关符号。
+
+---
+
+## 14. 通知系统深度分析：自动触发通知
+
+> 本节聚焦于「系统/业务事件**自动**产生的通知」，与「管理员/发布者**手动**发布」的通知（notices.js `POST /api/notices`）区分开。结论均来自实查 `routes/*.js` + `db.js`。
+
+### 14.1 双重存储模型（核心认知）
+
+自动触发通知同时写入**两张表**，二者靠 `notificationId` 外键关联：
+
+| 表 | 字段 | 角色 |
+|----|------|------|
+| `notices` | id, title, content, author, `auto`, level, createdAt, deleted, pinned, synced, **targetUserId**, images | 通知**正文**。`auto:true` 标记该条为自动触发；`targetUserId` 为空=公共通知，有值=用户专属 |
+| `user_notifications` | id, **userId**, **notificationId**(外键), read, createdAt, readAt | **已读桥接表**。只记「哪个用户哪条通知、是否已读」，不存正文 |
+
+`db.js:346` 建表；`addUserNotification`(`db.js:822`)、`markNotificationRead`(`db.js:823`)、`getUnreadCount`(`db.js:827`) 是桥接表唯一操作入口。
+
+### 14.2 三条读取/下发通道（注意语义差异！）
+
+| 端点 | 代码位置 | 数据来源 | 已读过滤 |
+|------|----------|----------|----------|
+| `GET /api/user/notices` | `notices.js:45` / `user.js` 同逻辑 | `notices` 表按 `!targetUserId \|\| targetUserId===我` 过滤 | **不过滤已读**（列全量，含公共通知） |
+| `GET /api/user/notifications` | `user.js:1024` | `notices` 表按 `targetUserId===我` 过滤（**不含公共通知**） | 不过滤已读 |
+| `GET /api/user/notifications/unread-count` | `user.js:1138` | `user_notifications` 表 `read=0` 计数 | — |
+| `POST .../mark-read` / `mark-all-read` | `user.js:1147/1158` | 只改 `user_notifications.read` | — |
+| `GET /api/user/notice-app-notification` | `user.js:1120` | **不走表**，读 `user._noticeAppNotification` 字段，**一次性读取即删除** | — |
+
+**关键设计点（易踩坑）**：
+- 列表类端点（`/notices`、`/notifications`）只按 `targetUserId` 过滤，**完全不读 `user_notifications.read`**。因此「标记已读」**只影响未读红点计数（badge）**，不改变列表里该通知是否展示。二者是解耦的。
+- 未读计数**只依赖桥接表行数**。自动触发时若只写了 `notices` 却漏写 `user_notifications`，该通知会出现在列表但**不计入红点**；反之若只写桥接表漏写 `notices`，红点有数但列表看不到内容。
+- `notice-app-notification` 是**完全独立**的通道（发布权限申请自动通过时写入 `user._noticeAppNotification`，`user.js:1078`），既不在 `notices` 表也不在 `user_notifications` 表，且读取一次即删除。
+
+### 14.3 自动触发点完整清单
+
+每一条自动通知的写入都是 **`notices.push({...targetUserId})` + `db.addUserNotification({notificationId,userId,read:0})`** 两步（霸凌/拍卖/举报受理场景）或走 `pushUserNotice()` 封装（认证/举报处理场景）。
+
+| # | 触发事件 | 触发位置 | 接收人 | 标题/级别 | 写入方式 |
+|---|----------|----------|--------|-----------|----------|
+| 1 | 用户提交帖子举报成功 | `posts.js:540` | 举报人 `reporterId` | 📋 举报已收到 (T1) | 内联 |
+| 2 | 管理员处理举报=resolved | `admin.js:1378` `pushUserNotice` | 举报人 `report.reportedBy` | 📋 举报已处理 (T1) | 封装函数 |
+| 3 | 管理员处理举报=ignored | `admin.js:1381` `pushUserNotice` | 举报人 | 📋 举报已忽略 (T1) | 封装函数 |
+| 4 | 提交霸凌事件举报 | `system.js:175` | 举报人 `reporterUserId` | 🛡️ 霸凌举报已收到 (T1) | 内联 |
+| 5 | 管理员确认处理霸凌(resolved) | `admin.js:1443` | 举报人 `reports[idx].userId` | 🛡️ 霸凌举报已确认处理 (**T0**) | 内联 |
+| 6 | 学生认证被驳回 | `admin.js:641` `pushUserNotice` | 申请人 | ❌ 学生认证未通过 (T1) | 封装函数 |
+| 7 | 学生认证通过/初审通过 | `admin.js:680` `pushUserNotice` | 申请人 | ✅ 学生认证已通过 (T1) | 封装函数 |
+| 8 | 拍卖内容审核通过 | `pickup.js:300` | 出价人 `bid.userId` | 🏆 拍卖内容已通过审核 (**T0**) | 内联 |
+| 9 | 拍卖内容审核未通过(退还 credit) | `pickup.js:327` | 出价人 | ❌ 拍卖内容未通过审核 (T1) | 内联 |
+| 10 | 拍卖举报被驳回 | `pickup.js:486` | 举报人 `report.reporterId` | 📋 拍卖内容举报已驳回 (T1) | 内联 |
+| 11 | 拍卖举报确认违规(下架+封禁) | `pickup.js:561` | 举报人 | 📋 拍卖内容举报已确认 (T1) | 内联 |
+| 12 | 通知发布权限申请自动通过(通行码正确) | `user.js:1078` | 申请人 | 写入 `user._noticeAppNotification`（特殊通道） | 字段写入 |
+
+### 14.4 写入模式的代码异味（给后续维护者）
+
+自动通知的写入**没有统一抽象**，存在明显重复：
+- **`pushUserNotice(targetUserId,title,content,level)`**（`admin.js:77`）是较规整的封装：先 `notices.push({id,title,content,author:'系统',auto:true,level,createdAt,targetUserId})`，再 `db.addUserNotification(...)`。被认证驳回/通过、举报处理(admin.js:1378/1381/641/680) 复用。
+- 但**霸凌确认(`admin.js:1443`)、霸凌受理(`system.js:175`)、帖子举报受理(`posts.js:540`)、拍卖审核/举报(`pickup.js` 三处)**全部是**复制粘贴同款逻辑**的 `notices.push`+`addUserNotification`，且字段命名/缩进风格不统一（如 `targetUserId` 有的缩进错位）。
+- **建议**：抽一个 `emitUserNotice(targetUserId, {title, content, level})` 公共函数（放 `admin.js` 或 `lib/`），所有自动触发点统一调用，避免「漏写桥接表 / 风格漂移」类 bug。改动时注意 `pushUserNotice` 当前定义在 `admin.js`，其它 route 文件需 `require` 进该函数。
+
+### 14.5 实时下发
+
+- 写入 `notices` 一律走 `writeNotices(notices)`（`notices.js:10`），其内部在写库后调用 `broadcastSSE('noticeUpdate', { t: Date.now() })`。
+- 前端/小程序监听 SSE 事件名 **`noticeUpdate`** 即可即时刷新通知（与 `postUpdate`/`voteUpdate` 并列，见 3.6）。`notice-app-notification` 不走 SSE，需前端轮询或登录后主动拉一次。
+
+### 14.6 小结（给 AI Agent 的速记）
+
+- 自动通知 = `notices`(正文,`auto:true`,带`targetUserId`) + `user_notifications`(已读桥) **双写**。
+- 红点计数只看桥接表；列表只看 `notices.targetUserId`；二者**解耦**，标记已读不隐藏列表项。
+- 自动触发点集中在 5 个文件：posts.js(举报受理)、admin.js(认证/举报处理/霸凌确认/pushUserNotice)、system.js(霸凌受理)、pickup.js(拍卖审核+拍卖举报)、user.js(发布权限申请特殊通道)。
+- 写新自动通知：调用/补一个 `emitUserNotice` 风格的封装，确保**双写**且 `auto:true`。

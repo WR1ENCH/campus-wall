@@ -6,6 +6,7 @@ const db = require('../db');
 const maintenance = require('../maintenance');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('../sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('../bullyingNames');
+const penalty = require('../lib/penalty');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -359,9 +360,9 @@ module.exports = function(app) {
   });
 
 app.get('/api/admin/reports', requireAdmin, (req, res) => {
-  const reports = readReports();
+  let reports = readReports();
   const { status } = req.query;
-  const filtered = status ? reports.filter(r => r.status === status) : reports;
+  let filtered = status ? reports.filter(r => r.status === status) : [...reports];
 
   // 按状态排序：pending 优先，再按时间倒序
   filtered.sort((a, b) => {
@@ -370,70 +371,72 @@ app.get('/api/admin/reports', requireAdmin, (req, res) => {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  res.json({ ok: true, data: filtered });
+  // 丰富举报信息：附带被举报人信息、类型标签
+  const users = readUsers();
+  const enriched = filtered.map(r => {
+    let evidence = {};
+    try { evidence = r.evidenceContent ? JSON.parse(r.evidenceContent) : {}; } catch { evidence = {}; }
+    let reportedUserId = r.reportedUserId || null;
+    // 旧格式举报没有 reportedUserId，从内容记录中查找
+    if (!reportedUserId && r.targetId) {
+      try {
+        const content = penalty.getReportedContent(r.type, r.targetId);
+        if (content && content.userId) reportedUserId = content.userId;
+      } catch (e) { /* 非致命 */ }
+    }
+    const reportedUser = reportedUserId ? users.find(u => u.id === reportedUserId) : null;
+    return { ...r, reportedUserId, evidence, reportedUser: reportedUser ? { nickname: reportedUser.nickname, username: reportedUser.username, uid: reportedUser.uid } : null };
+  });
+  res.json({ ok: true, data: enriched });
 });
 
 app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
-  const { status, action } = req.body;
-  if (!['resolved', 'ignored'].includes(status)) {
-    return res.json({ ok: false, msg: '状态无效' });
-  }
-
+  const { handledResult, action } = req.body;
   const reports = readReports();
-  const report = reports.find(r => r.id === req.params.id);
+  const report = reports.find(r => r.id === req.params.id || r.reportId === req.params.id);
   if (!report) return res.json({ ok: false, msg: '举报记录不存在' });
 
-  report.status = status;
+  const now = new Date().toISOString();
   report.handledBy = req.admin.id;
-  report.handledAt = new Date().toISOString();
-  if (action) report.action = action;
+  report.handledAt = now;
 
-  // 如果 action 是 delete_post，同时软删除被举报的帖子
-  if (action === 'delete_post' && report.postId) {
-    const posts = readPosts();
-    const now = new Date().toISOString();
-    posts.forEach(p => {
-      if (p.id === report.postId && !p.deleted) {
-        p.deleted = true;
-        p.deletedAt = now;
-        p.deletedBy = 'admin';
-      }
-    });
-    writePosts(posts);
-  }
-  // 如果 action 是 delete_comment，同时软删除被举报的评论
-  if (action === 'delete_comment' && report.targetId && report.type === 'comment') {
-    const posts = readPosts();
-    const now = new Date().toISOString();
-    posts.forEach(post => {
-      if (Array.isArray(post.comments)) {
-        post.comments.forEach(c => {
-          if (c.id === report.targetId && !c.deleted) {
-            c.deleted = true;
-            c.deletedAt = now;
-            c.deletedBy = 'admin';
-          }
-        });
-      }
-    });
-    writePosts(posts);
-  }
-  // 如果 action 是 delete_discussion_comment，同时软删除被举报的讨论区评论
-  if (action === 'delete_discussion_comment' && report.targetId && report.type === 'discussion_comment') {
-    const comments = readDiscussionComments();
-    const now = new Date().toISOString();
-    comments.forEach(c => {
-      if (c.id === report.targetId && !c.deleted) {
-        c.deleted = true;
-        c.deletedAt = now;
-        c.deletedBy = 'admin';
-      }
-    });
-    writeDiscussionComments(comments);
+  if (handledResult === 'no_violation') {
+    report.status = 'resolved';
+    report.handledResult = 'no_violation';
+    writeReports(reports);
+    if (report.reportedBy) {
+      penalty.emitUserNotice(report.reportedBy, '📋 举报已处理',
+        '你提交的举报（举报ID：' + (report.reportId || '') + '）经管理员核实，未发现违规行为。', 'T1');
+    }
+    return res.json({ ok: true, msg: '已标记为无违规行为' });
   }
 
-  writeReports(reports);
-  res.json({ ok: true });
+  if (handledResult === 'violation') {
+    report.handledResult = 'violation';
+    report.status = 'resolved';
+    writeReports(reports);
+    // 通知举报人：已确认违规，处罚已下发
+    if (report.reportedBy) {
+      penalty.emitUserNotice(report.reportedBy, '📋 举报已确认',
+        '你提交的举报（举报ID：' + (report.reportId || '') + '）经管理员核实确认违规，已施加处罚。感谢你对校园环境的维护！', 'T1');
+    }
+    return res.json({ ok: true, msg: '违规已确认，请在处罚管理中完善处罚详情', reportId: report.reportId });
+  }
+
+  // 传统处理（resolved/ignored 向后兼容）
+  if (['resolved', 'ignored'].includes(handledResult)) {
+    report.status = handledResult;
+    if (action) report.action = action;
+    writeReports(reports);
+    if (report.reportedBy) {
+      const label = handledResult === 'resolved' ? '已处理' : '已忽略';
+      penalty.emitUserNotice(report.reportedBy, '📋 举报' + label,
+        '你提交的举报（举报ID：' + (report.reportId || '') + '）已由管理员处理。', 'T1');
+    }
+    return res.json({ ok: true });
+  }
+
+  return res.json({ ok: false, msg: '无效的处理方式' });
 });
 
 app.get('/api/admin/bullying', requireAdmin, (req, res) => {

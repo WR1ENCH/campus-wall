@@ -90,6 +90,7 @@ const FRAME_PAGES = new Set([
   '/report.html', '/bully.html', '/knowledge.html', '/ecosystem.html',
   '/agreement.html', '/apply-notice.html', '/credit.html',
   '/featured.html', '/launch.html', '/maintenance.html',
+  '/safety.html',
 ]);
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i;
 
@@ -134,6 +135,7 @@ const PAGE_MAP = {
   '/bully.html': 'pages/bully.html',
   '/knowledge.html': 'pages/knowledge.html',
   '/ecosystem.html': 'pages/ecosystem.html',
+  '/safety.html': 'pages/safety.html',
 };
 
 app.use((req, res, next) => {
@@ -154,6 +156,9 @@ const { sseClients } = require('./lib/sse');
 // ===== 挂载路由模块 =====
 // ponytail: admin.js（含 /api/admin/votes/:id 等特化路由）必须在 auth.js（含 /api/admin/:id 通用路由）之前挂载，
 // 否则 PUT/DELETE /api/admin/votes/:id 会被通用路由捕获，返回"管理员不存在"。
+// penalty.js 与 reports.js 必须在 admin.js 之前挂载，避免 /api/admin/:id 吞掉特化路由。
+require('./routes/penalty')(app);
+require('./routes/reports')(app);
 require('./routes/admin')(app);
 require('./routes/auth')(app);
 require('./routes/user')(app);

@@ -6,6 +6,8 @@ const db = require('../db');
 const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { isFeatureBlocked } = require('../lib/penalty');
+const { createReport } = require('../routes/reports');
 
 function readPickupAuctions() { return db.readPickupAuctions(); }
 function writePickupAuctions(data) { db.writePickupAuctions(data); broadcastSSE('pickupUpdate', { t: Date.now() }); }
@@ -134,6 +136,11 @@ app.post('/api/pickup/bid', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  // 处罚限制检测
+  if (isFeatureBlocked(session.id, 'auction')) {
+    return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+  }
 
   const { slot, date, content, anonymous, amount } = req.body;
   if (!slot || !PICKUP_SLOTS.includes(slot)) return res.json({ ok: false, msg: '无效的时间段' });
@@ -437,6 +444,16 @@ app.post('/api/pickup/report-content/:bidId', (req, res) => {
   };
   reports.push(report);
   writePickupReports(reports);
+
+  // 同步创建统一举报记录（便于统一管理和用户安全中心查看）
+  try {
+    createReport({
+      type: 'auction', targetId: foundBid.id,
+      reason: (reason || '违规内容').trim().slice(0, 200),
+      reporterId: session.id, reporterName: session.nickname || session.username,
+      extra: { pickupBidId: foundBid.id, pickupSlot: foundAuction.slot, pickupDate: foundAuction.date }
+    });
+  } catch (e) { console.error('[pickup] 同步统一举报失败:', e.message); }
 
   res.json({ ok: true, msg: '举报已提交，管理员将尽快处理' });
 });
