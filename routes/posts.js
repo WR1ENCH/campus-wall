@@ -2,6 +2,7 @@ const { verifyUserToken, verifySignedToken } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const { captchaStore, postRateLimit } = require('../lib/state');
+const uniqueId = require('../lib/uniqueId');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
@@ -230,7 +231,7 @@ if (!content || !content.trim()) {
   }
 
   const newPost = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('POST'),
     type,
     content: content.trim(),
     avatar: realAvatar,
@@ -281,7 +282,7 @@ if (!content || !content.trim()) {
     if (disc && !disc.deleted) {
       var discComments = readDiscussionComments();
       var newDiscComment = {
-        id: 'dc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        id: uniqueId.generateId('DICM'),
         discussionId: syncDiscussionId,
         parentId: null,
         content: content.trim(),
@@ -430,7 +431,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   }
   if (!Array.isArray(post.comments)) post.comments = [];
   const newComment = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('POCM'),
     content: content.trim(),
     author: author || '匿名',
     avatar: avatar || '🙈',

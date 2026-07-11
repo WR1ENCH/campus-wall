@@ -62,6 +62,7 @@ const { inputSanitize, createCheckMaintenance } = require('./lib/middleware');
 const { verifySignedToken } = require('./lib/crypto');
 const db = require('./db');
 const maintenance = require('./maintenance');
+const { ensureUniqueIds } = require('./lib/idMigration');
 
 app.use(compression({
   filter: (req, res) => {
@@ -167,6 +168,14 @@ require('./routes/maintenance')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
 
 // ===== 启动 =====
+// 数据唯一化：启动时迁移旧 ID
+try {
+  const migrationResult = ensureUniqueIds(require('./db'));
+  console.log('[数据唯一化] 迁移完成:', migrationResult);
+} catch (err) {
+  console.error('[数据唯一化] 迁移失败:', err.message);
+}
+
 app.listen(PORT, () => {
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);

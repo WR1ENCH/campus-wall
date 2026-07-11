@@ -4,6 +4,7 @@ const { getClientIP } = require('../lib/helpers');
 const { requireAdmin } = require('../lib/middleware');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
+const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 
@@ -52,7 +53,7 @@ module.exports = function(app) {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
-    votes.push({ id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    votes.push({ id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
     writeVotes(votes);
     res.json({ ok: true });
   });
@@ -60,7 +61,7 @@ module.exports = function(app) {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
-    votes.push({ id: 'vote_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    votes.push({ id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
     writeVotes(votes);
     res.json({ ok: true });
   });

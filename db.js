@@ -5,7 +5,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const cache = require('./lib/cache');
 
-const DB_PATH = path.join(__dirname, 'data', 'campus.db');
+const DB_PATH = process.env.CW_DB_PATH || path.join(__dirname, 'data', 'campus.db');
 let db;
 
 function getDb() {
@@ -375,6 +375,14 @@ function migrate() {
   for (const sql of INDEXES) {
     try { db.exec(sql); } catch (e) { /* index may already exist */ }
   }
+  // 数据唯一化：ID 输入日志表
+  db.exec(`CREATE TABLE IF NOT EXISTS "ID_input" (
+    "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "entityType" TEXT,
+    "entityId" TEXT,
+    "content" TEXT,
+    "assignedAt" TEXT
+  )`);
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
@@ -822,6 +830,26 @@ function getUnreadCount(userId) {
   return row ? row.cnt : 0;
 }
 
+// ===== 数据唯一化：原始 SQL 执行 =====
+function runSql(sql, params = []) {
+  return getDb().prepare(sql).run(...params);
+}
+
+function allSql(sql, params = []) {
+  return getDb().prepare(sql).all(...params);
+}
+
+// ===== 数据唯一化：ID 分配日志 =====
+function addIdInput(entityType, entityId, content) {
+  try {
+    const d = getDb();
+    d.prepare(`INSERT INTO "ID_input" ("entityType", "entityId", "content", "assignedAt") VALUES (?, ?, ?, ?)`)
+      .run(entityType, entityId, content, new Date().toISOString());
+  } catch (e) {
+    console.warn('[db.js] addIdInput failed:', e.message);
+  }
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -862,4 +890,8 @@ module.exports = {
   insertPost, updatePost, softDeletePost,
   insertUser, updateUser,
   insertRow, updateRow, deleteRow,
+  // 数据唯一化：暴露 getDb / runSql / allSql 供迁移脚本使用
+  getDb, runSql, allSql,
+  // 数据唯一化：ID 分配日志表
+  addIdInput,
 };
