@@ -2,6 +2,7 @@ const { verifyUserToken, verifySignedToken } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
+const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 
@@ -137,7 +138,7 @@ app.post('/api/qa/questions', (req, res) => {
 
   const questions = readQAQuestions();
   const q = {
-    id: 'qa_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('QAQU'),
     userId: session.id,
     author: user.nickname,
     avatar: user.avatar || '',
@@ -226,7 +227,7 @@ app.post('/api/qa/questions/:id/answers', (req, res) => {
     return res.json({ ok: false, msg: '你已回答过此问题' });
   }
   const a = {
-    id: 'qa_ans_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('QAAN'),
     questionId: q.id,
     userId: session.id,
     author: user.nickname,

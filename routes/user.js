@@ -64,18 +64,7 @@ function addLoginLog(type, account, success, ip, ua) {
 }
 
 function generateUID() {
-  const banned = [/^(\d)\1{7}$/, /12345678/, /87654321/, /01234567/, /23456789/];
-  let uid, attempts = 0;
-  do {
-    uid = (Math.floor(Math.random() * 9) + 1).toString();
-    for (let i = 1; i < 8; i++) uid += Math.floor(Math.random() * 10).toString();
-    attempts++;
-    if (banned.some(p => p.test(uid))) continue;
-    const users = db.readUsers();
-    if (users.some(u => u.uid === uid)) continue;
-    break;
-  } while (attempts < 1000);
-  return uid || null;
+  return require('../lib/uniqueId').generateUID();
 }
 
 function luhnModN(code) {

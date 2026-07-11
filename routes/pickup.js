@@ -3,6 +3,7 @@ const { getClientIP } = require('../lib/helpers');
 const { requireAdmin } = require('../lib/middleware');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
+const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 
@@ -39,7 +40,7 @@ function getOrCreateAuction(slot, dateStr) {
   let idx = auctions.findIndex(a => a.slot === slot && a.date === dateStr);
   if (idx === -1) {
     const newAuction = {
-      id: 'pau_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      id: uniqueId.generateId('AURQ'),
       slot, date: dateStr,
       bids: [], status: 'open', createdAt: new Date().toISOString()
     };
