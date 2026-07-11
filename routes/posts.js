@@ -65,6 +65,9 @@ function requireAdmin(req, res, next) {
   if (!session || !session.id || !session.loginAt) {
     return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
   }
+  if (!['super', 'admin'].includes(session.role)) {
+    return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
+  }
   if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
     return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
   }
