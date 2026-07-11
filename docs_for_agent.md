@@ -716,3 +716,38 @@ server.js
 - 红点计数只看桥接表；列表只看 `notices.targetUserId`；二者**解耦**，标记已读不隐藏列表项。
 - 自动触发点集中在 5 个文件：posts.js(举报受理)、admin.js(认证/举报处理/霸凌确认/pushUserNotice)、system.js(霸凌受理)、pickup.js(拍卖审核+拍卖举报)、user.js(发布权限申请特殊通道)。
 - 写新自动通知：调用/补一个 `emitUserNotice` 风格的封装，确保**双写**且 `auto:true`。
+## 图谱参考
+
+本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **699 个节点**、**1094 条边**、**57 个社区**。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
+
+### 图谱文件说明
+
+| 文件 | 说明 |
+|------|------|
+| `graphify-out/graph.html` | 交互式图谱（浏览器直接打开），可视化所有节点与社区 |
+| `graphify-out/graph.json` | 原始图谱数据（NetworkX 格式），供程序化查询 |
+| `graphify-out/GRAPH_REPORT.md` | 审计报告含枢纽节点、意外连接、建议探索问题 |
+
+### 使用方式
+
+1. **查看交互图谱**：用浏览器打开 `graphify-out/graph.html`，浏览节点和社区结构。
+2. **查询图谱**（CLI）：`graphify query "<问题>"` — 基于已有图谱回答，无需重建。
+3. **增量更新**：修改代码后运行 `graphify . --update`，仅重新提取变更文件。
+4. **全量重建**：`graphify .`（移除 `graphify-out/graph.json` 后执行）。
+
+### 关键枢纽节点
+
+| 节点 | 度 | 作用 |
+|------|-----|------|
+| `broadcastSSE()` | 39 | SSE 实时推送中枢 — 几乎所有写操作都调用它 |
+| `getDb()` | 28 | 数据库连接入口 |
+| `dropAndInsert()` | 27 | 全表替换写入模式 |
+| `verifySignedToken()` | 21 | Token 签名校验 — 认证核心 |
+| `getClientIP()` | 13 | 客户端 IP 获取工具 |
+| `check()` (敏感词) | 10 | 敏感词检测 |
+| `verifyUserToken()` | 10 | 用户 Token 验证 |
+
+### 建议探索
+
+图谱中最值得探索的问题：**为什么 `broadcastSSE()` 会连接 14 个不同的社区？**
+答案：`broadcastSSE()` 是系统唯一的实时推送中枢（`lib/sse.js`），被所有业务模块（帖子、通知、投票、QA、讨论区、捡漏拍卖等）依赖，是代码库中耦合度最高的函数。
