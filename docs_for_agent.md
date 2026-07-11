@@ -3,6 +3,11 @@
 > 本文件是给 AI Agent 使用的「项目全景图」。阅读它即可直接上手编辑本项目，无需再逐一检索代码。
 > 所有结论均来自对当前代码库（codegraph 索引 689 节点 / 1890 边）的实查，与 README.md 中部分已过时描述（如「JSON 文件存储」「svg-captcha」）不同，本文件以**实际代码**为准。
 
+## 仓库地址
+
+- GitHub: https://github.com/WR1ENCH/campus-wall
+- Gitee: https://gitee.com/wr1Ench/campus-wall
+
 ---
 
 ## 0. 一句话定位

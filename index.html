@@ -2116,12 +2116,18 @@
  </div>
  <div class="user-login-field">
  <label class="user-login-label">绑定的智学网</label>
- <input class="user-login-input" id="forgotZhixueInput"
- placeholder="输入绑定的智学网账号" maxlength="50"
- onkeydown="if(event.key==='Enter') document.getElementById('forgotNewPwdInput').focus()">
- </div>
- <div class="user-login-field">
- <label class="user-login-label">新密码</label>
+  <input class="user-login-input" id="forgotZhixueInput"
+  placeholder="输入绑定的智学网账号" maxlength="50"
+  onkeydown="if(event.key==='Enter') document.getElementById('forgotZhixuePwdInput').focus()">
+  </div>
+  <div class="user-login-field">
+  <label class="user-login-label">智学网密码</label>
+  <input class="user-login-input" id="forgotZhixuePwdInput" type="password"
+  placeholder="输入绑定的智学网密码以验证身份" maxlength="50"
+  onkeydown="if(event.key==='Enter') document.getElementById('forgotNewPwdInput').focus()">
+  </div>
+  <div class="user-login-field">
+  <label class="user-login-label">新密码</label>
  <input class="user-login-input" id="forgotNewPwdInput" type="password"
  placeholder="至少 6 位" maxlength="20"
  onkeydown="if(event.key==='Enter') document.getElementById('forgotConfirmPwdInput').focus()">
@@ -3178,8 +3184,9 @@
  function showForgotPwdModal() {
  document.getElementById('forgotPwdOverlay').classList.add('show');
  document.getElementById('forgotPwdError').textContent = '';
- document.getElementById('forgotZhixueInput').value = '';
- document.getElementById('forgotNewPwdInput').value = '';
+  document.getElementById('forgotZhixueInput').value = '';
+  document.getElementById('forgotZhixuePwdInput').value = '';
+  document.getElementById('forgotNewPwdInput').value = '';
  document.getElementById('forgotConfirmPwdInput').value = '';
  setTimeout(() => document.getElementById('forgotZhixueInput').focus(), 50);
  }
@@ -3189,13 +3196,18 @@
  }
 
  async function doForgotPassword() {
- const zhixueUsername = document.getElementById('forgotZhixueInput').value.trim();
- const newPassword = document.getElementById('forgotNewPwdInput').value;
- const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
- if (!zhixueUsername) {
- document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网账号';
- return;
- }
+  const zhixueUsername = document.getElementById('forgotZhixueInput').value.trim();
+  const zhixuePassword = document.getElementById('forgotZhixuePwdInput').value;
+  const newPassword = document.getElementById('forgotNewPwdInput').value;
+  const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
+  if (!zhixueUsername) {
+  document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网账号';
+  return;
+  }
+  if (!zhixuePassword) {
+  document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网密码';
+  return;
+  }
  if (!newPassword || newPassword.length < 6) {
  document.getElementById('forgotPwdError').textContent = '新密码至少 6 位';
  return;
@@ -3208,7 +3220,7 @@
  const res = await fetch('/api/user/forgot-password', {
  method: 'POST',
  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ zhixueUsername, newPassword, confirmPassword })
+  body: JSON.stringify({ zhixueUsername, zhixuePassword, newPassword, confirmPassword })
  });
  const json = await res.json();
  if (json.ok) {
