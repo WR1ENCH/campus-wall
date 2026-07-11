@@ -158,6 +158,34 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - 支持 `autoStart`/`autoEnd` 定时自动开关。
 - 测试密钥（`TW-xxxxxxxx`）由 `maintenance.js` 管理，24h 有效，经 `/api/maintenance/verify` 验证后签发 `maintenance_bypass` token。
 
+### 3.8 数据唯一化（`lib/uniqueId.js` + `lib/idMigration.js`）
+
+所有核心实体使用带前缀的唯一 ID，确保跨模块全局唯一。
+
+**前缀方案**（格式：`PREFIX-[A-Z0-9]{16}`）：
+
+| 前缀 | 含义 | 生成时机 |
+|------|------|----------|
+| `POST` | 帖子 | `routes/posts.js` 创建帖子 |
+| `POCM` | 帖子评论 | `routes/posts.js` 创建评论 |
+| `DISC` | 讨论主题 | `routes/discussions.js` 创建讨论 |
+| `DICM` | 讨论评论 | `routes/discussions.js` 创建评论 |
+| `QAQU` | QA 问题 | `routes/qa.js` 创建问题 |
+| `QAAN` | QA 回答 | `routes/qa.js` 创建回答 |
+| `VOTE` | 投票 | `routes/votes.js` 创建投票 |
+| `AURQ` | 代拿请求 | `routes/pickup.js` 创建代拿 |
+| (无前缀) | 用户 uid | 16 位随机数字 `0-9` |
+
+**核心 API**：
+- `generateId(prefix)` — 返回 `PREFIX-[A-Z0-9]{16}` 字符串
+- `generateUID()` — 返回 16 位随机数字字符串
+- `isValidIdFormat(id)` — 校验新格式 ID 或 16 位 UID
+- `logIdAssignment(entityType, entityId, content, db)` — 写入 `data/ID_input.log` + `ID_input` 表
+
+**启动迁移**：`server.js` 启动时调用 `ensureUniqueIds(db)`，将旧格式 ID（`Date.now().toString(36)+random`）升级为新前缀格式，在事务中执行，幂等安全。
+
+**ID 日志表**：`ID_input`（entityType, entityId, content, assignedAt），记录每次 ID 分配。
+
 ---
 
 ## 4. 数据模型（db.js — SQLite 表）
