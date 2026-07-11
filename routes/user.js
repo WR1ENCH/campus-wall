@@ -2,7 +2,7 @@
 const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verifySignedToken, makeUserToken, verifyUserToken, getDisplayZhixueStatus } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
-const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers } = require('../lib/state');
+const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX } = require('../lib/state');
 const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
 const nodeCrypto = require('crypto');
@@ -108,8 +108,17 @@ function cleanupQrCodes() {
 
 module.exports = function(app) {
   app.post('/api/slider-captcha/grant', (req, res) => {
-    const id = 'sc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    captchaStore.set(id, { verified: true, t: Date.now() });
+    // 服务端限流：单 IP 60 秒内最多下发 CAPTCHA_GRANT_MAX 次，防止机器人批量刷 captcha token
+    const ip = getClientIP(req);
+    const now = Date.now();
+    const hits = (captchaGrantLimit.get(ip) || []).filter(ts => now - ts < CAPTCHA_GRANT_WINDOW_MS);
+    if (hits.length >= CAPTCHA_GRANT_MAX) {
+      return res.json({ ok: false, msg: '操作过于频繁，请稍后再试', code: 'RATE_LIMITED' });
+    }
+    hits.push(now);
+    captchaGrantLimit.set(ip, hits);
+    const id = 'sc_' + now.toString(36) + Math.random().toString(36).slice(2, 6);
+    captchaStore.set(id, { verified: true, t: now });
     res.json({ ok: true, data: { token: id } });
   });
   app.post('/api/user/register', (req, res) => {
@@ -459,10 +468,13 @@ module.exports = function(app) {
     res.json({ ok: true });
   });
   app.post('/api/user/forgot-password', (req, res) => {
-    const { zhixueUsername, newPassword, confirmPassword } = req.body;
+    const { zhixueUsername, zhixuePassword, newPassword, confirmPassword } = req.body;
   
     if (!zhixueUsername) {
       return res.json({ ok: false, msg: '请输入绑定的智学网账号' });
+    }
+    if (!zhixuePassword) {
+      return res.json({ ok: false, msg: '请输入绑定的智学网密码以验证身份' });
     }
     if (!newPassword || newPassword.length < 6) {
       return res.json({ ok: false, msg: '新密码至少 6 位' });
@@ -475,6 +487,12 @@ module.exports = function(app) {
     const userIndex = users.findIndex(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
     if (userIndex === -1) {
       return res.json({ ok: false, msg: '该智学网账号未认证或不存在' });
+    }
+  
+    // 身份验证：必须提供与绑定时一致的智学网密码，证明是账号本人
+    const storedZhixuePassword = decryptCert(users[userIndex].zhixuePassword);
+    if (!storedZhixuePassword || storedZhixuePassword !== zhixuePassword) {
+      return res.json({ ok: false, msg: '智学网密码不正确，无法验证身份' });
     }
   
     users[userIndex].password = hashPassword(newPassword);

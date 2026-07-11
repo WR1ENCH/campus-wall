@@ -31,6 +31,22 @@ function _updateVoteOptions(vote, newOptions) {
   vote.options = newOpts;
 }
 
+// 校验请求是否来自管理员或学生会（拒绝普通用户 token 冒用提权）
+function _resolveAdminOrSC(req) {
+  const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
+  if (!token) return null;
+  const session = verifySignedToken(token);
+  if (!session || !session.id || !session.loginAt) return null;
+  // 管理员 token 带 role 字段，且 24 小时内有效
+  if (session.role && (Date.now() - session.loginAt <= 24 * 3600 * 1000)) return session;
+  // 学生会 token：匹配学生会账号，或具备通知发布权限的用户
+  const sc = readSC();
+  if (sc && sc.id === session.id) return session;
+  const users = readUsers();
+  if (users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned')) return session;
+  return null;
+}
+
 module.exports = function(app) {
   app.get('/api/votes', (req, res) => {
     const votes = readVotes().filter(v => !v.deleted);
@@ -109,20 +125,8 @@ module.exports = function(app) {
     res.json({ ok: true });
   });
   app.put('/api/votes/:id', (req, res) => {
-    const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
-    if (!token) return res.json({ ok: false, msg: '请先登录' });
-    const session = verifySignedToken(token);
-    if (!session) return res.json({ ok: false, msg: '登录已过期' });
-    const { title, options } = req.body;
-    const votes = readVotes();
-    const vote = votes.find(v => v.id === req.params.id);
-    if (!vote) return res.json({ ok: false, msg: '投票不存在' });
-    if (title) vote.title = title.trim();
-    if (options) _updateVoteOptions(vote, options);
-    writeVotes(votes);
-    res.json({ ok: true });
-  });
-  app.put('/api/votes/:id', requireAdmin, (req, res) => {
+    const session = _resolveAdminOrSC(req);
+    if (!session) return res.json({ ok: false, msg: '登录已过期或无权限' });
     const { title, options, multiple, allowCustom, endTime } = req.body;
     const votes = readVotes();
     const vote = votes.find(v => v.id === req.params.id);
@@ -162,10 +166,8 @@ module.exports = function(app) {
 
   // 截止投票（管理员/学生会）—— aeed436 遗漏，admin.html adminEndVote 调用
   app.post('/api/votes/:id/end', (req, res) => {
-    const token = req.headers['x-admin-token'] || req.headers['x-sc-token'];
-    if (!token) return res.json({ ok: false, msg: '未登录' });
-    const session = verifySignedToken(token);
-    if (!session) return res.json({ ok: false, msg: '登录无效' });
+    const session = _resolveAdminOrSC(req);
+    if (!session) return res.json({ ok: false, msg: '登录无效或无权限' });
 
     const votes = readVotes();
     const vote = votes.find(v => v.id === req.params.id && !v.deleted);
