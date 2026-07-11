@@ -8,6 +8,19 @@ const { check: checkBullyingNames } = require('../bullyingNames');
 
 const CONTENT_MAX_LENGTH = 50;
 
+// 评论删除接口按 IP 限流（与 postRateLimit 同款内存 Map，无新依赖）
+const commentDeleteLimit = new Map();
+const COMMENT_DELETE_WINDOW_MS = 60 * 1000;
+const COMMENT_DELETE_MAX = 30;
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, ts] of commentDeleteLimit) {
+    const kept = ts.filter(t => now - t < COMMENT_DELETE_WINDOW_MS);
+    if (kept.length === 0) commentDeleteLimit.delete(ip);
+    else commentDeleteLimit.set(ip, kept);
+  }
+}, 60000);
+
 function readDiscussions() { return db.readDiscussions(); }
 function writeDiscussions(data) { db.writeDiscussions(data); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 function readDiscussionComments() { return db.readDiscussionComments(); }
@@ -60,6 +73,9 @@ function requireAdmin(req, res, next) {
   if (!session || !session.id || !session.loginAt) {
     return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
   }
+  if (!['super', 'admin'].includes(session.role)) {
+    return res.json({ ok: false, msg: '登录信息无效', code: 'INVALID_TOKEN' });
+  }
   if (Date.now() - session.loginAt > 24 * 3600 * 1000) {
     return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
   }
@@ -92,15 +108,21 @@ app.post('/api/discussions', (req, res) => {
   let creatorName = null;
   if (adminToken) {
     const session = verifySignedToken(adminToken);
-    if (session && session.id && session.loginAt && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
+    if (session && session.id && session.loginAt && ['super', 'admin'].includes(session.role) && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
       authed = true;
       creatorName = session.name || session.id;
     }
   } else if (scToken) {
     const session = verifySignedToken(scToken);
     if (session && session.id && session.loginAt && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
-      authed = true;
-      creatorName = session.name || session.id;
+      const sc = db.readSC();
+      const users = readUsers();
+      const isSC = sc && sc.id === session.id;
+      const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
+      if (isSC || isPublisher) {
+        authed = true;
+        creatorName = session.name || session.id;
+      }
     }
   }
   if (!authed) {
@@ -317,6 +339,16 @@ app.post('/api/discussions/:id/comments', (req, res) => {
 
 app.delete('/api/discussions/comments/:id', (req, res) => {
   try {
+    // 按 IP 限流，防止批量删除滥用
+    const ip = getClientIP(req);
+    const now = Date.now();
+    const hits = (commentDeleteLimit.get(ip) || []).filter(t => now - t < COMMENT_DELETE_WINDOW_MS);
+    if (hits.length >= COMMENT_DELETE_MAX) {
+      return res.json({ ok: false, msg: '操作过于频繁，请稍后再试', code: 'RATE_LIMITED' });
+    }
+    hits.push(now);
+    commentDeleteLimit.set(ip, hits);
+
     const token = req.headers['x-user-token'];
     const adminToken = req.headers['x-admin-token'];
 
@@ -324,7 +356,9 @@ app.delete('/api/discussions/comments/:id', (req, res) => {
     let userId = null;
 
     if (adminToken) {
-      if (verifySignedToken(adminToken)) {
+      const adminSession = verifySignedToken(adminToken);
+      // 仅接受带 role 的管理员 token，且 24 小时内有效；拒绝普通用户 token 冒用提权
+      if (adminSession && adminSession.role && adminSession.loginAt && (Date.now() - adminSession.loginAt <= 24 * 3600 * 1000)) {
         isAdmin = true;
       }
     }
