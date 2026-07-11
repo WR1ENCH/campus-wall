@@ -1,6 +1,7 @@
 const { verifyUserToken, verifySignedToken } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
+const uniqueId = require('../lib/uniqueId');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
@@ -114,7 +115,7 @@ app.post('/api/discussions', (req, res) => {
   const discussions = readDiscussions();
 
   const newDiscussion = {
-    id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('DISC'),
     title: title.trim(),
     expiresAt: expiresAt || null, // null 表示无限期
     deleted: false,
@@ -240,7 +241,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
 
   const comments = readDiscussionComments();
   const newComment = {
-    id: 'dc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: uniqueId.generateId('DICM'),
     discussionId: req.params.id,
     parentId: parentId || null,
     content: content.trim(),
@@ -280,7 +281,7 @@ app.post('/api/discussions/:id/comments', (req, res) => {
     const posts = readPosts();
     const topicTitle = discussion.title || '讨论';
     const wallContent = '#' + topicTitle + ' ' + content.trim();
-    const postId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const postId = uniqueId.generateId('POST');
     posts.unshift({
       id: postId,
       type: '日常',

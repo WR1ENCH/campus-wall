@@ -62,6 +62,7 @@ const { inputSanitize, createCheckMaintenance } = require('./lib/middleware');
 const { verifySignedToken } = require('./lib/crypto');
 const db = require('./db');
 const maintenance = require('./maintenance');
+const { ensureUniqueIds } = require('./lib/idMigration');
 
 app.use(compression({
   filter: (req, res) => {
@@ -101,7 +102,12 @@ app.use((req, res, next) => {
     !MOBILE_UA.test(req.headers['user-agent'] || '')
   ) {
     const sep = req.originalUrl.includes('?') ? '&' : '?';
-    const target = req.originalUrl + sep + 'mf=1';
+    let target = req.originalUrl + sep + 'mf=1';
+    // 仅允许同源安全字符，杜绝反射型 XSS（CodeQL: 用户可控值直接写入 iframe src）
+    if (!/^\/[A-Za-z0-9_./?&=%+-]*$/.test(target)) {
+      target = '/?mf=1';
+    }
+    target = encodeURI(target);
     res.set('Content-Type', 'text/html; charset=utf-8');
     return res.send(
       '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">' +
@@ -162,6 +168,14 @@ require('./routes/maintenance')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
 
 // ===== 启动 =====
+// 数据唯一化：启动时迁移旧 ID
+try {
+  const migrationResult = ensureUniqueIds(require('./db'));
+  console.log('[数据唯一化] 迁移完成:', migrationResult);
+} catch (err) {
+  console.error('[数据唯一化] 迁移失败:', err.message);
+}
+
 app.listen(PORT, () => {
   console.log(`\n  📌 校园墙服务已启动`);
   console.log(`  → http://localhost:${PORT}/`);
