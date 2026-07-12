@@ -1,7 +1,7 @@
 # agent-dev — Campus Wall 开发文档（AI Agent 上手指南）
 
 > 本文件是给 AI Agent 使用的「项目全景图」。阅读它即可直接上手编辑本项目，无需再逐一检索代码。
-> 所有结论均来自对当前代码库（codegraph 索引 689 节点 / 1890 边）的实查，与 README.md 中部分已过时描述（如「JSON 文件存储」「svg-captcha」）不同，本文件以**实际代码**为准。
+> 所有结论均来自对当前代码库（codegraph 索引 784 节点 / 2090 边）的实查，与 README.md 中部分已过时描述（如「JSON 文件存储」「svg-captcha」）不同，本文件以**实际代码**为准。
 > 请查看目录下的graphify图谱来完善你对此项目的理解，每当对此项目进行改动，请主动检查是否要对garphity图谱更新
 
 ## 仓库地址
@@ -196,7 +196,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ### 3.9 处罚机制 / 安全中心 / 统一举报系统（本次提交新增）
 
-三个新模块（`lib/penalty.js` / `routes/penalty.js` / `routes/reports.js` / `safety.html` / `pages/safety.html`）构成内容安全闭环。
+三个新模块（`lib/penalty.js` / `routes/penalty.js` / `routes/reports.js` / `safety.html` / `pages/safety.html`）构成内容安全闭环。后台管理界面 `admin.html` 另含「处罚管理」（`page-punishments`，`loadPunishments()`）与「申诉处理」（`page-appeals`，`loadAppeals()`）两个页面：申诉处理页通过 `GET /api/admin/appeals` 拉取申诉列表（按 `status` 过滤），在弹窗内可查看关联处罚与申诉内容，并调用 `appeal-action` 通过/驳回。
 
 **统一举报入口（`routes/reports.js`）**
 - 单一公开入口 `POST /api/reports`，按 `type` 区分内容类型：`post` / `comment` / `discussion` / `discussion_comment` / `qa_question` / `qa_answer` / `featured` / `auction`，生成 `REPO-` 前缀唯一 ID（`generateId('REPO')`）。
@@ -211,6 +211,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - `FEATURES = ['whisper','anonymous_post','qa','post','vote']`；`isFeatureBlocked(userId, feature)` 在 `routes/posts.js`（发帖/匿名发帖）、`routes/discussions.js`、`routes/qa.js`、`routes/votes.js`、`routes/pickup.js`（拍卖）的发帖/互动入口前被调用，命中则拒绝并提示。
 - `getActivePunishment()` 带**自动过期翻转**（到期自动置 `expired`）。
 - 管理员接口：`GET/POST /api/admin/punishments`、详情 `:id`、撤销 `:id/revoke`、申诉处理 `:id/appeal-action`（`approved` 撤销处罚并通知 / `rejected`）。从举报处理处罚时，回填 `report.handledResult='violation'`、`report.punishmentId`，并通知举报人。
+- 申诉列表接口：`GET /api/admin/appeals`（可按 `status=pending|approved|rejected` 过滤），返回每条申诉并关联处罚信息（级别/原因/状态/限制功能）与用户昵称/UID，供后台「申诉处理」页使用。
 
 **安全中心（前端 `safety.html` + 接口 `/api/user/safety-center`）**
 - 单接口聚合：进行中处罚 `activePunishment`、历史处罚 `history`、我的举报 `myReports`。
@@ -436,6 +437,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/punishments` | 管理员 | 处罚列表（可按 `status` / `userId` 过滤） |
+| GET | `/api/admin/appeals` | 管理员 | 申诉列表（可按 `status` 过滤，关联处罚 + 用户信息） |
 | GET | `/api/admin/punishments/:id` | 管理员 | 处罚详情（证据快照 + 关联申诉） |
 | POST | `/api/admin/punishments` | 管理员 | 新建处罚（按 `userId`；或从举报 `sourceReportId` 处理，自动回填举报） |
 | POST | `/api/admin/punishments/:id/revoke` | 管理员 | 撤销处罚 |
@@ -842,7 +844,7 @@ server.js
 
 ## 图谱参考
 
-本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **677 个节点**、**1125 条边**、**39 个社区**。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
+本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
 
 ### 图谱文件说明
 
@@ -858,6 +860,7 @@ server.js
 2. **查询图谱**（CLI）：`graphify query "<问题>"` — 基于已有图谱回答，无需重建。
 3. **增量更新**：修改代码后运行 `graphify . --update`，仅重新提取变更文件。
 4. **全量重建**：`graphify .`（移除 `graphify-out/graph.json` 后执行）。
+5. **无 LLM Key 时**：`graphify . --code-only` 仅用本地 AST 索引代码（跳过文档/图片语义提取），可正常生成 `graph.json` / `graph.html` / `GRAPH_REPORT.md`；社区名将为占位 `Community N`。后端支持 `OPENAI_BASE_URL`+`OPENAI_API_KEY`（OpenAI 兼容，如火山方舟）后可做语义命名。
 
 ### 关键枢纽节点
 
