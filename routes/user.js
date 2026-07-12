@@ -140,6 +140,9 @@ module.exports = function(app) {
     if (password.length < 6) {
       return res.json({ ok: false, msg: '密码至少 6 位' });
     }
+    if (nickname.includes(' ')) {
+      return res.json({ ok: false, msg: '昵称不能包含空格' });
+    }
     if (nickname.length < 2 || nickname.length > 12) {
       return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
     }
@@ -147,6 +150,9 @@ module.exports = function(app) {
     const users = readUsers();
     if (users.find(u => u.username === username)) {
       return res.json({ ok: false, msg: '账号已被注册' });
+    }
+    if (users.find(u => u.nickname && u.nickname.toLowerCase() === nickname.toLowerCase())) {
+      return res.json({ ok: false, msg: '昵称已被使用' });
     }
   
     const ip = getClientIP(req);

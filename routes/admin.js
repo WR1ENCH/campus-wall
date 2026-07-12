@@ -371,7 +371,7 @@ app.get('/api/admin/reports', requireAdmin, (req, res) => {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
-  // 丰富举报信息：附带被举报人信息、类型标签
+  // 丰富举报信息：附带举报人/被举报人信息、证据、目标内容
   const users = readUsers();
   const enriched = filtered.map(r => {
     let evidence = {};
@@ -384,8 +384,19 @@ app.get('/api/admin/reports', requireAdmin, (req, res) => {
         if (content && content.userId) reportedUserId = content.userId;
       } catch (e) { /* 非致命 */ }
     }
+    // 旧格式举报无证据快照，运行时从源内容降级捞取
+    if (!evidence.content && r.targetId) {
+      try {
+        const content = penalty.getReportedContent(r.type, r.targetId);
+        if (content && content.content) evidence.content = content.content;
+        if (content && content.images) evidence.images = content.images;
+      } catch (e) { /* 非致命 */ }
+    }
+    const reporter = r.reportedBy ? users.find(u => u.id === r.reportedBy) : null;
     const reportedUser = reportedUserId ? users.find(u => u.id === reportedUserId) : null;
-    return { ...r, reportedUserId, evidence, reportedUser: reportedUser ? { nickname: reportedUser.nickname, username: reportedUser.username, uid: reportedUser.uid } : null };
+    const isCommentOrDiscussion = r.type === 'comment' || r.type === 'sensitive_comment' || r.type === 'discussion_comment' || r.type === 'sensitive_discussion_comment';
+    const targetContent = evidence.content || (isCommentOrDiscussion ? (r.commentContent || '') : (r.postContent || ''));
+    return { ...r, reportedUserId, targetContent, evidence, reporterInfo: reporter ? { nickname: reporter.nickname, username: reporter.username, uid: reporter.uid } : null, reportedUser: reportedUser ? { nickname: reportedUser.nickname, username: reportedUser.username, uid: reportedUser.uid } : null };
   });
   res.json({ ok: true, data: enriched });
 });
@@ -406,7 +417,7 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
     writeReports(reports);
     if (report.reportedBy) {
       penalty.emitUserNotice(report.reportedBy, '📋 举报已处理',
-        '你提交的举报（举报ID：' + (report.reportId || '') + '）经管理员核实，未发现违规行为。', 'T1');
+        '你提交的举报（举报ID：' + (report.reportId || report.id || '') + '）经管理员核实，未发现违规行为。', 'T1');
     }
     return res.json({ ok: true, msg: '已标记为无违规行为' });
   }
@@ -418,7 +429,7 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
     // 通知举报人：已确认违规，处罚已下发
     if (report.reportedBy) {
       penalty.emitUserNotice(report.reportedBy, '📋 举报已确认',
-        '你提交的举报（举报ID：' + (report.reportId || '') + '）经管理员核实确认违规，已施加处罚。感谢你对校园环境的维护！', 'T1');
+        '你提交的举报（举报ID：' + (report.reportId || report.id || '') + '）经管理员核实确认违规，已施加处罚。感谢你对校园环境的维护！', 'T1');
     }
     return res.json({ ok: true, msg: '违规已确认，请在处罚管理中完善处罚详情', reportId: report.reportId });
   }
@@ -431,7 +442,7 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
     if (report.reportedBy) {
       const label = handledResult === 'resolved' ? '已处理' : '已忽略';
       penalty.emitUserNotice(report.reportedBy, '📋 举报' + label,
-        '你提交的举报（举报ID：' + (report.reportId || '') + '）已由管理员处理。', 'T1');
+        '你提交的举报（举报ID：' + (report.reportId || report.id || '') + '）已由管理员处理。', 'T1');
     }
     return res.json({ ok: true });
   }

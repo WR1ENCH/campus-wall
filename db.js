@@ -4,6 +4,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const cache = require('./lib/cache');
+const { generateId } = require('./lib/uniqueId');
 
 const DB_PATH = process.env.CW_DB_PATH || path.join(__dirname, 'data', 'campus.db');
 let db;
@@ -419,7 +420,7 @@ function migrate() {
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
-    { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent'] },
+    { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -438,6 +439,27 @@ function migrate() {
       }
     }
   }
+
+  // 为旧数据回填 reportId，并将旧 r_ 格式 id 统一为 REPO- 格式
+  const badReports = db.prepare(`SELECT id, reportId FROM "reports" WHERE reportId IS NULL OR reportId = '' OR id LIKE 'r_%'`).all();
+  for (const row of badReports) {
+    const rid = row.reportId && row.reportId.startsWith('REPO-') ? row.reportId : generateId('REPO');
+    if (row.id.startsWith('r_')) {
+      db.prepare(`UPDATE "reports" SET id = ?, reportId = ? WHERE id = ?`).run(rid, rid, row.id);
+      console.log(`[db.js] ✅ 已统一报告ID ${rid} (原 ${row.id})`);
+    } else {
+      db.prepare(`UPDATE "reports" SET reportId = ? WHERE id = ?`).run(rid, row.id);
+      console.log(`[db.js] ✅ 已回填 reportId ${rid} -> reports.${row.id}`);
+    }
+  }
+
+  // 修复 users 表中误存为科学记数法的 uid（如 1.23e+15 → 1230000000000000）
+  const uidFix = db.prepare(`SELECT rowid, uid FROM "users" WHERE uid LIKE '%e%'`).all();
+  for (const u of uidFix) {
+    const fixed = Number(u.uid).toFixed(0);
+    db.prepare(`UPDATE "users" SET uid = ? WHERE rowid = ?`).run(fixed, u.rowid);
+    console.log(`[db.js] ✅ 已修复 uid 格式 ${u.uid} -> ${fixed}`);
+  }
 }
 
 // ---- helpers ----
@@ -447,6 +469,8 @@ function tryParse(v) {
   if (v === 'false') return false;
   if (v === '1') return true;
   if (v === '0') return false;
+  // 长数字串（>15 位）是 ID/UID，不做数值转换避免科学记数法
+  if (v.length > 15 && /^\d+$/.test(v)) return v;
   // 解析数字字符串
   if (/^-?\d+(\.\d+)?$/.test(v)) {
     const n = Number(v);
@@ -567,7 +591,14 @@ function writeReports(data) { dropAndInsert('reports', data); }
 function readPunishments() { return all('punishments'); }
 function writePunishments(data) { dropAndInsert('punishments', data); }
 function insertPunishment(p) { insertRow('punishments', p); }
-function updatePunishment(id, updates) { updateRow('punishments', id, updates); }
+function updatePunishment(id, updates) {
+  const d = getDb();
+  const cols = Object.keys(updates);
+  const setClause = cols.map(c => `"${c}" = ?`).join(',');
+  const vals = cols.map(c => toSqlValue(updates[c]));
+  d.prepare(`UPDATE "punishments" SET ${setClause} WHERE punishmentId = ?`).run(...vals, id);
+  invalidateCache('punishments');
+}
 
 // Appeals (申诉)
 function readAppeals() { return all('appeals'); }

@@ -2147,7 +2147,7 @@
         } else if (isCommentReport || isDiscussionCommentReport) {
           targetLabel = '被举报评论';
         }
-        const targetContent = isCommentReport || isDiscussionCommentReport ? (r.commentContent || '') : (r.postContent || '');
+        const targetContent = r.targetContent || '';
         let deleteAction = 'delete_post';
         let deleteLabel = '删除帖子';
         if (r.type === 'comment' || r.type === 'sensitive_comment') { deleteAction = 'delete_comment'; deleteLabel = '删除评论'; }
@@ -2163,9 +2163,9 @@
           '<div>' + (i + 1) + '</div>' +
           '<div style="min-width:0;">' +
             '<div style="font-size:12px;color:var(--accent);margin-bottom:4px;">' + (isCommentReport ? '💬 ' + targetLabel : '📌 ' + targetLabel) + '：' + escHtml(targetContent) + '</div>' +
-            '<div style="font-size:12px;color:var(--text-sub);">举报人：' + escHtml(r.reporterName || '') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-sub);">举报人：' + (r.reporterInfo ? escHtml(r.reporterInfo.nickname + ' (' + r.reporterInfo.username + ', UID:' + r.reporterInfo.uid + ')') : escHtml(r.reporterName || '-')) + '</div>' +
             '<div style="font-size:12px;margin-top:4px;color:#92400e;background:var(--yellow);padding:2px 8px;border-radius:4px;display:inline-block;">原因：' + escHtml(r.reason || '') + '</div>' +
-            '<div style="font-size:10px;color:var(--text-sub);margin-top:3px;">ID: <code style="font-size:10px;">' + escHtml(r.reportId || r.id || '-') + '</code></div>' +
+            '<div style="font-size:10px;color:var(--text-sub);margin-top:3px;">ID: <code style="font-size:10px;">' + escHtml(r.reportId || '-') + '</code></div>' +
           '</div>' +
           '<div class="post-time-cell">' + timeStr + '</div>' +
           '<div><span class="type-badge ' + statusBadge + '">' + statusText + '</span></div>' +
@@ -3668,11 +3668,12 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', maintenance: '维护模式', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理', votes: '投票管理' };
+    const titles = { dashboard: '数据总览', maintenance: '维护模式', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', punishments: '处罚管理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', 'pickup-reports': '拍卖举报处理', votes: '投票管理' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
     if (id === 'reports') { loadReports(); }
+    if (id === 'punishments') { loadPunishments(); }
     if (id === 'comments') { loadComments(); }
     if (id === 'discussions') { loadDiscussionsAdmin(); }
     if (id === 'qa') { loadAdminQA(); }
@@ -5192,6 +5193,9 @@
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  var MEASURE_LABELS={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};
+  function labelMeasures(arr){return arr.map(function(m){return MEASURE_LABELS[m]||m;}).join('、');}
+
   // 渲染头像 <img>（解决嵌套模板字面量导致的JS解析错误）
   function avatarImg(src, width, height) {
     if (!src || !src.startsWith('data:')) return null;
@@ -5974,7 +5978,7 @@
         '<div style="margin-bottom:8px;"><span style="font-weight:600;">状态：</span>' + statusText + '</div>' +
         '<div style="margin-bottom:8px;"><span style="font-weight:600;">时长：</span>' + durationText + '</div>' +
         '<div style="margin-bottom:8px;"><span style="font-weight:600;">原因：</span>' + escHtml(p.reason || '') + '</div>' +
-        (p.measures && p.level === 'T1' ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">限制功能：</span>' + escHtml(p.measures) + '</div>' : '') +
+        (p.measures && p.level === 'T1' ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">限制功能：</span>' + escHtml(Array.isArray(p.measures) ? labelMeasures(p.measures) : String(p.measures)) + '</div>' : '') +
         (p.createdAt ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">创建时间：</span>' + new Date(p.createdAt).toLocaleString('zh-CN') + '</div>' : '') +
         (p.expiresAt ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">到期时间：</span>' + new Date(p.expiresAt).toLocaleString('zh-CN') + '</div>' : '') +
         evidenceHtml;
@@ -6049,15 +6053,23 @@
     overlay.className = 'ban-report-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
     let evidenceHtml = '';
-    if (report.evidence) {
-      const content = report.evidence.content || '';
-      const images = report.evidence.images || [];
+    var evContent = report.evidence && report.evidence.content ? report.evidence.content : '';
+    var evImages = report.evidence && report.evidence.images ? report.evidence.images : [];
+    if (!evContent && !evImages.length) {
+      // 旧格式举报无证据快照，用 DB 内容降级展示
+      var dbContent = report.targetContent || report.postContent || report.commentContent || '';
       evidenceHtml = '<div style="margin-top:8px;padding:10px;background:#fef3c7;border-radius:8px;">' +
         '<div style="font-size:12px;font-weight:600;margin-bottom:4px;">📎 被举报内容</div>' +
-        '<div style="font-size:12px;line-height:1.5;white-space:pre-wrap;">' + escHtml(content) + '</div>';
-      if (images.length > 0) {
+        '<div style="font-size:12px;line-height:1.5;white-space:pre-wrap;">' + escHtml(dbContent || '（旧格式，无快照）') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-sub);margin-top:4px;">目标ID：<code>' + escHtml(report.targetId || '-') + '</code></div>' +
+      '</div>';
+    } else {
+      evidenceHtml = '<div style="margin-top:8px;padding:10px;background:#fef3c7;border-radius:8px;">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:4px;">📎 被举报内容</div>' +
+        '<div style="font-size:12px;line-height:1.5;white-space:pre-wrap;">' + escHtml(evContent) + '</div>';
+      if (evImages.length > 0) {
         evidenceHtml += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">' +
-          images.map(img => '<img src="' + img + '" style="max-width:80px;max-height:80px;border-radius:4px;object-fit:cover;cursor:pointer;" onclick="window.open(\'' + img + '\')">').join('') +
+          evImages.map(img => '<img src="' + img + '" style="max-width:80px;max-height:80px;border-radius:4px;object-fit:cover;cursor:pointer;" onclick="window.open(\'' + img + '\')">').join('') +
         '</div>';
       }
       evidenceHtml += '</div>';
@@ -6075,6 +6087,8 @@
         '<div><span style="font-weight:600;">举报原因：</span>' + escHtml(report.reason || '') + '</div>' +
         '<div><span style="font-weight:600;">时间：</span>' + (report.createdAt ? new Date(report.createdAt).toLocaleString('zh-CN') : '-') + '</div>' +
         '<div><span style="font-weight:600;">状态：</span>' + (report.status === 'pending' ? '⏳ 待处理' : report.status === 'resolved' ? '✅ 已处理' : '⏹️ 已忽略') + '</div>' +
+        (report.handledResult === 'violation' ? '<div><span style="font-weight:600;">处理结果：</span>⚖️ 违规处罚</div>' : '') +
+        (report.punishmentId ? '<div style="margin-top:6px;"><button class="btn-view" onclick="this.closest(\'.ban-report-overlay\').remove();showPunishmentDetail(\'' + report.punishmentId.replace(/'/g, "\\'") + '\')" style="font-size:12px;padding:5px 12px;">🔗 查看关联处罚（含申诉）</button></div>' : '') +
         evidenceHtml +
       '</div>' +
     '</div>';
@@ -6143,7 +6157,7 @@
     if (!userId) { errEl.textContent = '缺少被处罚用户ID'; return; }
     try {
       // 先标记举报为违规
-      const handleRes = await fetch('/api/admin/reports/' + encodeURIComponent(reportId), {
+      const handleRes = await fetch('/api/admin/reports/' + encodeURIComponent(reportId) + '/handle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ handledResult: 'violation' })
@@ -6177,7 +6191,7 @@
   window.showReportNoViolation = async function(reportId) {
     showConfirm('⚠️', '确认无违规', '确定标记此举报为「无违规行为」吗？', async () => {
       try {
-        const res = await fetch('/api/admin/reports/' + encodeURIComponent(reportId), {
+        const res = await fetch('/api/admin/reports/' + encodeURIComponent(reportId) + '/handle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ handledResult: 'no_violation' })

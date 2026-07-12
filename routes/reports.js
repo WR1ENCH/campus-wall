@@ -27,7 +27,7 @@ function createReport({ type, targetId, postId, reason, reporterId, reporterName
     images: content.images || [],
   };
   const report = {
-    id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: reportId,
     reportId,
     type,
     targetId,
@@ -97,6 +97,11 @@ module.exports = function (app) {
       if (session) { reporterId = session.id; reporterName = session.nickname || '匿名用户'; }
     }
     // 允许匿名举报，但建议登录
+    // 同一个人不能重复举报同一条内容
+    if (reporterId) {
+      const existing = readReports().find(r => r.reportedBy === reporterId && r.targetId === targetId && r.type === type && r.status === 'pending');
+      if (existing) return res.json({ ok: false, msg: '你已举报过该内容，请等待处理' });
+    }
     try {
       const report = createReport({ type, targetId, postId, reason, reporterId, reporterName });
       res.json({ ok: true, data: { reportId: report.reportId } });

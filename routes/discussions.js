@@ -289,14 +289,18 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   // 敏感词命中：自动生成举报记录
   if (hasSensitive) {
     const reports = readReports();
+    const ev = { content: newComment.content || '', images: [] };
     reports.push({
       id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      reportId: 'REPO-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
       type: 'sensitive_discussion_comment',
       targetId: newComment.id,
       discussionId: req.params.id,
-      reason: '系统自动检测：讨论评论包含敏感词【' + sensitiveWords.join('、') + '】',
+      reason: '系统自动检测：讨论评论包含敏感词',
       reportedBy: session.id,
       reporterName: session.nickname || '未知',
+      reportedUserId: session.id,
+      evidenceContent: JSON.stringify(ev),
       createdAt: new Date().toISOString(),
       status: 'pending'
     });

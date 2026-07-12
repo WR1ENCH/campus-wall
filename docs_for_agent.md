@@ -772,9 +772,77 @@ server.js
 - 红点计数只看桥接表；列表只看 `notices.targetUserId`；二者**解耦**，标记已读不隐藏列表项。
 - 自动触发点集中在 5 个文件：posts.js(举报受理)、admin.js(认证/举报处理/霸凌确认/pushUserNotice)、system.js(霸凌受理)、pickup.js(拍卖审核+拍卖举报)、user.js(发布权限申请特殊通道)。
 - 写新自动通知：调用/补一个 `emitUserNotice` 风格的封装，确保**双写**且 `auto:true`。
+---
+
+## 15. 会话变更日志
+
+> 本节记录 AI Agent 在每次开发会话中对项目所做的全部改动，供后续维护者追溯。
+
+### 会话 1 — 2026-07-12
+
+#### safety.html 修复
+
+| 问题 | 文件 | 行 | 改动 |
+|------|------|-----|------|
+| 返回按钮不退出 iframe | `safety.html` | 全局 | `location.href='/'` → `window.top.location.href='/'` |
+| Token key 不匹配 | `safety.html` | `getToken()` | `'userToken'` → `'campus_user_token'` |
+| 举报详情无内容（旧格式无快照） | `safety.html` | `showReportDetail()` | 补充 `fallbackContent` 降级显示 |
+| 处罚限制功能显示空 | `safety.html` | `renderPunishCard()` | `escHtml` 兼容数组 + `labelMeasures` 映射 |
+| 申诉提交"网络错误" | `routes/penalty.js` | `app.post('/api/user/punishments/:id/appeal')` | `WHERE id = ?` → `WHERE punishmentId = ?` |
+| emoji 图标统一替换为 SVG | `safety.html` | 全部 | 所有 emoji 图标替换为 inline SVG；申诉弹窗添加 scale+translateY+opacity 过渡动画 |
+
+#### admin.html 修复
+
+| 问题 | 文件 | 行 | 改动 |
+|------|------|-----|------|
+| 处罚管理页面转圈 | `admin.html` | `showPage()` | 在 tab 切换逻辑中添加 `'punishments'` |
+| 举报处理无申诉查看入口 | `admin.html` | `showReportDetail()` | 增加「查看关联处罚（含申诉）」按钮 |
+| 举报处理"网络错误"(reportId 为空) | `admin.html` | 2156 | `r.reportId \|\| ''` → `r.reportId \|\| r.id \|\| ''` |
+| 举报弹窗举报人/被举报人 UID 为空 | `routes/admin.js` | 387-389 | 增加 `reporterInfo` 富化（查 `reportedBy`→用户信息） |
+| 旧格式举报弹窗无内容 | `admin.html` | 6059-6063 | 无证据快照时降级展示 `report.targetContent`/`report.postContent`/`report.commentContent` |
+| 敏感词检测类型无法查被举报人 | `lib/penalty.js` | 97 | `getReportedContent()` 入口归一化 `sensitive_` 前缀 |
+| **举报列表被举报贴内容/举报人/举报ID为空** | `routes/admin.js` | 377-395 | 增加 `targetContent` 字段 + 运行时证据快照降级捞取（`getReportedContent`） |
+| **举报列表 targetContent 显示** | `admin.html` | 2150 | `r.commentContent \|\| r.postContent` → `r.targetContent`（来自后端富化） |
+| **reportedUserId 列缺失** | `db.js` | 423 | 列迁移增加 `reportedUserId` |
+
+#### index.html 修复
+
+| 问题 | 文件 | 行 | 改动 |
+|------|------|-----|------|
+| 注册协议同意绕过 | `index.html` | `doUserRegister()` | 在注册入口增加 `agreementChecked` 校验 |
+| 昵称空格/重复检测 | `index.html` | `doUserRegister()` | 昵称空格报错；服务端 `readUsers` 查重（case-insensitive） |
+| 处罚弹窗无过渡动画 | `index.html` | 7385-7395 | `display:none/flex` + `@keyframes` → `visibility/opacity transition` + `.open` 类切换 |
+| 敏感词/霸凌弹窗无过渡动画 | `index.html` | 5370, 5400 | 内层 div 添加 `dialog-anim` 类（`animation:` 缩放+上移+淡入） |
+
+#### 敏感词自动举报格式化
+
+| 文件 | 行 | 改动 |
+|------|-----|------|
+| `routes/posts.js` | 268-280 | 敏感词帖子自动举报增加 `reportId`(REPO-)、`evidenceContent`、`reportedUserId` |
+| `routes/posts.js` | 463-476 | 敏感词评论自动举报同上 |
+| `routes/discussions.js` | 290-303 | 敏感词讨论评论自动举报同上 |
+| `routes/posts.js` | 542-553 | **用户提交帖子举报**增加 `reportId`、`evidenceContent`(截取帖子正文+图片)、`reportedUserId`(被举报人=帖主) |
+| `routes/posts.js` | 643-654 | **用户提交评论举报**同上（截取评论正文+图片+被举报人） |
+| `routes/posts.js` | 276, 476 | 敏感词自动举报 `reason` 去掉敏感词原文（如 `[六四]`），仅保留"系统自动检测：内容包含敏感词" |
+| `routes/discussions.js` | 291 | 同上，讨论评论自动举报 |
+
+#### UID 科学记数法修复
+
+| 问题 | 文件 | 行 | 改动 |
+|------|------|-----|------|
+| UID 在 DB 中被存储为 `1.23e+15` 科学记数法 | `db.js` | `tryParse()` | 16 位以上纯数字字符串不再转 Number，避免 SQLite 写回时变科学记数法 |
+| 已有科学记数法 UID 无法恢复 | `db.js` | `migrate()` | 启动时 `UPDATE users SET uid = ? WHERE uid LIKE '%e%'`，用 `toFixed(0)` 还原 |
+| 举报列表 reporter 不显示 UID | `admin.html` | 2166 | 从 `r.reporterName` 改为 `r.reporterInfo.nickname + (username, UID:xxx)` |
+
+#### 举报列表 reporterInfo 展示
+
+| 问题 | 文件 | 行 | 改动 |
+|------|------|-----|------|
+| 举报列表"举报人"只显示 raw name 无 UID | `admin.html` | 2166 | 用 `reporterInfo.nickname (username, UID:xxx)` 格式显示 |
+
 ## 图谱参考
 
-本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **699 个节点**、**1094 条边**、**57 个社区**。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
+本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **677 个节点**、**1125 条边**、**39 个社区**。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
 
 ### 图谱文件说明
 

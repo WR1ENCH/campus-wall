@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🛡️ 安全中心 · 校园墙</title>
+<title>安全中心 · 校园墙</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--brick-bg:#c4a882;--paper-bg:#fef9e7;--text-main:#2c1810;--text-sub:#6a4a3a;}
@@ -49,8 +49,10 @@ body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--bri
 .appeal-btn:hover{background:#1d4ed8;}
 .appeal-btn:disabled{background:#cbd5e1;color:#94a3b8;cursor:not-allowed;}
 .appeal-btn:disabled:hover{background:#cbd5e1;}
-.appeal-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
-.appeal-dialog.open{display:flex;}
+.appeal-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);visibility:hidden;opacity:0;transition:visibility .2s,opacity .2s;}
+.appeal-dialog.open{visibility:visible;opacity:1;}
+.appeal-dialog .appeal-box{transform:scale(0.92) translateY(24px);opacity:0;transition:transform .25s ease-out,opacity .22s ease-out;}
+.appeal-dialog.open .appeal-box{transform:scale(1) translateY(0);opacity:1;}
 .appeal-box{background:var(--paper-bg);border-radius:14px;padding:24px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.25);}
 .appeal-box h3{font-size:16px;margin-bottom:12px;color:var(--text-main);}
 .appeal-box textarea{width:100%;padding:10px 12px;border:2px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;height:100px;box-sizing:border-box;}
@@ -69,20 +71,20 @@ body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--bri
 </head>
 <body>
 <div class="top-bar">
-  <button class="back-btn" onclick="history.back()">← 返回</button>
-  <span class="page-title">🛡️ 安全中心</span>
+  <button class="back-btn" onclick="window.top.location.href='/'">← 返回</button>
+  <span class="page-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>安全中心</span>
 </div>
 <div class="container">
   <div class="tabs">
-    <button class="tab active" data-tab="reports" onclick="switchTab('reports')">📋 我的举报</button>
-    <button class="tab" data-tab="punishments" onclick="switchTab('punishments')">⚖️ 我的处罚</button>
+    <button class="tab active" data-tab="reports" onclick="switchTab('reports')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>我的举报</button>
+    <button class="tab" data-tab="punishments" onclick="switchTab('punishments')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>我的处罚</button>
   </div>
   <div id="tabReports"></div>
   <div id="tabPunishments" style="display:none;"></div>
 </div>
 <div class="appeal-dialog" id="appealDialog">
   <div class="appeal-box">
-    <h3>✍️ 提交申诉</h3>
+    <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>提交申诉</h3>
     <p style="font-size:13px;color:var(--text-sub);margin-bottom:10px;">请说明你认为处罚不合理的原因。申诉后管理员将审核，审核通过将解除处罚。</p>
     <textarea id="appealContent" placeholder="请详细说明申诉理由…"></textarea>
     <div class="appeal-msg" id="appealMsg"></div>
@@ -94,13 +96,14 @@ body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--bri
 </div>
 <div class="toast" id="toast"></div>
 <script>
+var ICON={clock:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',check:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',cross:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',refresh:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',lock:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',scales:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M6 6h12"/><path d="M4 10h16"/><path d="M2 14l4-4 4 4"/><path d="M14 14l4-4 4 4"/></svg>'};
 let currentUser = null;
 let currentPunishId = null;
 let safetyData = null;
 
 // Token helpers
-function getToken(){return localStorage.getItem('userToken');}
-function clearToken(){localStorage.removeItem('userToken');}
+function getToken(){return localStorage.getItem('campus_user_token');}
+function clearToken(){localStorage.removeItem('campus_user_token');}
 
 async function api(url, opts){
   const headers={'Content-Type':'application/json'};
@@ -120,11 +123,11 @@ function statusClass(status,result){
   return'status-ignored';
 }
 function statusText(status,result){
-  if(status==='pending')return'⏳ 待处理';
-  if(result==='no_violation')return'✅ 无违规';
-  if(result==='violation')return'⚖️ 已处罚';
-  if(status==='resolved')return'✅ 已处理';
-  if(status==='ignored')return'⏹️ 已忽略';
+  if(status==='pending')return ICON.clock+' 待处理';
+  if(result==='no_violation')return ICON.check+' 无违规';
+  if(result==='violation')return ICON.scales+' 已处罚';
+  if(status==='resolved')return ICON.check+' 已处理';
+  if(status==='ignored')return ICON.cross+' 已忽略';
   return status||'未知';
 }
 
@@ -176,11 +179,11 @@ function renderPunishments(data){
   var history=data.history||[];
   var html='';
   if(active){
-    html+='<div class="active-section"><h3>⚠️ 进行中处罚</h3>';
+    html+='<div class="active-section"><h3>'+ICON.warning+' 进行中处罚</h3>';
     html+=renderPunishCard(active,true);
     html+='</div>';
   }
-  html+='<div class="history-section"><h3>📜 历史处罚</h3>';
+  html+='<div class="history-section"><h3>'+ICON.refresh+' 历史处罚</h3>';
   if(history.length===0){
     html+='<div class="card"><div class="empty">暂无历史处罚记录</div></div>';
   }else{
@@ -194,7 +197,7 @@ function renderPunishCard(p,isActive){
   var levelClass='punish-'+p.level;
   var headerClass=isActive?'active':'expired';
   var measures=p.measures&&Array.isArray(p.measures)?p.measures:[];
-  var measureLabel=p.level==='T0'?'全面限制（禁止所有交互）':(measures.length>0?measures.join('、'):'-');
+  var measureLabel=p.level==='T0'?'全面限制（禁止所有交互）':(measures.length>0?labelMeasures(measures):'-');
   var duration=durationText(p.durationDays);
   var canAppeal=isActive&&!p.appealUsed;
   return '<div class="punish-card">'+
@@ -208,16 +211,18 @@ function renderPunishCard(p,isActive){
       '<div><span class="label">处罚时长：</span>'+duration+'</div>'+
       '<div><span class="label">处罚时间：</span>'+formatDate(p.createdAt)+'</div>'+
       (p.expiresAt?'<div><span class="label">到期时间：</span>'+formatDate(p.expiresAt)+'</div>':'')+
-      (p.status==='revoked'?'<div><span class="label">状态：</span>🔄 已撤销</div>':'')+
-      (p.appealStatus==='pending'?'<div><span class="label">申诉状态：</span>⏳ 申诉处理中</div>':'')+
-      (p.appealStatus==='approved'?'<div><span class="label">申诉状态：</span>✅ 申诉通过</div>':'')+
-      (p.appealStatus==='rejected'?'<div><span class="label">申诉状态：</span>❌ 申诉驳回</div>':'')+
-      (canAppeal?'<button class="appeal-btn" onclick="event.stopPropagation();openAppeal(\''+escHtml(p.punishmentId)+'\')">✍️ 申诉</button>':'')+
-      (!canAppeal&&isActive&&p.appealUsed?'<div style="font-size:12px;color:#94a3b8;margin-top:6px;">⚠️ 已使用过申诉机会，不可重复申诉</div>':'')+
+      (p.status==='revoked'?'<div><span class="label">状态：</span>'+ICON.refresh+' 已撤销</div>':'')+
+      (p.appealStatus==='pending'?'<div><span class="label">申诉状态：</span>'+ICON.clock+' 申诉处理中</div>':'')+
+      (p.appealStatus==='approved'?'<div><span class="label">申诉状态：</span>'+ICON.check+' 申诉通过</div>':'')+
+      (p.appealStatus==='rejected'?'<div><span class="label">申诉状态：</span>'+ICON.cross+' 申诉驳回</div>':'')+
+      (canAppeal?'<button class="appeal-btn" onclick="event.stopPropagation();openAppeal(\''+escHtml(p.punishmentId)+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>申诉</button>':'')+
+      (!canAppeal&&isActive&&p.appealUsed?'<div style="font-size:12px;color:#94a3b8;margin-top:6px;">'+ICON.warning+' 已使用过申诉机会，不可重复申诉</div>':'')+
     '</div>'+
   '</div>';
 }
 
+var MEASURE_LABELS={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};
+function labelMeasures(arr){return arr.map(function(m){return MEASURE_LABELS[m]||m;}).join('、');}
 function togglePunish(id){
   var body=document.getElementById('punishBody_'+id);
   if(body)body.classList.toggle('open');
@@ -244,7 +249,7 @@ async function submitAppeal(){
   try{
     var res=await api('/api/user/punishments/'+encodeURIComponent(currentPunishId)+'/appeal',{method:'POST',body:{content}});
     if(res.ok){
-      showToast('✅ 申诉已提交，等待管理员审核');
+      showToast(ICON.check+' 申诉已提交，等待管理员审核');
       closeAppeal();
       loadData();
     }else{
@@ -266,13 +271,13 @@ async function loadData(){
       var activeTab=document.querySelector('.tab.active');
       if(activeTab&&activeTab.dataset.tab==='punishments')renderPunishments(safetyData);
     }else if(res.code==='NOT_LOGIN'){
-      document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">🔒 请先<a href="/" style="color:#2563eb;">登录</a>后查看</div></div>';
+      document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">'+ICON.lock+' 请先<a href="/" style="color:#2563eb;">登录</a>后查看</div></div>';
     }else{
-      showToast('❌ '+res.msg,'error');
+      showToast(ICON.cross+' '+res.msg,'error');
     }
   }catch(e){
-    showToast('❌ 网络错误','error');
-    document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">❌ 加载失败，请检查网络</div></div>';
+    showToast(ICON.cross+' 网络错误','error');
+    document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">'+ICON.cross+' 加载失败，请检查网络</div></div>';
   }
 }
 

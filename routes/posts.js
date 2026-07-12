@@ -266,14 +266,18 @@ if (!content || !content.trim()) {
   // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
     const reports = readReports();
+    const ev = { content: newPost.content || '', images: newPost.images || [] };
     reports.push({
       id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      reportId: 'REPO-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
       type: 'sensitive_post',
       targetId: newPost.id,
       postId: newPost.id,
-      reason: '系统自动检测：内容包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reason: '系统自动检测：内容包含敏感词',
       reportedBy: realUserId,
       reporterName: realAuthor,
+      reportedUserId: realUserId,
+      evidenceContent: JSON.stringify(ev),
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
@@ -462,14 +466,18 @@ app.post('/api/posts/:id/comments', (req, res) => {
   // 敏感词命中：自动生成举报记录（仅在 sensitiveForce 时执行）
   if (hasSensitive) {
     const reports = readReports();
+    const ev = { content: newComment.content || '', images: newComment.images || [] };
     reports.push({
       id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      reportId: 'REPO-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
       type: 'sensitive_comment',
       targetId: newComment.id,
       postId: post.id,
-      reason: '系统自动检测：评论包含敏感词 [' + sensitiveWords.join(', ') + ']',
+      reason: '系统自动检测：评论包含敏感词',
       reportedBy: userId,
       reporterName: author,
+      reportedUserId: userId,
+      evidenceContent: JSON.stringify(ev),
       createdAt: new Date().toISOString(),
       status: 'pending'
     });
@@ -532,14 +540,18 @@ app.post('/api/posts/:id/report', (req, res) => {
   }
 
   const reports = readReports();
+  const ev = { content: post.content || '', images: post.images || [] };
   reports.push({
     id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    reportId: 'REPO-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
     type: 'post',
     targetId: req.params.id,
     postId: req.params.id,
     reason: reason.trim(),
     reportedBy: reporterId,
     reporterName: reporterName,
+    reportedUserId: post.userId,
+    evidenceContent: JSON.stringify(ev),
     createdAt: new Date().toISOString(),
     status: 'pending'
   });
@@ -633,14 +645,18 @@ app.post('/api/comments/:id/report', (req, res) => {
   }
 
   const reports = readReports();
+  const ev = { content: foundComment.content || '', images: foundComment.images || [] };
   reports.push({
     id: 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    reportId: 'REPO-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
     type: 'comment',
     targetId: req.params.id,
     postId: foundPostId,
     reason: reason.trim(),
     reportedBy: reporterId,
     reporterName: reporterName,
+    reportedUserId: foundComment.userId,
+    evidenceContent: JSON.stringify(ev),
     createdAt: new Date().toISOString(),
     status: 'pending'
   });

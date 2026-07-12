@@ -3697,10 +3697,22 @@
  }
 
  async function doUserRegister() {
+  // 检查是否同意用户协议
+  const agreeRow = document.getElementById('agreeRow');
+  agreeRow.classList.remove('error');
+  if (!document.getElementById('agreeCheckbox').checked) {
+    document.getElementById('userLoginError').textContent = '请先阅读并同意《用户协议》';
+    agreeRow.classList.add('error');
+    return;
+  }
   const username = document.getElementById('regUsernameInput').value.trim();
   const password = document.getElementById('regPasswordInput').value;
   const pwdConfirm = document.getElementById('regPwdConfirmInput').value;
   const nickname = document.getElementById('regNicknameInput').value.trim();
+  if (nickname.includes(' ')) {
+    document.getElementById('userLoginError').textContent = '昵称不能包含空格';
+    return;
+  }
   if (!username || !password || !nickname || !pwdConfirm) {
   document.getElementById('userLoginError').textContent = '请填写所有必填项';
   return;
@@ -5354,9 +5366,9 @@ async function showPostCaptchaModal() {
  function showSensitiveWarning(onEdit, onContinue) {
  const overlay = document.createElement('div');
  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
- overlay.innerHTML = `
- <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
- <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
+  overlay.innerHTML = `
+  <div class="dialog-anim" style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+  <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
  <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
  安全检测系统发现你编辑的内容包含违禁内容<br>
  如果继续发送，本帖会被标记并等待审核<br>
@@ -5384,8 +5396,8 @@ async function showPostCaptchaModal() {
  function showBullyingWarning(onEdit) {
  const overlay = document.createElement('div');
  overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
- overlay.innerHTML = `
- <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+  overlay.innerHTML = `
+  <div class="dialog-anim" style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
  <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 反欺凌机制已触发</h3>
  <p style="margin:16px 0;color:#b71c1c;font-size:15px;line-height:1.8;">
  你已触发反欺凌机制，本贴中似乎存在被霸凌者信息。<br>
@@ -7370,22 +7382,26 @@ async function showPostCaptchaModal() {
   </script>
 </div>
 <!-- 被处罚弹窗 -->
-<div id="punishPopup" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;backdrop-filter:blur(3px);animation:fadeIn .3s;">
-  <div style="background:#fff;border-radius:16px;padding:32px 28px 24px;max-width:380px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);animation:slideUp .35s ease-out;">
-    <div style="font-size:48px;margin-bottom:12px;">⚠️</div>
+<div id="punishPopup">
+  <div class="punish-box">
+    <div style="margin-bottom:12px;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
     <div style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:8px;">账号已被限制</div>
     <div id="punishPopupDesc" style="font-size:13px;color:#555;line-height:1.6;margin-bottom:20px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button onclick="document.getElementById('punishPopup').style.display='none'" style="padding:10px 20px;border-radius:10px;border:1px solid #d4c5a9;background:#f5f0e8;color:#333;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">我知道了</button>
-      <button onclick="document.getElementById('punishPopup').style.display='none';window.open('safety.html','_blank')" style="padding:10px 20px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">查看详情</button>
+      <button onclick="document.getElementById('punishPopup').classList.remove('open')" style="padding:10px 20px;border-radius:10px;border:1px solid #d4c5a9;background:#f5f0e8;color:#333;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">我知道了</button>
+      <button onclick="document.getElementById('punishPopup').classList.remove('open');window.open('safety.html','_blank')" style="padding:10px 20px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">查看详情</button>
     </div>
   </div>
 </div>
 <style>
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+#punishPopup{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);visibility:hidden;opacity:0;transition:visibility .25s,opacity .25s;}
+#punishPopup.open{visibility:visible;opacity:1;}
+#punishPopup .punish-box{background:#fff;border-radius:16px;padding:32px 28px 24px;max-width:380px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);transform:scale(0.92) translateY(24px);opacity:0;transition:transform .25s ease-out,opacity .22s ease-out;}
+#punishPopup.open .punish-box{transform:scale(1) translateY(0);opacity:1;}
+.dialog-anim{animation:dialogIn .3s ease-out;}
+@keyframes dialogIn{from{opacity:0;transform:scale(0.92) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
 </style>
-<script>window.checkPunishment=async function(){try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.measures&&Array.isArray(p.measures)?p.measures.join('、'):(p.level==='T0'?'所有交互功能':'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;setTimeout(function(){document.getElementById('punishPopup').style.display='flex';},500);}}catch(e){}}</script>
+<script>var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){try{var t=localStorage.getItem('campus_user_token');if(!t)return;if(sessionStorage.getItem('punishShown'))return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;sessionStorage.setItem('punishShown','1');setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 <script src="spa.js"></script>
 <script>
