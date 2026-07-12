@@ -39,5 +39,4 @@ _decrypted.txt
 
 # CodeGraph 索引（本地工具，不提交）
 .codegraph/
-graphify-out/
 CLAUDE.md
