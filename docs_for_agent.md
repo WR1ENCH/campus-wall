@@ -194,6 +194,32 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ---
 
+### 3.9 处罚机制 / 安全中心 / 统一举报系统（本次提交新增）
+
+三个新模块（`lib/penalty.js` / `routes/penalty.js` / `routes/reports.js` / `safety.html` / `pages/safety.html`）构成内容安全闭环。
+
+**统一举报入口（`routes/reports.js`）**
+- 单一公开入口 `POST /api/reports`，按 `type` 区分内容类型：`post` / `comment` / `discussion` / `discussion_comment` / `qa_question` / `qa_answer` / `featured` / `auction`，生成 `REPO-` 前缀唯一 ID（`generateId('REPO')`）。
+- 创建时调用 `penalty.getReportedContent()` 取被举报内容的**证据快照**（正文 + 图片），写入 `evidenceContent` JSON，使后续处理不依赖原文是否被删改。
+- 同时向举报人发系统通知（含 `reportId`）。`GET /api/reports/:reportId` 详情（举报人或管理员可见）；`GET /api/user/my-reports` 我的举报（安全中心用）。
+- 拍卖举报（`routes/pickup.js`）在写入 `pickup_reports` 后，会同步调用 `createReport({type:'auction'})` 进入统一举报表，便于统一管理与用户安全中心查看。
+
+**处罚机制（`lib/penalty.js` + `routes/penalty.js`）**
+- 两级处罚：
+  - `T0`（全面限制）：`isFeatureBlocked()` 直接返回 `true`，禁止所有交互。
+  - `T1`（部分限制）：仅禁止 `measures` 中列出的功能。
+- `FEATURES = ['whisper','anonymous_post','qa','post','vote']`；`isFeatureBlocked(userId, feature)` 在 `routes/posts.js`（发帖/匿名发帖）、`routes/discussions.js`、`routes/qa.js`、`routes/votes.js`、`routes/pickup.js`（拍卖）的发帖/互动入口前被调用，命中则拒绝并提示。
+- `getActivePunishment()` 带**自动过期翻转**（到期自动置 `expired`）。
+- 管理员接口：`GET/POST /api/admin/punishments`、详情 `:id`、撤销 `:id/revoke`、申诉处理 `:id/appeal-action`（`approved` 撤销处罚并通知 / `rejected`）。从举报处理处罚时，回填 `report.handledResult='violation'`、`report.punishmentId`，并通知举报人。
+
+**安全中心（前端 `safety.html` + 接口 `/api/user/safety-center`）**
+- 单接口聚合：进行中处罚 `activePunishment`、历史处罚 `history`、我的举报 `myReports`。
+- 页面双 tab：「我的举报」「我的处罚」；处罚卡片可展开看原因/限制功能/时长/证据快照，支持在线提交申诉（`POST /api/user/punishments/:id/appeal`，每处罚仅一次机会 `appealUsed`）。
+- 入口：`index.html` 侧边栏「安全中心」→ 新开 `safety.html`。
+
+**被处罚弹窗（`index.html`）**
+- 页面加载时 `checkPunishment()` 调 `/api/user/safety-center`；若 `activePunishment` 存在，弹出 `punishPopup` 告知限制功能与时长，按钮跳转 `safety.html` 查看详情。
+
 ## 4. 数据模型（db.js — SQLite 表）
 
 数据库文件：`data/campus.db`，WAL 模式。所有表在 `migrate()` 中 `CREATE TABLE IF NOT EXISTS` 自动建表（**无需手动迁移**）。代码统一通过 `readXxx()` / `writeXxx()` 接口访问（底层用 `dropAndInsert` 全表替换或 `insertRow` 单行插入）。
@@ -208,7 +234,9 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
-| `reports` | id, type, targetId, postId, reason, reportedBy, reporterName, createdAt, status('pending'/...), handledBy, handledAt, action | 举报 |
+| `reports` | id(PK), type, targetId, postId, reason, reportedBy, reporterName, reportedUserId, createdAt, status('pending'/'resolved'/'ignored'), handledBy, handledAt, action, **reportId**(`REPO-` 唯一ID，用户可见), **evidenceContent**(证据快照 JSON), **handledResult**('violation'/'no_violation'), **punishmentId**(关联处罚) | 统一举报（见 §3.9；`reportId`/`evidenceContent`/`handledResult`/`punishmentId` 由 db.js 列迁移自动补齐） |
+| `punishments` | punishmentId(PK), userId, level('T0'/'T1'), reason, measures(JSON), durationDays, status('active'/'expired'/'revoked'), sourceReportId, appealUsed, appealStatus('none'/'pending'/'approved'/'rejected'), createdAt, expiresAt, revokedAt, revokedBy | 处罚记录（见 §3.9） |
+| `appeals` | id(PK), punishmentId, userId, content, status('pending'/'approved'/'rejected'), createdAt, handledAt, handledBy, resultNote | 申诉记录（见 §3.9，每处罚限一次） |
 | `feedbacks` | id, type, description, contact, images, time, status, handledBy, handleNote | 用户反馈 |
 | `bullying` | id, reporterRole, victimName, bullyType, description, involved, location, incidentTime, contact, anonymous, images, time, status, handledBy, handleNote, userId | 霸凌举报 |
 | `credit_logs` | id, userId, amount, reason, createdAt | 积分变动日志 |
@@ -395,17 +423,38 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/pickup/review/:bidId` | 管理员 | 审核出价 |
 | POST | `/api/admin/pickup/report-action/:reportId` | 管理员 | 处理举报 |
 
-### 5.10 举报 / 反馈 / 霸凌（posts/system/admin）
+### 5.10 统一举报 / 处罚 / 申诉 / 霸凌（reports/penalty/system/admin）
+
+统一举报（`routes/reports.js`，见 §3.9）：
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| POST | `/api/reports` | 用户 | 提交举报 |
+| POST | `/api/reports` | 用户/匿名 | 提交举报（生成 `REPO-` ID + 证据快照） |
+| GET | `/api/reports/:reportId` | 举报人/管理员 | 举报详情（含证据快照） |
+| GET | `/api/user/my-reports` | 用户 | 我的举报列表 |
+
+处罚与申诉（`routes/penalty.js`，见 §3.9）：
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/admin/punishments` | 管理员 | 处罚列表（可按 `status` / `userId` 过滤） |
+| GET | `/api/admin/punishments/:id` | 管理员 | 处罚详情（证据快照 + 关联申诉） |
+| POST | `/api/admin/punishments` | 管理员 | 新建处罚（按 `userId`；或从举报 `sourceReportId` 处理，自动回填举报） |
+| POST | `/api/admin/punishments/:id/revoke` | 管理员 | 撤销处罚 |
+| POST | `/api/admin/punishments/:id/appeal-action` | 管理员 | 处理申诉（`approved` 撤销处罚 / `rejected`） |
+| GET | `/api/user/punishments` | 用户 | 我的处罚（进行中 + 历史） |
+| GET | `/api/user/punishments/:id` | 用户 | 处罚详情（含 `canAppeal`） |
+| POST | `/api/user/punishments/:id/appeal` | 用户 | 提交申诉（每处罚限一次） |
+| GET | `/api/user/safety-center` | 用户 | 安全中心聚合（activePunishment + history + myReports） |
+
+旧/其它：
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
 | POST | `/api/feedback` | 用户 | 提交反馈 |
 | POST | `/api/bullying-report` | 用户 | 霸凌举报 |
-| GET | `/api/admin/reports` | 管理员 | 举报列表 |
+| GET | `/api/admin/reports` | 管理员 | 举报列表（旧 admin 维度） |
 | POST | `/api/admin/reports/:id/handle` | 管理员 | 处理举报 |
 | PUT | `/api/admin/reports/:id` | 管理员 | 更新举报 |
 | POST | `/api/admin/reports/:id/ban-user` | 管理员 | 封禁被举报用户 |
-| GET | `/api/admin/deleted-content` | 管理员 | 已删除内容 |
+| GET | `/api/admin/pickup/reports` | 管理员 | 拍卖内容举报列表 |
 
 ### 5.11 后台管理 — 用户 / 内容管理（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
@@ -536,6 +585,12 @@ admin → auth → user → posts → discussions → qa → votes → notices
 4. 用 `<a data-spa href="/xxx.html">` 链接即可被 SPA 接管。
 
 ---
+
+### 6.5 安全中心前端（safety.html / pages/safety.html）
+- `safety.html`：独立可访问的「🛡️ 安全中心」页，双 tab（我的举报 / 我的处罚）；处罚卡片可展开看原因/限制功能/时长/证据快照，并支持在线申诉（弹窗提交 `POST /api/user/punishments/:id/appeal`）。
+- `pages/safety.html`：对应 SPA 片段，供 `index.html` 主壳内导航注入。
+- 入口：`index.html` 侧边栏「安全中心」→ `window.open('safety.html')`。
+- 被处罚弹窗：`index.html` 内置 `punishPopup`；页面加载时 `checkPunishment()` 调 `/api/user/safety-center`，若存在 `activePunishment` 则弹出限制说明，「查看详情」跳转 `safety.html`。
 
 ## 7. 微信小程序端（campus-wall-miniprogram/）
 
