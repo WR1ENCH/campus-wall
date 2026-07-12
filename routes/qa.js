@@ -5,6 +5,7 @@ const db = require('../db');
 const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { isFeatureBlocked } = require('../lib/penalty');
 
 function readQAQuestions() { return db.readQAQuestions(); }
 function writeQAQuestions(data) { db.writeQAQuestions(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
@@ -95,6 +96,10 @@ app.get('/api/qa/questions', (req, res) => {
 
 app.post('/api/qa/questions', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 处罚限制检测
+  if (isFeatureBlocked(session.id, 'qa')) {
+    return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+  }
   const { title, content, bounty = 0, images = [], sensitiveForce = false } = req.body;
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
@@ -193,6 +198,10 @@ app.get('/api/qa/questions/:id', (req, res) => {
 
 app.post('/api/qa/questions/:id/answers', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 处罚限制检测
+  if (isFeatureBlocked(session.id, 'qa')) {
+    return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+  }
   const { content, images = [], sensitiveForce = false } = req.body;
   if (!content || content.trim().length < 2) return res.json({ ok: false, msg: '回答至少2个字' });
   if (content.length > 2000) return res.json({ ok: false, msg: '回答最多2000字' });

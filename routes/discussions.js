@@ -5,6 +5,7 @@ const uniqueId = require('../lib/uniqueId');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { isFeatureBlocked } = require('../lib/penalty');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -216,6 +217,11 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  // 处罚限制检测
+  if (isFeatureBlocked(session.id, 'post')) {
+    return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+  }
 
   const { content, parentId } = req.body;
   if (!content || !content.trim()) {

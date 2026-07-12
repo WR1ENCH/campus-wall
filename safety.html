@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛡️ 安全中心 · 校园墙</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--brick-bg:#c4a882;--paper-bg:#fef9e7;--text-main:#2c1810;--text-sub:#6a4a3a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--brick-bg);padding:30px 16px;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(0,0,0,0.12) 59px,rgba(0,0,0,0.12) 61px,transparent 61px,transparent 120px),repeating-linear-gradient(90deg,transparent,transparent 119px,rgba(0,0,0,0.12) 119px,rgba(0,0,0,0.12) 121px,transparent 121px,transparent 240px),repeating-linear-gradient(0deg,rgba(180,140,100,0.3) 0,rgba(200,160,120,0.1) 30px,rgba(170,130,90,0.2) 60px,rgba(190,150,110,0.15) 90px,rgba(175,135,95,0.25) 120px);}
+.top-bar{max-width:600px;margin:0 auto 20px;display:flex;align-items:center;gap:10px;}
+.back-btn{background:#e8ddd0;border:2px solid #8b6f5e;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text-main);cursor:pointer;}
+.back-btn:hover{background:#ddd0c0;}
+.page-title{font-size:18px;font-weight:700;color:var(--text-main);letter-spacing:-0.3px;}
+.container{max-width:600px;margin:0 auto;}
+.card{background:var(--paper-bg);border:2px solid #d4c5a9;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
+.tabs{display:flex;gap:0;margin-bottom:20px;background:var(--paper-bg);border:2px solid #d4c5a9;border-radius:12px;overflow:hidden;}
+.tab{flex:1;padding:12px;text-align:center;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .15s;}
+.tab.active{background:#2c1810;color:#fff;font-weight:700;}
+.tab:not(.active):hover{background:#ede3d5;}
+.loading{text-align:center;padding:60px 20px;font-size:14px;color:var(--text-sub);}
+.empty{padding:40px 20px;text-align:center;color:var(--text-sub);font-size:14px;}
+.report-item{border-bottom:1px solid #e8ddd0;padding:14px 0;}
+.report-item:last-child{border-bottom:0;}
+.report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.report-id{font-size:11px;color:var(--text-sub);font-family:monospace;background:#ede3d5;padding:2px 6px;border-radius:4px;}
+.report-type{font-size:11px;color:#8b6f5e;background:#e8ddd0;padding:2px 8px;border-radius:4px;}
+.report-reason{font-size:13px;color:var(--text-main);line-height:1.5;margin:4px 0;}
+.report-meta{font-size:11px;color:var(--text-sub);display:flex;gap:12px;align-items:center;}
+.status-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;}
+.status-pending{background:#fef3c7;color:#92400e;}
+.status-resolved{background:#d1fae5;color:#065f46;}
+.status-ignored{background:#e5e7eb;color:#374151;}
+.punish-card{border:2px solid #d4c5a9;border-radius:12px;margin-bottom:12px;overflow:hidden;}
+.punish-header{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#fff;transition:background .1s;}
+.punish-header:hover{background:#f5f0e8;}
+.punish-header.active{background:#fef2f2;border-bottom:1px solid #fecaca;}
+.punish-header.expired{background:#f9f9f9;}
+.punish-id{font-size:11px;font-family:monospace;color:#64748b;}
+.punish-level{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;}
+.punish-T0{background:#fecaca;color:#991b1b;}
+.punish-T1{background:#fef3c7;color:#92400e;}
+.punish-body{padding:12px 16px;background:#fff;border-top:1px solid #e8ddd0;display:none;font-size:13px;line-height:1.8;color:var(--text-main);}
+.punish-body.open{display:block;}
+.punish-body .label{color:var(--text-sub);font-size:12px;}
+.appeal-btn{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+.appeal-btn:hover{background:#1d4ed8;}
+.appeal-btn:disabled{background:#cbd5e1;color:#94a3b8;cursor:not-allowed;}
+.appeal-btn:disabled:hover{background:#cbd5e1;}
+.appeal-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.appeal-dialog.open{display:flex;}
+.appeal-box{background:var(--paper-bg);border-radius:14px;padding:24px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.25);}
+.appeal-box h3{font-size:16px;margin-bottom:12px;color:var(--text-main);}
+.appeal-box textarea{width:100%;padding:10px 12px;border:2px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;height:100px;box-sizing:border-box;}
+.appeal-box .btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+.appeal-box .btn-row button{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.appeal-box .btn-cancel{background:#e8ddd0;color:var(--text-main);}
+.appeal-box .btn-submit{background:#2563eb;color:#fff;}
+.appeal-box .btn-submit:hover{background:#1d4ed8;}
+.appeal-msg{font-size:12px;color:#dc2626;min-height:18px;margin-top:6px;}
+.active-section{margin-bottom:20px;}
+.active-section h3{font-size:14px;font-weight:700;color:#991b1b;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.history-section h3{font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:10px;}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;z-index:99999;opacity:0;transition:opacity .3s;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <button class="back-btn" onclick="history.back()">← 返回</button>
+  <span class="page-title">🛡️ 安全中心</span>
+</div>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" data-tab="reports" onclick="switchTab('reports')">📋 我的举报</button>
+    <button class="tab" data-tab="punishments" onclick="switchTab('punishments')">⚖️ 我的处罚</button>
+  </div>
+  <div id="tabReports"></div>
+  <div id="tabPunishments" style="display:none;"></div>
+</div>
+<div class="appeal-dialog" id="appealDialog">
+  <div class="appeal-box">
+    <h3>✍️ 提交申诉</h3>
+    <p style="font-size:13px;color:var(--text-sub);margin-bottom:10px;">请说明你认为处罚不合理的原因。申诉后管理员将审核，审核通过将解除处罚。</p>
+    <textarea id="appealContent" placeholder="请详细说明申诉理由…"></textarea>
+    <div class="appeal-msg" id="appealMsg"></div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeAppeal()">取消</button>
+      <button class="btn-submit" onclick="submitAppeal()">提交申诉</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+let currentUser = null;
+let currentPunishId = null;
+let safetyData = null;
+
+// Token helpers
+function getToken(){return localStorage.getItem('userToken');}
+function clearToken(){localStorage.removeItem('userToken');}
+
+async function api(url, opts){
+  const headers={'Content-Type':'application/json'};
+  const t=getToken();
+  if(t)headers['x-user-token']=t;
+  if(opts&&opts.body)opts.body=JSON.stringify(opts.body);
+  const res=await fetch(url,{...opts,headers});
+  return res.json();
+}
+
+function escHtml(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function statusClass(status,result){
+  if(status==='pending')return'status-pending';
+  if(status==='resolved'&&result==='no_violation')return'status-resolved';
+  if(status==='resolved'||result==='violation')return'status-resolved';
+  return'status-ignored';
+}
+function statusText(status,result){
+  if(status==='pending')return'⏳ 待处理';
+  if(result==='no_violation')return'✅ 无违规';
+  if(result==='violation')return'⚖️ 已处罚';
+  if(status==='resolved')return'✅ 已处理';
+  if(status==='ignored')return'⏹️ 已忽略';
+  return status||'未知';
+}
+
+function durationText(days){
+  if(!days||days<=0)return'永久';
+  return days+'天';
+}
+
+function formatDate(iso){if(!iso)return'-';try{return new Date(iso).toLocaleString('zh-CN');}catch{return iso;}}
+
+function showToast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='error'?'#dc2626':'#333';
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},3000);
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===name);});
+  document.getElementById('tabReports').style.display=name==='reports'?'block':'none';
+  document.getElementById('tabPunishments').style.display=name==='punishments'?'block':'none';
+  if(name==='punishments'&&safetyData)renderPunishments(safetyData);
+}
+
+function renderReports(reports){
+  var el=document.getElementById('tabReports');
+  if(!reports||reports.length===0){el.innerHTML='<div class="card"><div class="empty">暂无举报记录</div></div>';return;}
+  el.innerHTML='<div class="card">'+reports.map(function(r){
+    var sc=statusClass(r.status,r.handledResult);
+    var st=statusText(r.status,r.handledResult);
+    return '<div class="report-item">'+
+      '<div class="report-header">'+
+        '<span class="report-id">'+escHtml(r.reportId||'-')+'</span>'+
+        '<span class="report-type">'+escHtml(r.typeLabel||r.type||'')+'</span>'+
+      '</div>'+
+      '<div class="report-reason">'+escHtml(r.reason)+'</div>'+
+      '<div class="report-meta">'+
+        '<span class="status-badge '+sc+'">'+st+'</span>'+
+        '<span>'+formatDate(r.createdAt)+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+function renderPunishments(data){
+  var el=document.getElementById('tabPunishments');
+  var active=data.activePunishment||null;
+  var history=data.history||[];
+  var html='';
+  if(active){
+    html+='<div class="active-section"><h3>⚠️ 进行中处罚</h3>';
+    html+=renderPunishCard(active,true);
+    html+='</div>';
+  }
+  html+='<div class="history-section"><h3>📜 历史处罚</h3>';
+  if(history.length===0){
+    html+='<div class="card"><div class="empty">暂无历史处罚记录</div></div>';
+  }else{
+    html+='<div class="card">'+history.map(function(p){return renderPunishCard(p,false);}).join('')+'</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function renderPunishCard(p,isActive){
+  var levelClass='punish-'+p.level;
+  var headerClass=isActive?'active':'expired';
+  var measures=p.measures&&Array.isArray(p.measures)?p.measures:[];
+  var measureLabel=p.level==='T0'?'全面限制（禁止所有交互）':(measures.length>0?measures.join('、'):'-');
+  var duration=durationText(p.durationDays);
+  var canAppeal=isActive&&!p.appealUsed;
+  return '<div class="punish-card">'+
+    '<div class="punish-header '+headerClass+'" onclick="togglePunish(\''+escHtml(p.punishmentId)+'\')">'+
+      '<div><span class="punish-level '+levelClass+'">'+(p.level||'')+'</span> <span class="punish-id">'+escHtml(p.punishmentId)+'</span></div>'+
+      '<span style="font-size:12px;color:var(--text-sub);">'+duration+'</span>'+
+    '</div>'+
+    '<div class="punish-body" id="punishBody_'+escHtml(p.punishmentId)+'">'+
+      '<div><span class="label">违规原因：</span>'+escHtml(p.reason||'')+'</div>'+
+      '<div><span class="label">限制功能：</span>'+measureLabel+'</div>'+
+      '<div><span class="label">处罚时长：</span>'+duration+'</div>'+
+      '<div><span class="label">处罚时间：</span>'+formatDate(p.createdAt)+'</div>'+
+      (p.expiresAt?'<div><span class="label">到期时间：</span>'+formatDate(p.expiresAt)+'</div>':'')+
+      (p.status==='revoked'?'<div><span class="label">状态：</span>🔄 已撤销</div>':'')+
+      (p.appealStatus==='pending'?'<div><span class="label">申诉状态：</span>⏳ 申诉处理中</div>':'')+
+      (p.appealStatus==='approved'?'<div><span class="label">申诉状态：</span>✅ 申诉通过</div>':'')+
+      (p.appealStatus==='rejected'?'<div><span class="label">申诉状态：</span>❌ 申诉驳回</div>':'')+
+      (canAppeal?'<button class="appeal-btn" onclick="event.stopPropagation();openAppeal(\''+escHtml(p.punishmentId)+'\')">✍️ 申诉</button>':'')+
+      (!canAppeal&&isActive&&p.appealUsed?'<div style="font-size:12px;color:#94a3b8;margin-top:6px;">⚠️ 已使用过申诉机会，不可重复申诉</div>':'')+
+    '</div>'+
+  '</div>';
+}
+
+function togglePunish(id){
+  var body=document.getElementById('punishBody_'+id);
+  if(body)body.classList.toggle('open');
+}
+
+function openAppeal(id){
+  currentPunishId=id;
+  document.getElementById('appealContent').value='';
+  document.getElementById('appealMsg').textContent='';
+  document.getElementById('appealDialog').classList.add('open');
+}
+
+function closeAppeal(){
+  document.getElementById('appealDialog').classList.remove('open');
+  currentPunishId=null;
+}
+
+async function submitAppeal(){
+  var content=document.getElementById('appealContent').value.trim();
+  var msgEl=document.getElementById('appealMsg');
+  if(!content){msgEl.textContent='请填写申诉理由';return;}
+  if(!currentPunishId){msgEl.textContent='处罚ID缺失';return;}
+  msgEl.textContent='';
+  try{
+    var res=await api('/api/user/punishments/'+encodeURIComponent(currentPunishId)+'/appeal',{method:'POST',body:{content}});
+    if(res.ok){
+      showToast('✅ 申诉已提交，等待管理员审核');
+      closeAppeal();
+      loadData();
+    }else{
+      msgEl.textContent=res.msg||'提交失败';
+    }
+  }catch(e){
+    msgEl.textContent='网络错误';
+  }
+}
+
+async function loadData(){
+  try{
+    var res=await api('/api/user/safety-center');
+    if(res.ok){
+      safetyData=res.data;
+      // Check login by res.ok; if wrong user
+      renderReports(safetyData.myReports);
+      // Only render punishments tab if active
+      var activeTab=document.querySelector('.tab.active');
+      if(activeTab&&activeTab.dataset.tab==='punishments')renderPunishments(safetyData);
+    }else if(res.code==='NOT_LOGIN'){
+      document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">🔒 请先<a href="/" style="color:#2563eb;">登录</a>后查看</div></div>';
+    }else{
+      showToast('❌ '+res.msg,'error');
+    }
+  }catch(e){
+    showToast('❌ 网络错误','error');
+    document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">❌ 加载失败，请检查网络</div></div>';
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

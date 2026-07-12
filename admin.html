@@ -728,6 +728,10 @@
         <span class="nav-icon">🚩</span>
         <span>拍卖举报处理</span>
       </div>
+      <div class="nav-item" onclick="showPage('punishments', this)">
+        <span class="nav-icon">⚖️</span>
+        <span>处罚管理</span>
+      </div>
     </div>
 
     <!-- 用户管理（独立一级菜单） -->
@@ -1398,6 +1402,61 @@
         </div>
         <div id="pickupReportBody">
           <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 处罚管理页 -->
+    <div class="page" id="page-punishments" style="display:none;">
+      <div class="post-toolbar">
+        <div style="flex:1;">
+          <span style="font-size:14px;color:var(--text-sub);">
+            共 <strong id="punishmentTotalCount">0</strong> 条处罚记录
+            <span id="punishmentActiveCount" style="color:#dc2626;margin-left:8px;"></span>
+          </span>
+        </div>
+        <select class="filter-select" id="punishmentStatusFilter" onchange="loadPunishments()">
+          <option value="">全部</option>
+          <option value="active">进行中</option>
+          <option value="revoked">已撤销</option>
+          <option value="expired">已过期</option>
+        </select>
+        <button class="btn-cancel" style="font-size:12px;padding:4px 10px;" onclick="loadPunishments()">🔄 刷新</button>
+      </div>
+      <div class="admins-table" style="margin-top:4px;">
+        <div class="table-header" style="grid-template-columns:36px 1fr 120px 120px 100px 100px 80px;">
+          <div>#</div>
+          <div>被处罚人 / 原因</div>
+          <div>处罚ID</div>
+          <div>时长</div>
+          <div>级别</div>
+          <div>状态</div>
+          <div>操作</div>
+        </div>
+        <div id="punishmentsBody">
+          <div class="loading"><div class="spinner"></div>加载中…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 处罚详情弹窗 -->
+    <div id="punishmentDetailOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+      <div style="background:var(--card-bg);border-radius:12px;padding:28px 24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:16px;font-weight:600;color:var(--text);">⚖️ 处罚详情</div>
+          <button onclick="document.getElementById('punishmentDetailOverlay').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-sub);">×</button>
+        </div>
+        <div id="punishmentDetailContent"></div>
+        <div id="punishmentAppealSection" style="margin-top:16px;display:none;">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">📝 关联申诉</div>
+          <div id="punishmentAppealContent"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;" id="appealActionBtns">
+            <button class="btn-primary" onclick="handleAppeal('approved')">✅ 通过</button>
+            <button class="btn-del" onclick="handleAppeal('rejected')">❌ 驳回</button>
+          </div>
+          <div style="margin-top:8px;">
+            <textarea id="appealResultNote" placeholder="审核说明（可选）" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;height:60px;box-sizing:border-box;"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -2094,10 +2153,11 @@
         if (r.type === 'comment' || r.type === 'sensitive_comment') { deleteAction = 'delete_comment'; deleteLabel = '删除评论'; }
         if (r.type === 'discussion_comment' || r.type === 'sensitive_discussion_comment') { deleteAction = 'delete_discussion_comment'; deleteLabel = '删除讨论评论'; }
         if (r.type && r.type.startsWith('sensitive_')) deleteLabel = '删除（系统检测）';
+        const reportIdStr = r.reportId || r.id || '';
         const actionBtns = r.status === 'pending'
-          ? '<button class="btn-view" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'resolved\', \'' + deleteAction + '\')">' + deleteLabel + '</button>' +
-            '<button class="btn-del" onclick="handleReport(\'' + r.id.replace(/'/g, "\\'") + '\', \'ignored\', \'\')">忽略</button>' +
-            '<button class="btn-action" style="background:#dc2626;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-family:inherit;" onclick="banReportUser(\'' + r.id.replace(/'/g, "\\'") + '\')">🔨 封禁</button>'
+          ? '<button class="btn-view" onclick="showReportDetail(' + JSON.stringify({...r}).replace(/"/g, '&quot;') + ')" style="font-size:11px;padding:3px 8px;">📋 详情</button>' +
+            '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + reportIdStr.replace(/'/g, "\\'") + '\')">✅ 无违规</button>' +
+            '<button class="btn-del" style="font-size:11px;padding:3px 8px;" onclick="openPunishDialog(\'' + reportIdStr.replace(/'/g, "\\'") + '\',\'' + (r.reason || '').replace(/'/g, "\\'") + '\',\'' + (r.reportedUserId || '').replace(/'/g, "\\'") + '\')">⚖️ 违规处罚</button>'
           : '<span style="font-size:12px;color:var(--text-sub);">已处理</span>';
         return '<div class="table-row" style="grid-template-columns:36px 1fr 100px 120px 100px 100px 120px;align-items:start;">' +
           '<div>' + (i + 1) + '</div>' +
@@ -2105,6 +2165,7 @@
             '<div style="font-size:12px;color:var(--accent);margin-bottom:4px;">' + (isCommentReport ? '💬 ' + targetLabel : '📌 ' + targetLabel) + '：' + escHtml(targetContent) + '</div>' +
             '<div style="font-size:12px;color:var(--text-sub);">举报人：' + escHtml(r.reporterName || '') + '</div>' +
             '<div style="font-size:12px;margin-top:4px;color:#92400e;background:var(--yellow);padding:2px 8px;border-radius:4px;display:inline-block;">原因：' + escHtml(r.reason || '') + '</div>' +
+            '<div style="font-size:10px;color:var(--text-sub);margin-top:3px;">ID: <code style="font-size:10px;">' + escHtml(r.reportId || r.id || '-') + '</code></div>' +
           '</div>' +
           '<div class="post-time-cell">' + timeStr + '</div>' +
           '<div><span class="type-badge ' + statusBadge + '">' + statusText + '</span></div>' +
@@ -5831,6 +5892,305 @@
         showToast('❌ ' + (json.msg || '操作失败'), 'error');
       }
     } catch(e) { showToast('❌ 网络错误', 'error'); }
+  };
+
+  // ===================== 处罚管理 =====================
+  window.allPunishments = [];
+
+  window.loadPunishments = async function() {
+    try {
+      const status = document.getElementById('punishmentStatusFilter').value;
+      let url = '/api/admin/punishments';
+      if (status) url += '?status=' + encodeURIComponent(status);
+      const res = await fetch(url, { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      allPunishments = json.data || [];
+      const total = allPunishments.length;
+      document.getElementById('punishmentTotalCount').textContent = total;
+      const active = allPunishments.filter(p => p.status === 'active').length;
+      document.getElementById('punishmentActiveCount').textContent = active > 0 ? '（' + active + ' 条生效 🔴）' : '';
+      if (total === 0) {
+        document.getElementById('punishmentsBody').innerHTML = '<div class="empty-tip">暂无处罚记录</div>';
+        return;
+      }
+      const html = allPunishments.map((p, i) => {
+        const statusBadge = p.status === 'active' ? 'badge-danger' :
+                            p.status === 'revoked' ? 'badge-super' : 'badge-admin';
+        const statusText = p.status === 'active' ? '进行中' :
+                           p.status === 'revoked' ? '已撤销' : '已过期';
+        const levelText = p.level === 'T0' ? 'T0（全禁）' : 'T1（部分禁）';
+        const durationText = (!p.durationDays || p.durationDays === 0) ? '永久' : p.durationDays + ' 天';
+        const revokeBtn = p.status === 'active'
+          ? '<button class="btn-cancel" onclick="revokePunishment(\'' + p.punishmentId + '\')" style="font-size:11px;padding:3px 8px;">撤销</button>'
+          : '<span style="font-size:11px;color:var(--text-sub);">已撤销</span>';
+        return '<div class="table-row" style="grid-template-columns:36px 1fr 120px 120px 100px 100px 80px;' + (p.status !== 'active' ? 'opacity:0.6;' : '') + '">' +
+          '<div>' + (i + 1) + '</div>' +
+          '<div style="min-width:0;">' +
+            '<div style="font-size:12px;color:var(--accent);margin-bottom:2px;">' + escHtml(p.userNickname || '未知') + ' (UID: ' + (p.userUid || '-') + ')</div>' +
+            '<div style="font-size:11px;color:var(--text-sub);">原因：' + escHtml(p.reason || '') + '</div>' +
+          '</div>' +
+          '<div style="font-size:11px;font-family:monospace;color:var(--text-sub);">' + escHtml(p.punishmentId) + '</div>' +
+          '<div>' + durationText + '</div>' +
+          '<div><span class="type-badge ' + (p.level === 'T0' ? 'badge-danger' : 'badge-admin') + '">' + levelText + '</span></div>' +
+          '<div><span class="type-badge ' + statusBadge + '">' + statusText + '</span></div>' +
+          '<div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+            '<button class="btn-view" onclick="showPunishmentDetail(\'' + p.punishmentId + '\')" style="font-size:11px;padding:3px 8px;">详情</button>' +
+            revokeBtn +
+          '</div>' +
+        '</div>';
+      }).join('');
+      document.getElementById('punishmentsBody').innerHTML = html;
+    } catch (e) {
+      document.getElementById('punishmentsBody').innerHTML = '<div class="empty-tip">⚠️ 加载失败：' + escHtml(e.message) + '</div>';
+    }
+  };
+
+  window.showPunishmentDetail = async function(id) {
+    try {
+      const res = await fetch('/api/admin/punishments/' + encodeURIComponent(id), { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) { showToast('❌ ' + json.msg, 'error'); return; }
+      const p = json.data;
+      const levelText = p.level === 'T0' ? 'T0（全面限制）' : 'T1（部分限制）';
+      const durationText = (!p.durationDays || p.durationDays === 0) ? '永久' : p.durationDays + ' 天';
+      const statusText = p.status === 'active' ? '🟢 进行中' : p.status === 'revoked' ? '🔴 已撤销' : '⚫ 已过期';
+      let evidenceHtml = '';
+      if (p.evidence && p.evidence.content) {
+        evidenceHtml = '<div style="margin-top:12px;padding:12px;background:var(--yellow);border-radius:8px;">' +
+          '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">📎 违规证据</div>' +
+          '<div style="font-size:13px;line-height:1.6;white-space:pre-wrap;">' + escHtml(p.evidence.content) + '</div>';
+        if (p.evidence.images && p.evidence.images.length > 0) {
+          evidenceHtml += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">' +
+            p.evidence.images.map(img => '<img src="' + img + '" style="max-width:120px;max-height:120px;border-radius:6px;object-fit:cover;cursor:pointer;" onclick="window.open(\'' + img + '\')">').join('') +
+          '</div>';
+        }
+        evidenceHtml += '</div>';
+      }
+      document.getElementById('punishmentDetailContent').innerHTML =
+        '<div style="margin-bottom:12px;"><span style="font-weight:600;">用户：</span>' + escHtml(p.userNickname || '未知') + ' (UID: ' + (p.userUid || '-') + ')</div>' +
+        '<div style="margin-bottom:8px;"><span style="font-weight:600;">处罚ID：</span><code>' + escHtml(p.punishmentId) + '</code></div>' +
+        '<div style="margin-bottom:8px;"><span style="font-weight:600;">级别：</span>' + levelText + '</div>' +
+        '<div style="margin-bottom:8px;"><span style="font-weight:600;">状态：</span>' + statusText + '</div>' +
+        '<div style="margin-bottom:8px;"><span style="font-weight:600;">时长：</span>' + durationText + '</div>' +
+        '<div style="margin-bottom:8px;"><span style="font-weight:600;">原因：</span>' + escHtml(p.reason || '') + '</div>' +
+        (p.measures && p.level === 'T1' ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">限制功能：</span>' + escHtml(p.measures) + '</div>' : '') +
+        (p.createdAt ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">创建时间：</span>' + new Date(p.createdAt).toLocaleString('zh-CN') + '</div>' : '') +
+        (p.expiresAt ? '<div style="margin-bottom:8px;"><span style="font-weight:600;">到期时间：</span>' + new Date(p.expiresAt).toLocaleString('zh-CN') + '</div>' : '') +
+        evidenceHtml;
+
+      // 申诉处理
+      const appealSection = document.getElementById('punishmentAppealSection');
+      const appealContent = document.getElementById('punishmentAppealContent');
+      if (p.appeals && p.appeals.length > 0) {
+        appealSection.style.display = 'block';
+        window._currentAppealPunishmentId = p.punishmentId;
+        appealContent.innerHTML = p.appeals.map(a => {
+          const statusText = a.status === 'pending' ? '⏳ 待审核' : a.status === 'approved' ? '✅ 已通过' : '❌ 已驳回';
+          return '<div style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:8px;">' +
+            '<div style="font-size:13px;margin-bottom:4px;"><span style="font-weight:600;">申诉内容：</span>' + escHtml(a.content || '') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-sub);">状态：' + statusText +
+            (a.resultNote ? ' | 说明：' + escHtml(a.resultNote) : '') +
+            (a.createdAt ? ' | ' + new Date(a.createdAt).toLocaleString('zh-CN') : '') + '</div>' +
+          '</div>';
+        }).join('');
+        document.getElementById('appealActionBtns').style.display = p.appealStatus === 'pending' ? 'flex' : 'none';
+      } else {
+        appealSection.style.display = 'none';
+      }
+      document.getElementById('punishmentDetailOverlay').style.display = 'flex';
+    } catch (e) {
+      showToast('❌ 加载失败：' + e.message, 'error');
+    }
+  };
+
+  window.revokePunishment = async function(id) {
+    showConfirm('⚠️', '撤销处罚', '确定撤销此处罚吗？此操作不可逆。', async () => {
+      try {
+        const res = await fetch('/api/admin/punishments/' + encodeURIComponent(id) + '/revoke', {
+          method: 'POST',
+          headers: { ...authHeaders() }
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ ' + json.msg, 'success');
+          loadPunishments();
+        } else {
+          showToast('❌ ' + json.msg, 'error');
+        }
+      } catch (e) { showToast('❌ 网络错误', 'error'); }
+    });
+  };
+
+  window.handleAppeal = async function(action) {
+    const id = window._currentAppealPunishmentId;
+    if (!id) return;
+    const note = document.getElementById('appealResultNote').value.trim();
+    try {
+      const res = await fetch('/api/admin/punishments/' + encodeURIComponent(id) + '/appeal-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ action, note })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ ' + json.msg, 'success');
+        document.getElementById('punishmentDetailOverlay').style.display = 'none';
+        loadPunishments();
+      } else {
+        showToast('❌ ' + json.msg, 'error');
+      }
+    } catch (e) { showToast('❌ 网络错误', 'error'); }
+  };
+
+  // ===================== 新版举报处理 =====================
+  window.showReportDetail = function(report) {
+    const overlay = document.createElement('div');
+    overlay.className = 'ban-report-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+    let evidenceHtml = '';
+    if (report.evidence) {
+      const content = report.evidence.content || '';
+      const images = report.evidence.images || [];
+      evidenceHtml = '<div style="margin-top:8px;padding:10px;background:#fef3c7;border-radius:8px;">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:4px;">📎 被举报内容</div>' +
+        '<div style="font-size:12px;line-height:1.5;white-space:pre-wrap;">' + escHtml(content) + '</div>';
+      if (images.length > 0) {
+        evidenceHtml += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">' +
+          images.map(img => '<img src="' + img + '" style="max-width:80px;max-height:80px;border-radius:4px;object-fit:cover;cursor:pointer;" onclick="window.open(\'' + img + '\')">').join('') +
+        '</div>';
+      }
+      evidenceHtml += '</div>';
+    }
+    overlay.innerHTML = '<div style="background:var(--card-bg);border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.25);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+        '<div style="font-size:15px;font-weight:600;color:var(--text);">📋 举报详情</div>' +
+        '<button onclick="this.closest(\'.ban-report-overlay\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-sub);">×</button>' +
+      '</div>' +
+      '<div style="font-size:13px;line-height:1.8;">' +
+        '<div><span style="font-weight:600;">举报ID：</span><code>' + escHtml(report.reportId || '-') + '</code></div>' +
+        '<div><span style="font-weight:600;">类型：</span>' + escHtml(report.label || report.type || '-') + '</div>' +
+        '<div><span style="font-weight:600;">举报人：</span>' + escHtml(report.reporterInfo ? report.reporterInfo.nickname + ' (' + report.reporterInfo.username + ', UID:' + report.reporterInfo.uid + ')' : (report.reporterName || '匿名')) + '</div>' +
+        '<div><span style="font-weight:600;">被举报人：</span>' + (report.reportedUser ? escHtml(report.reportedUser.nickname + ' (' + report.reportedUser.username + ', UID:' + report.reportedUser.uid + ')') : (report.reportedInfo ? escHtml(report.reportedInfo.nickname + ' (' + report.reportedInfo.username + ', UID:' + report.reportedInfo.uid + ')') : '-')) + '</div>' +
+        '<div><span style="font-weight:600;">举报原因：</span>' + escHtml(report.reason || '') + '</div>' +
+        '<div><span style="font-weight:600;">时间：</span>' + (report.createdAt ? new Date(report.createdAt).toLocaleString('zh-CN') : '-') + '</div>' +
+        '<div><span style="font-weight:600;">状态：</span>' + (report.status === 'pending' ? '⏳ 待处理' : report.status === 'resolved' ? '✅ 已处理' : '⏹️ 已忽略') + '</div>' +
+        evidenceHtml +
+      '</div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+  };
+
+  window.openPunishDialog = function(reportId, reason, userId) {
+    const overlay = document.createElement('div');
+    overlay.className = 'ban-report-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+    overlay.innerHTML = '<div style="background:var(--card-bg);border-radius:12px;padding:28px 24px;max-width:450px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.25);">' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:16px;">⚖️ 违规处罚</div>' +
+      '<div style="margin-bottom:12px;">' +
+        '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;">违规原因</label>' +
+        '<textarea id="punishViolationReason" style="width:100%;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;height:60px;box-sizing:border-box;">' + escHtml(reason || '') + '</textarea>' +
+      '</div>' +
+      '<div style="margin-bottom:12px;">' +
+        '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;">处罚级别</label>' +
+        '<select id="punishLevel" style="width:100%;padding:8px 10px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;" onchange="togglePunishMeasures()">' +
+          '<option value="T0">T0 — 全面限制（禁止所有交互）</option>' +
+          '<option value="T1" selected>T1 — 部分限制（选择受限功能）</option>' +
+        '</select>' +
+      '</div>' +
+      '<div id="punishMeasuresContainer" style="margin-bottom:12px;">' +
+        '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:6px;">限制功能</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:13px;"><input type="checkbox" class="punish-measure" value="whisper"> 禁止悄悄话</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:13px;"><input type="checkbox" class="punish-measure" value="anonymous_post"> 禁止匿名发帖/拍卖</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:13px;"><input type="checkbox" class="punish-measure" value="qa"> 禁止你问我答</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:13px;"><input type="checkbox" class="punish-measure" value="post"> 禁止发帖/讨论</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:13px;"><input type="checkbox" class="punish-measure" value="vote"> 禁止投票</label>' +
+      '</div>' +
+      '<div style="margin-bottom:16px;">' +
+        '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;">处罚时长（天，0=永久）</label>' +
+        '<input type="number" id="punishDuration" value="7" min="0" max="9999" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;outline:none;font-family:inherit;box-sizing:border-box;">' +
+      '</div>' +
+      '<div id="punishError" style="color:#dc2626;font-size:12px;min-height:18px;margin-bottom:8px;"></div>' +
+      '<input type="hidden" id="violationUserId" value="' + (userId || '').replace(/'/g, "\\'") + '">' +
+      '<input type="hidden" id="violationReportId" value="' + reportId.replace(/'/g, "\\'") + '">' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+        '<button class="btn-cancel" onclick="this.closest(\'.ban-report-overlay\').remove()">取消</button>' +
+        '<button class="btn-primary" onclick="confirmPunish(\'' + reportId.replace(/'/g, "\\'") + '\')">确认处罚</button>' +
+      '</div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+  };
+
+  window.togglePunishMeasures = function() {
+    const level = document.getElementById('punishLevel').value;
+    document.getElementById('punishMeasuresContainer').style.display = level === 'T1' ? 'block' : 'none';
+  };
+
+  window.confirmPunish = async function(reportId) {
+    const reason = document.getElementById('punishViolationReason').value.trim();
+    const level = document.getElementById('punishLevel').value;
+    const durationDays = parseInt(document.getElementById('punishDuration').value) || 0;
+    const errEl = document.getElementById('punishError');
+    if (!reason) { errEl.textContent = '请填写违规原因'; return; }
+    if (isNaN(durationDays) || durationDays < 0) { errEl.textContent = '天数无效'; return; }
+    let measures = [];
+    if (level === 'T1') {
+      document.querySelectorAll('.punish-measure:checked').forEach(cb => measures.push(cb.value));
+      if (measures.length === 0) { errEl.textContent = '请至少选择一个限制功能'; return; }
+    }
+    const userId = document.getElementById('violationUserId') ? document.getElementById('violationUserId').value : '';
+    const reportIdVal = document.getElementById('violationReportId') ? document.getElementById('violationReportId').value : '';
+    if (!userId) { errEl.textContent = '缺少被处罚用户ID'; return; }
+    try {
+      // 先标记举报为违规
+      const handleRes = await fetch('/api/admin/reports/' + encodeURIComponent(reportId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ handledResult: 'violation' })
+      });
+      const handleJson = await handleRes.json();
+      if (!handleJson.ok) { errEl.textContent = handleJson.msg; return; }
+      // 创建处罚
+      const punishRes = await fetch('/api/admin/punishments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          userId, level, measures, reason, durationDays,
+          sourceReportId: reportIdVal || reportId
+        })
+      });
+      const punishJson = await punishRes.json();
+      if (punishJson.ok) {
+        showToast('✅ 违规确认，处罚已生效（ID: ' + punishJson.data.punishmentId + '）', 'success');
+        var overlay = document.querySelector('.ban-report-overlay');
+        if (overlay) overlay.remove();
+        loadReports();
+        loadPunishments();
+      } else {
+        errEl.textContent = punishJson.msg || '创建处罚失败';
+      }
+    } catch (e) {
+      errEl.textContent = '网络错误';
+    }
+  };
+
+  window.showReportNoViolation = async function(reportId) {
+    showConfirm('⚠️', '确认无违规', '确定标记此举报为「无违规行为」吗？', async () => {
+      try {
+        const res = await fetch('/api/admin/reports/' + encodeURIComponent(reportId), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ handledResult: 'no_violation' })
+        });
+        const json = await res.json();
+        if (json.ok) {
+          showToast('✅ ' + json.msg, 'success');
+          loadReports();
+        } else {
+          showToast('❌ ' + json.msg, 'error');
+        }
+      } catch (e) { showToast('❌ 网络错误', 'error'); }
+    });
   };
 
   // ===== 启动 =====

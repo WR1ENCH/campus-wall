@@ -6,6 +6,7 @@ const uniqueId = require('../lib/uniqueId');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { isFeatureBlocked } = require('../lib/penalty');
 const maintenance = require('../maintenance');
 
 const CONTENT_MAX_LENGTH = 50;
@@ -169,7 +170,14 @@ app.post('/api/posts', (req, res) => {
     anonymousFlag = true;
   }
 
-  
+  // 处罚限制检测
+  if (realUserId) {
+    const feature = anonymousFlag ? 'anonymous_post' : 'post';
+    if (isFeatureBlocked(realUserId, feature)) {
+      return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+    }
+  }
+
 // 发帖频率检测（5分钟内最多3篇，超出需验证码）
 if (realUserId) {
   const now = Date.now();
@@ -388,6 +396,11 @@ app.post('/api/posts/:id/comments', (req, res) => {
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
 
+  // 处罚限制检测
+  if (isFeatureBlocked(session.id, 'post')) {
+    return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+  }
+
   // 从 Token 中获取用户信息，禁止从 req.body 读取
   const author = session.nickname || '匿名';
   const userId = session.id;
@@ -562,70 +575,26 @@ app.post('/api/posts/:id/report', (req, res) => {
   res.json({ ok: true, data: { hidden: false } });
 });
 
-// ===== 举报帖子（通用入口，供 post.html 使用） =====
+// ===== 举报帖子（委托 routes/reports.js 统一入口） =====
 app.post('/api/reports', (req, res) => {
   const { postId, reason } = req.body;
   if (!postId) return res.json({ ok: false, msg: '缺少帖子ID' });
   if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请选择举报原因' });
 
-  const posts = readPosts();
-  const post = posts.find(p => p.id === postId);
-  if (!post) return res.json({ ok: false, msg: '帖子不存在' });
-
-  let reporterId = null;
-  let reporterName = '匿名用户';
+  let reporterId = null, reporterName = '匿名用户';
   const token = req.headers['x-user-token'];
   if (token) {
     const session = verifyUserToken(token);
-    if (session) {
-      reporterId = session.id;
-      reporterName = session.nickname || '匿名用户';
-    }
+    if (session) { reporterId = session.id; reporterName = session.nickname || '匿名用户'; }
   }
-
-  const reports = readReports();
-  const reportId = 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  reports.push({
-    id: reportId,
-    type: 'post',
-    targetId: postId,
-    postId: postId,
-    reason: reason.trim(),
-    reportedBy: reporterId,
-    reporterName: reporterName,
-    createdAt: new Date().toISOString(),
-    status: 'pending'
-  });
-  writeReports(reports);
-
-  // 发送举报成功通知给举报人
-  if (reporterId) {
-    try {
-      const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const notices = readNotices();
-      notices.push({
-        id: notificationId,
-        title: '📋 举报已收到',
-        content: '你对帖子(#' + post.id + ')「' + (post.content || '').substring(0, 20) + '...」的举报已提交给管理员审核。\n\n举报原因：' + reason.trim() + '\n\n我们将在核实后进行处理，感谢你对校园环境的维护！',
-        author: '系统',
-        auto: true,
-        level: 'T1',
-        createdAt: new Date().toISOString(),
-        targetUserId: reporterId
-      });
-      writeNotices(notices);
-      db.addUserNotification({
-        notificationId,
-        userId: reporterId,
-        read: 0,
-        createdAt: new Date().toISOString()
-      });
-    } catch (e) {
-      console.error('发送举报通知失败:', e.message);
-    }
+  try {
+    const reportModule = require('./reports');
+    const report = reportModule.createReport({ type: 'post', targetId: postId, postId, reason, reporterId, reporterName });
+    res.json({ ok: true, data: { reportId: report.reportId } });
+  } catch (e) {
+    console.error('[posts] 委托举报失败:', e.message);
+    res.json({ ok: false, msg: '举报提交失败' });
   }
-
-  res.json({ ok: true });
 });
 
 // ===== 举报评论（帖子内的评论） =====
