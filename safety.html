@@ -140,7 +140,7 @@ function formatDate(iso){if(!iso)return'-';try{return new Date(iso).toLocaleStri
 
 function showToast(msg,type){
   var el=document.getElementById('toast');
-  el.textContent=msg;
+  el.innerHTML=msg;
   el.style.background=type==='error'?'#dc2626':'#333';
   el.classList.add('show');
   setTimeout(function(){el.classList.remove('show');},3000);
