@@ -1,0 +1,1442 @@
+{
+  "nodes": [
+    {
+      "id": "claude_md_project_rules",
+      "label": "CLAUDE.md - Project Rules",
+      "file_type": "document",
+      "source_file": "/home/wr1ench/campus-wall/CLAUDE.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_md_project_overview",
+      "label": "README.md - Campus Wall Project Overview",
+      "file_type": "document",
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "miniprogram_readme_md_wechat_miniprogram",
+      "label": "campus-wall-miniprogram/README.md - WeChat Mini Program",
+      "file_type": "document",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "commit_msg_txt_commit_message",
+      "label": "commit_msg.txt - Commit Message",
+      "file_type": "document",
+      "source_file": "/home/wr1ench/campus-wall/commit_msg.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docs_for_agent_md_agent_documentation",
+      "label": "docs_for_agent.md - Agent Documentation",
+      "file_type": "document",
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "agreement_html_user_agreement",
+      "label": "agreement.html - User Agreement Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/agreement.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "apply_notice_html_notice_application",
+      "label": "apply-notice.html - Notice Application Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/apply-notice.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "bully_html_bullying_whistleblowing",
+      "label": "bully.html - Bullying Whistleblowing Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/bully.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "credit_html_credit_system",
+      "label": "credit.html - Credit System Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/credit.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "ecosystem_html_ecosystem_shop",
+      "label": "ecosystem.html - Ecosystem Shop Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/ecosystem.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "featured_html_featured_content",
+      "label": "featured.html - Featured Content Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/featured.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "knowledge_html_knowledge_base",
+      "label": "knowledge.html - Knowledge Base Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/knowledge.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "launch_html_launch_site",
+      "label": "launch.html - Launch Site Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/launch.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "maintenance_html_maintenance_page",
+      "label": "maintenance.html - Maintenance Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/maintenance.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_admin_html_admin_panel",
+      "label": "pages/admin.html - Admin Panel",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/admin.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_bully_html_bullying_report",
+      "label": "pages/bully.html - Bullying Report Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/bully.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_ecosystem_html_ecosystem_detail",
+      "label": "pages/ecosystem.html - Ecosystem Detail Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/ecosystem.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_knowledge_html_knowledge_detail",
+      "label": "pages/knowledge.html - Knowledge Detail Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/knowledge.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_notice_html_notice_detail",
+      "label": "pages/notice.html - Notice Detail Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/notice.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_post_html_post_page",
+      "label": "pages/post.html - Post Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/post.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_platform_concept",
+      "label": "Campus Wall Platform",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_social_platform_concept",
+      "label": "Campus Social Platform",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "wechat_miniprogram_concept",
+      "label": "WeChat Mini Program",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "posting_wall_system_concept",
+      "label": "Posting/Wall System",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "credit_score_system_concept",
+      "label": "Credit Score System",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/credit.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "anti_bullying_whistleblowing_concept",
+      "label": "Anti-Bullying / Whistleblowing",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/bully.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "ecosystem_shop_marketplace_concept",
+      "label": "Ecosystem Shop / Marketplace",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/ecosystem.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "knowledge_base_concept",
+      "label": "Knowledge Base",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/knowledge.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "admin_management_concept",
+      "label": "Admin Management",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/pages/admin.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "notice_system_concept",
+      "label": "Notice System",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/apply-notice.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "user_agreement_concept",
+      "label": "User Agreement",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/agreement.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "data_deduplication_mechanism",
+      "label": "Data Deduplication Mechanism",
+      "file_type": "rationale",
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "auth_security_bypass_fix",
+      "label": "Auth Bypass / Privilege Escalation Security Fix",
+      "file_type": "rationale",
+      "source_file": "/home/wr1ench/campus-wall/commit_msg.txt",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_upload_security_concept",
+      "label": "Image Upload Security",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "search_functionality_concept",
+      "label": "Search Functionality",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "featured_content_concept",
+      "label": "Featured Content",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/featured.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "launch_site_concept",
+      "label": "Launch/Splash Site",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall/launch.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "admin_html_admin_panel",
+      "label": "Admin Panel",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "index_html_main_wall",
+      "label": "Main Wall Feed",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "notice_html_notification",
+      "label": "Notification Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/notice.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "post_html_submission",
+      "label": "Post Submission Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/post.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "report_html_user_report",
+      "label": "User Report Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/report.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "user_html_user_page",
+      "label": "User Profile Page",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/user.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_report_html_admin_report_management",
+      "label": "Admin Report Management Partial",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/report.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_user_html_admin_user_management",
+      "label": "Admin User Management Partial",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/user.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_wall_html_admin_wall_management",
+      "label": "Admin Wall Management Partial",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/pages/wall.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_backend_go",
+      "label": "Campus Wall Go Backend",
+      "file_type": "code",
+      "source_file": "/home/wr1ench/campus-wall/main.go",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_system",
+      "label": "Campus Wall System",
+      "file_type": "concept",
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "admin_html_tabbed_interface_pattern",
+      "label": "Tabbed Admin Interface",
+      "file_type": "rationale",
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "pages_partial_loading_pattern",
+      "label": "HTML Partial Loading Pattern",
+      "file_type": "rationale",
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "assets_screenshot_admin_png",
+      "label": "Admin Dashboard Screenshot",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_admin.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "assets_screenshot_index_png",
+      "label": "Main Index Page Screenshot",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_index.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "assets_screenshot_post_png",
+      "label": "Post Page Screenshot",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_post.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "assets_screenshot_user_png",
+      "label": "User Page Screenshot",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_user.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_miniprogram_icons_notice_active_png",
+      "label": "Notice Active Icon",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/icons/notice-active.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_miniprogram_icons_notice_png",
+      "label": "Notice Icon",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/icons/notice.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_miniprogram_icons_user_active_png",
+      "label": "User Active Icon",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/icons/user-active.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "campus_wall_miniprogram_icons_user_png",
+      "label": "User Icon",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/icons/user.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "slider_captcha_images_pic0_jpg",
+      "label": "Slider Captcha Background 0",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/slider-captcha/images/Pic0.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "slider_captcha_images_pic1_jpg",
+      "label": "Slider Captcha Background 1",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/slider-captcha/images/Pic1.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "slider_captcha_images_pic2_jpg",
+      "label": "Slider Captcha Background 2",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/slider-captcha/images/Pic2.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "slider_captcha_images_pic3_jpg",
+      "label": "Slider Captcha Background 3",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/slider-captcha/images/Pic3.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "slider_captcha_images_pic4_jpg",
+      "label": "Slider Captcha Background 4",
+      "file_type": "image",
+      "source_file": "/home/wr1ench/campus-wall/slider-captcha/images/Pic4.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_md_project_overview",
+      "target": "campus_wall_platform_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "miniprogram_readme_md_wechat_miniprogram",
+      "target": "wechat_miniprogram_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "campus_social_platform_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "posting_wall_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "credit_score_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "anti_bullying_whistleblowing_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "ecosystem_shop_marketplace_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "knowledge_base_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "admin_management_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "notice_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_platform_concept",
+      "target": "wechat_miniprogram_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/campus-wall-miniprogram/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "credit_html_credit_system",
+      "target": "credit_score_system_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/credit.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bully_html_bullying_whistleblowing",
+      "target": "anti_bullying_whistleblowing_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/bully.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "ecosystem_html_ecosystem_shop",
+      "target": "ecosystem_shop_marketplace_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/ecosystem.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "knowledge_html_knowledge_base",
+      "target": "knowledge_base_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/knowledge.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_admin_html_admin_panel",
+      "target": "admin_management_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "apply_notice_html_notice_application",
+      "target": "notice_system_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/apply-notice.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "agreement_html_user_agreement",
+      "target": "user_agreement_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/agreement.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "featured_html_featured_content",
+      "target": "featured_content_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/featured.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "launch_html_launch_site",
+      "target": "launch_site_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/launch.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_for_agent_md_agent_documentation",
+      "target": "data_deduplication_mechanism",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_for_agent_md_agent_documentation",
+      "target": "image_upload_security_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docs_for_agent_md_agent_documentation",
+      "target": "search_functionality_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "commit_msg_txt_commit_message",
+      "target": "auth_security_bypass_fix",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/commit_msg.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_bully_html_bullying_report",
+      "target": "anti_bullying_whistleblowing_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/bully.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_ecosystem_html_ecosystem_detail",
+      "target": "ecosystem_shop_marketplace_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/ecosystem.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_knowledge_html_knowledge_detail",
+      "target": "knowledge_base_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/knowledge.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_notice_html_notice_detail",
+      "target": "notice_system_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/notice.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_post_html_post_page",
+      "target": "posting_wall_system_concept",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/pages/post.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "maintenance_html_maintenance_page",
+      "target": "campus_wall_platform_concept",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/maintenance.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "data_deduplication_mechanism",
+      "target": "posting_wall_system_concept",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "auth_security_bypass_fix",
+      "target": "admin_management_concept",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/commit_msg.txt",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_upload_security_concept",
+      "target": "posting_wall_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "search_functionality_concept",
+      "target": "posting_wall_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "credit_score_system_concept",
+      "target": "posting_wall_system_concept",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/docs_for_agent.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bully_html_bullying_whistleblowing",
+      "target": "pages_bully_html_bullying_report",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "ecosystem_html_ecosystem_shop",
+      "target": "pages_ecosystem_html_ecosystem_detail",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "knowledge_html_knowledge_base",
+      "target": "pages_knowledge_html_knowledge_detail",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "apply_notice_html_notice_application",
+      "target": "pages_notice_html_notice_detail",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "admin_html_admin_panel",
+      "target": "pages_report_html_admin_report_management",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "admin_html_admin_panel",
+      "target": "pages_user_html_admin_user_management",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "admin_html_admin_panel",
+      "target": "pages_wall_html_admin_wall_management",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "report_html_user_report",
+      "target": "post_html_submission",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/report.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_main_wall",
+      "target": "report_html_user_report",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_main_wall",
+      "target": "post_html_submission",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_main_wall",
+      "target": "user_html_user_page",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_main_wall",
+      "target": "notice_html_notification",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "admin_html_admin_panel",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "index_html_main_wall",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/index.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "post_html_submission",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/post.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "report_html_user_report",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/report.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "user_html_user_page",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/user.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "notice_html_notification",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/notice.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "campus_wall_backend_go",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "admin_html_admin_panel",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "index_html_main_wall",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "post_html_submission",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "report_html_user_report",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "user_html_user_page",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "campus_wall_system",
+      "target": "notice_html_notification",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "admin_html_tabbed_interface_pattern",
+      "target": "admin_html_admin_panel",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "pages_partial_loading_pattern",
+      "target": "admin_html_admin_panel",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall/admin.html",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "assets_screenshot_admin_png",
+      "target": "admin_html",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_admin.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "assets_screenshot_index_png",
+      "target": "index_html",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_index.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "assets_screenshot_post_png",
+      "target": "post_html",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_post.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "assets_screenshot_user_png",
+      "target": "user_html",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/assets/screenshot_user.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "campus_wall_core_subsystems",
+      "label": "Campus Wall Core Subsystems",
+      "nodes": [
+        "posting_wall_system_concept",
+        "credit_score_system_concept",
+        "anti_bullying_whistleblowing_concept",
+        "ecosystem_shop_marketplace_concept",
+        "knowledge_base_concept",
+        "admin_management_concept",
+        "notice_system_concept",
+        "featured_content_concept"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/README.md"
+    },
+    {
+      "id": "page_file_pairs",
+      "label": "List Page and Detail Page File Pairs",
+      "nodes": [
+        "bully_html_bullying_whistleblowing",
+        "pages_bully_html_bullying_report",
+        "ecosystem_html_ecosystem_shop",
+        "pages_ecosystem_html_ecosystem_detail",
+        "knowledge_html_knowledge_base",
+        "pages_knowledge_html_knowledge_detail",
+        "apply_notice_html_notice_application",
+        "pages_notice_html_notice_detail"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall"
+    },
+    {
+      "id": "campus_wall_frontend_pages",
+      "label": "Campus Wall Frontend Pages",
+      "nodes": [
+        "index_html_main_wall",
+        "post_html_submission",
+        "report_html_user_report",
+        "user_html_user_page",
+        "notice_html_notification",
+        "admin_html_admin_panel"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/home/wr1ench/campus-wall"
+    },
+    {
+      "id": "admin_panel_partials",
+      "label": "Admin Panel Loaded Partials",
+      "nodes": [
+        "admin_html_admin_panel",
+        "pages_report_html_admin_report_management",
+        "pages_user_html_admin_user_management",
+        "pages_wall_html_admin_wall_management"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/wr1ench/campus-wall/admin.html"
+    },
+    {
+      "id": "report_and_pickup_flow",
+      "label": "Report and Pickup Flow",
+      "nodes": [
+        "report_html_user_report",
+        "pages_report_html_admin_report_management",
+        "post_html_submission"
+      ],
+      "relation": "participate_in",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/home/wr1ench/campus-wall"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
