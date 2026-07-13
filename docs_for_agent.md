@@ -842,6 +842,18 @@ server.js
 |------|------|-----|------|
 | 举报列表"举报人"只显示 raw name 无 UID | `admin.html` | 2166 | 用 `reporterInfo.nickname (username, UID:xxx)` 格式显示 |
 
+### 会话 2 — 2026-07-13
+
+#### 讨论区开放用户创建话题
+
+| 文件 | 改动 |
+|------|------|
+| `routes/discussions.js` | `POST /api/discussions` 新增 `x-user-token` 路径，普通用户可创建话题。增加处罚检测（`isFeatureBlocked`）、频率限制（1分钟最多5次）、敏感词+霸凌姓名检测。原有 admin/SC 路径不变。 |
+| `index.html` | 讨论弹窗话题列表增加「＋创建话题」按钮 + 标题输入表单。仅登录用户可见。创建成功后自动刷新列表。 |
+| `docs_for_agent.md` | 本会话记录。 |
+
+**频率限制**：`discussionCreateLimit` 内存 Map（1分钟窗口，最多5次），`DISCUSSION_CREATE_WINDOW_MS=60000`，`DISCUSSION_CREATE_MAX=5`。清理随 `commentDeleteLimit` 的 `setInterval` 每60秒执行。
+
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。

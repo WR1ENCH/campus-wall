@@ -1922,8 +1922,39 @@
  font-size: 11px; padding: 4px 8px; border-radius: 5px;
  transition: all 0.15s; font-family: inherit;
  }
- .discussion-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
- .top-bar .notif-btn {
+.discussion-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
+
+/* ===== 创建话题表单 ===== */
+.create-topic-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: #3d6ce8; color: white;
+  border: none; border-radius: 10px; cursor: pointer;
+  font-size: 13px; font-weight: 600; font-family: inherit; margin-bottom: 14px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.create-topic-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(59,130,246,0.3); }
+.create-topic-form {
+  background: #f8f9ff; border: 2px solid #3d6ce8; border-radius: 14px;
+  padding: 16px; margin-bottom: 16px; display: none;
+}
+.create-topic-form input {
+  width: 100%; padding: 10px 14px; border: 2px solid rgba(0,0,0,0.12);
+  border-radius: 10px; font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+  outline: none; box-sizing: border-box; transition: border-color 0.2s;
+}
+.create-topic-form input:focus { border-color: #3d6ce8; }
+.create-topic-actions { display: flex; gap: 8px; margin-top: 10px; }
+.create-topic-actions button {
+  padding: 8px 18px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; font-family: inherit; cursor: pointer; border: none;
+  transition: transform 0.15s;
+}
+.create-topic-submit { background: #3d6ce8; color: white; }
+.create-topic-submit:hover { transform: translateY(-1px); }
+.create-topic-cancel { background: rgba(0,0,0,0.06); color: #6b7280; }
+.create-topic-cancel:hover { background: rgba(0,0,0,0.1); }
+
+.top-bar .notif-btn {
  background: none; border: none; cursor: pointer;
  font-size: 18px; padding: 4px 6px;
  position: relative; transition: transform 0.2s;
@@ -6802,10 +6833,12 @@ function escJsStr(s) {
  let currentDiscussionId = null;
 
  function openDiscussionModal() {
- const overlay = document.getElementById('discussionOverlay');
- overlay.style.display = 'flex';
- showDiscussionTopics();
- loadDiscussions();
+  const overlay = document.getElementById('discussionOverlay');
+  overlay.style.display = 'flex';
+  const btn = document.getElementById('createTopicBtn');
+  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+  showDiscussionTopics();
+  loadDiscussions();
  }
 
  // 从校园墙帖子点击 #话题 打开对应讨论
@@ -6822,8 +6855,51 @@ function escJsStr(s) {
  }
 
  function escHtml(str) {
- if (!str) return '';
- return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ }
+
+ function getToken() { return localStorage.getItem('campus_user_token'); }
+
+ function showCreateForm() {
+  document.getElementById('createTopicBtn').style.display = 'none';
+  document.getElementById('discussionCreateForm').style.display = 'block';
+  document.getElementById('discussionTitleInput').focus();
+ }
+
+ function hideCreateForm() {
+  document.getElementById('discussionCreateForm').style.display = 'none';
+  const btn = document.getElementById('createTopicBtn');
+  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+ }
+
+ async function createDiscussion() {
+  const title = document.getElementById('discussionTitleInput').value.trim();
+  if (!title) { showToast('请输入话题标题'); return; }
+  const token = getToken();
+  if (!token) { showToast('请先登录'); return; }
+  try {
+    const res = await fetch('/api/discussions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ title })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      document.getElementById('discussionTitleInput').value = '';
+      hideCreateForm();
+      showToast('话题创建成功');
+      loadDiscussions();
+    } else if (json.warning) {
+      showToast(json.warningMsg);
+    } else if (json.bullying) {
+      showToast(json.warningMsg);
+    } else {
+      showToast(json.msg || '创建失败');
+    }
+  } catch (e) {
+    showToast('网络错误');
+  }
  }
 
  // 格式化 datetime-local 时间为本地可读字符串
@@ -6849,24 +6925,28 @@ function escJsStr(s) {
  }
 
  function renderDiscussionTopics(topics) {
- const container = document.getElementById('discussionTopics');
- if (!topics || topics.length === 0) {
- container.innerHTML = '<div class="discussion-empty">暂无讨论话题，请管理员设置</div>';
- return;
- }
- container.innerHTML = topics.map(d => {
- const expires = formatDateTimeLocal(d.expiresAt);
- return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
- <h4>${escHtml(d.title)}</h4>
- <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}</div>
- </div>`;
- }).join('');
+  const container = document.getElementById('discussionTopics');
+  const btn = document.getElementById('createTopicBtn');
+  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+  if (!topics || topics.length === 0) {
+  container.innerHTML = '<div class="discussion-empty">暂无讨论话题，快来创建第一个吧</div>';
+  return;
+  }
+  container.innerHTML = topics.map(d => {
+  const expires = formatDateTimeLocal(d.expiresAt);
+  return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
+  <h4>${escHtml(d.title)}</h4>
+  <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}</div>
+  </div>`;
+  }).join('');
  }
 
  async function showDiscussion(id) {
- currentDiscussionId = id;
- document.getElementById('discussionTopics').style.display = 'none';
- document.getElementById('discussionComments').style.display = 'block';
+  currentDiscussionId = id;
+  document.getElementById('discussionTopics').style.display = 'none';
+  document.getElementById('createTopicBtn').style.display = 'none';
+  document.getElementById('discussionCreateForm').style.display = 'none';
+  document.getElementById('discussionComments').style.display = 'block';
  const topics = await (await fetch('/api/discussions')).json();
  const topic = (topics.data || []).find(t => t.id === id);
  if (topic) {
@@ -6876,9 +6956,11 @@ function escJsStr(s) {
  }
 
  function showDiscussionTopics() {
- currentDiscussionId = null;
- document.getElementById('discussionComments').style.display = 'none';
- document.getElementById('discussionTopics').style.display = 'flex';
+  currentDiscussionId = null;
+  document.getElementById('discussionComments').style.display = 'none';
+  document.getElementById('discussionTopics').style.display = 'flex';
+  const btn = document.getElementById('createTopicBtn');
+  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
  }
 
  async function loadDiscussionComments(discussionId) {
@@ -7206,9 +7288,21 @@ function escJsStr(s) {
  <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 讨论区</h3>
  <button class="discussion-close" onclick="closeDiscussionModal()">×</button>
  </div>
- <div class="discussion-body">
- <div class="discussion-topics" id="discussionTopics"></div>
- <div class="discussion-comments" id="discussionComments" style="display:none;">
+  <div class="discussion-body">
+  <div id="discussionTopicsWrapper">
+    <button class="create-topic-btn" id="createTopicBtn" onclick="showCreateForm()" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg> 创建话题
+    </button>
+    <div class="create-topic-form" id="discussionCreateForm">
+      <input type="text" id="discussionTitleInput" placeholder="输入话题标题..." maxlength="50">
+      <div class="create-topic-actions">
+        <button class="create-topic-submit" onclick="createDiscussion()">创建</button>
+        <button class="create-topic-cancel" onclick="hideCreateForm()">取消</button>
+      </div>
+    </div>
+    <div class="discussion-topics" id="discussionTopics"></div>
+  </div>
+  <div class="discussion-comments" id="discussionComments" style="display:none;">
  <button class="discussion-back" onclick="showDiscussionTopics()">← 返回话题列表</button>
  <h4 id="currentDiscussionTitle"></h4>
  <div class="discussion-comment-input">
