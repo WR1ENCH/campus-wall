@@ -440,17 +440,7 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
       if (targetBid) {
         targetBid.reviewStatus = 'violated';
         targetBid.violatedAt = now;
-        // 封禁用户（不退还 Credits）
-        const users = readUsers();
-        const uIdx = users.findIndex(u => u.id === targetBid.userId);
-        if (uIdx !== -1 && users[uIdx].status !== 'banned') {
-          users[uIdx].status = 'banned';
-          users[uIdx].bannedAt = now;
-          users[uIdx].banReason = '校园墙拍卖展示内容违规（举报处理）';
-          writeUsers(users);
-          auctionMsg = '，已封禁用户 ' + users[uIdx].username;
-        }
-        // 查找下一个审核通过的出价作为替换
+        // 查找下一个审核通过的出价作为替换（处罚由处罚系统统一管理）
         const approvedBids = targetAuction.bids
           .filter(b => b.reviewStatus === 'approved' && b.id !== bidId)
           .sort((a, b) => b.amount - a.amount);

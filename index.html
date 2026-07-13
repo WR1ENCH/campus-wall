@@ -3843,8 +3843,8 @@
  localStorage.removeItem('campus_user_token');
  updateSideNavAuth();
  currentUser = null;
- } else {
- // 刷新用户数据（含 credit、签到状态、认证状态）
+      } else {
+      // 刷新用户数据（含 credit、签到状态、认证状态）
       currentUser.credit = json.data.credit || 0;
       currentUser.checkinToday = json.data.checkinToday;
       currentUser.checkinStreak = json.data.checkinStreak || 0;
@@ -3852,12 +3852,12 @@
       if (json.data.avatar !== undefined) currentUser.avatar = json.data.avatar;
       if (json.data.nickname !== undefined) currentUser.nickname = json.data.nickname;
       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
- }
- } catch {
- currentUser = null;
-  }
-  }
-  updateUserBar();
+      }
+    } catch {
+      currentUser = null;
+    }
+    }
+    updateUserBar();
   if (typeof updateSideNavAuth === 'function') updateSideNavAuth();
   checkAnnouncement();
   await checkNotifBadge();

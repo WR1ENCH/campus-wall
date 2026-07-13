@@ -2197,10 +2197,10 @@
         let actionBtns;
         if (r.status === 'pending') {
           if (isAuctionReport) {
-            // 拍卖举报：确认违规 / 驳回举报
+            // 拍卖举报：详情 / 无违规 / 违规处罚（与普通帖子相同的处罚弹窗）
             actionBtns = '<button class="btn-view" onclick="showReportDetail(' + JSON.stringify({...r}).replace(/"/g, '&quot;') + ')" style="font-size:11px;padding:3px 8px;">📋 详情</button>' +
               '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + escJsStr(reportIdStr) + '\')">✅ 无违规</button>' +
-              '<button class="btn-del" style="font-size:11px;padding:3px 8px;background:#c0392b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;" onclick="confirmAuctionViolation(\'' + escJsStr(reportIdStr) + '\',\'' + escJsStr(r.targetId || '') + '\')">⚠️ 确认违规</button>';
+              '<button class="btn-del" style="font-size:11px;padding:3px 8px;" onclick="openPunishDialog(\'' + escJsStr(reportIdStr) + '\',\'' + escJsStr(r.reason || '') + '\',\'' + escJsStr(r.reportedUserId || '') + '\')">⚖️ 违规处罚</button>';
           } else {
             // 普通举报：详情 / 无违规 / 违规处罚
             actionBtns = '<button class="btn-view" onclick="showReportDetail(' + JSON.stringify({...r}).replace(/"/g, '&quot;') + ')" style="font-size:11px;padding:3px 8px;">📋 详情</button>' +
@@ -6293,28 +6293,6 @@
         }
       } catch (e) { showToast('❌ 网络错误', 'error'); }
     });
-  };
-
-  window.confirmAuctionViolation = function(reportId, bidId) {
-    showConfirm('⚠️', '确认拍卖内容违规',
-      '确定此拍卖内容违规吗？\n\n确认后将：\n• 下架该展示内容\n• 封禁发布用户（不退还Credits）\n• 自动替换为第二出价者内容',
-      async () => {
-        try {
-          const res = await fetch('/api/admin/reports/' + encodeURIComponent(reportId) + '/handle', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeaders() },
-            body: JSON.stringify({ handledResult: 'violation' })
-          });
-          const json = await res.json();
-          if (json.ok) {
-            showToast('✅ ' + (json.msg || '违规已确认'), 'success');
-            loadReports();
-          } else {
-            showToast('❌ ' + (json.msg || '操作失败'), 'error');
-          }
-        } catch (e) { showToast('❌ 网络错误', 'error'); }
-      }
-    );
   };
 
   // ===== 启动 =====
