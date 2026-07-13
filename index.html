@@ -3845,19 +3845,22 @@
  currentUser = null;
  } else {
  // 刷新用户数据（含 credit、签到状态、认证状态）
- currentUser.credit = json.data.credit || 0;
- currentUser.checkinToday = json.data.checkinToday;
- currentUser.checkinStreak = json.data.checkinStreak || 0;
- currentUser.zhixueStatus = json.data.zhixueStatus || null;
- localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+      currentUser.credit = json.data.credit || 0;
+      currentUser.checkinToday = json.data.checkinToday;
+      currentUser.checkinStreak = json.data.checkinStreak || 0;
+      currentUser.zhixueStatus = json.data.zhixueStatus || null;
+      if (json.data.avatar !== undefined) currentUser.avatar = json.data.avatar;
+      if (json.data.nickname !== undefined) currentUser.nickname = json.data.nickname;
+      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
  }
  } catch {
  currentUser = null;
- }
- }
- updateUserBar();
- checkAnnouncement();
- await checkNotifBadge();
+  }
+  }
+  updateUserBar();
+  if (typeof updateSideNavAuth === 'function') updateSideNavAuth();
+  checkAnnouncement();
+  await checkNotifBadge();
  // 首次访问（无记录）→ 弹出登录框
  if (!currentUser && !localStorage.getItem('campus_wall_visited')) {
  localStorage.setItem('campus_wall_visited', '1');
