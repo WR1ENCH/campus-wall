@@ -425,13 +425,50 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
   if (handledResult === 'violation') {
     report.handledResult = 'violation';
     report.status = 'resolved';
+    // 拍卖举报：执行拍卖-specific 违规处理（下架内容、封禁用户、自动替换）
+    let auctionMsg = '';
+    if (report.type === 'auction') {
+      const bidId = report.targetId || report.pickupBidId;
+      const auctions = readPickupAuctions();
+      let targetBid = null, targetAuction = null;
+      for (const auction of auctions) {
+        if (Array.isArray(auction.bids)) {
+          const bid = auction.bids.find(b => b.id === bidId);
+          if (bid) { targetBid = bid; targetAuction = auction; break; }
+        }
+      }
+      if (targetBid) {
+        targetBid.reviewStatus = 'violated';
+        targetBid.violatedAt = now;
+        // 封禁用户（不退还 Credits）
+        const users = readUsers();
+        const uIdx = users.findIndex(u => u.id === targetBid.userId);
+        if (uIdx !== -1 && users[uIdx].status !== 'banned') {
+          users[uIdx].status = 'banned';
+          users[uIdx].bannedAt = now;
+          users[uIdx].banReason = '校园墙拍卖展示内容违规（举报处理）';
+          writeUsers(users);
+          auctionMsg = '，已封禁用户 ' + users[uIdx].username;
+        }
+        // 查找下一个审核通过的出价作为替换
+        const approvedBids = targetAuction.bids
+          .filter(b => b.reviewStatus === 'approved' && b.id !== bidId)
+          .sort((a, b) => b.amount - a.amount);
+        if (approvedBids.length > 0) {
+          auctionMsg += '，已自动替换为第二出价者内容';
+        } else {
+          auctionMsg += '，该时段暂无其他审核通过内容';
+        }
+        writePickupAuctions(auctions);
+      }
+    }
     writeReports(reports);
     // 通知举报人：已确认违规，处罚已下发
     if (report.reportedBy) {
       penalty.emitUserNotice(report.reportedBy, '📋 举报已确认',
-        '你提交的举报（举报ID：' + (report.reportId || report.id || '') + '）经管理员核实确认违规，已施加处罚。感谢你对校园环境的维护！', 'T1');
+        '你提交的举报（举报ID：' + (report.reportId || report.id || '') + '）经管理员核实确认违规，相关内容已下架。' + auctionMsg + '感谢你对校园环境的维护！', 'T1');
     }
-    return res.json({ ok: true, msg: '违规已确认，请在处罚管理中完善处罚详情', reportId: report.reportId });
+    return res.json({ ok: true, msg: '违规已确认，内容已下架' + auctionMsg, reportId: report.reportId });
   }
 
   // 传统处理（resolved/ignored 向后兼容）
