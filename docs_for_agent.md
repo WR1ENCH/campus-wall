@@ -854,6 +854,16 @@ server.js
 
 **频率限制**：`discussionCreateLimit` 内存 Map（1分钟窗口，最多5次），`DISCUSSION_CREATE_WINDOW_MS=60000`，`DISCUSSION_CREATE_MAX=5`。清理随 `commentDeleteLimit` 的 `setInterval` 每60秒执行。
 
+### 会话 3 — 2026-07-13
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 话题创建需学认证 | `routes/discussions.js` | 普通用户创建讨论话题时检查 `zhixueStatus === 'approved' && zhixueReviewedBy`，否则返回 `NOT_VERIFIED` |
+| 讨论+问答举报入口 | `index.html` | 话题列表、话题评论、问答问题、问答答案增加举报按钮，统一调用 `POST /api/reports`（`discussion` / `discussion_comment` / `qa_question` / `qa_answer`）|
+| 讨论窗口重设计 | `index.html` CSS + JS + HTML | 暖色调配色（砖棕 `#8b6f5e`），卡片化话题列表，comment 区背景优化，slide-left/slide-right 话题列表↔评论切换动画 |
+| 问答窗口重设计 | `index.html` CSS + JS + HTML | 暖金配色优化，qa-question-card/qa-answer-card 重设计，tab 切换 fade+slide 动画，报告按钮样式统一 |
+| 讨论评论举报修复 | `index.html` | 旧 `reportDiscussionComment` / `promptReportDiscussion` 调用不存在端点 → 改为统一 `/api/reports` |
+
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
