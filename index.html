@@ -661,15 +661,17 @@
  text-transform: uppercase;
  }
 
-  .note-content {
-  font-family: var(--font-body);
-  font-weight: 500;
-  line-height: 1.8;
-  letter-spacing: 0.02em;
-  word-break: break-word;
-  flex: 1;
-  font-size: 14px;
-  }
+   .note-content {
+   font-family: 'Ma Shan Zheng', cursive;
+   line-height: 1.7;
+   letter-spacing: 0.03em;
+   word-break: break-word;
+   flex: 1;
+   font-size: 17px;
+   }
+   .size-tiny .note-content { font-size: 16px; }
+   .size-medium .note-content,
+   .size-large .note-content { font-size: 18px; }
 
  .note-footer {
  display: flex; align-items: center; justify-content: space-between;
@@ -4714,7 +4716,7 @@ async function showPostCaptchaModal() {
  temp.style.cssText = `position:absolute;visibility:hidden;width:${sizeInfo.width}px;padding:${sizeInfo.padding}px;padding-top:${sizeInfo.padding + 10}px;font-family:'Ma Shan Zheng',cursive;`;
  temp.innerHTML = `
  <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
- <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${escHtml(post.content)}</div>
+  <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.7;letter-spacing:0.03em;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-medium' || sizeInfo.sizeClass === 'size-large' ? 'font-size:18px' : 'font-size:17px'}">${escHtml(post.content)}</div>
  <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
  <span style="display:flex;align-items:center;gap:3px;">${post.avatar && post.avatar.startsWith('data:') ? '<img src="' + escHtml(post.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : (post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')} ${post.author}${post.authorAdminRole === 'super' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}</span>
  <span style="display:flex;gap:4px;align-items:center;">
