@@ -13,12 +13,21 @@ const CONTENT_MAX_LENGTH = 50;
 const commentDeleteLimit = new Map();
 const COMMENT_DELETE_WINDOW_MS = 60 * 1000;
 const COMMENT_DELETE_MAX = 30;
+// 用户创建话题频率限制（1分钟内最多5个）
+const discussionCreateLimit = new Map();
+const DISCUSSION_CREATE_WINDOW_MS = 60000;
+const DISCUSSION_CREATE_MAX = 5;
 setInterval(() => {
   const now = Date.now();
   for (const [ip, ts] of commentDeleteLimit) {
     const kept = ts.filter(t => now - t < COMMENT_DELETE_WINDOW_MS);
     if (kept.length === 0) commentDeleteLimit.delete(ip);
     else commentDeleteLimit.set(ip, kept);
+  }
+  for (const [id, ts] of discussionCreateLimit) {
+    const kept = ts.filter(t => now - t < DISCUSSION_CREATE_WINDOW_MS);
+    if (kept.length === 0) discussionCreateLimit.delete(id);
+    else discussionCreateLimit.set(id, kept);
   }
 }, 60000);
 
@@ -102,11 +111,13 @@ app.get('/api/discussions', (req, res) => {
 });
 
 app.post('/api/discussions', (req, res) => {
-  // 允许管理员 token (x-admin-token) 或 学生会 token (x-sc-token)
+  // 允许管理员 token (x-admin-token)、学生会 token (x-sc-token) 或 普通用户 token (x-user-token)
   const adminToken = req.headers['x-admin-token'];
   const scToken = req.headers['x-sc-token'];
+  const userToken = req.headers['x-user-token'];
   let authed = false;
   let creatorName = null;
+  let isUser = false;
   if (adminToken) {
     const session = verifySignedToken(adminToken);
     if (session && session.id && session.loginAt && ['super', 'admin'].includes(session.role) && Date.now() - session.loginAt <= 24 * 3600 * 1000) {
@@ -125,6 +136,30 @@ app.post('/api/discussions', (req, res) => {
         creatorName = session.name || session.id;
       }
     }
+  } else if (userToken) {
+    // 普通用户认证
+    const session = verifyUserToken(userToken);
+    if (session) {
+      const users = readUsers();
+      const user = users.find(u => u.id === session.id);
+      if (user && user.status !== 'banned') {
+        // 处罚限制检测
+        if (isFeatureBlocked(session.id, 'post')) {
+          return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+        }
+        // 频率限制
+        const now = Date.now();
+        const timestamps = discussionCreateLimit.get(session.id) || [];
+        const recent = timestamps.filter(ts => now - ts < DISCUSSION_CREATE_WINDOW_MS);
+        if (recent.length >= DISCUSSION_CREATE_MAX) {
+          return res.json({ ok: false, msg: '创建话题过于频繁，请稍后再试', code: 'RATE_LIMITED' });
+        }
+        discussionCreateLimit.set(session.id, [...recent.slice(-19), now]);
+        authed = true;
+        creatorName = user.nickname || '匿名';
+        isUser = true;
+      }
+    }
   }
   if (!authed) {
     return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
@@ -133,6 +168,26 @@ app.post('/api/discussions', (req, res) => {
   const { title, expiresAt } = req.body;
   if (!title || !title.trim()) {
     return res.json({ ok: false, msg: '话题标题不能为空' });
+  }
+
+  // 普通用户的标题安全检测
+  if (isUser) {
+    const sensitiveWords = checkSensitive(title);
+    if (sensitiveWords.length > 0) {
+      return res.json({
+        ok: false,
+        warning: true,
+        warningMsg: '标题包含敏感词，请修改后重试'
+      });
+    }
+    const blockedNames = checkBullyingNames(title);
+    if (blockedNames.length > 0) {
+      return res.json({
+        ok: false,
+        bullying: true,
+        warningMsg: '标题涉及受保护人员姓名，无法发送'
+      });
+    }
   }
 
   const discussions = readDiscussions();
