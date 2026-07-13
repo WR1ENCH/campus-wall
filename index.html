@@ -5050,8 +5050,10 @@ async function showPostCaptchaModal() {
   buildReportBox(post.author || '匿名');
   }
 
-  // 打开拍卖内容举报弹窗
+  // 打开拍卖内容举报弹窗（先关闭滚动内容弹窗，避免被挡住）
   function openAuctionReportModal(bidId, content, slotLabel, username) {
+  var pickupEl = document.getElementById('pickupContentOverlay');
+  if (pickupEl) pickupEl.style.display = 'none';
   _reportId = null;
   _reportType = 'auction';
   _reportTargetId = bidId;
