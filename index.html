@@ -661,15 +661,17 @@
  text-transform: uppercase;
  }
 
-  .note-content {
-  font-family: var(--font-body);
-  font-weight: 500;
-  line-height: 1.8;
-  letter-spacing: 0.02em;
-  word-break: break-word;
-  flex: 1;
-  font-size: 14px;
-  }
+   .note-content {
+   font-family: 'Ma Shan Zheng', cursive;
+   line-height: 1.7;
+   letter-spacing: 0.03em;
+   word-break: break-word;
+   flex: 1;
+   font-size: 17px;
+   }
+   .size-tiny .note-content { font-size: 16px; }
+   .size-medium .note-content,
+   .size-large .note-content { font-size: 18px; }
 
  .note-footer {
  display: flex; align-items: center; justify-content: space-between;
@@ -2054,6 +2056,12 @@
   <span class="pickup-label" onclick="openPickupLabelClick(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> 校园墙拍卖</span>
   <div class="pickup-track" onclick="showPickupContentPopup()">
   <div class="pickup-scroll" id="pickupScroll">
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
+  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
   <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
   <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 欢迎来到校园墙</span>
   </div>
@@ -4739,7 +4747,7 @@ async function showPostCaptchaModal() {
  temp.style.cssText = `position:absolute;visibility:hidden;width:${sizeInfo.width}px;padding:${sizeInfo.padding}px;padding-top:${sizeInfo.padding + 10}px;font-family:'Ma Shan Zheng',cursive;`;
  temp.innerHTML = `
  <div class="note-type" style="font-size:11px;padding:2px 7px;margin-bottom:6px;">${cfg.emoji} ${post.type}</div>
- <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.65;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-small' ? 'font-size:17px' : 'font-size:18px'}">${escHtml(post.content)}</div>
+  <div style="font-family:'Ma Shan Zheng',cursive;line-height:1.7;letter-spacing:0.03em;word-break:break-word;${sizeInfo.sizeClass === 'size-tiny' ? 'font-size:16px' : sizeInfo.sizeClass === 'size-medium' || sizeInfo.sizeClass === 'size-large' ? 'font-size:18px' : 'font-size:17px'}">${escHtml(post.content)}</div>
  <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
  <span style="display:flex;align-items:center;gap:3px;">${post.avatar && post.avatar.startsWith('data:') ? '<img src="' + escHtml(post.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : (post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')} ${post.author}${post.authorAdminRole === 'super' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}</span>
  <span style="display:flex;gap:4px;align-items:center;">
@@ -5824,13 +5832,25 @@ async function showPostCaptchaModal() {
  const user = json.data.anonymous ? '匿名用户' : json.data.username;
  text = icon + ' ' + user + '：' + json.data.content;
  }
- // 双倍内容实现无缝循环滚动
- scrollDiv.innerHTML = '<span>' + text + '</span><span>' + text + '</span>';
- } catch {
- // 静默失败，保留现有内容
- }
- }
- // 定时刷新滚动栏（每5分钟，跨时段时自动更新）
+   // 动态计算副本数，确保总宽度 > 2×轨道宽度，实现无缝循环滚动
+  const track = scrollDiv.closest('.pickup-track');
+  const tempSpan = document.createElement('span');
+  tempSpan.style.cssText = 'visibility:hidden;position:absolute;white-space:nowrap;font-size:13px;font-weight:500';
+  // 包含 ::before 星标 SVG 以精确测量
+  tempSpan.innerHTML = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + text;
+  document.body.appendChild(tempSpan);
+  const copyW = tempSpan.offsetWidth + 48;
+  document.body.removeChild(tempSpan);
+  const trackW = track.offsetWidth;
+  let copies = Math.max(2, Math.ceil(trackW * 2 / copyW));
+  if (copies % 2 !== 0) copies++;
+  scrollDiv.innerHTML = Array(copies).fill('<span>' + text + '</span>').join('');
+  scrollDiv.style.animationDuration = (18 * copies / 2) + 's';
+  } catch {
+  // 静默失败，保留现有内容
+  }
+  }
+  // 定时刷新滚动栏（每5分钟，跨时段时自动更新）
  setInterval(loadPickupScroll, 5 * 60 * 1000);
  loadPickupScroll(); // 页面加载时立即执行
 
