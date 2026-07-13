@@ -145,9 +145,9 @@
     "semantic_hash": "b8e06fcd18052fa6add81b36f619c469"
   },
   "routes/discussions.js": {
-    "mtime": 1783954939.8494647,
-    "ast_hash": "846a295f499f2f203ae7ef4e76d960f7",
-    "semantic_hash": "846a295f499f2f203ae7ef4e76d960f7"
+    "mtime": 1783956654.536728,
+    "ast_hash": "507e99161bba968ed0c05086387836b2",
+    "semantic_hash": "507e99161bba968ed0c05086387836b2"
   },
   "routes/maintenance.js": {
     "mtime": 1783833229.7985334,

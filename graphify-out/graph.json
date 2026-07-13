@@ -6281,8 +6281,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "admin.js",
-      "id": "routes_admin",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin"
     },
     {
       "label": "{ hashPassword, verifyPassword, encryptCert, decryptCert, makeToken, verifySignedToken, getDisplayZhixueStatus }",
@@ -6292,8 +6292,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ hashpassword, verifypassword, encryptcert, decryptcert, maketoken, verifysignedtoken, getdisplayzhixuestatus }",
-      "id": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus"
     },
     {
       "label": "{ getClientIP }",
@@ -6303,8 +6303,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ getclientip }",
-      "id": "routes_admin_getclientip",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_getclientip"
     },
     {
       "label": "{ requireAdmin, requireSuper }",
@@ -6314,8 +6314,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ requireadmin, requiresuper }",
-      "id": "routes_admin_requireadmin_requiresuper",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_requireadmin_requiresuper"
     },
     {
       "label": "{ broadcastSSE }",
@@ -6325,8 +6325,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ broadcastsse }",
-      "id": "routes_admin_broadcastsse",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_broadcastsse"
     },
     {
       "label": "db",
@@ -6336,8 +6336,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "db",
-      "id": "routes_admin_db",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_db"
     },
     {
       "label": "maintenance",
@@ -6347,8 +6347,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "maintenance",
-      "id": "routes_admin_maintenance",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_maintenance"
     },
     {
       "label": "{ check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist }",
@@ -6358,8 +6358,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ check: checksensitive, reload: reloadsensitive, getstats: getsensitivestats, whitelist_file, savewhitelist }",
-      "id": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist"
     },
     {
       "label": "{ check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames }",
@@ -6369,8 +6369,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "{ check: checkbullyingnames, addname: addbullyingname, removename: removebullyingname, getall: getallbullyingnames, reload: reloadbullyingnames }",
-      "id": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames"
     },
     {
       "label": "penalty",
@@ -6380,8 +6380,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "penalty",
-      "id": "routes_admin_penalty",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_penalty"
     },
     {
       "label": "fs",
@@ -6391,8 +6391,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "fs",
-      "id": "routes_admin_fs",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_fs"
     },
     {
       "label": "path",
@@ -6402,8 +6402,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "path",
-      "id": "routes_admin_path",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_path"
     },
     {
       "label": "crypto",
@@ -6413,8 +6413,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "crypto",
-      "id": "routes_admin_crypto",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_crypto"
     },
     {
       "label": "DATA_DIR",
@@ -6424,8 +6424,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "data_dir",
-      "id": "routes_admin_data_dir",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_data_dir"
     },
     {
       "label": "SENSITIVE_CUSTOM_FILE",
@@ -6435,8 +6435,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "sensitive_custom_file",
-      "id": "routes_admin_sensitive_custom_file",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_sensitive_custom_file"
     },
     {
       "label": "adminRateLimit",
@@ -6446,8 +6446,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "adminratelimit",
-      "id": "routes_admin_adminratelimit",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_adminratelimit"
     },
     {
       "label": "checkAdminRateLimit()",
@@ -6457,8 +6457,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "checkadminratelimit()",
-      "id": "routes_admin_checkadminratelimit",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_checkadminratelimit"
     },
     {
       "label": "hasAdmins()",
@@ -6468,8 +6468,8 @@
       "_origin": "ast",
       "community": 37,
       "norm_label": "hasadmins()",
-      "id": "routes_admin_hasadmins",
-      "community_name": "hasAdmins"
+      "community_name": "hasAdmins",
+      "id": "routes_admin_hasadmins"
     },
     {
       "label": "generateUID()",
@@ -6479,8 +6479,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "generateuid()",
-      "id": "routes_admin_generateuid",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_generateuid"
     },
     {
       "label": "addLoginLog()",
@@ -6490,8 +6490,8 @@
       "_origin": "ast",
       "community": 34,
       "norm_label": "addloginlog()",
-      "id": "routes_admin_addloginlog",
-      "community_name": "addLoginLog"
+      "community_name": "addLoginLog",
+      "id": "routes_admin_addloginlog"
     },
     {
       "label": "readPosts()",
@@ -6501,8 +6501,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readposts()",
-      "id": "routes_admin_readposts",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readposts"
     },
     {
       "label": "writePosts()",
@@ -6512,8 +6512,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeposts()",
-      "id": "routes_admin_writeposts",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeposts"
     },
     {
       "label": "readUsers()",
@@ -6523,8 +6523,8 @@
       "_origin": "ast",
       "community": 33,
       "norm_label": "readusers()",
-      "id": "routes_admin_readusers",
-      "community_name": "changeCredit"
+      "community_name": "changeCredit",
+      "id": "routes_admin_readusers"
     },
     {
       "label": "writeUsers()",
@@ -6534,8 +6534,8 @@
       "_origin": "ast",
       "community": 33,
       "norm_label": "writeusers()",
-      "id": "routes_admin_writeusers",
-      "community_name": "changeCredit"
+      "community_name": "changeCredit",
+      "id": "routes_admin_writeusers"
     },
     {
       "label": "readAdmins()",
@@ -6545,8 +6545,8 @@
       "_origin": "ast",
       "community": 37,
       "norm_label": "readadmins()",
-      "id": "routes_admin_readadmins",
-      "community_name": "hasAdmins"
+      "community_name": "hasAdmins",
+      "id": "routes_admin_readadmins"
     },
     {
       "label": "writeAdmins()",
@@ -6556,8 +6556,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeadmins()",
-      "id": "routes_admin_writeadmins",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeadmins"
     },
     {
       "label": "readReports()",
@@ -6567,8 +6567,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readreports()",
-      "id": "routes_admin_readreports",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readreports"
     },
     {
       "label": "writeReports()",
@@ -6578,8 +6578,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writereports()",
-      "id": "routes_admin_writereports",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writereports"
     },
     {
       "label": "readFeedbacks()",
@@ -6589,8 +6589,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readfeedbacks()",
-      "id": "routes_admin_readfeedbacks",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readfeedbacks"
     },
     {
       "label": "writeFeedbacks()",
@@ -6600,8 +6600,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writefeedbacks()",
-      "id": "routes_admin_writefeedbacks",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writefeedbacks"
     },
     {
       "label": "readBullying()",
@@ -6611,8 +6611,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readbullying()",
-      "id": "routes_admin_readbullying",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readbullying"
     },
     {
       "label": "writeBullying()",
@@ -6622,8 +6622,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writebullying()",
-      "id": "routes_admin_writebullying",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writebullying"
     },
     {
       "label": "readCreditLogs()",
@@ -6633,8 +6633,8 @@
       "_origin": "ast",
       "community": 33,
       "norm_label": "readcreditlogs()",
-      "id": "routes_admin_readcreditlogs",
-      "community_name": "changeCredit"
+      "community_name": "changeCredit",
+      "id": "routes_admin_readcreditlogs"
     },
     {
       "label": "writeCreditLogs()",
@@ -6644,8 +6644,8 @@
       "_origin": "ast",
       "community": 33,
       "norm_label": "writecreditlogs()",
-      "id": "routes_admin_writecreditlogs",
-      "community_name": "changeCredit"
+      "community_name": "changeCredit",
+      "id": "routes_admin_writecreditlogs"
     },
     {
       "label": "readCreditCards()",
@@ -6655,8 +6655,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readcreditcards()",
-      "id": "routes_admin_readcreditcards",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readcreditcards"
     },
     {
       "label": "writeCreditCards()",
@@ -6666,8 +6666,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writecreditcards()",
-      "id": "routes_admin_writecreditcards",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writecreditcards"
     },
     {
       "label": "readNotices()",
@@ -6677,8 +6677,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "readnotices()",
-      "id": "routes_admin_readnotices",
-      "community_name": "pushUserNotice"
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_readnotices"
     },
     {
       "label": "writeNotices()",
@@ -6688,8 +6688,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "writenotices()",
-      "id": "routes_admin_writenotices",
-      "community_name": "pushUserNotice"
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_writenotices"
     },
     {
       "label": "pushUserNotice()",
@@ -6699,8 +6699,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "pushusernotice()",
-      "id": "routes_admin_pushusernotice",
-      "community_name": "pushUserNotice"
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_pushusernotice"
     },
     {
       "label": "readMaintenance()",
@@ -6710,8 +6710,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readmaintenance()",
-      "id": "routes_admin_readmaintenance",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readmaintenance"
     },
     {
       "label": "writeMaintenance()",
@@ -6721,8 +6721,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writemaintenance()",
-      "id": "routes_admin_writemaintenance",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writemaintenance"
     },
     {
       "label": "readApps()",
@@ -6732,8 +6732,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readapps()",
-      "id": "routes_admin_readapps",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readapps"
     },
     {
       "label": "writeApps()",
@@ -6743,8 +6743,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeapps()",
-      "id": "routes_admin_writeapps",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeapps"
     },
     {
       "label": "readPasskey()",
@@ -6754,8 +6754,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readpasskey()",
-      "id": "routes_admin_readpasskey",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readpasskey"
     },
     {
       "label": "writePasskey()",
@@ -6765,8 +6765,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writepasskey()",
-      "id": "routes_admin_writepasskey",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writepasskey"
     },
     {
       "label": "readVotes()",
@@ -6776,8 +6776,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readvotes()",
-      "id": "routes_admin_readvotes",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readvotes"
     },
     {
       "label": "writeVotes()",
@@ -6787,8 +6787,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writevotes()",
-      "id": "routes_admin_writevotes",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writevotes"
     },
     {
       "label": "readVoteRecords()",
@@ -6798,8 +6798,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readvoterecords()",
-      "id": "routes_admin_readvoterecords",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readvoterecords"
     },
     {
       "label": "writeVoteRecords()",
@@ -6809,8 +6809,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writevoterecords()",
-      "id": "routes_admin_writevoterecords",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writevoterecords"
     },
     {
       "label": "readVoteIpRecords()",
@@ -6820,8 +6820,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readvoteiprecords()",
-      "id": "routes_admin_readvoteiprecords",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readvoteiprecords"
     },
     {
       "label": "writeVoteIpRecords()",
@@ -6831,8 +6831,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writevoteiprecords()",
-      "id": "routes_admin_writevoteiprecords",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writevoteiprecords"
     },
     {
       "label": "readDiscussionComments()",
@@ -6842,8 +6842,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "readdiscussioncomments()",
-      "id": "routes_admin_readdiscussioncomments",
-      "community_name": "deleteSyncedDiscComment"
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_readdiscussioncomments"
     },
     {
       "label": "writeDiscussionComments()",
@@ -6853,8 +6853,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "writediscussioncomments()",
-      "id": "routes_admin_writediscussioncomments",
-      "community_name": "deleteSyncedDiscComment"
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_writediscussioncomments"
     },
     {
       "label": "readPickupAuctions()",
@@ -6864,8 +6864,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readpickupauctions()",
-      "id": "routes_admin_readpickupauctions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readpickupauctions"
     },
     {
       "label": "writePickupAuctions()",
@@ -6875,8 +6875,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writepickupauctions()",
-      "id": "routes_admin_writepickupauctions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writepickupauctions"
     },
     {
       "label": "readPickupReports()",
@@ -6886,8 +6886,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readpickupreports()",
-      "id": "routes_admin_readpickupreports",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readpickupreports"
     },
     {
       "label": "writePickupReports()",
@@ -6897,8 +6897,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writepickupreports()",
-      "id": "routes_admin_writepickupreports",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writepickupreports"
     },
     {
       "label": "readQAQuestions()",
@@ -6908,8 +6908,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readqaquestions()",
-      "id": "routes_admin_readqaquestions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readqaquestions"
     },
     {
       "label": "writeQAQuestions()",
@@ -6919,8 +6919,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeqaquestions()",
-      "id": "routes_admin_writeqaquestions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeqaquestions"
     },
     {
       "label": "readQAAnswers()",
@@ -6930,8 +6930,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readqaanswers()",
-      "id": "routes_admin_readqaanswers",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readqaanswers"
     },
     {
       "label": "writeQAAnswers()",
@@ -6941,8 +6941,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeqaanswers()",
-      "id": "routes_admin_writeqaanswers",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeqaanswers"
     },
     {
       "label": "readSC()",
@@ -6952,8 +6952,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readsc()",
-      "id": "routes_admin_readsc",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readsc"
     },
     {
       "label": "writeSC()",
@@ -6963,8 +6963,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writesc()",
-      "id": "routes_admin_writesc",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writesc"
     },
     {
       "label": "readWhispers()",
@@ -6974,8 +6974,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readwhispers()",
-      "id": "routes_admin_readwhispers",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readwhispers"
     },
     {
       "label": "writeWhispers()",
@@ -6985,8 +6985,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writewhispers()",
-      "id": "routes_admin_writewhispers",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writewhispers"
     },
     {
       "label": "readTrustTokens()",
@@ -6996,8 +6996,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readtrusttokens()",
-      "id": "routes_admin_readtrusttokens",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readtrusttokens"
     },
     {
       "label": "writeTrustTokens()",
@@ -7007,8 +7007,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writetrusttokens()",
-      "id": "routes_admin_writetrusttokens",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writetrusttokens"
     },
     {
       "label": "readLogs()",
@@ -7018,8 +7018,8 @@
       "_origin": "ast",
       "community": 34,
       "norm_label": "readlogs()",
-      "id": "routes_admin_readlogs",
-      "community_name": "addLoginLog"
+      "community_name": "addLoginLog",
+      "id": "routes_admin_readlogs"
     },
     {
       "label": "writeLogs()",
@@ -7029,8 +7029,8 @@
       "_origin": "ast",
       "community": 34,
       "norm_label": "writelogs()",
-      "id": "routes_admin_writelogs",
-      "community_name": "addLoginLog"
+      "community_name": "addLoginLog",
+      "id": "routes_admin_writelogs"
     },
     {
       "label": "readDeletedItems()",
@@ -7040,8 +7040,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readdeleteditems()",
-      "id": "routes_admin_readdeleteditems",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readdeleteditems"
     },
     {
       "label": "writeDeletedItems()",
@@ -7051,8 +7051,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writedeleteditems()",
-      "id": "routes_admin_writedeleteditems",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writedeleteditems"
     },
     {
       "label": "addDeletedItem()",
@@ -7062,8 +7062,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "adddeleteditem()",
-      "id": "routes_admin_adddeleteditem",
-      "community_name": "deleteSyncedDiscComment"
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_adddeleteditem"
     },
     {
       "label": "readAnnouncement()",
@@ -7073,8 +7073,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readannouncement()",
-      "id": "routes_admin_readannouncement",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readannouncement"
     },
     {
       "label": "writeAnnouncement()",
@@ -7084,8 +7084,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writeannouncement()",
-      "id": "routes_admin_writeannouncement",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writeannouncement"
     },
     {
       "label": "readDiscussions()",
@@ -7095,8 +7095,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "readdiscussions()",
-      "id": "routes_admin_readdiscussions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_readdiscussions"
     },
     {
       "label": "writeDiscussions()",
@@ -7106,8 +7106,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "writediscussions()",
-      "id": "routes_admin_writediscussions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_writediscussions"
     },
     {
       "label": "saveDeletedItem()",
@@ -7117,8 +7117,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "savedeleteditem()",
-      "id": "routes_admin_savedeleteditem",
-      "community_name": "deleteSyncedDiscComment"
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_savedeleteditem"
     },
     {
       "label": "deleteSyncedDiscComment()",
@@ -7128,8 +7128,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "deletesynceddisccomment()",
-      "id": "routes_admin_deletesynceddisccomment",
-      "community_name": "deleteSyncedDiscComment"
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_deletesynceddisccomment"
     },
     {
       "label": "changeCredit()",
@@ -7139,8 +7139,8 @@
       "_origin": "ast",
       "community": 33,
       "norm_label": "changecredit()",
-      "id": "routes_admin_changecredit",
-      "community_name": "changeCredit"
+      "community_name": "changeCredit",
+      "id": "routes_admin_changecredit"
     },
     {
       "label": "luhnModN()",
@@ -7150,8 +7150,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "luhnmodn()",
-      "id": "routes_admin_luhnmodn",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_luhnmodn"
     },
     {
       "label": "generateCardCode()",
@@ -7161,8 +7161,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "generatecardcode()",
-      "id": "routes_admin_generatecardcode",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_generatecardcode"
     },
     {
       "label": "_updateVoteOptions()",
@@ -7172,8 +7172,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "_updatevoteoptions()",
-      "id": "routes_admin_updatevoteoptions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_updatevoteoptions"
     },
     {
       "label": "_legacyUpdateVoteOptions()",
@@ -7183,8 +7183,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "_legacyupdatevoteoptions()",
-      "id": "routes_admin_legacyupdatevoteoptions",
-      "community_name": "admin.js"
+      "community_name": "admin.js",
+      "id": "routes_admin_legacyupdatevoteoptions"
     },
     {
       "label": "discussions.js",
@@ -18771,5 +18771,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "fb5f814673ba558f9fb36cb2573baf3d13ee5121"
+  "built_at_commit": "facd4d4531fb68854dee118fc83dbafef4d1f339"
 }
