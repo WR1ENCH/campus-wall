@@ -5769,7 +5769,7 @@ async function showPostCaptchaModal() {
  '</div>' +
   (reported ?
   '<button class="pickup-content-report-btn reported" disabled>已举报</button>' :
-  '<button class="pickup-content-report-btn" onclick="openAuctionReportModal(\'' + item.bidId + '\',\'' + escHtml(item.content).replace(/'/g, "\\'") + '\',\'' + escHtml(item.slotLabel).replace(/'/g, "\\'") + '\',\'' + escHtml(item.username).replace(/'/g, "\\'") + '\')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> 举报</button>') +
+  '<button class="pickup-content-report-btn" onclick="openAuctionReportModal(\'' + item.bidId + '\',\'' + escJsStr(escHtml(item.content)) + '\',\'' + escJsStr(escHtml(item.slotLabel)) + '\',\'' + escJsStr(escHtml(item.username)) + '\')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> 举报</button>') +
  '</div>';
  }).join('');
  }
@@ -6407,10 +6407,14 @@ async function showPostCaptchaModal() {
  return html;
  }
 
- function escHtml(str) {
- if (!str) return '';
- return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
- }
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function escJsStr(s) {
+  return (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
  // 渲染帖子内容，将 #话题 转为可点击链接
  function renderPostContent(post) {

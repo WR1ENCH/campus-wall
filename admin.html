@@ -2131,6 +2131,11 @@
     await Promise.all([loadDashboard(), loadPosts()]);
   }
 
+  // JS 字符串转义（先转反斜杠，再转单引号，防止 \' 破坏引号边界）
+  function escJsStr(s) {
+    return (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
   // ===== 举报处理 =====
   let allReports = [];
 
@@ -2194,13 +2199,13 @@
           if (isAuctionReport) {
             // 拍卖举报：确认违规 / 驳回举报
             actionBtns = '<button class="btn-view" onclick="showReportDetail(' + JSON.stringify({...r}).replace(/"/g, '&quot;') + ')" style="font-size:11px;padding:3px 8px;">📋 详情</button>' +
-              '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + reportIdStr.replace(/'/g, "\\'") + '\')">✅ 无违规</button>' +
-              '<button class="btn-del" style="font-size:11px;padding:3px 8px;background:#c0392b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;" onclick="confirmAuctionViolation(\'' + reportIdStr.replace(/'/g, "\\'") + '\',\'' + (r.targetId || '').replace(/'/g, "\\'") + '\')">⚠️ 确认违规</button>';
+              '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + escJsStr(reportIdStr) + '\')">✅ 无违规</button>' +
+              '<button class="btn-del" style="font-size:11px;padding:3px 8px;background:#c0392b;color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;" onclick="confirmAuctionViolation(\'' + escJsStr(reportIdStr) + '\',\'' + escJsStr(r.targetId || '') + '\')">⚠️ 确认违规</button>';
           } else {
             // 普通举报：详情 / 无违规 / 违规处罚
             actionBtns = '<button class="btn-view" onclick="showReportDetail(' + JSON.stringify({...r}).replace(/"/g, '&quot;') + ')" style="font-size:11px;padding:3px 8px;">📋 详情</button>' +
-              '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + reportIdStr.replace(/'/g, "\\'") + '\')">✅ 无违规</button>' +
-              '<button class="btn-del" style="font-size:11px;padding:3px 8px;" onclick="openPunishDialog(\'' + reportIdStr.replace(/'/g, "\\'") + '\',\'' + (r.reason || '').replace(/'/g, "\\'") + '\',\'' + (r.reportedUserId || '').replace(/'/g, "\\'") + '\')">⚖️ 违规处罚</button>';
+              '<button class="btn-super" style="background:#16a34a;color:#fff;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-size:11px;font-family:inherit;" onclick="showReportNoViolation(\'' + escJsStr(reportIdStr) + '\')">✅ 无违规</button>' +
+              '<button class="btn-del" style="font-size:11px;padding:3px 8px;" onclick="openPunishDialog(\'' + escJsStr(reportIdStr) + '\',\'' + escJsStr(r.reason || '') + '\',\'' + escJsStr(r.reportedUserId || '') + '\')">⚖️ 违规处罚</button>';
           }
         } else {
           actionBtns = '<span style="font-size:12px;color:var(--text-sub);">已处理</span>';
