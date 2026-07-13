@@ -5367,6 +5367,85 @@ async function showPostCaptchaModal() {
  document.getElementById('reportOverlay').classList.add('show');
  }
 
+  // 统一举报弹窗：支持所有内容类型
+  function buildReportBoxFor(type, targetId, typeLabel, authorName) {
+    _reportType = type;
+    _reportTargetId = targetId;
+    _reportId = type === 'post' || type === 'featured' ? targetId : null;
+    const box = document.getElementById('reportBoxInner');
+    if (!box) { console.error('[举报] 找不到 reportBoxInner 元素'); return; }
+    box.innerHTML = '';
+
+    _reportReason = '垃圾信息';
+    _reportOtherText = '';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.className = 'detail-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => closeReportModal();
+    box.appendChild(closeBtn);
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:16px;font-weight:600;margin-bottom:16px;';
+    title.innerHTML = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报' + typeLabel;
+    box.appendChild(title);
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:13px;color:rgba(90,74,0,0.6);margin-bottom:12px;line-height:1.6;';
+    hint.innerHTML = '你正在举报' + (authorName ? ' <strong>' + escHtml(authorName) + '</strong> 的' : '') + typeLabel + '，请选择举报原因：';
+    box.appendChild(hint);
+
+    const sel = document.createElement('select');
+    sel.id = 'reportReasonSelect';
+    sel.style.cssText = 'width:100%;padding:8px 10px;font-size:14px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;outline:none;font-family:inherit;color:#1a1a2e;background:rgba(255,255,255,0.85);margin-bottom:12px;cursor:pointer;';
+    const selectOptions = [
+      { value: '垃圾信息', label: '垃圾信息 / 广告' },
+      { value: '不当内容', label: '不当内容 / 违规' },
+      { value: '侮辱欺凌', label: '侮辱 / 欺凌 / 人身攻击' },
+      { value: '虚假信息', label: '虚假信息 / 谣言' },
+      { value: '其他', label: '其他（请填写具体原因）' },
+    ];
+    selectOptions.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value; o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', function() {
+      _reportReason = this.value;
+      const area = document.getElementById('reportOtherArea');
+      area.style.display = this.value === '其他' ? 'block' : 'none';
+      if (this.value === '其他') {
+        setTimeout(() => { const ta = document.getElementById('reportOtherInput'); if (ta) ta.focus(); }, 50);
+      }
+    });
+    box.appendChild(sel);
+
+    const otherArea = document.createElement('div');
+    otherArea.id = 'reportOtherArea';
+    otherArea.style.cssText = 'display:none;margin-bottom:12px;';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'reportOtherInput';
+    textarea.placeholder = '请详细描述举报原因...';
+    textarea.style.cssText = 'width:100%;min-height:80px;padding:10px;font-size:14px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;resize:vertical;outline:none;font-family:inherit;color:#1a1a2e;background:rgba(255,255,255,0.7);box-sizing:border-box;';
+    textarea.addEventListener('input', function() { _reportOtherText = this.value; });
+    otherArea.appendChild(textarea);
+    box.appendChild(otherArea);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button'; cancelBtn.className = 'btn-cancel';
+    cancelBtn.textContent = '取消'; cancelBtn.onclick = () => closeReportModal();
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button'; submitBtn.className = 'btn-danger-sm';
+    submitBtn.id = 'reportSubmitBtn'; submitBtn.textContent = '提交举报';
+    submitBtn.onclick = () => doSubmitReport();
+    btnRow.appendChild(cancelBtn); btnRow.appendChild(submitBtn);
+    box.appendChild(btnRow);
+
+    document.getElementById('reportOverlay').classList.add('show');
+  }
+
   function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('show');
   _reportId = null;
@@ -5375,12 +5454,8 @@ async function showPostCaptchaModal() {
   }
 
   async function doSubmitReport() {
-  if (_reportType === 'auction' && !_reportTargetId) {
+  if (!_reportTargetId) {
     showToast('请先选择要举报的内容');
-    return;
-  }
-  if (_reportType === 'post' && !_reportId) {
-    showToast('请先选择要举报的帖子');
     return;
   }
 
@@ -5405,43 +5480,20 @@ async function showPostCaptchaModal() {
   }
 
   try {
-  let res;
-  if (_reportType === 'auction') {
-    // 拍卖内容举报 → 统一举报接口
-    res = await fetch('/api/reports', {
-    method: 'POST',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-    body: JSON.stringify({ type: 'auction', targetId: _reportTargetId, reason })
+    // 统一举报接口
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ type: _reportType, targetId: _reportTargetId, reason })
     });
-  } else {
-    // 帖子举报
-    res = await fetch('/api/posts/' + _reportId + '/report', {
-    method: 'POST',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-    body: JSON.stringify({ reason })
-    });
-  }
-  const json = await res.json();
-  if (json.ok) {
-    showToast('举报已提交，管理员会尽快处理');
-    closeReportModal();
-    if (_reportType === 'auction') {
-    // 更新拍卖举报按钮状态
-    localStorage.setItem('pickup_report_' + _reportTargetId, '1');
-    const reportBtn = document.querySelector('.pickup-content-report-btn[onclick*="' + _reportTargetId + '"]');
-    if (reportBtn) {
-      reportBtn.textContent = '已举报';
-      reportBtn.classList.add('reported');
-      reportBtn.disabled = true;
+    const json = await res.json();
+    if (json.ok) {
+      showToast('举报已提交，管理员会尽快处理');
+      closeReportModal();
+    } else {
+      showToast(json.msg || '举报失败');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
     }
-    } else if (json.data && json.data.hidden) {
-    posts = posts.filter(p => p.id !== _reportId);
-    renderNotes(currentFilter);
-    }
-  } else {
-    showToast(json.msg || '举报失败');
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
-  }
   } catch(e) {
   console.error('[举报] 出错', e);
   showToast('网络错误');
@@ -6766,44 +6818,14 @@ function escJsStr(s) {
  }
 
   // ===== 举报问题/回答 =====
-  function reportQAQuestion(id) {
-  if (!currentUser) { showToast('请先登录'); return; }
-  const reason = prompt('请输入举报原因：\n（垃圾信息、不当内容、侮辱欺凌等）', '垃圾信息');
-  if (!reason) return;
-  const key = 'qa_report_q_' + id;
-  if (localStorage.getItem(key)) { showToast('已举报过该问题'); return; }
-  fetch('/api/reports', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },
-  body: JSON.stringify({ type: 'qa_question', targetId: id, reason: reason.trim() })
-  }).then(r => r.json()).then(json => {
-  if (json.ok) {
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 举报已提交，感谢反馈');
-  localStorage.setItem(key, '1');
-  } else {
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + (json.msg || '举报提交失败'));
-  }
-  }).catch(() => showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 网络错误'));
+   function reportQAQuestion(id) {
+    if (!currentUser) { showToast('请先登录'); return; }
+    buildReportBoxFor('qa_question', id, '问答问题', null);
   }
 
   function reportQAAnswer(id) {
-  if (!currentUser) { showToast('请先登录'); return; }
-  const reason = prompt('请输入举报原因：\n（垃圾信息、不当内容、侮辱欺凌等）', '垃圾信息');
-  if (!reason) return;
-  const key = 'qa_report_a_' + id;
-  if (localStorage.getItem(key)) { showToast('已举报过该回答'); return; }
-  fetch('/api/reports', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },
-  body: JSON.stringify({ type: 'qa_answer', targetId: id, reason: reason.trim() })
-  }).then(r => r.json()).then(json => {
-  if (json.ok) {
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 举报已提交，感谢反馈');
-  localStorage.setItem(key, '1');
-  } else {
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + (json.msg || '举报提交失败'));
-  }
-  }).catch(() => showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 网络错误'));
+    if (!currentUser) { showToast('请先登录'); return; }
+    buildReportBoxFor('qa_answer', id, '问答回答', null);
   }
 
   // ===== 我的提问 =====
@@ -6961,24 +6983,8 @@ function escJsStr(s) {
  // ===== 讨论功能 =====
  let currentDiscussionId = null;
 
-  async function reportDiscussionTopic(id) {
-  const reason = prompt('请输入举报原因：');
-  if (!reason) return;
-  try {
-  const res = await fetch('/api/reports', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },
-  body: JSON.stringify({ type: 'discussion', targetId: id, reason })
-  });
-  const json = await res.json();
-  if (json.ok) {
-  showToast('举报已提交，管理员会尽快处理');
-  } else {
-  showToast(json.msg || '举报失败');
-  }
-  } catch (e) {
-  showToast('网络错误');
-  }
+  function reportDiscussionTopic(id) {
+    buildReportBoxFor('discussion', id, '讨论话题', null);
   }
 
   function openDiscussionModal() {
@@ -7245,24 +7251,8 @@ function escJsStr(s) {
  }
  }
 
-  async function reportDiscussionComment(commentId) {
-  const reason = prompt('请输入举报原因：');
-  if (!reason) return;
-  try {
-  const res = await fetch('/api/reports', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', ...authHeaders() },
-  body: JSON.stringify({ type: 'discussion_comment', targetId: commentId, reason })
-  });
-  const json = await res.json();
-  if (json.ok) {
-  showToast('举报已提交');
-  } else {
-  showToast('举报失败：' + (json.msg || ''));
-  }
-  } catch (e) {
-  showToast('网络错误');
-  }
+  function reportDiscussionComment(commentId) {
+    buildReportBoxFor('discussion_comment', commentId, '讨论评论', null);
   }
 
  // 为评论元素添加 data-id 属性（用于嵌套回复定位）
@@ -7304,24 +7294,8 @@ function escJsStr(s) {
  });
  }
 
-  async function promptReportDiscussion(commentId) {
-  const reason = prompt('请输入举报原因：');
-  if (!reason) return;
-  try {
-  const res = await fetch('/api/reports', {
-  method: 'POST',
-  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-  body: JSON.stringify({ type: 'discussion_comment', targetId: commentId, reason })
-  });
-  const json = await res.json();
-  if (json.ok) {
-  showToast('举报已提交，管理员会尽快处理');
-  } else {
-  showToast(json.msg || '举报失败');
-  }
-  } catch (e) {
-  showToast('网络错误');
-  }
+  function promptReportDiscussion(commentId) {
+    buildReportBoxFor('discussion_comment', commentId, '讨论评论', null);
   }
 
  // 重写 submitDiscussionComment 以支持 replyToId
