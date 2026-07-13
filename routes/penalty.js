@@ -51,6 +51,31 @@ module.exports = function (app) {
     res.json({ ok: true, data: enriched });
   });
 
+  // 申诉列表（管理员，关联处罚 + 用户信息）
+  app.get('/api/admin/appeals', requireAdmin, (req, res) => {
+    const { status } = req.query;
+    let filtered = readAppeals();
+    if (status) filtered = filtered.filter(a => a.status === status);
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const punishments = readPunishments();
+    const users = readUsers();
+    const enriched = filtered.map(a => {
+      const p = punishments.find(x => x.punishmentId === a.punishmentId) || null;
+      const u = p ? users.find(x => x.id === p.userId) : null;
+      return {
+        ...a,
+        punishment: p ? {
+          punishmentId: p.punishmentId, level: p.level, reason: p.reason,
+          status: p.status, measures: p.measures, durationDays: p.durationDays,
+          expiresAt: p.expiresAt, appealStatus: p.appealStatus,
+        } : null,
+        userNickname: u ? u.nickname : '未知',
+        userUid: u ? u.uid : null,
+      };
+    });
+    res.json({ ok: true, data: enriched });
+  });
+
   // 处罚详情（含证据快照 + 关联申诉记录）
   app.get('/api/admin/punishments/:id', requireAdmin, (req, res) => {
     const list = readPunishments();
