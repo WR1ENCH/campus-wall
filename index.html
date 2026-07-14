@@ -256,9 +256,96 @@
  width: 100%;
  justify-content: flex-end;
  }
- .action-btns .compose-btn { white-space: nowrap; justify-content: center; }
+  .action-btns .compose-btn { white-space: nowrap; justify-content: center; }
+  .action-btns { position: relative; }
 
- /* ===== 校园墙拍卖滚动栏 ===== */
+  .search-btn { background:#f0e6d8; color:#5a4030; border:1.5px solid #d4c4b0; }
+  .search-btn:hover { background:#e8dccc; }
+
+  .search-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-height: 420px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 300;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .search-dropdown.open { display: flex; }
+  .search-dropdown-input {
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+  }
+  .search-dropdown-input input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e0d8d0;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    background: #faf8f5;
+    transition: border-color 0.2s;
+  }
+  .search-dropdown-input input:focus {
+    border-color: #b8a898;
+    background: #fff;
+  }
+  .search-dropdown-results {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 0;
+  }
+  .search-category {
+    padding: 6px 14px 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #9a8a7a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .search-empty {
+    padding: 24px 14px;
+    text-align: center;
+    color: #b0a090;
+    font-size: 13px;
+  }
+  .search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .search-result-item:hover { background: #f5f0ea; }
+  .search-result-item .sri-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #e8e0d8;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #8a7a6a; overflow: hidden;
+  }
+  .search-result-item .sri-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .search-result-item .sri-info { flex: 1; min-width: 0; }
+  .search-result-item .sri-name { font-size: 13px; font-weight: 600; color: #2c1810; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-result-item .sri-match { font-size: 11px; color: #8a7a6a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-result-item .sri-match em { font-style: normal; color: #c0392b; font-weight: 600; }
+
+  .search-no-results {
+    padding: 32px 14px;
+    text-align: center;
+    color: #b0a090;
+    font-size: 13px;
+  }
+
+  /* ===== 校园墙拍卖滚动栏 ===== */
  .pickup-bar {
  display: inline-flex; align-items: center;
  background: linear-gradient(135deg, #fff7e0, #fffdf5);
@@ -1498,10 +1585,12 @@
  #notifContent { min-height: 200px; }
 
  /* 我的拍卖 */
- #pickupMyBidsList { max-height: 260px !important; }
- }
+  #pickupMyBidsList { max-height: 260px !important; }
 
- /* ===== 桌面端隐藏侧边导航 ===== */
+  .search-dropdown { width: calc(100vw - 24px); max-width: 360px; right: 0; max-height: 360px; }
+  }
+
+  /* ===== 桌面端隐藏侧边导航 ===== */
  @media (min-width: 769px) {
   .side-nav, .side-nav-overlay { display: none !important; }
  }
@@ -2165,6 +2254,13 @@
   <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="btn-label">讨论区</span></button>
   <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="btn-label">你问我答</span></button>
   <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <span class="btn-label">投票</span></button>
+  <button class="compose-btn search-btn" id="searchUserBtn" type="button" onclick="toggleSearchDropdown(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span class="btn-label">找人</span></button>
+  </div>
+  <div class="search-dropdown" id="searchDropdown">
+    <div class="search-dropdown-input">
+      <input type="text" id="searchUserInput" placeholder="搜索账号、昵称、UID或姓名..." autocomplete="off">
+    </div>
+    <div class="search-dropdown-results" id="searchResults"></div>
   </div>
   </div>
 
@@ -7550,9 +7646,91 @@ function escJsStr(s) {
  }
  }
 
- function openProfilePage() {
- var userStr = localStorage.getItem('campus_wall_user');
- if (userStr) {
+  // ===== 用户搜索 =====
+  var _searchTimer = null;
+  function toggleSearchDropdown(e) {
+    e.stopPropagation();
+    var dd = document.getElementById('searchDropdown');
+    var isOpen = dd.classList.contains('open');
+    if (isOpen) { closeSearchDropdown(); return; }
+    dd.classList.add('open');
+    var input = document.getElementById('searchUserInput');
+    input.value = '';
+    document.getElementById('searchResults').innerHTML = '<div class="search-empty">输入关键词开始搜索用户</div>';
+    setTimeout(function() { input.focus(); }, 100);
+  }
+  function closeSearchDropdown() {
+    document.getElementById('searchDropdown').classList.remove('open');
+    if (_searchTimer) { clearTimeout(_searchTimer); _searchTimer = null; }
+  }
+  document.addEventListener('click', function(e) {
+    var dd = document.getElementById('searchDropdown');
+    if (dd.classList.contains('open') && !dd.contains(e.target) && e.target.id !== 'searchUserBtn' && !e.target.closest('#searchUserBtn')) {
+      closeSearchDropdown();
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSearchDropdown();
+  });
+  function doSearch() {
+    var input = document.getElementById('searchUserInput');
+    var q = input.value.trim();
+    var resultsEl = document.getElementById('searchResults');
+    if (!q) { resultsEl.innerHTML = '<div class="search-empty">输入关键词开始搜索用户</div>'; return; }
+    resultsEl.innerHTML = '<div class="search-empty" style="padding:32px">搜索中...</div>';
+    var token = localStorage.getItem('campus_user_token');
+    var headers = {};
+    if (token) headers['x-user-token'] = token;
+    fetch('/api/users/search?q=' + encodeURIComponent(q), { headers: headers })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (!j.ok || !j.data) { resultsEl.innerHTML = '<div class="search-no-results">搜索出错，请重试</div>'; return; }
+        var d = j.data;
+        var hasAny = d.accounts.length || d.nicknames.length || d.uids.length || d.names.length;
+        if (!hasAny) { resultsEl.innerHTML = '<div class="search-no-results">未找到匹配的用户</div>'; return; }
+        var html = '';
+        if (d.accounts.length) {
+          html += '<div class="search-category">匹配账号</div>';
+          d.accounts.forEach(function(u) { html += renderSearchItem(u, u.username, '账号'); });
+        }
+        if (d.nicknames.length) {
+          html += '<div class="search-category">匹配昵称</div>';
+          d.nicknames.forEach(function(u) { html += renderSearchItem(u, u.nickname, '昵称'); });
+        }
+        if (d.uids.length) {
+          html += '<div class="search-category">匹配UID</div>';
+          d.uids.forEach(function(u) { html += renderSearchItem(u, u.uid, 'UID'); });
+        }
+        if (d.names.length) {
+          html += '<div class="search-category">匹配姓名</div>';
+          d.names.forEach(function(u) { html += renderSearchItem(u, u.nickname, '姓名'); });
+        }
+        resultsEl.innerHTML = html;
+      })
+      .catch(function() {
+        resultsEl.innerHTML = '<div class="search-no-results">网络错误，请重试</div>';
+      });
+  }
+  function renderSearchItem(u, matchText, type) {
+    var avatarHtml = u.avatar ? '<img src="' + escHtml(u.avatar) + '" alt="">' : escHtml((u.nickname || '?')[0]);
+    var displayName = escHtml(u.nickname || u.username || '未知');
+    var matchDisplay = escHtml(matchText || '');
+    return '<div class="search-result-item" onclick="window.open(\'user.html?id=' + encodeURIComponent(u.id) + '\',\'_blank\');closeSearchDropdown()">' +
+      '<div class="sri-avatar">' + avatarHtml + '</div>' +
+      '<div class="sri-info"><div class="sri-name">' + displayName + '</div><div class="sri-match">' + matchDisplay + '</div></div></div>';
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('searchUserInput');
+    if (!input) return;
+    input.addEventListener('input', function() {
+      if (_searchTimer) clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(doSearch, 300);
+    });
+  });
+
+  function openProfilePage() {
+  var userStr = localStorage.getItem('campus_wall_user');
+  if (userStr) {
  try {
  var u = JSON.parse(userStr);
  if (u.id) {
