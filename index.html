@@ -263,7 +263,7 @@
   .search-btn:hover { background:#e8dccc; }
 
   .search-dropdown {
-    display: none;
+    display: flex;
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
@@ -275,15 +275,16 @@
     z-index: 300;
     overflow: hidden;
     flex-direction: column;
+    visibility: hidden;
     opacity: 0;
-    transform: translateY(-6px) scale(0.97);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateY(-8px);
+    transition: visibility 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
     pointer-events: none;
   }
   .search-dropdown.open {
-    display: flex;
+    visibility: visible;
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     pointer-events: auto;
   }
   .search-dropdown-input {
@@ -2265,6 +2266,12 @@
   <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <span class="btn-label">投票</span></button>
   <button class="compose-btn" style="background:#fce4ec;color:#880e4f;border:1.5px solid #f48fb1;" type="button" onclick="openWhisperModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="9" y1="12" x2="15" y2="12"/></svg> <span class="btn-label">悄悄话</span></button>
   <button class="compose-btn search-btn" id="searchUserBtn" type="button" onclick="toggleSearchDropdown(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span class="btn-label">找人</span></button>
+  </div>
+  <div class="search-dropdown" id="searchDropdown">
+    <div class="search-dropdown-input">
+      <input type="text" id="searchUserInput" placeholder="搜索账号、昵称、UID或姓名..." autocomplete="off">
+    </div>
+    <div class="search-dropdown-results" id="searchResults"></div>
   </div>
   </div>
 
