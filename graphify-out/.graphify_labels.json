@@ -54,5 +54,10 @@
   "52": "校园墙微信小程序",
   "53": "app.js",
   "54": "为项目加入搜索用户功能",
-  "55": "longbow.slidercaptcha.min.js"
+  "55": "longbow.slidercaptcha.min.js",
+  "56": "penalty.js",
+  "57": "student-council.js",
+  "58": "hotness.js",
+  "59": "verifySignedToken",
+  "60": "9. 变更记录（Changelog）"
 }

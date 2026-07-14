@@ -133,7 +133,6 @@ module.exports = function(app) {
       if (!entry || !entry.verified) {
         return res.json({ ok: false, msg: '请完成人机验证' });
       }
-      captchaStore.delete(captchaId);
     }
     if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
       return res.json({ ok: false, msg: '账号需 3-16 位字母、数字、下划线' });
@@ -175,6 +174,7 @@ module.exports = function(app) {
     };
     users.push(newUser);
     writeUsers(users);
+    if (!maintenance.isBotTesting()) captchaStore.delete(captchaId);
   
     res.json({
       ok: true,
@@ -203,7 +203,6 @@ module.exports = function(app) {
       if (!entry || !entry.verified) {
         return res.json({ ok: false, msg: '请完成人机验证' });
       }
-      captchaStore.delete(captchaId);
     }
 
     const users = readUsers();
@@ -224,6 +223,7 @@ module.exports = function(app) {
     }
     const isBanned = user.status === 'banned';
     addLoginLog('user', user.nickname, !isBanned, ip, ua);
+    if (!maintenance.isBotTesting()) captchaStore.delete(captchaId);
     res.json({
       ok: true,
       banned: isBanned,
@@ -254,7 +254,6 @@ module.exports = function(app) {
       if (!entry || !entry.verified) {
         return res.json({ ok: false, msg: '请完成人机验证' });
       }
-      captchaStore.delete(captchaId);
     }
 
     if (!zhixueUsername || !password) {
@@ -298,6 +297,7 @@ module.exports = function(app) {
     }
     const isBanned = user.status === 'banned';
     addLoginLog('user', user.nickname, !isBanned, ip, ua);
+    if (!maintenance.isBotTesting()) captchaStore.delete(captchaId);
     res.json({
       ok: true,
       banned: isBanned,
@@ -999,7 +999,7 @@ module.exports = function(app) {
 // ===== 用户搜索 =====
 app.get('/api/users/search', (req, res) => {
   const q = (req.query.q || '').trim();
-  if (!q || q.length < 1) return res.json({ ok: true, data: { accounts: [], nicknames: [], uids: [], names: [] } });
+  if (!q || q.length < 2) return res.json({ ok: true, data: { accounts: [], nicknames: [], uids: [], names: [] } });
 
   const users = readUsers();
   const results = { accounts: [], nicknames: [], uids: [], names: [] };
