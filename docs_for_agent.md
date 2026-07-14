@@ -972,3 +972,33 @@ server.js
 **首页 Credit 按钮 `index.html`**
 - `.action-btns` 中 hamburger 按钮后新增 Credits 按钮：金黄色 `var(--brand-gold)` 背景，显示积分余额，点击新窗打开 `credit.html`。
 - `updateUserBar()` 中同步刷新 `#actionBarCredit`，覆盖登录态切换、签到后刷新等场景。
+
+### 会话 6 — 2026-07-14 · 悄悄话重设计 + 人机验证优化 + 登录刷新
+
+**Task 1：悄悄话发送窗口重设计**
+- 推翻旧暖色胶带风格，采用全新扁平现代化设计：
+  - 纯白卡片圆角 `16px`、毛玻璃模糊背景（`.whisper-modal-overlay` `backdrop-filter: blur(4px)`）
+  - 粉红主题色（`#e91e63`）点缀输入框 focus 边框和发送按钮
+  - 搜索输入框圆角 `12px`，focus 时边框变色过渡
+  - 搜索结果显示四类分类标题（匹配账号/匹配昵称/匹配UID/匹配姓名），每项带错落 `stagger` 动画（每项延迟 30ms）
+  - 已通过智学认证的用户显示绿色 ✅ 已认证徽标
+  - 选中用户区域圆角 `12px`、浅粉背景、头像预览
+  - 弹窗打开 `whisperIn` 动画（`scale(0.92) → scale(1)` + `translateY(16px) → 0`，`cubic-bezier(0.16,1,0.3,1)`）
+  - 发送按钮 hover 上移 + 阴影；active 回弹
+- 删除旧的 `.tape` 胶带装饰、`fadeSlideIn` 动画
+- 影响文件：`index.html`（HTML + CSS + JS）
+
+**Task 2：登录后硬刷新**
+- `doUserLogin()` / `doUserRegister()` / `doZhixueLogin()` 三个成功分支全部改为 `window.top.location.reload(true)`，实现 Ctrl+Shift+R 级别的完全硬刷新（清缓存重载全部资源）
+- 移除旧的 toast 提示、信任浏览器弹窗、公告检查等页面内操作（刷新后由新页面自动处理）
+- 影响文件：`index.html`
+
+**Task 3：人机验证通过一次免二次验证**
+- 引入 `_humanVerified` 全局标志 + `sessionStorage` 持久化（页面刷新后仍保持）
+- 首次滑块验证成功后 `_humanVerified = true`，写入 `sessionStorage`
+- `showPostCaptchaModal()` 检测 `_humanVerified = true` 时直接调 grant 拿 token → 提交，跳过滑块 UI
+- Bot-testing 模式同步设置 `_humanVerified`
+- 影响文件：`index.html`
+
+**API 增强**：用户搜索 `/api/users/search` 返回结果增加 `zhixueStatus` 和 `certRealName` 字段，供前端展示认证状态。
+- 影响文件：`routes/user.js`
