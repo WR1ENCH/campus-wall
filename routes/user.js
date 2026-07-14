@@ -995,7 +995,7 @@ app.get('/api/users/search', (req, res) => {
 
   for (const user of users) {
     if (user.status === 'banned') continue;
-    const base = { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar };
+    const base = { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, zhixueStatus: user.zhixueStatus || null, certRealName: user.certRealName || null };
 
     if (user.username && user.username.toLowerCase().includes(ql) && results.accounts.length < LIMIT && !seen.has('a' + user.id)) {
       results.accounts.push(base); seen.add('a' + user.id);
