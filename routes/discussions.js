@@ -6,6 +6,7 @@ const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -147,6 +148,11 @@ app.post('/api/discussions', (req, res) => {
         if (user.zhixueStatus !== 'approved' || !user.zhixueReviewedBy) {
           return res.json({ ok: false, msg: '仅学生认证用户可创建话题，请先完成同学认证', code: 'NOT_VERIFIED' });
         }
+        // 信用分检测
+        if (credibility.isFeatureBlocked(session.id, 'post')) {
+          return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+        }
+
         // 处罚限制检测
         if (isFeatureBlocked(session.id, 'post')) {
           return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
@@ -277,6 +283,11 @@ app.post('/api/discussions/:id/comments', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  // 信用分检测
+  if (credibility.isFeatureBlocked(session.id, 'post')) {
+    return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+  }
 
   // 处罚限制检测
   if (isFeatureBlocked(session.id, 'post')) {

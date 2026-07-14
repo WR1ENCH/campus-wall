@@ -3,6 +3,7 @@ const { generateId, logIdAssignment } = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked, emitUserNotice } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 const db = require('../db');
 
 const WHISPER_MAX_LENGTH = 50;
@@ -18,6 +19,10 @@ module.exports = function(app) {
     if (!receiverId || !content) return res.json({ ok: false, msg: '接收者和内容不能为空' });
     if (content.length > WHISPER_MAX_LENGTH) return res.json({ ok: false, msg: '内容不能超过' + WHISPER_MAX_LENGTH + '字' });
     if (receiverId === session.id) return res.json({ ok: false, msg: '不能给自己发悄悄话' });
+
+    if (credibility.isFeatureBlocked(session.id, 'whisper')) {
+      return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+    }
 
     if (isFeatureBlocked(session.id, 'whisper')) {
       return res.json({ ok: false, msg: '当前账号功能受限，无法发送悄悄话', code: 'FEATURE_BLOCKED' });

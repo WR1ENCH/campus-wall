@@ -7,6 +7,7 @@ const maintenance = require('../maintenance');
 const { check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist } = require('../sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames } = require('../bullyingNames');
 const penalty = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -46,6 +47,9 @@ function hasAdmins() { return db.readAdmins().length > 0; }
 
 function generateUID() {
   return require('../lib/uniqueId').generateUID();
+}
+function genCredId() {
+  return require('../lib/uniqueId').generateId('CRDL');
 }
 
 function addLoginLog(type, account, success, ip, ua) {
@@ -710,11 +714,13 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   users[userIndex].certClassName = className && className.trim() ? encryptCert(className.trim()) : null;
 
   if (isManual) {
-    // 手动认证直接通过，奖励 Credits
+    // 手动认证直接通过，奖励 Credits + 信用分
     users[userIndex].credit = (users[userIndex].credit || 0) + 300;
+    writeUsers(users);
+    credibility.addZhixueBonus(u.id);
+  } else {
+    writeUsers(users);
   }
-
-  writeUsers(users);
 
   // ponytail: aeed436 路由拆分时遗漏——认证通过后未通知用户
   pushUserNotice(users[userIndex].id, isManual ? '✅ 学生认证已通过' : '✅ 学生认证初审通过',
@@ -1150,7 +1156,11 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
     .slice(0, 20)
     .map(r => ({ id: r.id, time: r.time, reason: r.reason, type: r.type, status: r.status }));
-  res.json({ ok: true, data: { ...safeUser, postCount: userPosts.length, posts: userPosts, reports: userReports } });
+  const credibilityLogs = db.readCredibilityLogs()
+    .filter(l => l.userId === user.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
+  res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
 });
 
 // ===== Credit / 卡密管理 =====
@@ -1250,6 +1260,57 @@ app.post('/api/admin/credit/deduct', requireAdmin, requireSuper, (req, res) => {
   writeCreditLogs(logs);
   console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 扣除用户 ' + userId + ' 的 ' + num + ' Credit');
   res.json({ ok: true, data: { credit: users[idx].credit } });
+});
+
+// ===== 信用分管理（管理员） =====
+app.get('/api/admin/credibility-logs', requireAdmin, (req, res) => {
+  const { userId } = req.query;
+  let logs = db.readCredibilityLogs();
+  if (userId) logs = logs.filter(l => l.userId === userId);
+  logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: logs });
+});
+
+app.post('/api/admin/user/:id/credibility', requireAdmin, (req, res) => {
+  const { action, amount, reason } = req.body;
+  const targetUserId = req.params.id;
+  if (!['set', 'add', 'deduct'].includes(action)) return res.json({ ok: false, msg: '操作类型无效' });
+  const num = parseInt(amount);
+  if (isNaN(num) || num < 0) return res.json({ ok: false, msg: '请输入有效数量' });
+  const users = readUsers();
+  const idx = users.findIndex(u => u.id === targetUserId);
+  if (idx === -1) return res.json({ ok: false, msg: '用户不存在' });
+  const current = users[idx].credibility_score != null ? users[idx].credibility_score : 90;
+  let newScore;
+  let changeAmount;
+  let logReason;
+  if (action === 'set') {
+    newScore = Math.max(0, Math.min(100, num));
+    changeAmount = newScore - current;
+    logReason = '管理员设置信用分为 ' + newScore + (reason ? '（' + reason + '）' : '');
+  } else if (action === 'add') {
+    newScore = current + num;
+    changeAmount = num;
+    logReason = '管理员增加 ' + num + ' 信用分' + (reason ? '（' + reason + '）' : '');
+  } else {
+    newScore = Math.max(0, current - num);
+    changeAmount = -(current - newScore);
+    logReason = '管理员扣除 ' + (current - newScore) + ' 信用分' + (reason ? '（' + reason + '）' : '');
+  }
+  users[idx].credibility_score = newScore;
+  writeUsers(users);
+  const log = {
+    id: genCredId(),
+    userId: targetUserId,
+    amount: changeAmount,
+    score: newScore,
+    reason: logReason + '（经办人：' + req.admin.id + '）',
+    type: 'admin',
+    createdAt: new Date().toISOString(),
+  };
+  db.insertCredibilityLog(log);
+  console.warn('[AUDIT] 管理员 ' + req.admin.id + ' 修改用户 ' + targetUserId + ' 信用分: ' + current + ' -> ' + newScore);
+  res.json({ ok: true, data: { score: newScore, change: changeAmount } });
 });
 
 // ===== 数据总览 =====

@@ -7,6 +7,7 @@ const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 const { createReport } = require('../routes/reports');
 
 function readPickupAuctions() { return db.readPickupAuctions(); }
@@ -136,6 +137,11 @@ app.post('/api/pickup/bid', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期' });
+
+  // 信用分检测
+  if (credibility.isFeatureBlocked(session.id, 'anonymous_post')) {
+    return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+  }
 
   // 处罚限制检测
   if (isFeatureBlocked(session.id, 'auction')) {

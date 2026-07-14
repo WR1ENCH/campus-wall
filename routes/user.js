@@ -9,6 +9,7 @@ const nodeCrypto = require('crypto');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const maintenance = require('../maintenance');
+const credibility = require('../lib/credibility');
 
 // ===== 本地数据访问包装（兼容旧式 readXxx/writeXxx 调用模式） =====
 function readUsers() { return db.readUsers(); }
@@ -167,7 +168,10 @@ module.exports = function(app) {
       status: 'active',
       postCount: 0,
       bindAdminId: null,
-      bindAdminRole: null
+      bindAdminRole: null,
+      credibility_score: 90,
+      credibility_exchanged_total: 0,
+      credibility_last_refresh: new Date().toISOString()
     };
     users.push(newUser);
     writeUsers(users);
@@ -962,7 +966,7 @@ module.exports = function(app) {
     // 奖励 Credits（确认时才发放）
     users[userIndex].credit = (users[userIndex].credit || 0) + 300;
     writeUsers(users);
-  
+    credibility.addZhixueBonus(session.id);
     res.json({ ok: true, msg: '认证信息已确认，欢迎！' });
   });
   app.post('/api/user/deny-zhixue', (req, res) => {
@@ -1213,5 +1217,61 @@ app.get('/api/users/:id/posts', (req, res) => {
     const notifications = readUserNotifications().filter(n => n.userId === session.id && !n.read);
     notifications.forEach(n => markNotificationRead(session.id, n.notificationId));
     res.json({ ok: true, msg: '全部已标记为已读' });
+  });
+
+  // ===== 信用分（Credibility Score） API =====
+  app.get('/api/user/credibility-info', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const info = credibility.getScore(session.id);
+    if (!info) return res.json({ ok: false, msg: '用户不存在' });
+    const users = readUsers();
+    const user = users.find(u => u.id === session.id);
+    if (user) credibility.checkAndRefresh(user);
+    const logs = db.readCredibilityLogs()
+      .filter(l => l.userId === session.id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const rate = credibility.getExchangeRate(info.exchangedTotal);
+    const maxExchange = credibility.CREDIBILITY_MAX_EXCHANGE;
+    const remainingExchange = maxExchange - info.exchangedTotal;
+    res.json({
+      ok: true,
+      data: {
+        score: info.score,
+        exchangedTotal: info.exchangedTotal,
+        lastRefresh: info.lastRefresh,
+        credit: info.credit,
+        exchangeRate: rate,
+        remainingExchange,
+        maxExchange,
+        logs,
+        thresholds: credibility.THRESHOLDS,
+      }
+    });
+  });
+
+  app.post('/api/user/exchange-credibility', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const { credits } = req.body;
+    const amount = parseInt(credits);
+    if (!amount || amount <= 0) return res.json({ ok: false, msg: '请输入有效的 credits 数量' });
+    const result = credibility.exchangeCredits(session.id, amount);
+    res.json(result);
+  });
+
+  app.get('/api/user/credibility-logs', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期' });
+    const logs = db.readCredibilityLogs()
+      .filter(l => l.userId === session.id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({ ok: true, data: logs });
   });
 };
