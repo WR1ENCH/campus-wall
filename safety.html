@@ -349,15 +349,18 @@ body{
 
 .tab-content{
   position:relative;min-height:200px;
+  transition:min-height .35s var(--ease-out);
 }
 .tab-panel{
-  display:none;
-  animation:panelIn .3s var(--ease-out);
+  position:absolute;inset:0;
+  opacity:0;transform:translateY(8px);
+  pointer-events:none;
+  transition:opacity .3s ease,transform .35s var(--ease-out);
 }
-.tab-panel.active{display:block;}
-@keyframes panelIn{
-  from{opacity:0;transform:translateY(8px);}
-  to{opacity:1;transform:translateY(0);}
+.tab-panel.active{
+  opacity:1;transform:translateY(0);
+  position:relative;
+  pointer-events:auto;
 }
 
 /* ===== 列表卡片(沿用项目卡片模式) ===== */
@@ -814,6 +817,15 @@ function switchTab(name){
   if(name==='reports'&&state.data){
     renderReportsTab(state.data);
   }
+  fixTabContentHeight();
+}
+
+function fixTabContentHeight(){
+  var reportsH=document.getElementById('tabReportsBody').scrollHeight;
+  var punishH=document.getElementById('tabPunishmentsBody').scrollHeight;
+  var maxH=Math.max(reportsH,punishH,200);
+  var tc=document.querySelector('.tab-content');
+  tc.style.minHeight=maxH+'px';
 }
 
 function moveTabIndicator(){
@@ -1174,6 +1186,7 @@ async function loadData(){
   renderDashboard(state.data);
   renderReportsTab(state.data);
   renderPunishmentsTab(state.data);
+  fixTabContentHeight();
   startCountdownTimer();
 }
 
