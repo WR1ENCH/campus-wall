@@ -143,6 +143,10 @@ app.post('/api/discussions', (req, res) => {
       const users = readUsers();
       const user = users.find(u => u.id === session.id);
       if (user && user.status !== 'banned') {
+        // 学生认证检查：仅认证通过的用户可创建话题
+        if (user.zhixueStatus !== 'approved' || !user.zhixueReviewedBy) {
+          return res.json({ ok: false, msg: '仅学生认证用户可创建话题，请先完成同学认证', code: 'NOT_VERIFIED' });
+        }
         // 处罚限制检测
         if (isFeatureBlocked(session.id, 'post')) {
           return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
@@ -195,11 +199,12 @@ app.post('/api/discussions', (req, res) => {
   const newDiscussion = {
     id: uniqueId.generateId('DISC'),
     title: title.trim(),
-    expiresAt: expiresAt || null, // null 表示无限期
+    expiresAt: expiresAt || null,
     deleted: false,
     createdAt: new Date().toISOString(),
     createdBy: creatorName,
-    commentCount: 0
+    commentCount: 0,
+    ...(isUser ? {} : { official: true })
   };
   discussions.push(newDiscussion);
   writeDiscussions(discussions);

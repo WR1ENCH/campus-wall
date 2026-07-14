@@ -715,33 +715,47 @@
 
  /* ===== 问答系统 ===== */
  .qa-tab {
- padding: 5px 14px; border-radius: 20px; border: 1.5px solid #e8c84a;
- background: transparent; color: #7a5700; font-size: 13px; cursor: pointer; transition: .15s;
+ padding: 6px 18px; border-radius: 20px; border: 1.5px solid #d4a537;
+ background: transparent; color: #7a5700; font-size: 13px; cursor: pointer;
+ transition: all .25s cubic-bezier(0.34,1.56,0.64,1); font-weight: 500;
+ font-family: inherit; position: relative;
  }
- .qa-tab.active { background: #f5c518; font-weight: 700; }
+ .qa-tab:hover { background: rgba(212, 165, 55, 0.08); transform: translateY(-1px); }
+ .qa-tab.active { background: #d4a537; color: #fff; font-weight: 600; box-shadow: 0 2px 8px rgba(212, 165, 55, 0.3); }
  .qa-filter-btn {
- padding: 5px 12px; border-radius: 20px; border: 1.5px solid #e0d080;
- background: #fffef5; color: #7a5700; font-size: 12px; cursor: pointer; transition: .15s;
+ padding: 5px 14px; border-radius: 20px; border: 1.5px solid #ece3c0;
+ background: rgba(255, 254, 245, 0.6); color: #7a5700; font-size: 12px;
+ cursor: pointer; transition: all .2s; font-family: inherit;
  }
- .qa-filter-btn.active { background: #f5c518; border-color: #f5c518; font-weight: 700; }
+ .qa-filter-btn:hover { background: rgba(212, 165, 55, 0.08); border-color: #d4a537; }
+ .qa-filter-btn.active { background: #d4a537; border-color: #d4a537; color: #fff; font-weight: 600; box-shadow: 0 2px 6px rgba(212, 165, 55, 0.25); }
  .qa-question-card {
- background: #fffef5; border: 1.5px solid #f0e8a0; border-radius: 14px;
- padding: 14px 16px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .15s, transform .1s;
+ background: #fff; border: 1px solid #efe9d6; border-radius: 14px;
+ padding: 16px 18px; margin-bottom: 10px; cursor: pointer;
+ transition: all .2s cubic-bezier(0.34,1.56,0.64,1);
+ box-shadow: 0 1px 3px rgba(0,0,0,0.03);
  }
- .qa-question-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+ .qa-question-card:hover {
+ box-shadow: 0 6px 20px rgba(212, 165, 55, 0.10);
+ transform: translateY(-2px); border-color: #d4a537;
+ }
  .qa-answer-card {
- background: #f8fffe; border: 1.5px solid #d0ede8; border-radius: 12px;
- padding: 12px 14px; margin-bottom: 10px;
+ background: #fafcfa; border: 1px solid #e0e8e0; border-radius: 12px;
+ padding: 14px 16px; margin-bottom: 10px;
+ transition: all .2s;
  }
+ .qa-answer-card:hover { border-color: #b0c8b0; }
  .qa-answer-card.accepted { background: #f0fdf4; border-color: #4caf50; }
  .qa-img-add {
  display: flex; align-items: center; justify-content: center;
- width: 60px; height: 60px; border-radius: 10px; border: 2px dashed #e8c84a;
- font-size: 24px; color: #e8c84a; cursor: pointer; background: #fffef5;
+ width: 60px; height: 60px; border-radius: 10px; border: 2px dashed #d4a537;
+ font-size: 24px; color: #d4a537; cursor: pointer; background: rgba(255,254,245,0.5);
+ transition: all .2s;
  }
+ .qa-img-add:hover { background: rgba(212,165,55,0.06); border-color: #b8912a; }
  .qa-img-thumb {
  position: relative; width: 60px; height: 60px; border-radius: 10px;
- overflow: hidden; border: 1.5px solid #e8c84a;
+ overflow: hidden; border: 1.5px solid #d4a537;
  }
  .qa-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
  .qa-img-thumb .qa-img-del {
@@ -749,9 +763,25 @@
  color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px;
  font-size: 11px; cursor: pointer; line-height: 18px; text-align: center; padding: 0;
  }
- .qa-badge-open { background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
- .qa-badge-accepted { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
- .qa-badge-expired { background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+ .qa-badge-open { background: #e8f5e9; color: #2e7d32; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+ .qa-badge-accepted { background: #e3f2fd; color: #1565c0; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+ .qa-badge-expired { background: #fff3e0; color: #e65100; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+ /* QA report button */
+ .qa-report-btn {
+ display: inline-flex; align-items: center; gap: 3px;
+ background: none; border: none; color: #bbb; cursor: pointer;
+ font-size: 12px; padding: 4px 6px; border-radius: 6px;
+ transition: all .2s; font-family: inherit; vertical-align: middle;
+ }
+ .qa-report-btn:hover { color: #e04; background: rgba(239,68,68,0.08); }
+ .qa-report-btn.reported { color: #e04; opacity: 0.6; cursor: default; }
+
+ /* QA tab page transition */
+ @keyframes qaPageIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
 
  /* QA 弹窗入场动画 */
  @keyframes qaIn {
@@ -1766,8 +1796,8 @@
  .note-detail-box .detail-close:hover { background: rgba(0,0,0,0.18); }
 
  /* ===== 举报弹窗（层级要高于帖子详情弹窗）===== */
- .report-overlay {
- display: none; position: fixed; inset: 0; z-index: 1100;
+.report-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
  background: rgba(0,0,0,0.55);
  align-items: center; justify-content: center;
  backdrop-filter: blur(3px);
@@ -1798,161 +1828,223 @@
  .report-box .detail-close:hover { background: rgba(0,0,0,0.12); }
 
 /* ===== 讨论弹窗 ===== */
- .discussion-overlay {
- display: none; position: fixed; inset: 0; z-index: 3000;
- background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
- align-items: center; justify-content: center;
- }
- .discussion-overlay.show { display: flex; }
- .discussion-modal {
- background: white; border-radius: 18px;
- width: 92%; max-width: 620px; max-height: 82vh;
- overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
- display: flex; flex-direction: column;
- animation: discIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
- }
- @keyframes discIn {
- from { opacity: 0; transform: translateY(20px) scale(0.96); }
- to { opacity: 1; transform: translateY(0) scale(1); }
- }
- .discussion-header {
- padding: 20px 24px 16px;
- display: flex; align-items: center; justify-content: space-between;
- border-bottom: 1px solid rgba(0,0,0,0.08);
- }
- .discussion-header h3 { font-size: 20px; font-weight: 700; margin: 0; color: #1a1a2e; }
- .discussion-close {
- background: rgba(0,0,0,0.06); border: none; font-size: 22px; cursor: pointer;
- width: 36px; height: 36px; border-radius: 50%;
- display: flex; align-items: center; justify-content: center;
- color: #6b7280; transition: all 0.15s;
- }
- .discussion-close:hover { background: rgba(0,0,0,0.12); color: #1a1a2e; }
- .discussion-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.discussion-overlay {
+  display: none; position: fixed; inset: 0; z-index: 3000;
+  background: rgba(60,40,20,0.5); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center;
+}
+.discussion-overlay.show { display: flex; }
+.discussion-modal {
+  background: #fefcf7; border-radius: 20px;
+  width: 92%; max-width: 620px; max-height: 82vh;
+  overflow: hidden; box-shadow: 0 25px 80px rgba(60,40,20,0.3);
+  display: flex; flex-direction: column;
+  animation: discIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes discIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.discussion-header {
+  padding: 20px 24px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(139,111,94,0.15);
+}
+.discussion-header h3 { font-size: 20px; font-weight: 700; margin: 0; color: #5a3d00; }
+.discussion-close {
+  background: rgba(139,111,94,0.1); border: none; font-size: 20px; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #8b6f5e; transition: all 0.2s; line-height: 1;
+}
+.discussion-close:hover { background: rgba(139,111,94,0.2); color: #5a3d00; transform: rotate(90deg); }
+.discussion-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
 
- /* 话题列表 */
- .discussion-topics { display: flex; flex-direction: column; gap: 14px; }
- .discussion-topic {
- padding: 18px 20px; border-radius: 14px;
- border: 2px solid rgba(0,0,0,0.08); cursor: pointer;
- transition: all 0.2s; position: relative;
- }
- .discussion-topic:hover { border-color: #3d6ce8; background: #f8f9ff; transform: translateY(-1px); }
- .discussion-topic h4 { font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #1a1a2e; }
- .discussion-topic-meta { font-size: 13px; color: #6b7280; }
+/* 话题列表 */
+.discussion-topics { display: flex; flex-direction: column; gap: 12px; }
+.discussion-topic {
+  padding: 18px 20px; border-radius: 14px;
+  border: 1.5px solid rgba(139,111,94,0.15); cursor: pointer;
+  transition: all 0.25s ease; position: relative;
+  background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.discussion-topic:hover {
+  border-color: #8b6f5e; background: #fcf8f0;
+  transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139,111,94,0.12);
+}
+.discussion-topic h4 { font-size: 16px; font-weight: 700; margin: 0 0 8px 0; color: #5a3d00; }
+.discussion-topic-meta {
+  font-size: 13px; color: #8b6f5e;
+  display: flex; align-items: center; gap: 6px;
+}
+.discussion-topic-report {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  font-size: 12px; color: #a08878; padding: 4px 8px;
+  border-radius: 6px; transition: all 0.15s; font-family: inherit;
+}
+.discussion-topic-report:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+.official-badge {
+  margin-left: auto; font-size: 13px; font-weight: 700;
+  color: #8b6f5e; display: inline-flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
 
- /* 评论区 */
- .discussion-comments { display: flex; flex-direction: column; gap: 16px; }
- .discussion-back {
- background: none; border: none; color: #3d6ce8; cursor: pointer;
- font-size: 14px; padding: 6px 0; margin-bottom: 10px; font-family: inherit; font-weight: 600;
- align-self: flex-start;
- }
- .discussion-back:hover { text-decoration: underline; }
- #currentDiscussionTitle { font-size: 17px; font-weight: 700; margin: 0 0 14px 0; color: #1a1a2e; }
+/* 评论区 */
+.discussion-comments { display: flex; flex-direction: column; gap: 16px; }
+.discussion-back {
+  background: none; border: none; color: #8b6f5e; cursor: pointer;
+  font-size: 14px; padding: 6px 0; margin-bottom: 10px;
+  font-family: inherit; font-weight: 600;
+  align-self: flex-start; transition: all 0.2s;
+}
+.discussion-back:hover { color: #5a3d00; transform: translateX(-3px); }
+#currentDiscussionTitle { font-size: 17px; font-weight: 700; margin: 0 0 14px 0; color: #5a3d00; }
 
- /* 评论输入框 */
- .discussion-comment-input { display: flex; gap: 10px; margin-bottom: 18px; align-items: flex-end; }
- .discussion-comment-input textarea {
- flex: 1; padding: 12px 14px; border: 2px solid rgba(0,0,0,0.12);
- border-radius: 12px; font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
- outline: none; resize: vertical; min-height: 60px; color: #1a1a2e;
- transition: border-color 0.2s;
- }
- .discussion-comment-input textarea:focus { border-color: #3d6ce8; }
- .discussion-comment-input button {
- padding: 12px 22px; background: linear-gradient(135deg, #3d6ce8, #2563eb);
- color: white; border: none; border-radius: 12px; cursor: pointer;
- font-size: 14px; font-weight: 700; font-family: inherit;
- transition: transform 0.15s, box-shadow 0.15s;
- box-shadow: 0 3px 10px rgba(59,130,246,0.25);
- }
- .discussion-comment-input button:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(59,130,246,0.35); }
+/* 评论输入框 */
+.discussion-comment-input { display: flex; gap: 10px; margin-bottom: 18px; align-items: flex-end; }
+.discussion-comment-input textarea {
+  flex: 1; padding: 12px 14px; border: 1.5px solid rgba(139,111,94,0.2);
+  border-radius: 12px; font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+  outline: none; resize: vertical; min-height: 60px; color: #5a3d00;
+  transition: border-color 0.2s; background: rgba(255,255,255,0.8);
+}
+.discussion-comment-input textarea:focus {
+  border-color: #8b6f5e; box-shadow: 0 0 0 3px rgba(139,111,94,0.1);
+}
+.discussion-comment-input button {
+  padding: 12px 22px; background: #8b6f5e;
+  color: white; border: none; border-radius: 12px; cursor: pointer;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  transition: all 0.2s;
+  box-shadow: 0 3px 12px rgba(139,111,94,0.25);
+}
+.discussion-comment-input button:hover {
+  transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,111,94,0.3);
+  background: #7a5f4e;
+}
 
- /* 评论列表 */
- .discussion-comments-list { display: flex; flex-direction: column; gap: 14px; }
- .discussion-comment {
- padding: 14px 16px; border-radius: 12px; background: #f8f9ff;
- position: relative; border: 1px solid rgba(0,0,0,0.04);
- }
- .discussion-comment-header {
- display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
- }
- .discussion-comment-avatar { font-size: 22px; }
- .discussion-comment-author { font-size: 14px; font-weight: 600; color: #1a1a2e; }
- .discussion-comment-time { font-size: 11px; color: #9ca3af; margin-left: auto; }
- .discussion-comment-content { font-size: 14px; color: #374151; line-height: 1.65; white-space: pre-wrap; }
- .discussion-comment-actions {
- display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
- }
- .discussion-comment-actions button {
- background: none; border: none; cursor: pointer;
- font-size: 12px; padding: 5px 10px; border-radius: 6px;
- transition: all 0.15s; font-family: inherit;
- }
- .reply-btn { color: #3d6ce8; }
- .reply-btn:hover { background: #eff6ff; }
- .delete-btn { color: #ef4444; }
- .delete-btn:hover { background: #fee2e2; }
- .report-btn { color: #f59e0b; }
- .report-btn:hover { background: #fef3c7; }
+/* 评论列表 */
+.discussion-comments-list { display: flex; flex-direction: column; gap: 14px; }
+.discussion-comment {
+  padding: 14px 16px; border-radius: 12px;
+  background: rgba(255,255,255,0.6);
+  position: relative; border: 1px solid rgba(139,111,94,0.1);
+}
+.discussion-comment-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.discussion-comment-avatar { font-size: 22px; }
+.discussion-comment-author { font-size: 14px; font-weight: 600; color: #5a3d00; }
+.discussion-comment-time { font-size: 11px; color: #a08878; margin-left: auto; }
+.discussion-comment-content { font-size: 14px; color: #4a3a2a; line-height: 1.65; white-space: pre-wrap; }
+.discussion-comment-actions {
+  display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+}
+.discussion-comment-actions button {
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; padding: 5px 10px; border-radius: 6px;
+  transition: all 0.15s; font-family: inherit;
+}
+.reply-btn { color: #8b6f5e; }
+.reply-btn:hover { background: rgba(139,111,94,0.08); }
+.delete-btn { color: #dc2626; }
+.delete-btn:hover { background: rgba(220,38,38,0.08); }
+.report-btn { color: #a08878; }
+.report-btn:hover { background: rgba(239,68,68,0.08); color: #dc2626; }
 
- /* 嵌套回复 */
- .discussion-replies {
- margin-left: 24px; margin-top: 12px;
- display: flex; flex-direction: column; gap: 10px;
- border-left: 2px solid rgba(0,0,0,0.06); padding-left: 14px;
- }
- .discussion-reply {
- padding: 12px 14px; border-radius: 10px;
- background: white; border: 1px solid rgba(0,0,0,0.06);
- }
- .discussion-reply-header {
- display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
- }
- .discussion-reply-avatar { font-size: 18px; }
- .discussion-reply-author { font-size: 13px; font-weight: 600; color: #374151; }
- .discussion-reply-time { font-size: 11px; color: #9ca3af; margin-left: auto; }
- .discussion-reply-content { font-size: 13px; color: #4b5563; line-height: 1.55; white-space: pre-wrap; }
- .discussion-reply-actions {
- display: flex; gap: 6px; margin-top: 8px;
- }
- .discussion-reply-actions button {
- background: none; border: none; cursor: pointer;
- font-size: 11px; padding: 4px 8px; border-radius: 5px;
- transition: all 0.15s; font-family: inherit;
- }
-.discussion-empty { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
+/* 嵌套回复 */
+.discussion-replies {
+  margin-left: 24px; margin-top: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-left: 2px solid rgba(139,111,94,0.1); padding-left: 14px;
+}
+.discussion-reply {
+  padding: 12px 14px; border-radius: 10px;
+  background: white; border: 1px solid rgba(139,111,94,0.08);
+}
+.discussion-reply-header {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.discussion-reply-avatar { font-size: 18px; }
+.discussion-reply-author { font-size: 13px; font-weight: 600; color: #5a3d00; }
+.discussion-reply-time { font-size: 11px; color: #a08878; margin-left: auto; }
+.discussion-reply-content { font-size: 13px; color: #4a3a2a; line-height: 1.55; white-space: pre-wrap; }
+.discussion-reply-actions {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.discussion-reply-actions button {
+  background: none; border: none; cursor: pointer;
+  font-size: 11px; padding: 4px 8px; border-radius: 5px;
+  transition: all 0.15s; font-family: inherit;
+}
+.discussion-empty { text-align: center; padding: 40px 20px; color: #a08878; font-size: 14px; }
 
 /* ===== 创建话题表单 ===== */
 .create-topic-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 16px; background: #3d6ce8; color: white;
+  padding: 8px 16px; background: #8b6f5e; color: white;
   border: none; border-radius: 10px; cursor: pointer;
   font-size: 13px; font-weight: 600; font-family: inherit; margin-bottom: 14px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.2s;
 }
-.create-topic-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(59,130,246,0.3); }
+.create-topic-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,111,94,0.3); }
 .create-topic-form {
-  background: #f8f9ff; border: 2px solid #3d6ce8; border-radius: 14px;
+  background: rgba(139,111,94,0.06); border: 1.5px solid #8b6f5e; border-radius: 14px;
   padding: 16px; margin-bottom: 16px; display: none;
+  animation: createFormIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.create-topic-form.hiding {
+  animation: createFormOut 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes createFormIn {
+  from { opacity: 0; transform: translateY(-12px) scaleY(0.95); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+@keyframes createFormOut {
+  from { opacity: 1; transform: translateY(0) scaleY(1); }
+  to { opacity: 0; transform: translateY(-12px) scaleY(0.95); }
 }
 .create-topic-form input {
-  width: 100%; padding: 10px 14px; border: 2px solid rgba(0,0,0,0.12);
+  width: 100%; padding: 10px 14px; border: 1.5px solid rgba(139,111,94,0.2);
   border-radius: 10px; font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
-  outline: none; box-sizing: border-box; transition: border-color 0.2s;
+  outline: none; box-sizing: border-box; transition: border-color 0.2s; color: #5a3d00;
 }
-.create-topic-form input:focus { border-color: #3d6ce8; }
+.create-topic-form input:focus { border-color: #8b6f5e; box-shadow: 0 0 0 3px rgba(139,111,94,0.1); }
 .create-topic-actions { display: flex; gap: 8px; margin-top: 10px; }
 .create-topic-actions button {
   padding: 8px 18px; border-radius: 8px; font-size: 13px;
   font-weight: 600; font-family: inherit; cursor: pointer; border: none;
-  transition: transform 0.15s;
+  transition: all 0.15s;
 }
-.create-topic-submit { background: #3d6ce8; color: white; }
-.create-topic-submit:hover { transform: translateY(-1px); }
-.create-topic-cancel { background: rgba(0,0,0,0.06); color: #6b7280; }
-.create-topic-cancel:hover { background: rgba(0,0,0,0.1); }
+.create-topic-submit { background: #8b6f5e; color: white; }
+.create-topic-submit:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(139,111,94,0.25); }
+.create-topic-cancel { background: rgba(139,111,94,0.08); color: #8b6f5e; }
+.create-topic-cancel:hover { background: rgba(139,111,94,0.15); }
+
+/* 讨论视图动画 */
+.discussion-view {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.discussion-view.slide-out-left {
+  transform: translateX(-24px); opacity: 0;
+}
+.discussion-view.slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.discussion-view.slide-out-right {
+  transform: translateX(24px); opacity: 0;
+}
+.discussion-view.slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
 
 .top-bar .notif-btn {
  background: none; border: none; cursor: pointer;
@@ -2631,9 +2723,9 @@
 
  <!-- ===== 你问我答 主弹窗 ===== -->
  <div class="modal-overlay" id="qaOverlay" onclick="closeQAOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
- <div onclick="event.stopPropagation()" style="background:#fffdf5;border-radius:18px;width:min(94vw,820px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #e8c84a;animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+ <div onclick="event.stopPropagation()" style="background:#fffcf7;border-radius:18px;width:min(94vw,820px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #d4a537;animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
  <!-- 头部 -->
- <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+ <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #efe9d6;flex-shrink:0;">
  <div style="display:flex;gap:10px;align-items:center;">
  <span style="font-size:20px;font-weight:700;color:#7a5700;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 你问我答</span>
  <div style="display:flex;gap:6px;" id="qaTabBar">
@@ -2707,17 +2799,17 @@
 
  <!-- 发放奖励弹窗 -->
  <div class="modal-overlay" id="qaRewardOverlay" onclick="closeQAReward(event)" style="display:none;align-items:center;justify-content:center;">
- <div onclick="event.stopPropagation()" style="background:#fffef5;border-radius:16px;width:min(90vw,520px);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #e8c84a;">
- <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+ <div onclick="event.stopPropagation()" style="background:#fffcf7;border-radius:16px;width:min(90vw,520px);max-height:80vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #d4a537;">
+ <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid #efe9d6;flex-shrink:0;">
  <span style="font-size:16px;font-weight:700;color:#7a5700;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> 发放悬赏</span>
  <button onclick="closeQAReward()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
  </div>
- <div style="padding:14px 18px;background:#fff8e1;border-bottom:1.5px solid #f0e8a0;flex-shrink:0;">
+ <div style="padding:14px 18px;background:#fef8e7;border-bottom:1.5px solid #efe9d6;flex-shrink:0;">
  <span style="font-size:13px;color:#856404;">悬赏总额：<b id="qaRewardTotal">0</b> Credits</span>
  <span style="margin-left:14px;font-size:13px;color:#856404;">剩余可发放：<b id="qaRewardRemain" style="color:#2a6846;">0</b> Credits</span>
  </div>
  <div style="flex:1;overflow-y:auto;padding:10px 18px;" id="qaRewardAnswers"></div>
- <div style="padding:12px 18px;border-top:1.5px solid #f0e8a0;text-align:right;flex-shrink:0;" id="qaRewardActions">
+ <div style="padding:12px 18px;border-top:1.5px solid #efe9d6;text-align:right;flex-shrink:0;" id="qaRewardActions">
  <button onclick="closeQAReward()" style="padding:9px 18px;border-radius:10px;border:1.5px solid #e8c84a;background:#fff;cursor:pointer;font-size:13px;margin-right:8px;">取消</button>
  <button onclick="submitQAReward()" style="padding:9px 20px;border-radius:10px;border:none;background:#f5c518;color:#7a5700;font-weight:700;cursor:pointer;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 发放</button>
  </div>
@@ -5292,6 +5384,85 @@ async function showPostCaptchaModal() {
  document.getElementById('reportOverlay').classList.add('show');
  }
 
+  // 统一举报弹窗：支持所有内容类型
+  function buildReportBoxFor(type, targetId, typeLabel, authorName) {
+    _reportType = type;
+    _reportTargetId = targetId;
+    _reportId = type === 'post' || type === 'featured' ? targetId : null;
+    const box = document.getElementById('reportBoxInner');
+    if (!box) { console.error('[举报] 找不到 reportBoxInner 元素'); return; }
+    box.innerHTML = '';
+
+    _reportReason = '垃圾信息';
+    _reportOtherText = '';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.className = 'detail-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => closeReportModal();
+    box.appendChild(closeBtn);
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:16px;font-weight:600;margin-bottom:16px;';
+    title.innerHTML = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报' + typeLabel;
+    box.appendChild(title);
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:13px;color:rgba(90,74,0,0.6);margin-bottom:12px;line-height:1.6;';
+    hint.innerHTML = '你正在举报' + (authorName ? ' <strong>' + escHtml(authorName) + '</strong> 的' : '') + typeLabel + '，请选择举报原因：';
+    box.appendChild(hint);
+
+    const sel = document.createElement('select');
+    sel.id = 'reportReasonSelect';
+    sel.style.cssText = 'width:100%;padding:8px 10px;font-size:14px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;outline:none;font-family:inherit;color:#1a1a2e;background:rgba(255,255,255,0.85);margin-bottom:12px;cursor:pointer;';
+    const selectOptions = [
+      { value: '垃圾信息', label: '垃圾信息 / 广告' },
+      { value: '不当内容', label: '不当内容 / 违规' },
+      { value: '侮辱欺凌', label: '侮辱 / 欺凌 / 人身攻击' },
+      { value: '虚假信息', label: '虚假信息 / 谣言' },
+      { value: '其他', label: '其他（请填写具体原因）' },
+    ];
+    selectOptions.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value; o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', function() {
+      _reportReason = this.value;
+      const area = document.getElementById('reportOtherArea');
+      area.style.display = this.value === '其他' ? 'block' : 'none';
+      if (this.value === '其他') {
+        setTimeout(() => { const ta = document.getElementById('reportOtherInput'); if (ta) ta.focus(); }, 50);
+      }
+    });
+    box.appendChild(sel);
+
+    const otherArea = document.createElement('div');
+    otherArea.id = 'reportOtherArea';
+    otherArea.style.cssText = 'display:none;margin-bottom:12px;';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'reportOtherInput';
+    textarea.placeholder = '请详细描述举报原因...';
+    textarea.style.cssText = 'width:100%;min-height:80px;padding:10px;font-size:14px;border:1px solid rgba(0,0,0,0.15);border-radius:8px;resize:vertical;outline:none;font-family:inherit;color:#1a1a2e;background:rgba(255,255,255,0.7);box-sizing:border-box;';
+    textarea.addEventListener('input', function() { _reportOtherText = this.value; });
+    otherArea.appendChild(textarea);
+    box.appendChild(otherArea);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button'; cancelBtn.className = 'btn-cancel';
+    cancelBtn.textContent = '取消'; cancelBtn.onclick = () => closeReportModal();
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button'; submitBtn.className = 'btn-danger-sm';
+    submitBtn.id = 'reportSubmitBtn'; submitBtn.textContent = '提交举报';
+    submitBtn.onclick = () => doSubmitReport();
+    btnRow.appendChild(cancelBtn); btnRow.appendChild(submitBtn);
+    box.appendChild(btnRow);
+
+    document.getElementById('reportOverlay').classList.add('show');
+  }
+
   function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('show');
   _reportId = null;
@@ -5300,12 +5471,8 @@ async function showPostCaptchaModal() {
   }
 
   async function doSubmitReport() {
-  if (_reportType === 'auction' && !_reportTargetId) {
+  if (!_reportTargetId) {
     showToast('请先选择要举报的内容');
-    return;
-  }
-  if (_reportType === 'post' && !_reportId) {
-    showToast('请先选择要举报的帖子');
     return;
   }
 
@@ -5330,43 +5497,20 @@ async function showPostCaptchaModal() {
   }
 
   try {
-  let res;
-  if (_reportType === 'auction') {
-    // 拍卖内容举报 → 统一举报接口
-    res = await fetch('/api/reports', {
-    method: 'POST',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-    body: JSON.stringify({ type: 'auction', targetId: _reportTargetId, reason })
+    // 统一举报接口
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify({ type: _reportType, targetId: _reportTargetId, reason })
     });
-  } else {
-    // 帖子举报
-    res = await fetch('/api/posts/' + _reportId + '/report', {
-    method: 'POST',
-    headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-    body: JSON.stringify({ reason })
-    });
-  }
-  const json = await res.json();
-  if (json.ok) {
-    showToast('举报已提交，管理员会尽快处理');
-    closeReportModal();
-    if (_reportType === 'auction') {
-    // 更新拍卖举报按钮状态
-    localStorage.setItem('pickup_report_' + _reportTargetId, '1');
-    const reportBtn = document.querySelector('.pickup-content-report-btn[onclick*="' + _reportTargetId + '"]');
-    if (reportBtn) {
-      reportBtn.textContent = '已举报';
-      reportBtn.classList.add('reported');
-      reportBtn.disabled = true;
+    const json = await res.json();
+    if (json.ok) {
+      showToast('举报已提交，管理员会尽快处理');
+      closeReportModal();
+    } else {
+      showToast(json.msg || '举报失败');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
     }
-    } else if (json.data && json.data.hidden) {
-    posts = posts.filter(p => p.id !== _reportId);
-    renderNotes(currentFilter);
-    }
-  } else {
-    showToast(json.msg || '举报失败');
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交举报'; }
-  }
   } catch(e) {
   console.error('[举报] 出错', e);
   showToast('网络错误');
@@ -6276,10 +6420,20 @@ async function showPostCaptchaModal() {
  function closeQAOverlay(e) { if (e.target === document.getElementById('qaOverlay')) closeQAModal(); }
 
  function switchQATab(tab) {
- document.getElementById('qaPageList').style.display = tab === 'list' ? 'block' : 'none';
- document.getElementById('qaPageMy').style.display = tab === 'my' ? 'block' : 'none';
- document.getElementById('qaPageAsk').style.display = tab === 'ask' ? 'block' : 'none';
- document.getElementById('qaPageDetail').style.display = tab === 'detail' ? 'block' : 'none';
+ const pageIds = { list: 'qaPageList', my: 'qaPageMy', ask: 'qaPageAsk', detail: 'qaPageDetail' };
+ Object.keys(pageIds).forEach(k => {
+ const el = document.getElementById(pageIds[k]);
+ if (!el) return;
+ if (k === tab) {
+ el.style.display = 'block';
+ el.classList.remove('qa-page-enter');
+ void el.offsetHeight;
+ el.classList.add('qa-page-enter');
+ } else {
+ el.style.display = 'none';
+ el.classList.remove('qa-page-enter');
+ }
+ });
  document.querySelectorAll('.qa-tab').forEach(b => b.classList.remove('active'));
  if (tab === 'my') {
  document.getElementById('qaTabMy') && document.getElementById('qaTabMy').classList.add('active');
@@ -6352,10 +6506,11 @@ async function showPostCaptchaModal() {
  '</div>' +
  '</div>' +
  '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
- badge + bountyHtml + deadline +
- '<span style="color:#888;font-size:11px;margin-left:auto;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + (q.answerCount || 0) + ' 条回答</span>' +
- '</div>' +
- '</div>';
+  badge + bountyHtml + deadline +
+  (currentUser ? '<button class="qa-report-btn" onclick="event.stopPropagation();reportQAQuestion(\'' + q.id + '\')" title="举报问题"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>' : '') +
+  '<span style="color:#888;font-size:11px;margin-left:auto;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + (q.answerCount || 0) + ' 条回答</span>' +
+  '</div>' +
+  '</div>';
  }
 
  async function loadQADetail(qid) {
@@ -6376,7 +6531,7 @@ async function showPostCaptchaModal() {
  let html = '<div style="margin-bottom:6px;">' +
  '<button onclick="switchQATab(\'list\')" style="background:none;border:none;color:#888;cursor:pointer;font-size:13px;padding:0;">← 返回列表</button>' +
  '</div>';
- html += '<div style="background:#fffef5;border:1.5px solid #f0e8a0;border-radius:14px;padding:16px;margin-bottom:14px;">';
+  html += '<div style="background:#fffcf7;border:1px solid #efe9d6;border-radius:14px;padding:16px;margin-bottom:14px;">';
  html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">';
  html += '<span style="font-size:28px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
  html += '<div style="flex:1;">';
@@ -6389,8 +6544,9 @@ async function showPostCaptchaModal() {
  }
  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' + (statusMap[q.status] || '') +
  (q.bounty > 0 ? '<span style="background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> 悬赏 ' + q.bounty + ' Credits</span>' : '') +
- (q.deadline ? '<span style="color:#888;font-size:12px;">⏰ 截止 ' + formatQATime(q.deadline) + '</span>' : '') +
- (isOwner && q.status === 'open' ? '<button onclick="deleteQAQuestion(\'' + q.id + '\')" style="margin-left:auto;background:none;border:none;color:#e04;cursor:pointer;font-size:12px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>' : '') +
+  (q.deadline ? '<span style="color:#888;font-size:12px;">⏰ 截止 ' + formatQATime(q.deadline) + '</span>' : '') +
+  (currentUser ? '<button class="qa-report-btn" onclick="reportQAQuestion(\'' + q.id + '\')" title="举报问题" style="margin-left:auto;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>' : '') +
+  (isOwner && q.status === 'open' ? '<button onclick="deleteQAQuestion(\'' + q.id + '\')" style="background:none;border:none;color:#e04;cursor:pointer;font-size:12px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>' : '') +
  '</div>';
  html += '</div>';
 
@@ -6445,11 +6601,12 @@ async function showPostCaptchaModal() {
  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + a.images.map(img => '<img src="' + img + '" style="height:70px;border-radius:8px;cursor:pointer;object-fit:cover;" onclick="showQAImgPreview(\'' + img + '\')">').join('') + '</div>';
  }
  html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">';
- if (currentUser && !isMe) {
- html += '<button onclick="likeQAAnswer(\'' + a.id + '\')" style="background:' + (liked ? '#ffe0b2' : '#f5f5f5') + ';border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:12px;" id="qa-like-' + a.id + '">' + (liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>') + ' <span id="qa-like-count-' + a.id + '">' + (a.likes || 0) + '</span></button>';
- } else {
- html += '<span style="font-size:12px;color:#aaa;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> ' + (a.likes || 0) + '</span>';
- }
+  if (currentUser && !isMe) {
+  html += '<button onclick="likeQAAnswer(\'' + a.id + '\')" style="background:' + (liked ? '#ffe0b2' : '#f5f5f5') + ';border:none;border-radius:20px;padding:4px 10px;cursor:pointer;font-size:12px;" id="qa-like-' + a.id + '">' + (liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>') + ' <span id="qa-like-count-' + a.id + '">' + (a.likes || 0) + '</span></button>';
+  html += '<button class="qa-report-btn" onclick="reportQAAnswer(\'' + a.id + '\')" title="举报回答"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>';
+  } else {
+  html += '<span style="font-size:12px;color:#aaa;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> ' + (a.likes || 0) + '</span>';
+  }
  if (isOwner && q.status === 'open' && !a.accepted) {
  html += '<button onclick="acceptQAAnswer(\'' + q.id + '\',\'' + a.id + '\')" style="background:#e3f2fd;color:#1565c0;border:none;border-radius:20px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:600;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 采纳此答案</button>';
  }
@@ -6677,7 +6834,18 @@ function escJsStr(s) {
  } catch { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 网络错误'); }
  }
 
- // ===== 我的提问 =====
+  // ===== 举报问题/回答 =====
+   function reportQAQuestion(id) {
+    if (!currentUser) { showToast('请先登录'); return; }
+    buildReportBoxFor('qa_question', id, '问答问题', null);
+  }
+
+  function reportQAAnswer(id) {
+    if (!currentUser) { showToast('请先登录'); return; }
+    buildReportBoxFor('qa_answer', id, '问答回答', null);
+  }
+
+  // ===== 我的提问 =====
  let qaRewardQuestionId = null;
  let qaRewardAnswerIds = [];
 
@@ -6832,14 +7000,18 @@ function escJsStr(s) {
  // ===== 讨论功能 =====
  let currentDiscussionId = null;
 
- function openDiscussionModal() {
-  const overlay = document.getElementById('discussionOverlay');
-  overlay.style.display = 'flex';
-  const btn = document.getElementById('createTopicBtn');
-  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
-  showDiscussionTopics();
-  loadDiscussions();
- }
+  function reportDiscussionTopic(id) {
+    buildReportBoxFor('discussion', id, '讨论话题', null);
+  }
+
+  function openDiscussionModal() {
+   const overlay = document.getElementById('discussionOverlay');
+   overlay.style.display = 'flex';
+   const btn = document.getElementById('createTopicBtn');
+   if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+   showDiscussionTopics();
+   loadDiscussions();
+  }
 
  // 从校园墙帖子点击 #话题 打开对应讨论
  function openDiscussionTopic(id) {
@@ -6849,10 +7021,12 @@ function escJsStr(s) {
  }, 300);
  }
 
- function closeDiscussionModal() {
- document.getElementById('discussionOverlay').style.display = 'none';
- currentDiscussionId = null;
- }
+  function closeDiscussionModal() {
+  document.getElementById('discussionOverlay').style.display = 'none';
+  currentDiscussionId = null;
+  document.getElementById('discussionComments').classList.remove('slide-in-right', 'slide-out-right');
+  document.getElementById('discussionTopicsWrapper').classList.remove('slide-out-left', 'slide-in-left');
+  }
 
  function escHtml(str) {
   if (!str) return '';
@@ -6863,14 +7037,24 @@ function escJsStr(s) {
 
  function showCreateForm() {
   document.getElementById('createTopicBtn').style.display = 'none';
-  document.getElementById('discussionCreateForm').style.display = 'block';
+  const form = document.getElementById('discussionCreateForm');
+  form.classList.remove('hiding');
+  form.style.display = 'block';
+  form.style.animation = 'none';
+  form.offsetHeight;
+  form.style.animation = '';
   document.getElementById('discussionTitleInput').focus();
  }
 
  function hideCreateForm() {
-  document.getElementById('discussionCreateForm').style.display = 'none';
-  const btn = document.getElementById('createTopicBtn');
-  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+  const form = document.getElementById('discussionCreateForm');
+  form.classList.add('hiding');
+  setTimeout(() => {
+   form.style.display = 'none';
+   form.classList.remove('hiding');
+   const btn = document.getElementById('createTopicBtn');
+   if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+  }, 200);
  }
 
  async function createDiscussion() {
@@ -6924,44 +7108,67 @@ function escJsStr(s) {
  }
  }
 
- function renderDiscussionTopics(topics) {
-  const container = document.getElementById('discussionTopics');
-  const btn = document.getElementById('createTopicBtn');
-  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
-  if (!topics || topics.length === 0) {
-  container.innerHTML = '<div class="discussion-empty">暂无讨论话题，快来创建第一个吧</div>';
-  return;
+  function renderDiscussionTopics(topics) {
+   const container = document.getElementById('discussionTopics');
+   const btn = document.getElementById('createTopicBtn');
+   if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+   if (!topics || topics.length === 0) {
+   container.innerHTML = '<div class="discussion-empty">暂无讨论话题，快来创建第一个吧</div>';
+   return;
+   }
+    container.innerHTML = topics.map(d => {
+    const expires = formatDateTimeLocal(d.expiresAt);
+    const reportBtn = getToken() && !d.official ? `<button class="discussion-topic-report" onclick="event.stopPropagation();reportDiscussionTopic('${d.id}')">举报</button>` : '';
+    const badge = d.official ? '<span class="official-badge" title="官方认证"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b6f5e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>已认证</span>' : '';
+    return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
+    <h4>${escHtml(d.title)}</h4>
+    <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}${badge}${reportBtn}</div>
+    </div>`;
+   }).join('');
   }
-  container.innerHTML = topics.map(d => {
-  const expires = formatDateTimeLocal(d.expiresAt);
-  return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
-  <h4>${escHtml(d.title)}</h4>
-  <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}</div>
-  </div>`;
-  }).join('');
- }
 
- async function showDiscussion(id) {
-  currentDiscussionId = id;
-  document.getElementById('discussionTopics').style.display = 'none';
-  document.getElementById('createTopicBtn').style.display = 'none';
-  document.getElementById('discussionCreateForm').style.display = 'none';
-  document.getElementById('discussionComments').style.display = 'block';
- const topics = await (await fetch('/api/discussions')).json();
- const topic = (topics.data || []).find(t => t.id === id);
- if (topic) {
- document.getElementById('currentDiscussionTitle').textContent = topic.title;
- }
- await loadDiscussionComments(id);
- }
+  async function showDiscussion(id) {
+   currentDiscussionId = id;
+   const topicsWrapper = document.getElementById('discussionTopicsWrapper');
+   const commentsView = document.getElementById('discussionComments');
+   topicsWrapper.classList.add('slide-out-left');
+   await new Promise(r => setTimeout(r, 200));
+   topicsWrapper.style.display = 'none';
+   topicsWrapper.classList.remove('slide-out-left');
+   document.getElementById('createTopicBtn').style.display = 'none';
+   document.getElementById('discussionCreateForm').style.display = 'none';
+   commentsView.style.display = 'block';
+   commentsView.classList.add('slide-in-right');
+   setTimeout(() => commentsView.classList.remove('slide-in-right'), 350);
+   const topics = await (await fetch('/api/discussions')).json();
+   const topic = (topics.data || []).find(t => t.id === id);
+   if (topic) {
+   document.getElementById('currentDiscussionTitle').textContent = topic.title;
+   }
+   await loadDiscussionComments(id);
+  }
 
- function showDiscussionTopics() {
-  currentDiscussionId = null;
-  document.getElementById('discussionComments').style.display = 'none';
-  document.getElementById('discussionTopics').style.display = 'flex';
-  const btn = document.getElementById('createTopicBtn');
-  if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
- }
+  function showDiscussionTopics() {
+   currentDiscussionId = null;
+   const commentsView = document.getElementById('discussionComments');
+   const topicsWrapper = document.getElementById('discussionTopicsWrapper');
+   if (commentsView.style.display !== 'none' && commentsView.style.display !== '') {
+     commentsView.classList.add('slide-out-right');
+     setTimeout(() => {
+       commentsView.style.display = 'none';
+       commentsView.classList.remove('slide-out-right');
+       topicsWrapper.style.display = 'block';
+       topicsWrapper.classList.add('slide-in-left');
+       setTimeout(() => topicsWrapper.classList.remove('slide-in-left'), 350);
+       const btn = document.getElementById('createTopicBtn');
+       if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+     }, 200);
+   } else {
+     topicsWrapper.style.display = 'block';
+     const btn = document.getElementById('createTopicBtn');
+     if (btn) btn.style.display = getToken() ? 'inline-flex' : 'none';
+   }
+  }
 
  async function loadDiscussionComments(discussionId) {
  try {
@@ -7072,25 +7279,9 @@ function escJsStr(s) {
  }
  }
 
- async function reportDiscussionComment(commentId) {
- const reason = prompt('请输入举报原因：');
- if (!reason) return;
- try {
- const res = await fetch('/api/discussions/comments/' + commentId + '/report', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json', ...authHeaders() },
- body: JSON.stringify({ reason })
- });
- const json = await res.json();
- if (json.ok) {
- showToast('举报已提交');
- } else {
- showToast('举报失败：' + (json.msg || ''));
- }
- } catch (e) {
- showToast('网络错误');
- }
- }
+  function reportDiscussionComment(commentId) {
+    buildReportBoxFor('discussion_comment', commentId, '讨论评论', null);
+  }
 
  // 为评论元素添加 data-id 属性（用于嵌套回复定位）
  // 重写 renderDiscussionComments 以正确设置 data-id
@@ -7131,25 +7322,9 @@ function escJsStr(s) {
  });
  }
 
- async function promptReportDiscussion(commentId) {
- const reason = prompt('请输入举报原因：');
- if (!reason) return;
- try {
- const res = await fetch('/api/discussions/comments/' + commentId + '/report', {
- method: 'POST',
- headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ reason })
- });
- const json = await res.json();
- if (json.ok) {
- showToast('举报已提交，管理员会尽快处理');
- } else {
- showToast(json.msg || '举报失败');
- }
- } catch (e) {
- showToast('网络错误');
- }
- }
+  function promptReportDiscussion(commentId) {
+    buildReportBoxFor('discussion_comment', commentId, '讨论评论', null);
+  }
 
  // 重写 submitDiscussionComment 以支持 replyToId
  async function submitDiscussionComment(force = false) {
@@ -7281,29 +7456,29 @@ function escJsStr(s) {
 
  </script>
 
- <!-- 讨论弹窗 -->
- <div class="discussion-overlay" id="discussionOverlay" style="display:none;">
- <div class="discussion-modal">
- <div class="discussion-header">
- <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 讨论区</h3>
- <button class="discussion-close" onclick="closeDiscussionModal()">×</button>
- </div>
-  <div class="discussion-body">
-  <div id="discussionTopicsWrapper">
-    <button class="create-topic-btn" id="createTopicBtn" onclick="showCreateForm()" style="display:none;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg> 创建话题
-    </button>
-    <div class="create-topic-form" id="discussionCreateForm">
-      <input type="text" id="discussionTitleInput" placeholder="输入话题标题..." maxlength="50">
-      <div class="create-topic-actions">
-        <button class="create-topic-submit" onclick="createDiscussion()">创建</button>
-        <button class="create-topic-cancel" onclick="hideCreateForm()">取消</button>
-      </div>
-    </div>
-    <div class="discussion-topics" id="discussionTopics"></div>
+  <!-- 讨论弹窗 -->
+  <div class="discussion-overlay" id="discussionOverlay" style="display:none;">
+  <div class="discussion-modal">
+  <div class="discussion-header">
+  <h3 style="display:flex;align-items:center;gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 讨论区</h3>
+  <button class="discussion-close" onclick="closeDiscussionModal()">✕</button>
   </div>
-  <div class="discussion-comments" id="discussionComments" style="display:none;">
- <button class="discussion-back" onclick="showDiscussionTopics()">← 返回话题列表</button>
+   <div class="discussion-body">
+   <div id="discussionTopicsWrapper" class="discussion-view">
+     <button class="create-topic-btn" id="createTopicBtn" onclick="showCreateForm()" style="display:none;">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg> 创建话题
+     </button>
+     <div class="create-topic-form" id="discussionCreateForm">
+       <input type="text" id="discussionTitleInput" placeholder="输入话题标题..." maxlength="50">
+       <div class="create-topic-actions">
+         <button class="create-topic-submit" onclick="createDiscussion()">创建</button>
+         <button class="create-topic-cancel" onclick="hideCreateForm()">取消</button>
+       </div>
+     </div>
+     <div class="discussion-topics" id="discussionTopics"></div>
+   </div>
+   <div class="discussion-comments discussion-view" id="discussionComments" style="display:none;">
+  <button class="discussion-back" onclick="showDiscussionTopics()">← 返回话题列表</button>
  <h4 id="currentDiscussionTitle"></h4>
  <div class="discussion-comment-input">
  <textarea id="discussionCommentInput" placeholder="说点什么..."></textarea>

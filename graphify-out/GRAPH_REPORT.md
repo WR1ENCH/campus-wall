@@ -1,4 +1,4 @@
-# Graph Report - /home/wr1ench/campus-wall-dev_v  (2026-07-13)
+# Graph Report - /home/wr1ench/campus-wall-dev  (2026-07-13)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fb5f8146`
+- Built from commit: `facd4d45`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

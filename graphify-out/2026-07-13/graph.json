@@ -858,7 +858,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "migrate()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "db_migrate"
     },
     {
@@ -1980,7 +1980,7 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "verifypassword()",
-      "community_name": "auth.js",
+      "community_name": "student-council.js",
       "id": "lib_crypto_verifypassword"
     },
     {
@@ -2211,7 +2211,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "idmigration.js",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_idmigration"
     },
     {
@@ -2222,7 +2222,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "{ generateid, generateuid, isvalididformat, logidassignment }",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_idmigration_generateid_generateuid_isvalididformat_logidassignment"
     },
     {
@@ -2233,7 +2233,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "needsmigration()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_idmigration_needsmigration"
     },
     {
@@ -2244,7 +2244,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "ensureuniqueids()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_idmigration_ensureuniqueids"
     },
     {
@@ -2332,7 +2332,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "requiresuper()",
-      "community_name": "middleware.js",
+      "community_name": "penalty.js",
       "id": "lib_middleware_requiresuper"
     },
     {
@@ -2376,7 +2376,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "penalty.js",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty"
     },
     {
@@ -2387,7 +2387,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "db",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_db"
     },
     {
@@ -2398,7 +2398,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "{ generateid }",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_generateid"
     },
     {
@@ -2409,7 +2409,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "{ broadcastsse }",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_broadcastsse"
     },
     {
@@ -2420,7 +2420,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "features",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_features"
     },
     {
@@ -2431,7 +2431,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "feature_labels",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_feature_labels"
     },
     {
@@ -2442,7 +2442,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "parsemeasures()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_parsemeasures"
     },
     {
@@ -2453,7 +2453,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "emitusernotice()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_emitusernotice"
     },
     {
@@ -2464,7 +2464,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "getactivepunishment()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_getactivepunishment"
     },
     {
@@ -2475,7 +2475,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "isfeatureblocked()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_isfeatureblocked"
     },
     {
@@ -2486,7 +2486,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "durationtext()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_durationtext"
     },
     {
@@ -2497,7 +2497,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "notifyreportreceived()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_notifyreportreceived"
     },
     {
@@ -2508,7 +2508,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "notifypunishmentissued()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_notifypunishmentissued"
     },
     {
@@ -2519,7 +2519,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "notifyappealsubmitted()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_notifyappealsubmitted"
     },
     {
@@ -2530,7 +2530,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "notifyappealresult()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_notifyappealresult"
     },
     {
@@ -2541,7 +2541,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "getreportedcontent()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_getreportedcontent"
     },
     {
@@ -2552,7 +2552,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "parseimages()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "lib_penalty_parseimages"
     },
     {
@@ -2585,7 +2585,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "broadcastsse()",
-      "community_name": "broadcastSSE",
+      "community_name": "posts.js",
       "id": "lib_sse_broadcastsse"
     },
     {
@@ -2607,7 +2607,7 @@
       "_origin": "ast",
       "community": 19,
       "norm_label": "captchastore",
-      "community_name": "state.js",
+      "community_name": "verifySignedToken",
       "id": "lib_state_captchastore"
     },
     {
@@ -2695,7 +2695,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "uniqueid.js",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid"
     },
     {
@@ -2706,7 +2706,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "crypto",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_crypto"
     },
     {
@@ -2717,7 +2717,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "fs",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_fs"
     },
     {
@@ -2728,7 +2728,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "path",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_path"
     },
     {
@@ -2739,7 +2739,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "valid_prefixes",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_valid_prefixes"
     },
     {
@@ -2750,7 +2750,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "prefix_re",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_prefix_re"
     },
     {
@@ -2761,7 +2761,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "generateid()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_generateid"
     },
     {
@@ -2772,7 +2772,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "generateuid()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_generateuid"
     },
     {
@@ -2783,7 +2783,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "isvalididformat()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_isvalididformat"
     },
     {
@@ -2794,7 +2794,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "logidassignment()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "lib_uniqueid_logidassignment"
     },
     {
@@ -3993,7 +3993,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writenotices()",
-      "community_name": "pickup.js",
+      "community_name": "posts.js",
       "id": "routes_pickup_writenotices"
     },
     {
@@ -4290,7 +4290,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writediscussions()",
-      "community_name": "broadcastSSE",
+      "community_name": "posts.js",
       "id": "routes_posts_writediscussions"
     },
     {
@@ -4334,7 +4334,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writenotices()",
-      "community_name": "broadcastSSE",
+      "community_name": "posts.js",
       "id": "routes_posts_writenotices"
     },
     {
@@ -4598,7 +4598,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "reports.js",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports"
     },
     {
@@ -4609,7 +4609,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "db",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_db"
     },
     {
@@ -4620,7 +4620,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "{ generateid, logidassignment }",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_generateid_logidassignment"
     },
     {
@@ -4631,7 +4631,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "{ verifyusertoken }",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_verifyusertoken"
     },
     {
@@ -4642,7 +4642,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "penalty",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_penalty"
     },
     {
@@ -4653,7 +4653,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "readreports()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_readreports"
     },
     {
@@ -4664,7 +4664,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "writereports()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_writereports"
     },
     {
@@ -4675,7 +4675,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "readusers()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_readusers"
     },
     {
@@ -4686,7 +4686,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "readnotices()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_readnotices"
     },
     {
@@ -4697,7 +4697,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "writenotices()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_writenotices"
     },
     {
@@ -4708,7 +4708,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "broadcastssenotice()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_broadcastssenotice"
     },
     {
@@ -4719,7 +4719,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "type_labels",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_type_labels"
     },
     {
@@ -4730,7 +4730,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "createreport()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_createreport"
     },
     {
@@ -4741,7 +4741,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "getreportbyanyid()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_getreportbyanyid"
     },
     {
@@ -4752,7 +4752,7 @@
       "_origin": "ast",
       "community": 2,
       "norm_label": "enrichreport()",
-      "community_name": "pickup.js",
+      "community_name": "penalty.js",
       "id": "routes_reports_enrichreport"
     },
     {
@@ -5005,7 +5005,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writeposts()",
-      "community_name": "system.js",
+      "community_name": "posts.js",
       "id": "routes_system_writeposts"
     },
     {
@@ -5082,7 +5082,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writenotices()",
-      "community_name": "system.js",
+      "community_name": "posts.js",
       "id": "routes_system_writenotices"
     },
     {
@@ -5368,7 +5368,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writeposts()",
-      "community_name": "broadcastSSE",
+      "community_name": "posts.js",
       "id": "routes_user_writeposts"
     },
     {
@@ -5401,7 +5401,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writenotices()",
-      "community_name": "broadcastSSE",
+      "community_name": "posts.js",
       "id": "routes_user_writenotices"
     },
     {
@@ -5632,7 +5632,7 @@
       "_origin": "ast",
       "community": 1,
       "norm_label": "writevotes()",
-      "community_name": "votes.js",
+      "community_name": "posts.js",
       "id": "routes_votes_writevotes"
     },
     {
@@ -5764,7 +5764,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "sensitivewords.js",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords"
     },
     {
@@ -5775,7 +5775,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "fs",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_fs"
     },
     {
@@ -5786,7 +5786,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "path",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_path"
     },
     {
@@ -5797,7 +5797,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "sen_words",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_sen_words"
     },
     {
@@ -5808,7 +5808,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "core_words",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_core_words"
     },
     {
@@ -5819,7 +5819,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "data_dir",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_data_dir"
     },
     {
@@ -5830,7 +5830,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "custom_file",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_custom_file"
     },
     {
@@ -5841,7 +5841,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "whitelist_file",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_whitelist_file"
     },
     {
@@ -5852,7 +5852,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "loadcustomwords()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_loadcustomwords"
     },
     {
@@ -5863,7 +5863,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "loadwhitelist()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_loadwhitelist"
     },
     {
@@ -5874,7 +5874,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "savewhitelist()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_savewhitelist"
     },
     {
@@ -5885,7 +5885,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "customwords",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_customwords"
     },
     {
@@ -5896,7 +5896,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "whitelist",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_whitelist"
     },
     {
@@ -5907,7 +5907,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "all_words",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_all_words"
     },
     {
@@ -5918,7 +5918,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "reload()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_reload"
     },
     {
@@ -5929,7 +5929,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "check()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_check"
     },
     {
@@ -5940,7 +5940,7 @@
       "_origin": "ast",
       "community": 5,
       "norm_label": "getstats()",
-      "community_name": "discussions.js",
+      "community_name": "notices.js",
       "id": "sensitivewords_getstats"
     },
     {
@@ -6237,7 +6237,7 @@
       "_origin": "ast",
       "community": 12,
       "norm_label": "zhixue.js",
-      "community_name": "zhixue.js",
+      "community_name": "server.js",
       "id": "zhixue"
     },
     {
@@ -6248,7 +6248,7 @@
       "_origin": "ast",
       "community": 12,
       "norm_label": "{ spawn }",
-      "community_name": "zhixue.js",
+      "community_name": "server.js",
       "id": "zhixue_spawn"
     },
     {
@@ -6259,7 +6259,7 @@
       "_origin": "ast",
       "community": 12,
       "norm_label": "path",
-      "community_name": "zhixue.js",
+      "community_name": "server.js",
       "id": "zhixue_path"
     },
     {
@@ -6270,7 +6270,7 @@
       "_origin": "ast",
       "community": 12,
       "norm_label": "loginzhixue()",
-      "community_name": "zhixue.js",
+      "community_name": "server.js",
       "id": "zhixue_loginzhixue"
     },
     {
@@ -6279,9 +6279,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "routes_admin",
       "community": 0,
-      "norm_label": "admin.js"
+      "norm_label": "admin.js",
+      "community_name": "admin.js",
+      "id": "routes_admin"
     },
     {
       "label": "{ hashPassword, verifyPassword, encryptCert, decryptCert, makeToken, verifySignedToken, getDisplayZhixueStatus }",
@@ -6289,9 +6290,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus",
       "community": 0,
-      "norm_label": "{ hashpassword, verifypassword, encryptcert, decryptcert, maketoken, verifysignedtoken, getdisplayzhixuestatus }"
+      "norm_label": "{ hashpassword, verifypassword, encryptcert, decryptcert, maketoken, verifysignedtoken, getdisplayzhixuestatus }",
+      "community_name": "admin.js",
+      "id": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus"
     },
     {
       "label": "{ getClientIP }",
@@ -6299,9 +6301,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "routes_admin_getclientip",
       "community": 0,
-      "norm_label": "{ getclientip }"
+      "norm_label": "{ getclientip }",
+      "community_name": "admin.js",
+      "id": "routes_admin_getclientip"
     },
     {
       "label": "{ requireAdmin, requireSuper }",
@@ -6309,9 +6312,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "routes_admin_requireadmin_requiresuper",
       "community": 0,
-      "norm_label": "{ requireadmin, requiresuper }"
+      "norm_label": "{ requireadmin, requiresuper }",
+      "community_name": "admin.js",
+      "id": "routes_admin_requireadmin_requiresuper"
     },
     {
       "label": "{ broadcastSSE }",
@@ -6319,9 +6323,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "routes_admin_broadcastsse",
       "community": 0,
-      "norm_label": "{ broadcastsse }"
+      "norm_label": "{ broadcastsse }",
+      "community_name": "admin.js",
+      "id": "routes_admin_broadcastsse"
     },
     {
       "label": "db",
@@ -6329,9 +6334,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "routes_admin_db",
       "community": 0,
-      "norm_label": "db"
+      "norm_label": "db",
+      "community_name": "admin.js",
+      "id": "routes_admin_db"
     },
     {
       "label": "maintenance",
@@ -6339,9 +6345,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "routes_admin_maintenance",
       "community": 0,
-      "norm_label": "maintenance"
+      "norm_label": "maintenance",
+      "community_name": "admin.js",
+      "id": "routes_admin_maintenance"
     },
     {
       "label": "{ check: checkSensitive, reload: reloadSensitive, getStats: getSensitiveStats, WHITELIST_FILE, saveWhitelist }",
@@ -6349,9 +6356,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist",
       "community": 0,
-      "norm_label": "{ check: checksensitive, reload: reloadsensitive, getstats: getsensitivestats, whitelist_file, savewhitelist }"
+      "norm_label": "{ check: checksensitive, reload: reloadsensitive, getstats: getsensitivestats, whitelist_file, savewhitelist }",
+      "community_name": "admin.js",
+      "id": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist"
     },
     {
       "label": "{ check: checkBullyingNames, addName: addBullyingName, removeName: removeBullyingName, getAll: getAllBullyingNames, reload: reloadBullyingNames }",
@@ -6359,9 +6367,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames",
       "community": 0,
-      "norm_label": "{ check: checkbullyingnames, addname: addbullyingname, removename: removebullyingname, getall: getallbullyingnames, reload: reloadbullyingnames }"
+      "norm_label": "{ check: checkbullyingnames, addname: addbullyingname, removename: removebullyingname, getall: getallbullyingnames, reload: reloadbullyingnames }",
+      "community_name": "admin.js",
+      "id": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames"
     },
     {
       "label": "penalty",
@@ -6369,9 +6378,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "routes_admin_penalty",
       "community": 0,
-      "norm_label": "penalty"
+      "norm_label": "penalty",
+      "community_name": "admin.js",
+      "id": "routes_admin_penalty"
     },
     {
       "label": "fs",
@@ -6379,9 +6389,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "routes_admin_fs",
       "community": 0,
-      "norm_label": "fs"
+      "norm_label": "fs",
+      "community_name": "admin.js",
+      "id": "routes_admin_fs"
     },
     {
       "label": "path",
@@ -6389,9 +6400,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "routes_admin_path",
       "community": 0,
-      "norm_label": "path"
+      "norm_label": "path",
+      "community_name": "admin.js",
+      "id": "routes_admin_path"
     },
     {
       "label": "crypto",
@@ -6399,9 +6411,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "routes_admin_crypto",
       "community": 0,
-      "norm_label": "crypto"
+      "norm_label": "crypto",
+      "community_name": "admin.js",
+      "id": "routes_admin_crypto"
     },
     {
       "label": "DATA_DIR",
@@ -6409,9 +6422,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "routes_admin_data_dir",
       "community": 0,
-      "norm_label": "data_dir"
+      "norm_label": "data_dir",
+      "community_name": "admin.js",
+      "id": "routes_admin_data_dir"
     },
     {
       "label": "SENSITIVE_CUSTOM_FILE",
@@ -6419,9 +6433,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "routes_admin_sensitive_custom_file",
       "community": 0,
-      "norm_label": "sensitive_custom_file"
+      "norm_label": "sensitive_custom_file",
+      "community_name": "admin.js",
+      "id": "routes_admin_sensitive_custom_file"
     },
     {
       "label": "adminRateLimit",
@@ -6429,9 +6444,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "routes_admin_adminratelimit",
       "community": 0,
-      "norm_label": "adminratelimit"
+      "norm_label": "adminratelimit",
+      "community_name": "admin.js",
+      "id": "routes_admin_adminratelimit"
     },
     {
       "label": "checkAdminRateLimit()",
@@ -6439,9 +6455,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "routes_admin_checkadminratelimit",
       "community": 0,
-      "norm_label": "checkadminratelimit()"
+      "norm_label": "checkadminratelimit()",
+      "community_name": "admin.js",
+      "id": "routes_admin_checkadminratelimit"
     },
     {
       "label": "hasAdmins()",
@@ -6449,9 +6466,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L45",
       "_origin": "ast",
-      "id": "routes_admin_hasadmins",
       "community": 37,
-      "norm_label": "hasadmins()"
+      "norm_label": "hasadmins()",
+      "community_name": "hasAdmins",
+      "id": "routes_admin_hasadmins"
     },
     {
       "label": "generateUID()",
@@ -6459,9 +6477,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L47",
       "_origin": "ast",
-      "id": "routes_admin_generateuid",
       "community": 0,
-      "norm_label": "generateuid()"
+      "norm_label": "generateuid()",
+      "community_name": "admin.js",
+      "id": "routes_admin_generateuid"
     },
     {
       "label": "addLoginLog()",
@@ -6469,9 +6488,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L51",
       "_origin": "ast",
-      "id": "routes_admin_addloginlog",
       "community": 34,
-      "norm_label": "addloginlog()"
+      "norm_label": "addloginlog()",
+      "community_name": "addLoginLog",
+      "id": "routes_admin_addloginlog"
     },
     {
       "label": "readPosts()",
@@ -6479,9 +6499,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L58",
       "_origin": "ast",
-      "id": "routes_admin_readposts",
       "community": 0,
-      "norm_label": "readposts()"
+      "norm_label": "readposts()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readposts"
     },
     {
       "label": "writePosts()",
@@ -6489,9 +6510,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L59",
       "_origin": "ast",
-      "id": "routes_admin_writeposts",
       "community": 0,
-      "norm_label": "writeposts()"
+      "norm_label": "writeposts()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeposts"
     },
     {
       "label": "readUsers()",
@@ -6499,9 +6521,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L60",
       "_origin": "ast",
-      "id": "routes_admin_readusers",
       "community": 33,
-      "norm_label": "readusers()"
+      "norm_label": "readusers()",
+      "community_name": "changeCredit",
+      "id": "routes_admin_readusers"
     },
     {
       "label": "writeUsers()",
@@ -6509,9 +6532,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L61",
       "_origin": "ast",
-      "id": "routes_admin_writeusers",
       "community": 33,
-      "norm_label": "writeusers()"
+      "norm_label": "writeusers()",
+      "community_name": "changeCredit",
+      "id": "routes_admin_writeusers"
     },
     {
       "label": "readAdmins()",
@@ -6519,9 +6543,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L62",
       "_origin": "ast",
-      "id": "routes_admin_readadmins",
       "community": 37,
-      "norm_label": "readadmins()"
+      "norm_label": "readadmins()",
+      "community_name": "hasAdmins",
+      "id": "routes_admin_readadmins"
     },
     {
       "label": "writeAdmins()",
@@ -6529,9 +6554,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L63",
       "_origin": "ast",
-      "id": "routes_admin_writeadmins",
       "community": 0,
-      "norm_label": "writeadmins()"
+      "norm_label": "writeadmins()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeadmins"
     },
     {
       "label": "readReports()",
@@ -6539,9 +6565,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L64",
       "_origin": "ast",
-      "id": "routes_admin_readreports",
       "community": 0,
-      "norm_label": "readreports()"
+      "norm_label": "readreports()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readreports"
     },
     {
       "label": "writeReports()",
@@ -6549,9 +6576,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "routes_admin_writereports",
       "community": 0,
-      "norm_label": "writereports()"
+      "norm_label": "writereports()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writereports"
     },
     {
       "label": "readFeedbacks()",
@@ -6559,9 +6587,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L66",
       "_origin": "ast",
-      "id": "routes_admin_readfeedbacks",
       "community": 0,
-      "norm_label": "readfeedbacks()"
+      "norm_label": "readfeedbacks()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readfeedbacks"
     },
     {
       "label": "writeFeedbacks()",
@@ -6569,9 +6598,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L67",
       "_origin": "ast",
-      "id": "routes_admin_writefeedbacks",
       "community": 0,
-      "norm_label": "writefeedbacks()"
+      "norm_label": "writefeedbacks()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writefeedbacks"
     },
     {
       "label": "readBullying()",
@@ -6579,9 +6609,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "routes_admin_readbullying",
       "community": 0,
-      "norm_label": "readbullying()"
+      "norm_label": "readbullying()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readbullying"
     },
     {
       "label": "writeBullying()",
@@ -6589,9 +6620,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L69",
       "_origin": "ast",
-      "id": "routes_admin_writebullying",
       "community": 0,
-      "norm_label": "writebullying()"
+      "norm_label": "writebullying()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writebullying"
     },
     {
       "label": "readCreditLogs()",
@@ -6599,9 +6631,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L70",
       "_origin": "ast",
-      "id": "routes_admin_readcreditlogs",
       "community": 33,
-      "norm_label": "readcreditlogs()"
+      "norm_label": "readcreditlogs()",
+      "community_name": "changeCredit",
+      "id": "routes_admin_readcreditlogs"
     },
     {
       "label": "writeCreditLogs()",
@@ -6609,9 +6642,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L71",
       "_origin": "ast",
-      "id": "routes_admin_writecreditlogs",
       "community": 33,
-      "norm_label": "writecreditlogs()"
+      "norm_label": "writecreditlogs()",
+      "community_name": "changeCredit",
+      "id": "routes_admin_writecreditlogs"
     },
     {
       "label": "readCreditCards()",
@@ -6619,9 +6653,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L72",
       "_origin": "ast",
-      "id": "routes_admin_readcreditcards",
       "community": 0,
-      "norm_label": "readcreditcards()"
+      "norm_label": "readcreditcards()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readcreditcards"
     },
     {
       "label": "writeCreditCards()",
@@ -6629,9 +6664,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L73",
       "_origin": "ast",
-      "id": "routes_admin_writecreditcards",
       "community": 0,
-      "norm_label": "writecreditcards()"
+      "norm_label": "writecreditcards()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writecreditcards"
     },
     {
       "label": "readNotices()",
@@ -6639,9 +6675,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L74",
       "_origin": "ast",
-      "id": "routes_admin_readnotices",
       "community": 35,
-      "norm_label": "readnotices()"
+      "norm_label": "readnotices()",
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_readnotices"
     },
     {
       "label": "writeNotices()",
@@ -6649,9 +6686,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L75",
       "_origin": "ast",
-      "id": "routes_admin_writenotices",
       "community": 35,
-      "norm_label": "writenotices()"
+      "norm_label": "writenotices()",
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_writenotices"
     },
     {
       "label": "pushUserNotice()",
@@ -6659,9 +6697,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L78",
       "_origin": "ast",
-      "id": "routes_admin_pushusernotice",
       "community": 35,
-      "norm_label": "pushusernotice()"
+      "norm_label": "pushusernotice()",
+      "community_name": "pushUserNotice",
+      "id": "routes_admin_pushusernotice"
     },
     {
       "label": "readMaintenance()",
@@ -6669,9 +6708,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L98",
       "_origin": "ast",
-      "id": "routes_admin_readmaintenance",
       "community": 0,
-      "norm_label": "readmaintenance()"
+      "norm_label": "readmaintenance()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readmaintenance"
     },
     {
       "label": "writeMaintenance()",
@@ -6679,9 +6719,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L99",
       "_origin": "ast",
-      "id": "routes_admin_writemaintenance",
       "community": 0,
-      "norm_label": "writemaintenance()"
+      "norm_label": "writemaintenance()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writemaintenance"
     },
     {
       "label": "readApps()",
@@ -6689,9 +6730,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L100",
       "_origin": "ast",
-      "id": "routes_admin_readapps",
       "community": 0,
-      "norm_label": "readapps()"
+      "norm_label": "readapps()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readapps"
     },
     {
       "label": "writeApps()",
@@ -6699,9 +6741,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L101",
       "_origin": "ast",
-      "id": "routes_admin_writeapps",
       "community": 0,
-      "norm_label": "writeapps()"
+      "norm_label": "writeapps()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeapps"
     },
     {
       "label": "readPasskey()",
@@ -6709,9 +6752,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L102",
       "_origin": "ast",
-      "id": "routes_admin_readpasskey",
       "community": 0,
-      "norm_label": "readpasskey()"
+      "norm_label": "readpasskey()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readpasskey"
     },
     {
       "label": "writePasskey()",
@@ -6719,9 +6763,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L103",
       "_origin": "ast",
-      "id": "routes_admin_writepasskey",
       "community": 0,
-      "norm_label": "writepasskey()"
+      "norm_label": "writepasskey()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writepasskey"
     },
     {
       "label": "readVotes()",
@@ -6729,9 +6774,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L104",
       "_origin": "ast",
-      "id": "routes_admin_readvotes",
       "community": 0,
-      "norm_label": "readvotes()"
+      "norm_label": "readvotes()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readvotes"
     },
     {
       "label": "writeVotes()",
@@ -6739,9 +6785,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L105",
       "_origin": "ast",
-      "id": "routes_admin_writevotes",
       "community": 0,
-      "norm_label": "writevotes()"
+      "norm_label": "writevotes()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writevotes"
     },
     {
       "label": "readVoteRecords()",
@@ -6749,9 +6796,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L106",
       "_origin": "ast",
-      "id": "routes_admin_readvoterecords",
       "community": 0,
-      "norm_label": "readvoterecords()"
+      "norm_label": "readvoterecords()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readvoterecords"
     },
     {
       "label": "writeVoteRecords()",
@@ -6759,9 +6807,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L107",
       "_origin": "ast",
-      "id": "routes_admin_writevoterecords",
       "community": 0,
-      "norm_label": "writevoterecords()"
+      "norm_label": "writevoterecords()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writevoterecords"
     },
     {
       "label": "readVoteIpRecords()",
@@ -6769,9 +6818,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L108",
       "_origin": "ast",
-      "id": "routes_admin_readvoteiprecords",
       "community": 0,
-      "norm_label": "readvoteiprecords()"
+      "norm_label": "readvoteiprecords()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readvoteiprecords"
     },
     {
       "label": "writeVoteIpRecords()",
@@ -6779,9 +6829,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L109",
       "_origin": "ast",
-      "id": "routes_admin_writevoteiprecords",
       "community": 0,
-      "norm_label": "writevoteiprecords()"
+      "norm_label": "writevoteiprecords()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writevoteiprecords"
     },
     {
       "label": "readDiscussionComments()",
@@ -6789,9 +6840,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L110",
       "_origin": "ast",
-      "id": "routes_admin_readdiscussioncomments",
       "community": 32,
-      "norm_label": "readdiscussioncomments()"
+      "norm_label": "readdiscussioncomments()",
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_readdiscussioncomments"
     },
     {
       "label": "writeDiscussionComments()",
@@ -6799,9 +6851,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L111",
       "_origin": "ast",
-      "id": "routes_admin_writediscussioncomments",
       "community": 32,
-      "norm_label": "writediscussioncomments()"
+      "norm_label": "writediscussioncomments()",
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_writediscussioncomments"
     },
     {
       "label": "readPickupAuctions()",
@@ -6809,9 +6862,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L112",
       "_origin": "ast",
-      "id": "routes_admin_readpickupauctions",
       "community": 0,
-      "norm_label": "readpickupauctions()"
+      "norm_label": "readpickupauctions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readpickupauctions"
     },
     {
       "label": "writePickupAuctions()",
@@ -6819,9 +6873,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L113",
       "_origin": "ast",
-      "id": "routes_admin_writepickupauctions",
       "community": 0,
-      "norm_label": "writepickupauctions()"
+      "norm_label": "writepickupauctions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writepickupauctions"
     },
     {
       "label": "readPickupReports()",
@@ -6829,9 +6884,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L114",
       "_origin": "ast",
-      "id": "routes_admin_readpickupreports",
       "community": 0,
-      "norm_label": "readpickupreports()"
+      "norm_label": "readpickupreports()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readpickupreports"
     },
     {
       "label": "writePickupReports()",
@@ -6839,9 +6895,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L115",
       "_origin": "ast",
-      "id": "routes_admin_writepickupreports",
       "community": 0,
-      "norm_label": "writepickupreports()"
+      "norm_label": "writepickupreports()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writepickupreports"
     },
     {
       "label": "readQAQuestions()",
@@ -6849,9 +6906,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L116",
       "_origin": "ast",
-      "id": "routes_admin_readqaquestions",
       "community": 0,
-      "norm_label": "readqaquestions()"
+      "norm_label": "readqaquestions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readqaquestions"
     },
     {
       "label": "writeQAQuestions()",
@@ -6859,9 +6917,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L117",
       "_origin": "ast",
-      "id": "routes_admin_writeqaquestions",
       "community": 0,
-      "norm_label": "writeqaquestions()"
+      "norm_label": "writeqaquestions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeqaquestions"
     },
     {
       "label": "readQAAnswers()",
@@ -6869,9 +6928,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L118",
       "_origin": "ast",
-      "id": "routes_admin_readqaanswers",
       "community": 0,
-      "norm_label": "readqaanswers()"
+      "norm_label": "readqaanswers()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readqaanswers"
     },
     {
       "label": "writeQAAnswers()",
@@ -6879,9 +6939,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L119",
       "_origin": "ast",
-      "id": "routes_admin_writeqaanswers",
       "community": 0,
-      "norm_label": "writeqaanswers()"
+      "norm_label": "writeqaanswers()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeqaanswers"
     },
     {
       "label": "readSC()",
@@ -6889,9 +6950,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L120",
       "_origin": "ast",
-      "id": "routes_admin_readsc",
       "community": 0,
-      "norm_label": "readsc()"
+      "norm_label": "readsc()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readsc"
     },
     {
       "label": "writeSC()",
@@ -6899,9 +6961,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L121",
       "_origin": "ast",
-      "id": "routes_admin_writesc",
       "community": 0,
-      "norm_label": "writesc()"
+      "norm_label": "writesc()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writesc"
     },
     {
       "label": "readWhispers()",
@@ -6909,9 +6972,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "routes_admin_readwhispers",
       "community": 0,
-      "norm_label": "readwhispers()"
+      "norm_label": "readwhispers()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readwhispers"
     },
     {
       "label": "writeWhispers()",
@@ -6919,9 +6983,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L123",
       "_origin": "ast",
-      "id": "routes_admin_writewhispers",
       "community": 0,
-      "norm_label": "writewhispers()"
+      "norm_label": "writewhispers()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writewhispers"
     },
     {
       "label": "readTrustTokens()",
@@ -6929,9 +6994,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L124",
       "_origin": "ast",
-      "id": "routes_admin_readtrusttokens",
       "community": 0,
-      "norm_label": "readtrusttokens()"
+      "norm_label": "readtrusttokens()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readtrusttokens"
     },
     {
       "label": "writeTrustTokens()",
@@ -6939,9 +7005,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L125",
       "_origin": "ast",
-      "id": "routes_admin_writetrusttokens",
       "community": 0,
-      "norm_label": "writetrusttokens()"
+      "norm_label": "writetrusttokens()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writetrusttokens"
     },
     {
       "label": "readLogs()",
@@ -6949,9 +7016,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L126",
       "_origin": "ast",
-      "id": "routes_admin_readlogs",
       "community": 34,
-      "norm_label": "readlogs()"
+      "norm_label": "readlogs()",
+      "community_name": "addLoginLog",
+      "id": "routes_admin_readlogs"
     },
     {
       "label": "writeLogs()",
@@ -6959,9 +7027,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L127",
       "_origin": "ast",
-      "id": "routes_admin_writelogs",
       "community": 34,
-      "norm_label": "writelogs()"
+      "norm_label": "writelogs()",
+      "community_name": "addLoginLog",
+      "id": "routes_admin_writelogs"
     },
     {
       "label": "readDeletedItems()",
@@ -6969,9 +7038,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L128",
       "_origin": "ast",
-      "id": "routes_admin_readdeleteditems",
       "community": 0,
-      "norm_label": "readdeleteditems()"
+      "norm_label": "readdeleteditems()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readdeleteditems"
     },
     {
       "label": "writeDeletedItems()",
@@ -6979,9 +7049,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L129",
       "_origin": "ast",
-      "id": "routes_admin_writedeleteditems",
       "community": 0,
-      "norm_label": "writedeleteditems()"
+      "norm_label": "writedeleteditems()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writedeleteditems"
     },
     {
       "label": "addDeletedItem()",
@@ -6989,9 +7060,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L130",
       "_origin": "ast",
-      "id": "routes_admin_adddeleteditem",
       "community": 32,
-      "norm_label": "adddeleteditem()"
+      "norm_label": "adddeleteditem()",
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_adddeleteditem"
     },
     {
       "label": "readAnnouncement()",
@@ -6999,9 +7071,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L131",
       "_origin": "ast",
-      "id": "routes_admin_readannouncement",
       "community": 0,
-      "norm_label": "readannouncement()"
+      "norm_label": "readannouncement()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readannouncement"
     },
     {
       "label": "writeAnnouncement()",
@@ -7009,9 +7082,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L132",
       "_origin": "ast",
-      "id": "routes_admin_writeannouncement",
       "community": 0,
-      "norm_label": "writeannouncement()"
+      "norm_label": "writeannouncement()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writeannouncement"
     },
     {
       "label": "readDiscussions()",
@@ -7019,9 +7093,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L133",
       "_origin": "ast",
-      "id": "routes_admin_readdiscussions",
       "community": 0,
-      "norm_label": "readdiscussions()"
+      "norm_label": "readdiscussions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_readdiscussions"
     },
     {
       "label": "writeDiscussions()",
@@ -7029,9 +7104,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L134",
       "_origin": "ast",
-      "id": "routes_admin_writediscussions",
       "community": 0,
-      "norm_label": "writediscussions()"
+      "norm_label": "writediscussions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_writediscussions"
     },
     {
       "label": "saveDeletedItem()",
@@ -7039,9 +7115,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L136",
       "_origin": "ast",
-      "id": "routes_admin_savedeleteditem",
       "community": 32,
-      "norm_label": "savedeleteditem()"
+      "norm_label": "savedeleteditem()",
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_savedeleteditem"
     },
     {
       "label": "deleteSyncedDiscComment()",
@@ -7049,9 +7126,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L149",
       "_origin": "ast",
-      "id": "routes_admin_deletesynceddisccomment",
       "community": 32,
-      "norm_label": "deletesynceddisccomment()"
+      "norm_label": "deletesynceddisccomment()",
+      "community_name": "deleteSyncedDiscComment",
+      "id": "routes_admin_deletesynceddisccomment"
     },
     {
       "label": "changeCredit()",
@@ -7059,9 +7137,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L161",
       "_origin": "ast",
-      "id": "routes_admin_changecredit",
       "community": 33,
-      "norm_label": "changecredit()"
+      "norm_label": "changecredit()",
+      "community_name": "changeCredit",
+      "id": "routes_admin_changecredit"
     },
     {
       "label": "luhnModN()",
@@ -7069,9 +7148,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L183",
       "_origin": "ast",
-      "id": "routes_admin_luhnmodn",
       "community": 0,
-      "norm_label": "luhnmodn()"
+      "norm_label": "luhnmodn()",
+      "community_name": "admin.js",
+      "id": "routes_admin_luhnmodn"
     },
     {
       "label": "generateCardCode()",
@@ -7079,9 +7159,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L199",
       "_origin": "ast",
-      "id": "routes_admin_generatecardcode",
       "community": 0,
-      "norm_label": "generatecardcode()"
+      "norm_label": "generatecardcode()",
+      "community_name": "admin.js",
+      "id": "routes_admin_generatecardcode"
     },
     {
       "label": "_updateVoteOptions()",
@@ -7089,9 +7170,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L226",
       "_origin": "ast",
-      "id": "routes_admin_updatevoteoptions",
       "community": 0,
-      "norm_label": "_updatevoteoptions()"
+      "norm_label": "_updatevoteoptions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_updatevoteoptions"
     },
     {
       "label": "_legacyUpdateVoteOptions()",
@@ -7099,9 +7181,10 @@
       "source_file": "routes/admin.js",
       "source_location": "L983",
       "_origin": "ast",
-      "id": "routes_admin_legacyupdatevoteoptions",
       "community": 0,
-      "norm_label": "_legacyupdatevoteoptions()"
+      "norm_label": "_legacyupdatevoteoptions()",
+      "community_name": "admin.js",
+      "id": "routes_admin_legacyupdatevoteoptions"
     },
     {
       "label": "discussions.js",
@@ -17442,9 +17525,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L130",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_adddeleteditem",
-      "confidence_score": 1.0
+      "target": "routes_admin_adddeleteditem"
     },
     {
       "relation": "contains",
@@ -17452,9 +17535,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L51",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_addloginlog",
-      "confidence_score": 1.0
+      "target": "routes_admin_addloginlog"
     },
     {
       "relation": "contains",
@@ -17462,9 +17545,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_adminratelimit",
-      "confidence_score": 1.0
+      "target": "routes_admin_adminratelimit"
     },
     {
       "relation": "contains",
@@ -17472,9 +17555,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_broadcastsse",
-      "confidence_score": 1.0
+      "target": "routes_admin_broadcastsse"
     },
     {
       "relation": "contains",
@@ -17482,9 +17565,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L161",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_changecredit",
-      "confidence_score": 1.0
+      "target": "routes_admin_changecredit"
     },
     {
       "relation": "contains",
@@ -17492,9 +17575,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames",
-      "confidence_score": 1.0
+      "target": "routes_admin_check_checkbullyingnames_addname_addbullyingname_removename_removebullyingname_getall_getallbullyingnames_reload_reloadbullyingnames"
     },
     {
       "relation": "contains",
@@ -17502,9 +17585,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist",
-      "confidence_score": 1.0
+      "target": "routes_admin_check_checksensitive_reload_reloadsensitive_getstats_getsensitivestats_whitelist_file_savewhitelist"
     },
     {
       "relation": "contains",
@@ -17512,9 +17595,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_checkadminratelimit",
-      "confidence_score": 1.0
+      "target": "routes_admin_checkadminratelimit"
     },
     {
       "relation": "contains",
@@ -17522,9 +17605,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_crypto",
-      "confidence_score": 1.0
+      "target": "routes_admin_crypto"
     },
     {
       "relation": "contains",
@@ -17532,9 +17615,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_data_dir",
-      "confidence_score": 1.0
+      "target": "routes_admin_data_dir"
     },
     {
       "relation": "contains",
@@ -17542,9 +17625,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_db",
-      "confidence_score": 1.0
+      "target": "routes_admin_db"
     },
     {
       "relation": "contains",
@@ -17552,9 +17635,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L149",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_deletesynceddisccomment",
-      "confidence_score": 1.0
+      "target": "routes_admin_deletesynceddisccomment"
     },
     {
       "relation": "contains",
@@ -17562,9 +17645,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_fs",
-      "confidence_score": 1.0
+      "target": "routes_admin_fs"
     },
     {
       "relation": "contains",
@@ -17572,9 +17655,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L199",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_generatecardcode",
-      "confidence_score": 1.0
+      "target": "routes_admin_generatecardcode"
     },
     {
       "relation": "contains",
@@ -17582,9 +17665,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_generateuid",
-      "confidence_score": 1.0
+      "target": "routes_admin_generateuid"
     },
     {
       "relation": "contains",
@@ -17592,9 +17675,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_getclientip",
-      "confidence_score": 1.0
+      "target": "routes_admin_getclientip"
     },
     {
       "relation": "contains",
@@ -17602,9 +17685,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_hasadmins",
-      "confidence_score": 1.0
+      "target": "routes_admin_hasadmins"
     },
     {
       "relation": "contains",
@@ -17612,9 +17695,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus",
-      "confidence_score": 1.0
+      "target": "routes_admin_hashpassword_verifypassword_encryptcert_decryptcert_maketoken_verifysignedtoken_getdisplayzhixuestatus"
     },
     {
       "relation": "contains",
@@ -17622,9 +17705,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L983",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_legacyupdatevoteoptions",
-      "confidence_score": 1.0
+      "target": "routes_admin_legacyupdatevoteoptions"
     },
     {
       "relation": "contains",
@@ -17632,9 +17715,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L183",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_luhnmodn",
-      "confidence_score": 1.0
+      "target": "routes_admin_luhnmodn"
     },
     {
       "relation": "contains",
@@ -17642,9 +17725,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_maintenance",
-      "confidence_score": 1.0
+      "target": "routes_admin_maintenance"
     },
     {
       "relation": "contains",
@@ -17652,9 +17735,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_path",
-      "confidence_score": 1.0
+      "target": "routes_admin_path"
     },
     {
       "relation": "contains",
@@ -17662,9 +17745,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_penalty",
-      "confidence_score": 1.0
+      "target": "routes_admin_penalty"
     },
     {
       "relation": "contains",
@@ -17672,9 +17755,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L78",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_pushusernotice",
-      "confidence_score": 1.0
+      "target": "routes_admin_pushusernotice"
     },
     {
       "relation": "contains",
@@ -17682,9 +17765,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readadmins",
-      "confidence_score": 1.0
+      "target": "routes_admin_readadmins"
     },
     {
       "relation": "contains",
@@ -17692,9 +17775,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L131",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readannouncement",
-      "confidence_score": 1.0
+      "target": "routes_admin_readannouncement"
     },
     {
       "relation": "contains",
@@ -17702,9 +17785,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L100",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readapps",
-      "confidence_score": 1.0
+      "target": "routes_admin_readapps"
     },
     {
       "relation": "contains",
@@ -17712,9 +17795,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readbullying",
-      "confidence_score": 1.0
+      "target": "routes_admin_readbullying"
     },
     {
       "relation": "contains",
@@ -17722,9 +17805,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readcreditcards",
-      "confidence_score": 1.0
+      "target": "routes_admin_readcreditcards"
     },
     {
       "relation": "contains",
@@ -17732,9 +17815,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readcreditlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_readcreditlogs"
     },
     {
       "relation": "contains",
@@ -17742,9 +17825,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L128",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readdeleteditems",
-      "confidence_score": 1.0
+      "target": "routes_admin_readdeleteditems"
     },
     {
       "relation": "contains",
@@ -17752,9 +17835,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L110",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readdiscussioncomments",
-      "confidence_score": 1.0
+      "target": "routes_admin_readdiscussioncomments"
     },
     {
       "relation": "contains",
@@ -17762,9 +17845,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L133",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readdiscussions",
-      "confidence_score": 1.0
+      "target": "routes_admin_readdiscussions"
     },
     {
       "relation": "contains",
@@ -17772,9 +17855,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L66",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readfeedbacks",
-      "confidence_score": 1.0
+      "target": "routes_admin_readfeedbacks"
     },
     {
       "relation": "contains",
@@ -17782,9 +17865,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L126",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_readlogs"
     },
     {
       "relation": "contains",
@@ -17792,9 +17875,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L98",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readmaintenance",
-      "confidence_score": 1.0
+      "target": "routes_admin_readmaintenance"
     },
     {
       "relation": "contains",
@@ -17802,9 +17885,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L74",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readnotices",
-      "confidence_score": 1.0
+      "target": "routes_admin_readnotices"
     },
     {
       "relation": "contains",
@@ -17812,9 +17895,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L102",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readpasskey",
-      "confidence_score": 1.0
+      "target": "routes_admin_readpasskey"
     },
     {
       "relation": "contains",
@@ -17822,9 +17905,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L112",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readpickupauctions",
-      "confidence_score": 1.0
+      "target": "routes_admin_readpickupauctions"
     },
     {
       "relation": "contains",
@@ -17832,9 +17915,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L114",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readpickupreports",
-      "confidence_score": 1.0
+      "target": "routes_admin_readpickupreports"
     },
     {
       "relation": "contains",
@@ -17842,9 +17925,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L58",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readposts",
-      "confidence_score": 1.0
+      "target": "routes_admin_readposts"
     },
     {
       "relation": "contains",
@@ -17852,9 +17935,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readqaanswers",
-      "confidence_score": 1.0
+      "target": "routes_admin_readqaanswers"
     },
     {
       "relation": "contains",
@@ -17862,9 +17945,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readqaquestions",
-      "confidence_score": 1.0
+      "target": "routes_admin_readqaquestions"
     },
     {
       "relation": "contains",
@@ -17872,9 +17955,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L64",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readreports",
-      "confidence_score": 1.0
+      "target": "routes_admin_readreports"
     },
     {
       "relation": "contains",
@@ -17882,9 +17965,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readsc",
-      "confidence_score": 1.0
+      "target": "routes_admin_readsc"
     },
     {
       "relation": "contains",
@@ -17892,9 +17975,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L124",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readtrusttokens",
-      "confidence_score": 1.0
+      "target": "routes_admin_readtrusttokens"
     },
     {
       "relation": "contains",
@@ -17902,9 +17985,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readusers",
-      "confidence_score": 1.0
+      "target": "routes_admin_readusers"
     },
     {
       "relation": "contains",
@@ -17912,9 +17995,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readvoteiprecords",
-      "confidence_score": 1.0
+      "target": "routes_admin_readvoteiprecords"
     },
     {
       "relation": "contains",
@@ -17922,9 +18005,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L106",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readvoterecords",
-      "confidence_score": 1.0
+      "target": "routes_admin_readvoterecords"
     },
     {
       "relation": "contains",
@@ -17932,9 +18015,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L104",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readvotes",
-      "confidence_score": 1.0
+      "target": "routes_admin_readvotes"
     },
     {
       "relation": "contains",
@@ -17942,9 +18025,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_readwhispers",
-      "confidence_score": 1.0
+      "target": "routes_admin_readwhispers"
     },
     {
       "relation": "contains",
@@ -17952,9 +18035,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_requireadmin_requiresuper",
-      "confidence_score": 1.0
+      "target": "routes_admin_requireadmin_requiresuper"
     },
     {
       "relation": "contains",
@@ -17962,9 +18045,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_savedeleteditem",
-      "confidence_score": 1.0
+      "target": "routes_admin_savedeleteditem"
     },
     {
       "relation": "contains",
@@ -17972,9 +18055,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_sensitive_custom_file",
-      "confidence_score": 1.0
+      "target": "routes_admin_sensitive_custom_file"
     },
     {
       "relation": "contains",
@@ -17982,9 +18065,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L226",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_updatevoteoptions",
-      "confidence_score": 1.0
+      "target": "routes_admin_updatevoteoptions"
     },
     {
       "relation": "contains",
@@ -17992,9 +18075,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeadmins",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeadmins"
     },
     {
       "relation": "contains",
@@ -18002,9 +18085,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L132",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeannouncement",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeannouncement"
     },
     {
       "relation": "contains",
@@ -18012,9 +18095,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L101",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeapps",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeapps"
     },
     {
       "relation": "contains",
@@ -18022,9 +18105,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L69",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writebullying",
-      "confidence_score": 1.0
+      "target": "routes_admin_writebullying"
     },
     {
       "relation": "contains",
@@ -18032,9 +18115,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L73",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writecreditcards",
-      "confidence_score": 1.0
+      "target": "routes_admin_writecreditcards"
     },
     {
       "relation": "contains",
@@ -18042,9 +18125,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L71",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writecreditlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_writecreditlogs"
     },
     {
       "relation": "contains",
@@ -18052,9 +18135,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L129",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writedeleteditems",
-      "confidence_score": 1.0
+      "target": "routes_admin_writedeleteditems"
     },
     {
       "relation": "contains",
@@ -18062,9 +18145,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L111",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writediscussioncomments",
-      "confidence_score": 1.0
+      "target": "routes_admin_writediscussioncomments"
     },
     {
       "relation": "contains",
@@ -18072,9 +18155,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writediscussions",
-      "confidence_score": 1.0
+      "target": "routes_admin_writediscussions"
     },
     {
       "relation": "contains",
@@ -18082,9 +18165,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writefeedbacks",
-      "confidence_score": 1.0
+      "target": "routes_admin_writefeedbacks"
     },
     {
       "relation": "contains",
@@ -18092,9 +18175,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L127",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writelogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_writelogs"
     },
     {
       "relation": "contains",
@@ -18102,9 +18185,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L99",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writemaintenance",
-      "confidence_score": 1.0
+      "target": "routes_admin_writemaintenance"
     },
     {
       "relation": "contains",
@@ -18112,9 +18195,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L75",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writenotices",
-      "confidence_score": 1.0
+      "target": "routes_admin_writenotices"
     },
     {
       "relation": "contains",
@@ -18122,9 +18205,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L103",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writepasskey",
-      "confidence_score": 1.0
+      "target": "routes_admin_writepasskey"
     },
     {
       "relation": "contains",
@@ -18132,9 +18215,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L113",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writepickupauctions",
-      "confidence_score": 1.0
+      "target": "routes_admin_writepickupauctions"
     },
     {
       "relation": "contains",
@@ -18142,9 +18225,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L115",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writepickupreports",
-      "confidence_score": 1.0
+      "target": "routes_admin_writepickupreports"
     },
     {
       "relation": "contains",
@@ -18152,9 +18235,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L59",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeposts",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeposts"
     },
     {
       "relation": "contains",
@@ -18162,9 +18245,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L119",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeqaanswers",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeqaanswers"
     },
     {
       "relation": "contains",
@@ -18172,9 +18255,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L117",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeqaquestions",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeqaquestions"
     },
     {
       "relation": "contains",
@@ -18182,9 +18265,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L65",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writereports",
-      "confidence_score": 1.0
+      "target": "routes_admin_writereports"
     },
     {
       "relation": "contains",
@@ -18192,9 +18275,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writesc",
-      "confidence_score": 1.0
+      "target": "routes_admin_writesc"
     },
     {
       "relation": "contains",
@@ -18202,9 +18285,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L125",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writetrusttokens",
-      "confidence_score": 1.0
+      "target": "routes_admin_writetrusttokens"
     },
     {
       "relation": "contains",
@@ -18212,9 +18295,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L61",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writeusers",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeusers"
     },
     {
       "relation": "contains",
@@ -18222,9 +18305,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L109",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writevoteiprecords",
-      "confidence_score": 1.0
+      "target": "routes_admin_writevoteiprecords"
     },
     {
       "relation": "contains",
@@ -18232,9 +18315,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L107",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writevoterecords",
-      "confidence_score": 1.0
+      "target": "routes_admin_writevoterecords"
     },
     {
       "relation": "contains",
@@ -18242,9 +18325,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writevotes",
-      "confidence_score": 1.0
+      "target": "routes_admin_writevotes"
     },
     {
       "relation": "contains",
@@ -18252,9 +18335,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L123",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin",
-      "target": "routes_admin_writewhispers",
-      "confidence_score": 1.0
+      "target": "routes_admin_writewhispers"
     },
     {
       "relation": "calls",
@@ -18263,9 +18346,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_hasadmins",
-      "target": "routes_admin_readadmins",
-      "confidence_score": 1.0
+      "target": "routes_admin_readadmins"
     },
     {
       "relation": "calls",
@@ -18274,9 +18357,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_addloginlog",
-      "target": "routes_admin_readlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_readlogs"
     },
     {
       "relation": "calls",
@@ -18285,9 +18368,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L55",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_addloginlog",
-      "target": "routes_admin_writelogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_writelogs"
     },
     {
       "relation": "calls",
@@ -18296,9 +18379,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L162",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_changecredit",
-      "target": "routes_admin_readusers",
-      "confidence_score": 1.0
+      "target": "routes_admin_readusers"
     },
     {
       "relation": "calls",
@@ -18307,9 +18390,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L167",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_changecredit",
-      "target": "routes_admin_writeusers",
-      "confidence_score": 1.0
+      "target": "routes_admin_writeusers"
     },
     {
       "relation": "calls",
@@ -18318,9 +18401,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L168",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_changecredit",
-      "target": "routes_admin_readcreditlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_readcreditlogs"
     },
     {
       "relation": "calls",
@@ -18329,9 +18412,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L176",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_changecredit",
-      "target": "routes_admin_writecreditlogs",
-      "confidence_score": 1.0
+      "target": "routes_admin_writecreditlogs"
     },
     {
       "relation": "calls",
@@ -18340,9 +18423,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L81",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_pushusernotice",
-      "target": "routes_admin_readnotices",
-      "confidence_score": 1.0
+      "target": "routes_admin_readnotices"
     },
     {
       "relation": "calls",
@@ -18351,9 +18434,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L89",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_pushusernotice",
-      "target": "routes_admin_writenotices",
-      "confidence_score": 1.0
+      "target": "routes_admin_writenotices"
     },
     {
       "relation": "calls",
@@ -18362,9 +18445,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L151",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_deletesynceddisccomment",
-      "target": "routes_admin_readdiscussioncomments",
-      "confidence_score": 1.0
+      "target": "routes_admin_readdiscussioncomments"
     },
     {
       "relation": "calls",
@@ -18373,9 +18456,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L156",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_deletesynceddisccomment",
-      "target": "routes_admin_writediscussioncomments",
-      "confidence_score": 1.0
+      "target": "routes_admin_writediscussioncomments"
     },
     {
       "relation": "calls",
@@ -18384,9 +18467,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_savedeleteditem",
-      "target": "routes_admin_adddeleteditem",
-      "confidence_score": 1.0
+      "target": "routes_admin_adddeleteditem"
     },
     {
       "relation": "calls",
@@ -18395,9 +18478,9 @@
       "source_file": "routes/admin.js",
       "source_location": "L154",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "routes_admin_deletesynceddisccomment",
-      "target": "routes_admin_savedeleteditem",
-      "confidence_score": 1.0
+      "target": "routes_admin_savedeleteditem"
     },
     {
       "relation": "contains",
@@ -18661,5 +18744,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "fb5f814673ba558f9fb36cb2573baf3d13ee5121"
+  "built_at_commit": "facd4d4531fb68854dee118fc83dbafef4d1f339"
 }
