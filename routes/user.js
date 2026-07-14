@@ -259,7 +259,7 @@ module.exports = function(app) {
     }
   
     const users = readUsers();
-    let user = users.find(u => u.zhixueUsername === zhixueUsername && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
+    let user = users.find(u => String(u.zhixueUsername) === String(zhixueUsername) && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
     // 防御：approved 必须有审核记录
     if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
       console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
@@ -271,8 +271,17 @@ module.exports = function(app) {
     }
     const decryptedZhixuePwd = user.zhixuePassword ? (decryptCert(user.zhixuePassword) || '') : '';
     if (password !== decryptedZhixuePwd) {
-      addLoginLog('user', zhixueUsername, false, ip, ua);
-      return res.json({ ok: false, msg: '当前密码错误' });
+      // 旧版代码在审核通过时会清空 zhixuePassword（已知 bug），
+      // 用户密码已不可恢复。此时允许用户重新提交密码来绑定。
+      if (!user.zhixuePassword) {
+        const idx = users.findIndex(u => u.id === user.id);
+        users[idx].zhixuePassword = encryptCert(password);
+        writeUsers(users);
+        console.log('[zhixue-login] 已恢复用户', user.id, '的智学密码');
+      } else {
+        addLoginLog('user', zhixueUsername, false, ip, ua);
+        return res.json({ ok: false, msg: '当前密码错误' });
+      }
     }
     // 自动解封
     if (user.status === 'banned' && user.banUntil) {

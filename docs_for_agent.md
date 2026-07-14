@@ -1015,3 +1015,8 @@ server.js
 
 **Bug 2：搜索无法匹配同学认证姓名**
 - `routes/user.js:1010-1014`：解密 `certRealName` 后再与搜索词比较（原代码对密文做 includes 永不相符）；同时补充 `zhixueManualName` 搜索，覆盖手动认证场景。
+
+**附加修复**
+- `routes/user.js:262`：`zhixueUsername` 在 DB 中以 Number 存储，登录时用 `String()` 统一转字符串再比较，修复类型不匹配导致用户找不到
+- `routes/user.js:273-282`：当 `zhixuePassword` 为 null（旧版代码审核清空导致）时，将用户输入的密码加密存储并放行登录，实现自动恢复
+- `lib/middleware.js:123,139-145`：将 `password` / `zhixuePassword` / `oldPwd` / `newPwd` 等密码字段加入 `inputSanitize` 白名单，防止特殊字符被静默清除
