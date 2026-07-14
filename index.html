@@ -2341,7 +2341,7 @@
   </div>
 
   <!-- ===== 悄悄话接收通知弹窗 ===== -->
-  <div class="modal-overlay" id="whisperIncomingOverlay" onclick="closeWhisperIncoming(event)" style="display:none">
+  <div class="modal-overlay" id="whisperIncomingOverlay" onclick="closeWhisperIncoming(event)" style="display:none;z-index:10000">
   <div class="modal-note whisper-incoming-modal" onclick="event.stopPropagation()" style="max-width:380px;">
   <div class="tape" style="--tape-rotate:-1deg;"></div>
   <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 💬 收到一条悄悄话</h3>
@@ -3017,6 +3017,11 @@
   <button class="side-nav-item" onclick="toggleSideNav(); window.open('safety.html','_blank');">
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>
   <span class="nav-label">安全中心</span>
+  </button>
+  <button class="side-nav-item" onclick="toggleSideNav(); window.open('credit.html','_blank');">
+  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg></span>
+  <span class="nav-label">我的Credits</span>
+  <span id="sideNavCredit" style="margin-left:auto;font-size:12px;font-weight:700;color:#8b6f5e;background:rgba(139,111,94,0.12);padding:2px 9px;border-radius:10px;font-variant-numeric:tabular-nums;">0</span>
   </button>
   <div class="side-nav-divider"></div>
   <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
@@ -7826,8 +7831,10 @@ function escJsStr(s) {
  try {
  var u = JSON.parse(userStr);
  var name = u.nickname || u.username || '';
- document.getElementById('sideNavUserName').textContent = name;
- document.getElementById('sideNavUserCredit').textContent = (u.credit || 0) + ' Credit';
+  document.getElementById('sideNavUserName').textContent = name;
+  document.getElementById('sideNavUserCredit').textContent = (u.credit || 0) + ' Credit';
+  var sideNavCredit = document.getElementById('sideNavCredit');
+  if (sideNavCredit) sideNavCredit.textContent = (u.credit || 0);
   var avatarEl = document.getElementById('sideNavAvatar');
   if (u.avatar && u.avatar.startsWith('data:image/')) {
   avatarEl.innerHTML = '<img src="' + u.avatar + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">';

@@ -935,3 +935,28 @@ server.js
 
 图谱中最值得探索的问题：**为什么 `broadcastSSE()` 会连接 14 个不同的社区？**
 答案：`broadcastSSE()` 是系统唯一的实时推送中枢（`lib/sse.js`），被所有业务模块（帖子、通知、投票、QA、讨论区、捡漏拍卖等）依赖，是代码库中耦合度最高的函数。
+
+---
+
+## 9. 变更记录（Changelog）
+
+> 本节记录本项目的非正式改动，便于后续 Agent 快速对齐。
+
+### 2026-07-14 · 密语接收弹窗层级修复 + 积分入口与积分页重做
+
+**Bug 修复：`#whisperIncomingOverlay` 被通知弹窗覆盖**
+- 现象：收到密语（whisper）时，接收弹窗有时被「校园通知」弹窗（`notifOverlay`）挡住，用户看不到。
+- 根因：`index.html` 中 `#whisperIncomingOverlay` 没有显式 `z-index`，继承自 `.modal-overlay` 的 `999`；而 `notifOverlay` / `announcementOverlay` 用 `z-index:1000`。并且 `checkNotifBadge()` 在任意 `noticeUpdate` SSE 事件（密语到达也会触发）后，若用户有 T0 通知会自动弹出 `notifOverlay`，恰好盖住密语弹窗。
+- 修复：`index.html` 的 `#whisperIncomingOverlay` 增加内联 `z-index:10000`（高于所有其它弹窗）。已用 Playwright 验证：用户存在 T0 通知且同时收到密语时，密语弹窗正确置顶显示。
+
+**积分（Credit）入口新增**
+- `index.html`：左侧导航新增「我的积分」项（`<li id="sideNavCredit">`），紧接「安全中心」之后；在登录态刷新函数（`login-update`）中同步写入积分数值。顶部 `#topUserCredit` 原本已存在。
+- `user.html`：个人主页 `profile-actions` 新增「我的积分」按钮（`#openCreditBtn`，`.btn-credit` 样式），点击跳转 `credit.html`。`renderUser` 在查看**本人**主页时把 `#userCreditInline` 设为真实积分（来自 `/api/user/me`），他人主页显示公开资料中的积分（公开接口 `/api/users/:id` 不返回 credit，故为 0）。
+
+**`credit.html` 视觉重做（最小化 / 现代风）**
+- 背景：暖色砖墙（`radial-gradient` + `repeating-linear-gradient`）+ 半透明卡片，契合项目整体暖色调。
+- 交互：卡片进场 `rise-in` 动画（错落 `nth-child` 延迟）；余额 `count-up`（`animateCount`）；兑换结果「已兑换 ✅」按钮态 + 微动效。
+- 逻辑保持：保留全部既有 JS —— `loadCredit`、`renderCredit`、`animateCount`、`doRedeem`、`luhnModN` 卡密校验、`showResult`/`clearResult`，以及 `/api/user/me`、`/api/user/credit-logs`、`/api/user/redeem-credit` 调用。
+- CTA：兑换引导按钮指向 `https://www.kufaka.com/shop/2XLA5BYC/2niwrg`。
+
+**图谱更新提示**：本次改动涉及 `index.html` / `user.html` / `credit.html` 三处前端文件，建议在提交后运行 `graphify . --update`（或 `graphify . --code-only`）刷新 `graphify-out/`。
