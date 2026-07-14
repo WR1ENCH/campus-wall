@@ -6091,6 +6091,7 @@ async function showPostCaptchaModal() {
     if (!content) { showToast('请输入内容'); return; }
     var token = localStorage.getItem('campus_user_token');
     if (!token) { showToast('请先登录'); return; }
+    if (currentUser && currentUser.id === _whisperSelectedUserId) { showToast('不能给自己发悄悄话'); return; }
     fetch('/api/whispers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-token': token },
