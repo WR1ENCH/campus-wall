@@ -995,7 +995,7 @@ app.get('/api/users/search', (req, res) => {
 
   for (const user of users) {
     if (user.status === 'banned') continue;
-    const base = { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, uid: user.uid };
+    const base = { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar };
 
     if (user.username && user.username.toLowerCase().includes(ql) && results.accounts.length < LIMIT && !seen.has('a' + user.id)) {
       results.accounts.push(base); seen.add('a' + user.id);
@@ -1003,7 +1003,7 @@ app.get('/api/users/search', (req, res) => {
     if (user.nickname && user.nickname.toLowerCase().includes(ql) && results.nicknames.length < LIMIT && !seen.has('n' + user.id)) {
       results.nicknames.push(base); seen.add('n' + user.id);
     }
-    if (user.uid && String(user.uid).includes(q) && results.uids.length < LIMIT && !seen.has('u' + user.id)) {
+    if (user.id && user.id.toLowerCase().includes(ql) && results.uids.length < LIMIT && !seen.has('u' + user.id)) {
       results.uids.push(base); seen.add('u' + user.id);
     }
     if (user.certRealName && user.zhixueStatus === 'approved' && user.certRealName.includes(q) && results.names.length < LIMIT && !seen.has('r' + user.id)) {

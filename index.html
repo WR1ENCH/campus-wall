@@ -275,8 +275,17 @@
     z-index: 300;
     overflow: hidden;
     flex-direction: column;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
   }
-  .search-dropdown.open { display: flex; }
+  .search-dropdown.open {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
   .search-dropdown-input {
     padding: 12px 14px;
     border-bottom: 1px solid #eee;
@@ -7699,7 +7708,7 @@ function escJsStr(s) {
         }
         if (d.uids.length) {
           html += '<div class="search-category">匹配UID</div>';
-          d.uids.forEach(function(u) { html += renderSearchItem(u, u.uid, 'UID'); });
+          d.uids.forEach(function(u) { html += renderSearchItem(u, u.id, 'UID'); });
         }
         if (d.names.length) {
           html += '<div class="search-category">匹配姓名</div>';
