@@ -982,6 +982,38 @@ module.exports = function(app) {
 // aeed436「路由拆分 + SPA」重构时从旧 server.js 删除后未迁移，导致 user.html
 // 请求 /api/users/:id 与 /api/users/:id/posts 命中 404 返回 HTML，前端
 // JSON 解析报 "Unexpected token '<'"。此处按原逻辑恢复。
+// ===== 用户搜索 =====
+app.get('/api/users/search', (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q || q.length < 1) return res.json({ ok: true, data: { accounts: [], nicknames: [], uids: [], names: [] } });
+
+  const users = readUsers();
+  const results = { accounts: [], nicknames: [], uids: [], names: [] };
+  const seen = new Set();
+  const ql = q.toLowerCase();
+  const LIMIT = 20;
+
+  for (const user of users) {
+    if (user.status === 'banned') continue;
+    const base = { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar };
+
+    if (user.username && user.username.toLowerCase().includes(ql) && results.accounts.length < LIMIT && !seen.has('a' + user.id)) {
+      results.accounts.push(base); seen.add('a' + user.id);
+    }
+    if (user.nickname && user.nickname.toLowerCase().includes(ql) && results.nicknames.length < LIMIT && !seen.has('n' + user.id)) {
+      results.nicknames.push(base); seen.add('n' + user.id);
+    }
+    if (user.id && user.id.toLowerCase().includes(ql) && results.uids.length < LIMIT && !seen.has('u' + user.id)) {
+      results.uids.push(base); seen.add('u' + user.id);
+    }
+    if (user.certRealName && user.zhixueStatus === 'approved' && user.certRealName.includes(q) && results.names.length < LIMIT && !seen.has('r' + user.id)) {
+      results.names.push(base); seen.add('r' + user.id);
+    }
+  }
+
+  res.json({ ok: true, data: results });
+});
+
 app.get('/api/users/:id', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);

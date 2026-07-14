@@ -350,9 +350,10 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/comments/:id/report` | 用户 | 举报评论 |
 | POST | `/api/comments/batch-delete` | 管理员 | 批量删评论 |
 
-### 5.4 用户主页 / 公开资料
+### 5.4 用户搜索 / 主页 / 公开资料
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
+| GET | `/api/users/search?q=xxx` | 无 | 搜索用户，按 `q` 匹配账号/昵称/UID(user.id)/实名姓名，返回分类结果（accounts/nicknames/uids/names，每类上限 20） |
 | GET | `/api/users/:id` | 无 | 用户公开资料 |
 | GET | `/api/users/:id/posts` | 无 | 用户历史帖子 |
 | GET | `/api/user/notices` | 用户 | 用户相关通知 |
@@ -584,6 +585,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
   - 管理员：`x-admin-token`
   - 学生会：`x-sc-token`
 - 响应判断：`const j = await res.json(); if (j.ok) { ... } else { alert(j.msg) }`。
+- 用户搜索：`index.html` 操作栏 `action-btns` 最右侧有「找人」按钮（`.search-btn`），点击弹出带渐入动画的下拉气泡 `#searchDropdown`（`.open` 时 `opacity`/`transform` 过渡），输入关键词后 300ms 防抖调 `GET /api/users/search?q=xxx`，结果按「匹配账号/匹配昵称/匹配UID(user.id)/匹配姓名」四类分组展示，点击结果打开 `user.html?id=xxx`。点击外部或按 Esc 关闭。
 - 错误 `code` 常见：`NOT_LOGIN` / `INVALID_TOKEN` / `TOKEN_EXPIRED` / `FORBIDDEN` / `MAINTENANCE` / `RATE_LIMITED` / `ALREADY_INIT`。
 - 富文本渲染：引入 `marked.min.js`（CDN）做 Markdown；内容经 `inputSanitize` + 客户端转义防 XSS。
 - 滑块验证码：`slider-captcha/longbow.slidercaptcha.min.js`，先 `POST /api/slider-captcha/grant` 拿 `captchaId`，用户拖动完成后提交 `captchaId` + `captchaText`。

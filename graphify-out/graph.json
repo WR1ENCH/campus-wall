@@ -10,7 +10,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "bullyingnames",
-      "community": 8,
+      "community": 3,
       "norm_label": "bullyingnames.js"
     },
     {
@@ -20,7 +20,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "bullyingnames_fs",
-      "community": 8,
+      "community": 3,
       "norm_label": "fs"
     },
     {
@@ -30,7 +30,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "bullyingnames_path",
-      "community": 8,
+      "community": 3,
       "norm_label": "path"
     },
     {
@@ -40,7 +40,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "bullyingnames_data_dir",
-      "community": 8,
+      "community": 3,
       "norm_label": "data_dir"
     },
     {
@@ -50,7 +50,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "bullyingnames_names_file",
-      "community": 8,
+      "community": 3,
       "norm_label": "names_file"
     },
     {
@@ -60,7 +60,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "bullyingnames_loadnames",
-      "community": 8,
+      "community": 3,
       "norm_label": "loadnames()"
     },
     {
@@ -70,7 +70,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "bullyingnames_savenames",
-      "community": 8,
+      "community": 3,
       "norm_label": "savenames()"
     },
     {
@@ -80,7 +80,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "bullyingnames_protected_names",
-      "community": 8,
+      "community": 3,
       "norm_label": "protected_names"
     },
     {
@@ -90,7 +90,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "bullyingnames_reload",
-      "community": 8,
+      "community": 3,
       "norm_label": "reload()"
     },
     {
@@ -100,7 +100,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "bullyingnames_check",
-      "community": 8,
+      "community": 3,
       "norm_label": "check()"
     },
     {
@@ -110,7 +110,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "bullyingnames_addname",
-      "community": 8,
+      "community": 3,
       "norm_label": "addname()"
     },
     {
@@ -120,7 +120,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "bullyingnames_removename",
-      "community": 8,
+      "community": 3,
       "norm_label": "removename()"
     },
     {
@@ -130,7 +130,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "bullyingnames_getall",
-      "community": 8,
+      "community": 3,
       "norm_label": "getall()"
     },
     {
@@ -140,7 +140,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "bullyingnames_ensuredir",
-      "community": 8,
+      "community": 3,
       "norm_label": "ensuredir()"
     },
     {
@@ -870,7 +870,7 @@
       "source_location": "L542",
       "_origin": "ast",
       "id": "db_writeadmins",
-      "community": 9,
+      "community": 18,
       "norm_label": "writeadmins()"
     },
     {
@@ -930,7 +930,7 @@
       "source_location": "L586",
       "_origin": "ast",
       "id": "db_writelogs",
-      "community": 9,
+      "community": 18,
       "norm_label": "writelogs()"
     },
     {
@@ -1850,7 +1850,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "lib_crypto_verifysignedtoken",
-      "community": 20,
+      "community": 5,
       "norm_label": "verifysignedtoken()"
     },
     {
@@ -1880,7 +1880,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "lib_crypto_verifyusertoken",
-      "community": 20,
+      "community": 5,
       "norm_label": "verifyusertoken()"
     },
     {
@@ -1900,7 +1900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_helpers",
-      "community": 18,
+      "community": 20,
       "norm_label": "helpers.js"
     },
     {
@@ -1910,7 +1910,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "lib_helpers_getclientip",
-      "community": 18,
+      "community": 20,
       "norm_label": "getclientip()"
     },
     {
@@ -1920,7 +1920,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "lib_helpers_hasspecialchars",
-      "community": 18,
+      "community": 20,
       "norm_label": "hasspecialchars()"
     },
     {
@@ -1930,7 +1930,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "lib_helpers_parselocaldatetime",
-      "community": 18,
+      "community": 20,
       "norm_label": "parselocaldatetime()"
     },
     {
@@ -2090,7 +2090,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "lib_middleware_ratelimitlogin",
-      "community": 18,
+      "community": 20,
       "norm_label": "ratelimitlogin()"
     },
     {
@@ -2110,7 +2110,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "lib_middleware_requireadmin",
-      "community": 20,
+      "community": 5,
       "norm_label": "requireadmin()"
     },
     {
@@ -2130,7 +2130,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "lib_middleware_createcheckmaintenance",
-      "community": 20,
+      "community": 5,
       "norm_label": "createcheckmaintenance()"
     },
     {
@@ -3160,7 +3160,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "routes_admin_checkadminratelimit",
-      "community": 18,
+      "community": 20,
       "norm_label": "checkadminratelimit()"
     },
     {
@@ -4030,7 +4030,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "routes_discussions_writediscussions",
-      "community": 39,
+      "community": 8,
       "norm_label": "writediscussions()"
     },
     {
@@ -4090,7 +4090,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "routes_discussions_writeposts",
-      "community": 8,
+      "community": 39,
       "norm_label": "writeposts()"
     },
     {
@@ -4170,7 +4170,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "routes_discussions_requireadmin",
-      "community": 20,
+      "community": 8,
       "norm_label": "requireadmin()"
     },
     {
@@ -4320,7 +4320,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "routes_notices_writenotices",
-      "community": 5,
+      "community": 39,
       "norm_label": "writenotices()"
     },
     {
@@ -4390,7 +4390,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "routes_notices_writevotes",
-      "community": 5,
+      "community": 39,
       "norm_label": "writevotes()"
     },
     {
@@ -5080,7 +5080,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "routes_posts_requireadmin",
-      "community": 20,
+      "community": 1,
       "norm_label": "requireadmin()"
     },
     {
@@ -6340,7 +6340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "sensitivewords",
-      "community": 5,
+      "community": 8,
       "norm_label": "sensitivewords.js"
     },
     {
@@ -6350,7 +6350,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "sensitivewords_fs",
-      "community": 5,
+      "community": 8,
       "norm_label": "fs"
     },
     {
@@ -6360,7 +6360,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "sensitivewords_path",
-      "community": 5,
+      "community": 8,
       "norm_label": "path"
     },
     {
@@ -6370,7 +6370,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "sensitivewords_sen_words",
-      "community": 5,
+      "community": 8,
       "norm_label": "sen_words"
     },
     {
@@ -6380,7 +6380,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "sensitivewords_core_words",
-      "community": 5,
+      "community": 8,
       "norm_label": "core_words"
     },
     {
@@ -6390,7 +6390,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "sensitivewords_data_dir",
-      "community": 5,
+      "community": 8,
       "norm_label": "data_dir"
     },
     {
@@ -6400,7 +6400,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "sensitivewords_custom_file",
-      "community": 5,
+      "community": 8,
       "norm_label": "custom_file"
     },
     {
@@ -6410,7 +6410,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "sensitivewords_whitelist_file",
-      "community": 5,
+      "community": 8,
       "norm_label": "whitelist_file"
     },
     {
@@ -6420,7 +6420,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "sensitivewords_loadcustomwords",
-      "community": 5,
+      "community": 8,
       "norm_label": "loadcustomwords()"
     },
     {
@@ -6430,7 +6430,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "sensitivewords_loadwhitelist",
-      "community": 5,
+      "community": 8,
       "norm_label": "loadwhitelist()"
     },
     {
@@ -6440,7 +6440,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "sensitivewords_savewhitelist",
-      "community": 5,
+      "community": 8,
       "norm_label": "savewhitelist()"
     },
     {
@@ -6450,7 +6450,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "sensitivewords_customwords",
-      "community": 5,
+      "community": 8,
       "norm_label": "customwords"
     },
     {
@@ -6460,7 +6460,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "sensitivewords_whitelist",
-      "community": 5,
+      "community": 8,
       "norm_label": "whitelist"
     },
     {
@@ -6470,7 +6470,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "sensitivewords_all_words",
-      "community": 5,
+      "community": 8,
       "norm_label": "all_words"
     },
     {
@@ -6480,7 +6480,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "sensitivewords_reload",
-      "community": 5,
+      "community": 8,
       "norm_label": "reload()"
     },
     {
@@ -6490,7 +6490,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "sensitivewords_check",
-      "community": 5,
+      "community": 8,
       "norm_label": "check()"
     },
     {
@@ -6500,7 +6500,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "sensitivewords_getstats",
-      "community": 5,
+      "community": 8,
       "norm_label": "getstats()"
     },
     {
@@ -6809,8 +6809,8 @@
       "source_file": "README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "readme",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_md",
+      "community": 50,
       "norm_label": "readme.md"
     },
     {
@@ -6819,8 +6819,8 @@
       "source_file": "README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "readme_\u6821\u56ed\u5899_campus_wall",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "community": 50,
       "norm_label": "\ud83d\udccc \u6821\u56ed\u5899 (campus wall)"
     },
     {
@@ -6829,8 +6829,8 @@
       "source_file": "README.md",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "readme_\u76ee\u5f55",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u76ee\u5f55",
+      "community": 50,
       "norm_label": "\ud83d\udccb \u76ee\u5f55"
     },
     {
@@ -6839,8 +6839,8 @@
       "source_file": "README.md",
       "source_location": "L30",
       "_origin": "ast",
-      "id": "readme_1_\u524d\u53f0\u4e3b\u9875\u9762",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_1_\u524d\u53f0\u4e3b\u9875\u9762",
+      "community": 50,
       "norm_label": "1. \u524d\u53f0\u4e3b\u9875\u9762"
     },
     {
@@ -6849,8 +6849,8 @@
       "source_file": "README.md",
       "source_location": "L37",
       "_origin": "ast",
-      "id": "readme_2_\u53d1\u5e16\u529f\u80fd",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_2_\u53d1\u5e16\u529f\u80fd",
+      "community": 50,
       "norm_label": "2. \u53d1\u5e16\u529f\u80fd"
     },
     {
@@ -6859,8 +6859,8 @@
       "source_file": "README.md",
       "source_location": "L43",
       "_origin": "ast",
-      "id": "readme_3_\u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_3_\u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba",
+      "community": 50,
       "norm_label": "3. \u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba"
     },
     {
@@ -6869,8 +6869,8 @@
       "source_file": "README.md",
       "source_location": "L51",
       "_origin": "ast",
-      "id": "readme_4_\u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_4_\u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55",
+      "community": 50,
       "norm_label": "4. \u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55"
     },
     {
@@ -6879,8 +6879,8 @@
       "source_file": "README.md",
       "source_location": "L62",
       "_origin": "ast",
-      "id": "readme_5_\u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_5_\u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91",
+      "community": 50,
       "norm_label": "5. \u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91"
     },
     {
@@ -6889,8 +6889,8 @@
       "source_file": "README.md",
       "source_location": "L69",
       "_origin": "ast",
-      "id": "readme_6_\u540c\u5b66\u8ba4\u8bc1",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_6_\u540c\u5b66\u8ba4\u8bc1",
+      "community": 50,
       "norm_label": "6. \u540c\u5b66\u8ba4\u8bc1"
     },
     {
@@ -6899,8 +6899,8 @@
       "source_file": "README.md",
       "source_location": "L80",
       "_origin": "ast",
-      "id": "readme_7_\u8ba8\u8bba\u533a",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_7_\u8ba8\u8bba\u533a",
+      "community": 50,
       "norm_label": "7. \u8ba8\u8bba\u533a"
     },
     {
@@ -6909,8 +6909,8 @@
       "source_file": "README.md",
       "source_location": "L87",
       "_origin": "ast",
-      "id": "readme_8_qa_\u95ee\u7b54\u60ac\u8d4f",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_8_qa_\u95ee\u7b54\u60ac\u8d4f",
+      "community": 50,
       "norm_label": "8. qa \u95ee\u7b54\u60ac\u8d4f"
     },
     {
@@ -6919,8 +6919,8 @@
       "source_file": "README.md",
       "source_location": "L95",
       "_origin": "ast",
-      "id": "readme_9_\u4e3e\u62a5\u7cfb\u7edf",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_9_\u4e3e\u62a5\u7cfb\u7edf",
+      "community": 50,
       "norm_label": "9. \u4e3e\u62a5\u7cfb\u7edf"
     },
     {
@@ -6929,8 +6929,8 @@
       "source_file": "README.md",
       "source_location": "L103",
       "_origin": "ast",
-      "id": "readme_10_\u9738\u51cc\u4e3e\u62a5",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_10_\u9738\u51cc\u4e3e\u62a5",
+      "community": 50,
       "norm_label": "10. \u9738\u51cc\u4e3e\u62a5"
     },
     {
@@ -6939,8 +6939,8 @@
       "source_file": "README.md",
       "source_location": "L112",
       "_origin": "ast",
-      "id": "readme_11_\u7ba1\u7406\u540e\u53f0",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_11_\u7ba1\u7406\u540e\u53f0",
+      "community": 50,
       "norm_label": "11. \u7ba1\u7406\u540e\u53f0"
     },
     {
@@ -6949,8 +6949,8 @@
       "source_file": "README.md",
       "source_location": "L129",
       "_origin": "ast",
-      "id": "readme_12_\u4eba\u673a\u9632\u5fa1",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_12_\u4eba\u673a\u9632\u5fa1",
+      "community": 50,
       "norm_label": "12. \u4eba\u673a\u9632\u5fa1"
     },
     {
@@ -6959,8 +6959,8 @@
       "source_file": "README.md",
       "source_location": "L136",
       "_origin": "ast",
-      "id": "readme_13_\u5b89\u5168\u9632\u62a4",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_13_\u5b89\u5168\u9632\u62a4",
+      "community": 50,
       "norm_label": "13. \u5b89\u5168\u9632\u62a4"
     },
     {
@@ -6969,8 +6969,8 @@
       "source_file": "README.md",
       "source_location": "L152",
       "_origin": "ast",
-      "id": "readme_14_credit",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_14_credit",
+      "community": 50,
       "norm_label": "14. credit"
     },
     {
@@ -6979,8 +6979,8 @@
       "source_file": "README.md",
       "source_location": "L158",
       "_origin": "ast",
-      "id": "readme_\u6280\u672f\u6808",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u6280\u672f\u6808",
+      "community": 50,
       "norm_label": "\ud83d\udee0\ufe0f \u6280\u672f\u6808"
     },
     {
@@ -6989,8 +6989,8 @@
       "source_file": "README.md",
       "source_location": "L172",
       "_origin": "ast",
-      "id": "readme_\u5feb\u901f\u5f00\u59cb",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
+      "community": 50,
       "norm_label": "\ud83d\ude80 \u5feb\u901f\u5f00\u59cb"
     },
     {
@@ -6999,8 +6999,8 @@
       "source_file": "README.md",
       "source_location": "L174",
       "_origin": "ast",
-      "id": "readme_\u73af\u5883\u8981\u6c42",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u73af\u5883\u8981\u6c42",
+      "community": 50,
       "norm_label": "\u73af\u5883\u8981\u6c42"
     },
     {
@@ -7009,8 +7009,8 @@
       "source_file": "README.md",
       "source_location": "L178",
       "_origin": "ast",
-      "id": "readme_\u5b89\u88c5\u90e8\u7f72",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u5b89\u88c5\u90e8\u7f72",
+      "community": 50,
       "norm_label": "\u5b89\u88c5\u90e8\u7f72"
     },
     {
@@ -7019,8 +7019,8 @@
       "source_file": "README.md",
       "source_location": "L196",
       "_origin": "ast",
-      "id": "readme_\u9996\u6b21\u4f7f\u7528",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u9996\u6b21\u4f7f\u7528",
+      "community": 50,
       "norm_label": "\u9996\u6b21\u4f7f\u7528"
     },
     {
@@ -7029,8 +7029,8 @@
       "source_file": "README.md",
       "source_location": "L204",
       "_origin": "ast",
-      "id": "readme_\u9879\u76ee\u7ed3\u6784",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u9879\u76ee\u7ed3\u6784",
+      "community": 50,
       "norm_label": "\ud83d\udcc1 \u9879\u76ee\u7ed3\u6784"
     },
     {
@@ -7039,8 +7039,8 @@
       "source_file": "README.md",
       "source_location": "L240",
       "_origin": "ast",
-      "id": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "community": 50,
       "norm_label": "\ud83d\udd27 \u4e8c\u6b21\u5f00\u53d1"
     },
     {
@@ -7049,8 +7049,8 @@
       "source_file": "README.md",
       "source_location": "L242",
       "_origin": "ast",
-      "id": "readme_\u6dfb\u52a0\u65b0\u677f\u5757",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u6dfb\u52a0\u65b0\u677f\u5757",
+      "community": 50,
       "norm_label": "\u6dfb\u52a0\u65b0\u677f\u5757"
     },
     {
@@ -7059,8 +7059,8 @@
       "source_file": "README.md",
       "source_location": "L245",
       "_origin": "ast",
-      "id": "readme_\u8c03\u6574_pow_\u96be\u5ea6",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574_pow_\u96be\u5ea6",
+      "community": 50,
       "norm_label": "\u8c03\u6574 pow \u96be\u5ea6"
     },
     {
@@ -7069,8 +7069,8 @@
       "source_file": "README.md",
       "source_location": "L248",
       "_origin": "ast",
-      "id": "readme_\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236",
+      "community": 50,
       "norm_label": "\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236"
     },
     {
@@ -7079,8 +7079,8 @@
       "source_file": "README.md",
       "source_location": "L251",
       "_origin": "ast",
-      "id": "readme_\u654f\u611f\u8bcd\u7ba1\u7406",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u654f\u611f\u8bcd\u7ba1\u7406",
+      "community": 50,
       "norm_label": "\u654f\u611f\u8bcd\u7ba1\u7406"
     },
     {
@@ -7089,8 +7089,8 @@
       "source_file": "README.md",
       "source_location": "L254",
       "_origin": "ast",
-      "id": "readme_\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883",
+      "community": 50,
       "norm_label": "\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883"
     },
     {
@@ -7099,8 +7099,8 @@
       "source_file": "README.md",
       "source_location": "L263",
       "_origin": "ast",
-      "id": "readme_\u5f00\u6e90\u534f\u8bae",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u5f00\u6e90\u534f\u8bae",
+      "community": 50,
       "norm_label": "\ud83d\udcc4 \u5f00\u6e90\u534f\u8bae"
     },
     {
@@ -7109,8 +7109,8 @@
       "source_file": "README.md",
       "source_location": "L269",
       "_origin": "ast",
-      "id": "readme_\u81f4\u8c22",
-      "community": 22,
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u81f4\u8c22",
+      "community": 50,
       "norm_label": "\ud83d\ude4f \u81f4\u8c22"
     },
     {
@@ -7119,8 +7119,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_md",
+      "community": 52,
       "norm_label": "readme.md"
     },
     {
@@ -7129,8 +7129,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "community": 52,
       "norm_label": "\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f"
     },
     {
@@ -7139,8 +7139,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u76ee\u5f55\u7ed3\u6784",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u76ee\u5f55\u7ed3\u6784",
+      "community": 52,
       "norm_label": "\u76ee\u5f55\u7ed3\u6784"
     },
     {
@@ -7149,8 +7149,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
+      "community": 52,
       "norm_label": "\u80cc\u666f\u6837\u5f0f(\u4e0e\u7f51\u9875\u7248\u4e00\u81f4)"
     },
     {
@@ -7159,8 +7159,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L33",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf",
+      "community": 52,
       "norm_label": "\u989c\u8272\u7cfb\u7edf"
     },
     {
@@ -7169,8 +7169,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L44",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
+      "community": 52,
       "norm_label": "\u5f00\u53d1\u8bf4\u660e"
     },
     {
@@ -7179,9 +7179,369 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L50",
       "_origin": "ast",
-      "id": "campus_wall_miniprogram_readme_\u6ce8\u610f\u4e8b\u9879",
-      "community": 43,
+      "id": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6ce8\u610f\u4e8b\u9879",
+      "community": 52,
       "norm_label": "\u6ce8\u610f\u4e8b\u9879"
+    },
+    {
+      "label": "2026-07-14-safety-center-redesign.md",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign",
+      "community": 49,
+      "norm_label": "2026-07-14-safety-center-redesign.md"
+    },
+    {
+      "label": "Safety Center \u91cd\u65b0\u8bbe\u8ba1",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "community": 49,
+      "norm_label": "safety center \u91cd\u65b0\u8bbe\u8ba1"
+    },
+    {
+      "label": "1. \u9700\u6c42\u56de\u987e",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_\u9700\u6c42\u56de\u987e",
+      "community": 49,
+      "norm_label": "1. \u9700\u6c42\u56de\u987e"
+    },
+    {
+      "label": "1.1 \u4efb\u52a1\u539f\u6587",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_1_\u4efb\u52a1\u539f\u6587",
+      "community": 49,
+      "norm_label": "1.1 \u4efb\u52a1\u539f\u6587"
+    },
+    {
+      "label": "1.2 \u5173\u952e\u7ea6\u675f(\u6765\u81ea `docs_for_agent.md` \u00a73.9 \u4e0e \u00a76.5)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_2_\u5173\u952e\u7ea6\u675f_\u6765\u81ea_docs_for_agent_md_3_9_\u4e0e_6_5",
+      "community": 49,
+      "norm_label": "1.2 \u5173\u952e\u7ea6\u675f(\u6765\u81ea `docs_for_agent.md` \u00a73.9 \u4e0e \u00a76.5)"
+    },
+    {
+      "label": "1.3 \u7528\u6237\u5df2\u786e\u8ba4\u7684\u51b3\u7b56",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L27",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_3_\u7528\u6237\u5df2\u786e\u8ba4\u7684\u51b3\u7b56",
+      "community": 49,
+      "norm_label": "1.3 \u7528\u6237\u5df2\u786e\u8ba4\u7684\u51b3\u7b56"
+    },
+    {
+      "label": "2. \u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a(\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L33",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "community": 49,
+      "norm_label": "2. \u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a(\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50)"
+    },
+    {
+      "label": "2.1 \u8272\u5f69 token(\u7ee7\u627f + \u5fae\u8c03)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L35",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_1_\u8272\u5f69_token_\u7ee7\u627f_\u5fae\u8c03",
+      "community": 49,
+      "norm_label": "2.1 \u8272\u5f69 token(\u7ee7\u627f + \u5fae\u8c03)"
+    },
+    {
+      "label": "2.2 \u5b57\u4f53\u7b56\u7565",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L85",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_2_\u5b57\u4f53\u7b56\u7565",
+      "community": 49,
+      "norm_label": "2.2 \u5b57\u4f53\u7b56\u7565"
+    },
+    {
+      "label": "2.3 \u52a8\u6548\u539f\u5219(\u6cbf\u7528\u9879\u76ee spring \u98ce\u683c)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L93",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_3_\u52a8\u6548\u539f\u5219_\u6cbf\u7528\u9879\u76ee_spring_\u98ce\u683c",
+      "community": 49,
+      "norm_label": "2.3 \u52a8\u6548\u539f\u5219(\u6cbf\u7528\u9879\u76ee spring \u98ce\u683c)"
+    },
+    {
+      "label": "2.4 \u80cc\u666f\u4e0e\u6750\u8d28",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L108",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_4_\u80cc\u666f\u4e0e\u6750\u8d28",
+      "community": 49,
+      "norm_label": "2.4 \u80cc\u666f\u4e0e\u6750\u8d28"
+    },
+    {
+      "label": "3. \u4fe1\u606f\u67b6\u6784",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L116",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_\u4fe1\u606f\u67b6\u6784",
+      "community": 49,
+      "norm_label": "3. \u4fe1\u606f\u67b6\u6784"
+    },
+    {
+      "label": "3.1 \u6574\u4f53\u7ed3\u6784",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L118",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_1_\u6574\u4f53\u7ed3\u6784",
+      "community": 49,
+      "norm_label": "3.1 \u6574\u4f53\u7ed3\u6784"
+    },
+    {
+      "label": "3.2 \u6a21\u5757\u8be6\u7ec6",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L143",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_\u6a21\u5757\u8be6\u7ec6",
+      "community": 49,
+      "norm_label": "3.2 \u6a21\u5757\u8be6\u7ec6"
+    },
+    {
+      "label": "3.2.1 \u5b9e\u65f6\u72b6\u6001\u533a(\u65b0\u589e, \u59cb\u7ec8\u5728 tabs \u4e0a\u65b9)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L145",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_1_\u5b9e\u65f6\u72b6\u6001\u533a_\u65b0\u589e_\u59cb\u7ec8\u5728_tabs_\u4e0a\u65b9",
+      "community": 49,
+      "norm_label": "3.2.1 \u5b9e\u65f6\u72b6\u6001\u533a(\u65b0\u589e, \u59cb\u7ec8\u5728 tabs \u4e0a\u65b9)"
+    },
+    {
+      "label": "3.2.2 Tabs(\u6cbf\u7528\u65e7\u7248, \u5185\u5bb9\u533a\u66f4\u65b0)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L173",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_2_tabs_\u6cbf\u7528\u65e7\u7248_\u5185\u5bb9\u533a\u66f4\u65b0",
+      "community": 49,
+      "norm_label": "3.2.2 tabs(\u6cbf\u7528\u65e7\u7248, \u5185\u5bb9\u533a\u66f4\u65b0)"
+    },
+    {
+      "label": "3.2.3 \u7533\u8bc9\u5f39\u7a97(\u6cbf\u7528\u65e7\u7248, \u89c6\u89c9\u5347\u7ea7)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L181",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_3_\u7533\u8bc9\u5f39\u7a97_\u6cbf\u7528\u65e7\u7248_\u89c6\u89c9\u5347\u7ea7",
+      "community": 49,
+      "norm_label": "3.2.3 \u7533\u8bc9\u5f39\u7a97(\u6cbf\u7528\u65e7\u7248, \u89c6\u89c9\u5347\u7ea7)"
+    },
+    {
+      "label": "4. \u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L191",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "community": 49,
+      "norm_label": "4. \u5173\u952e\u4ee3\u7801\u89c4\u8303"
+    },
+    {
+      "label": "4.1 \u547d\u540d",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L193",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_1_\u547d\u540d",
+      "community": 49,
+      "norm_label": "4.1 \u547d\u540d"
+    },
+    {
+      "label": "4.2 \u53ef\u8bbf\u95ee\u6027",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L199",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_2_\u53ef\u8bbf\u95ee\u6027",
+      "community": 49,
+      "norm_label": "4.2 \u53ef\u8bbf\u95ee\u6027"
+    },
+    {
+      "label": "4.3 \u6027\u80fd",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L207",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_3_\u6027\u80fd",
+      "community": 49,
+      "norm_label": "4.3 \u6027\u80fd"
+    },
+    {
+      "label": "4.4 \u5b89\u5168",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L214",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_4_\u5b89\u5168",
+      "community": 49,
+      "norm_label": "4.4 \u5b89\u5168"
+    },
+    {
+      "label": "5. API \u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L222",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "community": 49,
+      "norm_label": "5. api \u884c\u4e3a\u4e0e\u6570\u636e\u6d41"
+    },
+    {
+      "label": "5.1 \u6570\u636e\u83b7\u53d6",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L224",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_1_\u6570\u636e\u83b7\u53d6",
+      "community": 49,
+      "norm_label": "5.1 \u6570\u636e\u83b7\u53d6"
+    },
+    {
+      "label": "5.2 \u5b9e\u65f6\u72b6\u6001\u533a\u6570\u636e\u52a0\u5de5",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L233",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_2_\u5b9e\u65f6\u72b6\u6001\u533a\u6570\u636e\u52a0\u5de5",
+      "community": 49,
+      "norm_label": "5.2 \u5b9e\u65f6\u72b6\u6001\u533a\u6570\u636e\u52a0\u5de5"
+    },
+    {
+      "label": "5.3 \u5012\u8ba1\u65f6\u8ba1\u7b97",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L247",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_3_\u5012\u8ba1\u65f6\u8ba1\u7b97",
+      "community": 49,
+      "norm_label": "5.3 \u5012\u8ba1\u65f6\u8ba1\u7b97"
+    },
+    {
+      "label": "5.4 \u63d0\u4ea4\u7533\u8bc9\u6d41\u7a0b(\u6cbf\u7528\u65e7\u7248)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L269",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_4_\u63d0\u4ea4\u7533\u8bc9\u6d41\u7a0b_\u6cbf\u7528\u65e7\u7248",
+      "community": 49,
+      "norm_label": "5.4 \u63d0\u4ea4\u7533\u8bc9\u6d41\u7a0b(\u6cbf\u7528\u65e7\u7248)"
+    },
+    {
+      "label": "6. \u6587\u4ef6\u6539\u52a8\u6e05\u5355",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L281",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_6_\u6587\u4ef6\u6539\u52a8\u6e05\u5355",
+      "community": 49,
+      "norm_label": "6. \u6587\u4ef6\u6539\u52a8\u6e05\u5355"
+    },
+    {
+      "label": "6.1 pages/safety.html \u540c\u6b65\u7b56\u7565",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L288",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_6_1_pages_safety_html_\u540c\u6b65\u7b56\u7565",
+      "community": 49,
+      "norm_label": "6.1 pages/safety.html \u540c\u6b65\u7b56\u7565"
+    },
+    {
+      "label": "7. \u9a8c\u6536\u6e05\u5355",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L308",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_7_\u9a8c\u6536\u6e05\u5355",
+      "community": 49,
+      "norm_label": "7. \u9a8c\u6536\u6e05\u5355"
+    },
+    {
+      "label": "8. \u98ce\u9669\u4e0e\u6743\u8861",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L326",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "community": 49,
+      "norm_label": "8. \u98ce\u9669\u4e0e\u6743\u8861"
+    },
+    {
+      "label": "8.1 \u5012\u8ba1\u65f6\u7684\u7cbe\u5ea6",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L328",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_1_\u5012\u8ba1\u65f6\u7684\u7cbe\u5ea6",
+      "community": 49,
+      "norm_label": "8.1 \u5012\u8ba1\u65f6\u7684\u7cbe\u5ea6"
+    },
+    {
+      "label": "8.2 \u5927\u91cf\u5386\u53f2\u5904\u7f5a\u7684\u6027\u80fd",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L333",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_2_\u5927\u91cf\u5386\u53f2\u5904\u7f5a\u7684\u6027\u80fd",
+      "community": 49,
+      "norm_label": "8.2 \u5927\u91cf\u5386\u53f2\u5904\u7f5a\u7684\u6027\u80fd"
+    },
+    {
+      "label": "8.3 activePunishment \u5b57\u6bb5\u7f3a\u5931",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L338",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_3_activepunishment_\u5b57\u6bb5\u7f3a\u5931",
+      "community": 49,
+      "norm_label": "8.3 activepunishment \u5b57\u6bb5\u7f3a\u5931"
+    },
+    {
+      "label": "8.4 \u4e0e index.html \u7684 punishPopup \u534f\u540c",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L343",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_4_\u4e0e_index_html_\u7684_punishpopup_\u534f\u540c",
+      "community": 49,
+      "norm_label": "8.4 \u4e0e index.html \u7684 punishpopup \u534f\u540c"
+    },
+    {
+      "label": "9. \u5b9e\u65bd\u987a\u5e8f(\u589e\u91cf\u4ea4\u4ed8)",
+      "file_type": "document",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L350",
+      "_origin": "ast",
+      "id": "docs_superpowers_specs_2026_07_14_safety_center_redesign_9_\u5b9e\u65bd\u987a\u5e8f_\u589e\u91cf\u4ea4\u4ed8",
+      "community": 49,
+      "norm_label": "9. \u5b9e\u65bd\u987a\u5e8f(\u589e\u91cf\u4ea4\u4ed8)"
     },
     {
       "label": "docs_for_agent.md",
@@ -7414,20 +7774,20 @@
       "norm_label": "5.3 \u5e16\u5b50 / \u8bc4\u8bba / \u70b9\u8d5e / \u4e3e\u62a5(posts.js)"
     },
     {
-      "label": "5.4 \u7528\u6237\u4e3b\u9875 / \u516c\u5f00\u8d44\u6599",
+      "label": "5.4 \u7528\u6237\u641c\u7d22 / \u4e3b\u9875 / \u516c\u5f00\u8d44\u6599",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
       "source_location": "L353",
       "_origin": "ast",
-      "id": "docs_for_agent_5_4_\u7528\u6237\u4e3b\u9875_\u516c\u5f00\u8d44\u6599",
+      "id": "docs_for_agent_5_4_\u7528\u6237\u641c\u7d22_\u4e3b\u9875_\u516c\u5f00\u8d44\u6599",
       "community": 26,
-      "norm_label": "5.4 \u7528\u6237\u4e3b\u9875 / \u516c\u5f00\u8d44\u6599"
+      "norm_label": "5.4 \u7528\u6237\u641c\u7d22 / \u4e3b\u9875 / \u516c\u5f00\u8d44\u6599"
     },
     {
       "label": "5.5 \u8ba8\u8bba\u533a\uff08discussions.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L360",
+      "source_location": "L361",
       "_origin": "ast",
       "id": "docs_for_agent_5_5_\u8ba8\u8bba\u533a_discussions_js",
       "community": 26,
@@ -7437,7 +7797,7 @@
       "label": "5.6 QA \u60ac\u8d4f\u95ee\u7b54\uff08qa.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L371",
+      "source_location": "L372",
       "_origin": "ast",
       "id": "docs_for_agent_5_6_qa_\u60ac\u8d4f\u95ee\u7b54_qa_js",
       "community": 26,
@@ -7447,7 +7807,7 @@
       "label": "5.7 \u6295\u7968\uff08votes.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L386",
+      "source_location": "L387",
       "_origin": "ast",
       "id": "docs_for_agent_5_7_\u6295\u7968_votes_js",
       "community": 26,
@@ -7457,7 +7817,7 @@
       "label": "5.8 \u6821\u56ed\u901a\u77e5 / \u516c\u544a / \u5b66\u751f\u4f1a\uff08notices.js + student-council.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L401",
+      "source_location": "L402",
       "_origin": "ast",
       "id": "docs_for_agent_5_8_\u6821\u56ed\u901a\u77e5_\u516c\u544a_\u5b66\u751f\u4f1a_notices_js_student_council_js",
       "community": 26,
@@ -7467,7 +7827,7 @@
       "label": "5.9 \u5931\u7269 / \u6361\u6f0f\u62cd\u5356\uff08pickup.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L420",
+      "source_location": "L421",
       "_origin": "ast",
       "id": "docs_for_agent_5_9_\u5931\u7269_\u6361\u6f0f\u62cd\u5356_pickup_js",
       "community": 26,
@@ -7477,7 +7837,7 @@
       "label": "5.10 \u7edf\u4e00\u4e3e\u62a5 / \u5904\u7f5a / \u7533\u8bc9 / \u9738\u51cc\uff08reports/penalty/system/admin\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L435",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "docs_for_agent_5_10_\u7edf\u4e00\u4e3e\u62a5_\u5904\u7f5a_\u7533\u8bc9_\u9738\u51cc_reports_penalty_system_admin",
       "community": 26,
@@ -7487,7 +7847,7 @@
       "label": "5.11 \u540e\u53f0\u7ba1\u7406 \u2014 \u7528\u6237 / \u5185\u5bb9\u7ba1\u7406\uff08admin.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L469",
+      "source_location": "L470",
       "_origin": "ast",
       "id": "docs_for_agent_5_11_\u540e\u53f0\u7ba1\u7406_\u7528\u6237_\u5185\u5bb9\u7ba1\u7406_admin_js",
       "community": 26,
@@ -7497,7 +7857,7 @@
       "label": "5.12 \u540e\u53f0\u7ba1\u7406 \u2014 \u5b89\u5168 / \u654f\u611f\u8bcd\uff08admin.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L488",
+      "source_location": "L489",
       "_origin": "ast",
       "id": "docs_for_agent_5_12_\u540e\u53f0\u7ba1\u7406_\u5b89\u5168_\u654f\u611f\u8bcd_admin_js",
       "community": 26,
@@ -7507,7 +7867,7 @@
       "label": "5.13 \u540e\u53f0\u7ba1\u7406 \u2014 \u53cd\u9988 / \u9738\u51cc / \u8ba4\u8bc1\u5ba1\u6838\uff08admin.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L504",
+      "source_location": "L505",
       "_origin": "ast",
       "id": "docs_for_agent_5_13_\u540e\u53f0\u7ba1\u7406_\u53cd\u9988_\u9738\u51cc_\u8ba4\u8bc1\u5ba1\u6838_admin_js",
       "community": 26,
@@ -7517,7 +7877,7 @@
       "label": "5.14 \u540e\u53f0\u7ba1\u7406 \u2014 \u79ef\u5206\u5361\u5bc6 / \u62a5\u8868\uff08admin.js\uff0c\u591a\u6570\u9700\u8d85\u7ea7\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L521",
+      "source_location": "L522",
       "_origin": "ast",
       "id": "docs_for_agent_5_14_\u540e\u53f0\u7ba1\u7406_\u79ef\u5206\u5361\u5bc6_\u62a5\u8868_admin_js_\u591a\u6570\u9700\u8d85\u7ea7",
       "community": 26,
@@ -7527,7 +7887,7 @@
       "label": "5.15 \u540e\u53f0\u7ba1\u7406 \u2014 \u901a\u77e5\u53d1\u5e03 / \u7ef4\u62a4\uff08admin.js + maintenance.js\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L532",
+      "source_location": "L533",
       "_origin": "ast",
       "id": "docs_for_agent_5_15_\u540e\u53f0\u7ba1\u7406_\u901a\u77e5\u53d1\u5e03_\u7ef4\u62a4_admin_js_maintenance_js",
       "community": 26,
@@ -7537,7 +7897,7 @@
       "label": "5.16 \u7cfb\u7edf / \u901a\u7528\uff08system.js + maintenance.js + slider\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L552",
+      "source_location": "L553",
       "_origin": "ast",
       "id": "docs_for_agent_5_16_\u7cfb\u7edf_\u901a\u7528_system_js_maintenance_js_slider",
       "community": 26,
@@ -7547,7 +7907,7 @@
       "label": "6. \u524d\u7aef\u67b6\u6784\uff08SPA\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L566",
+      "source_location": "L567",
       "_origin": "ast",
       "id": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "community": 45,
@@ -7557,7 +7917,7 @@
       "label": "6.1 \u9875\u9762\u6a21\u578b",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L568",
+      "source_location": "L569",
       "_origin": "ast",
       "id": "docs_for_agent_6_1_\u9875\u9762\u6a21\u578b",
       "community": 45,
@@ -7567,7 +7927,7 @@
       "label": "6.2 SPA \u8def\u7531\uff08spa.js \u2014 class SpaRouter\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L574",
+      "source_location": "L575",
       "_origin": "ast",
       "id": "docs_for_agent_6_2_spa_\u8def\u7531_spa_js_class_sparouter",
       "community": 45,
@@ -7577,7 +7937,7 @@
       "label": "6.3 \u524d\u7aef\u8c03\u7528\u540e\u7aef\u7684\u7ea6\u5b9a",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L580",
+      "source_location": "L581",
       "_origin": "ast",
       "id": "docs_for_agent_6_3_\u524d\u7aef\u8c03\u7528\u540e\u7aef\u7684\u7ea6\u5b9a",
       "community": 45,
@@ -7587,7 +7947,7 @@
       "label": "6.4 \u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u524d\u7aef\u9875\u9762",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L591",
+      "source_location": "L593",
       "_origin": "ast",
       "id": "docs_for_agent_6_4_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u524d\u7aef\u9875\u9762",
       "community": 45,
@@ -7597,7 +7957,7 @@
       "label": "6.5 \u5b89\u5168\u4e2d\u5fc3\u524d\u7aef\uff08safety.html / pages/safety.html\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L599",
+      "source_location": "L601",
       "_origin": "ast",
       "id": "docs_for_agent_6_5_\u5b89\u5168\u4e2d\u5fc3\u524d\u7aef_safety_html_pages_safety_html",
       "community": 45,
@@ -7607,7 +7967,7 @@
       "label": "7. \u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u7aef\uff08campus-wall-miniprogram/\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L605",
+      "source_location": "L607",
       "_origin": "ast",
       "id": "docs_for_agent_7_\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u7aef_campus_wall_miniprogram",
       "community": 40,
@@ -7617,7 +7977,7 @@
       "label": "8. \u914d\u7f6e\u4e0e\u73af\u5883\u53d8\u91cf\uff08.env\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L616",
+      "source_location": "L618",
       "_origin": "ast",
       "id": "docs_for_agent_8_\u914d\u7f6e\u4e0e\u73af\u5883\u53d8\u91cf_env",
       "community": 40,
@@ -7627,7 +7987,7 @@
       "label": "9. \u5e38\u89c1\u5751\u4e0e\u5f00\u53d1\u987b\u77e5\uff08\u52a1\u5fc5\u5148\u8bfb\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L631",
+      "source_location": "L633",
       "_origin": "ast",
       "id": "docs_for_agent_9_\u5e38\u89c1\u5751\u4e0e\u5f00\u53d1\u987b\u77e5_\u52a1\u5fc5\u5148\u8bfb",
       "community": 40,
@@ -7637,7 +7997,7 @@
       "label": "10. \u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u540e\u7aef\u529f\u80fd\uff08\u6807\u51c6\u6d41\u7a0b\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L647",
+      "source_location": "L649",
       "_origin": "ast",
       "id": "docs_for_agent_10_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u540e\u7aef\u529f\u80fd_\u6807\u51c6\u6d41\u7a0b",
       "community": 40,
@@ -7647,7 +8007,7 @@
       "label": "11. \u8fd0\u884c / \u90e8\u7f72 / \u7ef4\u62a4",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L662",
+      "source_location": "L664",
       "_origin": "ast",
       "id": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "community": 46,
@@ -7657,7 +8017,7 @@
       "label": "\u672c\u5730\u5f00\u53d1",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L664",
+      "source_location": "L666",
       "_origin": "ast",
       "id": "docs_for_agent_\u672c\u5730\u5f00\u53d1",
       "community": 46,
@@ -7667,7 +8027,7 @@
       "label": "\u751f\u4ea7\u90e8\u7f72\uff08PM2\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L673",
+      "source_location": "L675",
       "_origin": "ast",
       "id": "docs_for_agent_\u751f\u4ea7\u90e8\u7f72_pm2",
       "community": 46,
@@ -7677,7 +8037,7 @@
       "label": "\u6570\u636e\u5907\u4efd",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "_origin": "ast",
       "id": "docs_for_agent_\u6570\u636e\u5907\u4efd",
       "community": 46,
@@ -7687,7 +8047,7 @@
       "label": "\u7d22\u5f15\u7ef4\u62a4",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L683",
+      "source_location": "L685",
       "_origin": "ast",
       "id": "docs_for_agent_\u7d22\u5f15\u7ef4\u62a4",
       "community": 46,
@@ -7697,7 +8057,7 @@
       "label": "12. \u6a21\u5757\u4f9d\u8d56\u901f\u67e5\uff08\u8c03\u7528\u5173\u7cfb\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L689",
+      "source_location": "L691",
       "_origin": "ast",
       "id": "docs_for_agent_12_\u6a21\u5757\u4f9d\u8d56\u901f\u67e5_\u8c03\u7528\u5173\u7cfb",
       "community": 40,
@@ -7707,7 +8067,7 @@
       "label": "13. \u4e00\u53e5\u8bdd\u901f\u8bb0\uff08\u7ed9 AI Agent\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L712",
+      "source_location": "L714",
       "_origin": "ast",
       "id": "docs_for_agent_13_\u4e00\u53e5\u8bdd\u901f\u8bb0_\u7ed9_ai_agent",
       "community": 40,
@@ -7717,7 +8077,7 @@
       "label": "14. \u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790\uff1a\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L718",
+      "source_location": "L720",
       "_origin": "ast",
       "id": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "community": 44,
@@ -7727,7 +8087,7 @@
       "label": "14.1 \u53cc\u91cd\u5b58\u50a8\u6a21\u578b\uff08\u6838\u5fc3\u8ba4\u77e5\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L722",
+      "source_location": "L724",
       "_origin": "ast",
       "id": "docs_for_agent_14_1_\u53cc\u91cd\u5b58\u50a8\u6a21\u578b_\u6838\u5fc3\u8ba4\u77e5",
       "community": 44,
@@ -7737,7 +8097,7 @@
       "label": "14.2 \u4e09\u6761\u8bfb\u53d6/\u4e0b\u53d1\u901a\u9053\uff08\u6ce8\u610f\u8bed\u4e49\u5dee\u5f02\uff01\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L733",
+      "source_location": "L735",
       "_origin": "ast",
       "id": "docs_for_agent_14_2_\u4e09\u6761\u8bfb\u53d6_\u4e0b\u53d1\u901a\u9053_\u6ce8\u610f\u8bed\u4e49\u5dee\u5f02",
       "community": 44,
@@ -7747,7 +8107,7 @@
       "label": "14.3 \u81ea\u52a8\u89e6\u53d1\u70b9\u5b8c\u6574\u6e05\u5355",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L748",
+      "source_location": "L750",
       "_origin": "ast",
       "id": "docs_for_agent_14_3_\u81ea\u52a8\u89e6\u53d1\u70b9\u5b8c\u6574\u6e05\u5355",
       "community": 44,
@@ -7757,7 +8117,7 @@
       "label": "14.4 \u5199\u5165\u6a21\u5f0f\u7684\u4ee3\u7801\u5f02\u5473\uff08\u7ed9\u540e\u7eed\u7ef4\u62a4\u8005\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L767",
+      "source_location": "L769",
       "_origin": "ast",
       "id": "docs_for_agent_14_4_\u5199\u5165\u6a21\u5f0f\u7684\u4ee3\u7801\u5f02\u5473_\u7ed9\u540e\u7eed\u7ef4\u62a4\u8005",
       "community": 44,
@@ -7767,7 +8127,7 @@
       "label": "14.5 \u5b9e\u65f6\u4e0b\u53d1",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L774",
+      "source_location": "L776",
       "_origin": "ast",
       "id": "docs_for_agent_14_5_\u5b9e\u65f6\u4e0b\u53d1",
       "community": 44,
@@ -7777,7 +8137,7 @@
       "label": "14.6 \u5c0f\u7ed3\uff08\u7ed9 AI Agent \u7684\u901f\u8bb0\uff09",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L779",
+      "source_location": "L781",
       "_origin": "ast",
       "id": "docs_for_agent_14_6_\u5c0f\u7ed3_\u7ed9_ai_agent_\u7684\u901f\u8bb0",
       "community": 44,
@@ -7787,7 +8147,7 @@
       "label": "15. \u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L787",
+      "source_location": "L789",
       "_origin": "ast",
       "id": "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "community": 41,
@@ -7797,7 +8157,7 @@
       "label": "\u4f1a\u8bdd 1 \u2014 2026-07-12",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L791",
+      "source_location": "L793",
       "_origin": "ast",
       "id": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "community": 41,
@@ -7807,7 +8167,7 @@
       "label": "safety.html \u4fee\u590d",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L793",
+      "source_location": "L795",
       "_origin": "ast",
       "id": "docs_for_agent_safety_html_\u4fee\u590d",
       "community": 41,
@@ -7817,7 +8177,7 @@
       "label": "admin.html \u4fee\u590d",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L804",
+      "source_location": "L806",
       "_origin": "ast",
       "id": "docs_for_agent_admin_html_\u4fee\u590d",
       "community": 41,
@@ -7827,7 +8187,7 @@
       "label": "index.html \u4fee\u590d",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L818",
+      "source_location": "L820",
       "_origin": "ast",
       "id": "docs_for_agent_index_html_\u4fee\u590d",
       "community": 41,
@@ -7837,7 +8197,7 @@
       "label": "\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L827",
+      "source_location": "L829",
       "_origin": "ast",
       "id": "docs_for_agent_\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
       "community": 41,
@@ -7847,7 +8207,7 @@
       "label": "UID \u79d1\u5b66\u8bb0\u6570\u6cd5\u4fee\u590d",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L839",
+      "source_location": "L841",
       "_origin": "ast",
       "id": "docs_for_agent_uid_\u79d1\u5b66\u8bb0\u6570\u6cd5\u4fee\u590d",
       "community": 41,
@@ -7857,7 +8217,7 @@
       "label": "\u4e3e\u62a5\u5217\u8868 reporterInfo \u5c55\u793a",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L847",
+      "source_location": "L849",
       "_origin": "ast",
       "id": "docs_for_agent_\u4e3e\u62a5\u5217\u8868_reporterinfo_\u5c55\u793a",
       "community": 41,
@@ -7867,7 +8227,7 @@
       "label": "\u4f1a\u8bdd 2 \u2014 2026-07-13",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L853",
+      "source_location": "L855",
       "_origin": "ast",
       "id": "docs_for_agent_\u4f1a\u8bdd_2_2026_07_13",
       "community": 41,
@@ -7877,7 +8237,7 @@
       "label": "\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L855",
+      "source_location": "L857",
       "_origin": "ast",
       "id": "docs_for_agent_\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898",
       "community": 41,
@@ -7887,7 +8247,7 @@
       "label": "\u4f1a\u8bdd 3 \u2014 2026-07-13",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L865",
+      "source_location": "L867",
       "_origin": "ast",
       "id": "docs_for_agent_\u4f1a\u8bdd_3_2026_07_13",
       "community": 41,
@@ -7897,7 +8257,7 @@
       "label": "\u56fe\u8c31\u53c2\u8003",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L875",
+      "source_location": "L877",
       "_origin": "ast",
       "id": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "community": 47,
@@ -7907,7 +8267,7 @@
       "label": "\u56fe\u8c31\u6587\u4ef6\u8bf4\u660e",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L879",
+      "source_location": "L881",
       "_origin": "ast",
       "id": "docs_for_agent_\u56fe\u8c31\u6587\u4ef6\u8bf4\u660e",
       "community": 47,
@@ -7917,7 +8277,7 @@
       "label": "\u4f7f\u7528\u65b9\u5f0f",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L887",
+      "source_location": "L889",
       "_origin": "ast",
       "id": "docs_for_agent_\u4f7f\u7528\u65b9\u5f0f",
       "community": 47,
@@ -7927,7 +8287,7 @@
       "label": "\u5173\u952e\u67a2\u7ebd\u8282\u70b9",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L895",
+      "source_location": "L897",
       "_origin": "ast",
       "id": "docs_for_agent_\u5173\u952e\u67a2\u7ebd\u8282\u70b9",
       "community": 47,
@@ -7937,11 +8297,71 @@
       "label": "\u5efa\u8bae\u63a2\u7d22",
       "file_type": "document",
       "source_file": "docs_for_agent.md",
-      "source_location": "L907",
+      "source_location": "L909",
       "_origin": "ast",
       "id": "docs_for_agent_\u5efa\u8bae\u63a2\u7d22",
       "community": 47,
       "norm_label": "\u5efa\u8bae\u63a2\u7d22"
+    },
+    {
+      "label": "task.md",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "task",
+      "community": 54,
+      "norm_label": "task.md"
+    },
+    {
+      "label": "\u4efb\u52a1",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "task_\u4efb\u52a1",
+      "community": 54,
+      "norm_label": "\u4efb\u52a1"
+    },
+    {
+      "label": "\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "task_\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd",
+      "community": 54,
+      "norm_label": "\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd"
+    },
+    {
+      "label": "\u641c\u7d22\u5339\u914d\u5185\u5bb9",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "task_\u641c\u7d22\u5339\u914d\u5185\u5bb9",
+      "community": 54,
+      "norm_label": "\u641c\u7d22\u5339\u914d\u5185\u5bb9"
+    },
+    {
+      "label": "\u641c\u7d22\u5165\u53e3",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "task_\u641c\u7d22\u5165\u53e3",
+      "community": 54,
+      "norm_label": "\u641c\u7d22\u5165\u53e3"
+    },
+    {
+      "label": "\u8981\u6c42",
+      "file_type": "document",
+      "source_file": "task.md",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "task_\u8981\u6c42",
+      "community": 54,
+      "norm_label": "\u8981\u6c42"
     }
   ],
   "links": [
@@ -19895,8 +20315,8 @@
       "source_file": "README.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "readme",
-      "target": "readme_\u6821\u56ed\u5899_campus_wall",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_md",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
       "confidence_score": 1.0
     },
     {
@@ -19905,8 +20325,8 @@
       "source_file": "README.md",
       "source_location": "L103",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_10_\u9738\u51cc\u4e3e\u62a5",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_10_\u9738\u51cc\u4e3e\u62a5",
       "confidence_score": 1.0
     },
     {
@@ -19915,8 +20335,8 @@
       "source_file": "README.md",
       "source_location": "L112",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_11_\u7ba1\u7406\u540e\u53f0",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_11_\u7ba1\u7406\u540e\u53f0",
       "confidence_score": 1.0
     },
     {
@@ -19925,8 +20345,8 @@
       "source_file": "README.md",
       "source_location": "L129",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_12_\u4eba\u673a\u9632\u5fa1",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_12_\u4eba\u673a\u9632\u5fa1",
       "confidence_score": 1.0
     },
     {
@@ -19935,8 +20355,8 @@
       "source_file": "README.md",
       "source_location": "L136",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_13_\u5b89\u5168\u9632\u62a4",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_13_\u5b89\u5168\u9632\u62a4",
       "confidence_score": 1.0
     },
     {
@@ -19945,8 +20365,8 @@
       "source_file": "README.md",
       "source_location": "L152",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_14_credit",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_14_credit",
       "confidence_score": 1.0
     },
     {
@@ -19955,8 +20375,8 @@
       "source_file": "README.md",
       "source_location": "L30",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_1_\u524d\u53f0\u4e3b\u9875\u9762",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_1_\u524d\u53f0\u4e3b\u9875\u9762",
       "confidence_score": 1.0
     },
     {
@@ -19965,8 +20385,8 @@
       "source_file": "README.md",
       "source_location": "L37",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_2_\u53d1\u5e16\u529f\u80fd",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_2_\u53d1\u5e16\u529f\u80fd",
       "confidence_score": 1.0
     },
     {
@@ -19975,8 +20395,8 @@
       "source_file": "README.md",
       "source_location": "L43",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_3_\u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_3_\u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba",
       "confidence_score": 1.0
     },
     {
@@ -19985,8 +20405,8 @@
       "source_file": "README.md",
       "source_location": "L51",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_4_\u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_4_\u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55",
       "confidence_score": 1.0
     },
     {
@@ -19995,8 +20415,8 @@
       "source_file": "README.md",
       "source_location": "L62",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_5_\u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_5_\u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91",
       "confidence_score": 1.0
     },
     {
@@ -20005,8 +20425,8 @@
       "source_file": "README.md",
       "source_location": "L69",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_6_\u540c\u5b66\u8ba4\u8bc1",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_6_\u540c\u5b66\u8ba4\u8bc1",
       "confidence_score": 1.0
     },
     {
@@ -20015,8 +20435,8 @@
       "source_file": "README.md",
       "source_location": "L80",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_7_\u8ba8\u8bba\u533a",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_7_\u8ba8\u8bba\u533a",
       "confidence_score": 1.0
     },
     {
@@ -20025,8 +20445,8 @@
       "source_file": "README.md",
       "source_location": "L87",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_8_qa_\u95ee\u7b54\u60ac\u8d4f",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_8_qa_\u95ee\u7b54\u60ac\u8d4f",
       "confidence_score": 1.0
     },
     {
@@ -20035,8 +20455,8 @@
       "source_file": "README.md",
       "source_location": "L95",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_9_\u4e3e\u62a5\u7cfb\u7edf",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_9_\u4e3e\u62a5\u7cfb\u7edf",
       "confidence_score": 1.0
     },
     {
@@ -20045,8 +20465,8 @@
       "source_file": "README.md",
       "source_location": "L240",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u4e8c\u6b21\u5f00\u53d1",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
       "confidence_score": 1.0
     },
     {
@@ -20055,8 +20475,8 @@
       "source_file": "README.md",
       "source_location": "L263",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u5f00\u6e90\u534f\u8bae",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u5f00\u6e90\u534f\u8bae",
       "confidence_score": 1.0
     },
     {
@@ -20065,8 +20485,8 @@
       "source_file": "README.md",
       "source_location": "L172",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u5feb\u901f\u5f00\u59cb",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
       "confidence_score": 1.0
     },
     {
@@ -20075,8 +20495,8 @@
       "source_file": "README.md",
       "source_location": "L158",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u6280\u672f\u6808",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u6280\u672f\u6808",
       "confidence_score": 1.0
     },
     {
@@ -20085,8 +20505,8 @@
       "source_file": "README.md",
       "source_location": "L12",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u76ee\u5f55",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u76ee\u5f55",
       "confidence_score": 1.0
     },
     {
@@ -20095,8 +20515,8 @@
       "source_file": "README.md",
       "source_location": "L269",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u81f4\u8c22",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u81f4\u8c22",
       "confidence_score": 1.0
     },
     {
@@ -20105,8 +20525,8 @@
       "source_file": "README.md",
       "source_location": "L204",
       "weight": 1.0,
-      "source": "readme_\u6821\u56ed\u5899_campus_wall",
-      "target": "readme_\u9879\u76ee\u7ed3\u6784",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u9879\u76ee\u7ed3\u6784",
       "confidence_score": 1.0
     },
     {
@@ -20115,8 +20535,8 @@
       "source_file": "README.md",
       "source_location": "L178",
       "weight": 1.0,
-      "source": "readme_\u5feb\u901f\u5f00\u59cb",
-      "target": "readme_\u5b89\u88c5\u90e8\u7f72",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u5b89\u88c5\u90e8\u7f72",
       "confidence_score": 1.0
     },
     {
@@ -20125,8 +20545,8 @@
       "source_file": "README.md",
       "source_location": "L174",
       "weight": 1.0,
-      "source": "readme_\u5feb\u901f\u5f00\u59cb",
-      "target": "readme_\u73af\u5883\u8981\u6c42",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u73af\u5883\u8981\u6c42",
       "confidence_score": 1.0
     },
     {
@@ -20135,8 +20555,8 @@
       "source_file": "README.md",
       "source_location": "L196",
       "weight": 1.0,
-      "source": "readme_\u5feb\u901f\u5f00\u59cb",
-      "target": "readme_\u9996\u6b21\u4f7f\u7528",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u9996\u6b21\u4f7f\u7528",
       "confidence_score": 1.0
     },
     {
@@ -20145,8 +20565,8 @@
       "source_file": "README.md",
       "source_location": "L251",
       "weight": 1.0,
-      "source": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "target": "readme_\u654f\u611f\u8bcd\u7ba1\u7406",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u654f\u611f\u8bcd\u7ba1\u7406",
       "confidence_score": 1.0
     },
     {
@@ -20155,8 +20575,8 @@
       "source_file": "README.md",
       "source_location": "L242",
       "weight": 1.0,
-      "source": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "target": "readme_\u6dfb\u52a0\u65b0\u677f\u5757",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u6dfb\u52a0\u65b0\u677f\u5757",
       "confidence_score": 1.0
     },
     {
@@ -20165,8 +20585,8 @@
       "source_file": "README.md",
       "source_location": "L245",
       "weight": 1.0,
-      "source": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "target": "readme_\u8c03\u6574_pow_\u96be\u5ea6",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574_pow_\u96be\u5ea6",
       "confidence_score": 1.0
     },
     {
@@ -20175,8 +20595,8 @@
       "source_file": "README.md",
       "source_location": "L248",
       "weight": 1.0,
-      "source": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "target": "readme_\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236",
       "confidence_score": 1.0
     },
     {
@@ -20185,8 +20605,8 @@
       "source_file": "README.md",
       "source_location": "L254",
       "weight": 1.0,
-      "source": "readme_\u4e8c\u6b21\u5f00\u53d1",
-      "target": "readme_\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883",
+      "source": "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "target": "home_wr1ench_campus_wall_dev_x_readme_\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883",
       "confidence_score": 1.0
     },
     {
@@ -20195,8 +20615,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme",
-      "target": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_md",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
       "confidence_score": 1.0
     },
     {
@@ -20205,8 +20625,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L44",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "target": "campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
       "confidence_score": 1.0
     },
     {
@@ -20215,8 +20635,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L50",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "target": "campus_wall_miniprogram_readme_\u6ce8\u610f\u4e8b\u9879",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6ce8\u610f\u4e8b\u9879",
       "confidence_score": 1.0
     },
     {
@@ -20225,8 +20645,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "target": "campus_wall_miniprogram_readme_\u76ee\u5f55\u7ed3\u6784",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u76ee\u5f55\u7ed3\u6784",
       "confidence_score": 1.0
     },
     {
@@ -20235,8 +20655,8 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L22",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "target": "campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
       "confidence_score": 1.0
     },
     {
@@ -20245,8 +20665,358 @@
       "source_file": "campus-wall-miniprogram/README.md",
       "source_location": "L33",
       "weight": 1.0,
-      "source": "campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "target": "campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf",
+      "source": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
+      "target": "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_\u9700\u6c42\u56de\u987e",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_\u4fe1\u606f\u67b6\u6784",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L222",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L281",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_6_\u6587\u4ef6\u6539\u52a8\u6e05\u5355",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L308",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_7_\u9a8c\u6536\u6e05\u5355",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L326",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L350",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_9_\u5b9e\u65bd\u987a\u5e8f_\u589e\u91cf\u4ea4\u4ed8",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_\u9700\u6c42\u56de\u987e",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_1_\u4efb\u52a1\u539f\u6587",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_\u9700\u6c42\u56de\u987e",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_2_\u5173\u952e\u7ea6\u675f_\u6765\u81ea_docs_for_agent_md_3_9_\u4e0e_6_5",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_\u9700\u6c42\u56de\u987e",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_3_\u7528\u6237\u5df2\u786e\u8ba4\u7684\u51b3\u7b56",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_1_\u8272\u5f69_token_\u7ee7\u627f_\u5fae\u8c03",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_2_\u5b57\u4f53\u7b56\u7565",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_3_\u52a8\u6548\u539f\u5219_\u6cbf\u7528\u9879\u76ee_spring_\u98ce\u683c",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L108",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_\u8bbe\u8ba1\u8bed\u8a00\u9501\u5b9a_\u4e0e\u73b0\u6709\u9879\u76ee\u5bf9\u9f50",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_2_4_\u80cc\u666f\u4e0e\u6750\u8d28",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_\u4fe1\u606f\u67b6\u6784",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_1_\u6574\u4f53\u7ed3\u6784",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_\u4fe1\u606f\u67b6\u6784",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_\u6a21\u5757\u8be6\u7ec6",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_\u6a21\u5757\u8be6\u7ec6",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_1_\u5b9e\u65f6\u72b6\u6001\u533a_\u65b0\u589e_\u59cb\u7ec8\u5728_tabs_\u4e0a\u65b9",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_\u6a21\u5757\u8be6\u7ec6",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_2_tabs_\u6cbf\u7528\u65e7\u7248_\u5185\u5bb9\u533a\u66f4\u65b0",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_\u6a21\u5757\u8be6\u7ec6",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_3_2_3_\u7533\u8bc9\u5f39\u7a97_\u6cbf\u7528\u65e7\u7248_\u89c6\u89c9\u5347\u7ea7",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L193",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_1_\u547d\u540d",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L199",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_2_\u53ef\u8bbf\u95ee\u6027",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L207",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_3_\u6027\u80fd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_\u5173\u952e\u4ee3\u7801\u89c4\u8303",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_4_4_\u5b89\u5168",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L224",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_1_\u6570\u636e\u83b7\u53d6",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L233",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_2_\u5b9e\u65f6\u72b6\u6001\u533a\u6570\u636e\u52a0\u5de5",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L247",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_3_\u5012\u8ba1\u65f6\u8ba1\u7b97",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L269",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_api_\u884c\u4e3a\u4e0e\u6570\u636e\u6d41",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_5_4_\u63d0\u4ea4\u7533\u8bc9\u6d41\u7a0b_\u6cbf\u7528\u65e7\u7248",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L288",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_6_\u6587\u4ef6\u6539\u52a8\u6e05\u5355",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_6_1_pages_safety_html_\u540c\u6b65\u7b56\u7565",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L328",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_1_\u5012\u8ba1\u65f6\u7684\u7cbe\u5ea6",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L333",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_2_\u5927\u91cf\u5386\u53f2\u5904\u7f5a\u7684\u6027\u80fd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L338",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_3_activepunishment_\u5b57\u6bb5\u7f3a\u5931",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/superpowers/specs/2026-07-14-safety-center-redesign.md",
+      "source_location": "L343",
+      "weight": 1.0,
+      "source": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_\u98ce\u9669\u4e0e\u6743\u8861",
+      "target": "docs_superpowers_specs_2026_07_14_safety_center_redesign_8_4_\u4e0e_index_html_\u7684_punishpopup_\u534f\u540c",
       "confidence_score": 1.0
     },
     {
@@ -20273,7 +21043,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L647",
+      "source_location": "L649",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_10_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u540e\u7aef\u529f\u80fd_\u6807\u51c6\u6d41\u7a0b",
@@ -20283,7 +21053,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L662",
+      "source_location": "L664",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
@@ -20293,7 +21063,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L689",
+      "source_location": "L691",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_12_\u6a21\u5757\u4f9d\u8d56\u901f\u67e5_\u8c03\u7528\u5173\u7cfb",
@@ -20303,7 +21073,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L712",
+      "source_location": "L714",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_13_\u4e00\u53e5\u8bdd\u901f\u8bb0_\u7ed9_ai_agent",
@@ -20313,7 +21083,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L718",
+      "source_location": "L720",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
@@ -20323,7 +21093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L787",
+      "source_location": "L789",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
@@ -20383,7 +21153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L566",
+      "source_location": "L567",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
@@ -20393,7 +21163,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L605",
+      "source_location": "L607",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_7_\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u7aef_campus_wall_miniprogram",
@@ -20403,7 +21173,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L616",
+      "source_location": "L618",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_8_\u914d\u7f6e\u4e0e\u73af\u5883\u53d8\u91cf_env",
@@ -20413,7 +21183,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L631",
+      "source_location": "L633",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_9_\u5e38\u89c1\u5751\u4e0e\u5f00\u53d1\u987b\u77e5_\u52a1\u5fc5\u5148\u8bfb",
@@ -20433,7 +21203,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L875",
+      "source_location": "L877",
       "weight": 1.0,
       "source": "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "target": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
@@ -20553,7 +21323,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L435",
+      "source_location": "L436",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_10_\u7edf\u4e00\u4e3e\u62a5_\u5904\u7f5a_\u7533\u8bc9_\u9738\u51cc_reports_penalty_system_admin",
@@ -20563,7 +21333,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L469",
+      "source_location": "L470",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_11_\u540e\u53f0\u7ba1\u7406_\u7528\u6237_\u5185\u5bb9\u7ba1\u7406_admin_js",
@@ -20573,7 +21343,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L488",
+      "source_location": "L489",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_12_\u540e\u53f0\u7ba1\u7406_\u5b89\u5168_\u654f\u611f\u8bcd_admin_js",
@@ -20583,7 +21353,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L504",
+      "source_location": "L505",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_13_\u540e\u53f0\u7ba1\u7406_\u53cd\u9988_\u9738\u51cc_\u8ba4\u8bc1\u5ba1\u6838_admin_js",
@@ -20593,7 +21363,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L521",
+      "source_location": "L522",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_14_\u540e\u53f0\u7ba1\u7406_\u79ef\u5206\u5361\u5bc6_\u62a5\u8868_admin_js_\u591a\u6570\u9700\u8d85\u7ea7",
@@ -20603,7 +21373,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L532",
+      "source_location": "L533",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_15_\u540e\u53f0\u7ba1\u7406_\u901a\u77e5\u53d1\u5e03_\u7ef4\u62a4_admin_js_maintenance_js",
@@ -20613,7 +21383,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L552",
+      "source_location": "L553",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_16_\u7cfb\u7edf_\u901a\u7528_system_js_maintenance_js_slider",
@@ -20656,14 +21426,14 @@
       "source_location": "L353",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
-      "target": "docs_for_agent_5_4_\u7528\u6237\u4e3b\u9875_\u516c\u5f00\u8d44\u6599",
+      "target": "docs_for_agent_5_4_\u7528\u6237\u641c\u7d22_\u4e3b\u9875_\u516c\u5f00\u8d44\u6599",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L360",
+      "source_location": "L361",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_5_\u8ba8\u8bba\u533a_discussions_js",
@@ -20673,7 +21443,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L371",
+      "source_location": "L372",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_6_qa_\u60ac\u8d4f\u95ee\u7b54_qa_js",
@@ -20683,7 +21453,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L386",
+      "source_location": "L387",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_7_\u6295\u7968_votes_js",
@@ -20693,7 +21463,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L401",
+      "source_location": "L402",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_8_\u6821\u56ed\u901a\u77e5_\u516c\u544a_\u5b66\u751f\u4f1a_notices_js_student_council_js",
@@ -20703,7 +21473,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L420",
+      "source_location": "L421",
       "weight": 1.0,
       "source": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
       "target": "docs_for_agent_5_9_\u5931\u7269_\u6361\u6f0f\u62cd\u5356_pickup_js",
@@ -20713,7 +21483,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L568",
+      "source_location": "L569",
       "weight": 1.0,
       "source": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "target": "docs_for_agent_6_1_\u9875\u9762\u6a21\u578b",
@@ -20723,7 +21493,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L574",
+      "source_location": "L575",
       "weight": 1.0,
       "source": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "target": "docs_for_agent_6_2_spa_\u8def\u7531_spa_js_class_sparouter",
@@ -20733,7 +21503,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L580",
+      "source_location": "L581",
       "weight": 1.0,
       "source": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "target": "docs_for_agent_6_3_\u524d\u7aef\u8c03\u7528\u540e\u7aef\u7684\u7ea6\u5b9a",
@@ -20743,7 +21513,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L591",
+      "source_location": "L593",
       "weight": 1.0,
       "source": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "target": "docs_for_agent_6_4_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u524d\u7aef\u9875\u9762",
@@ -20753,7 +21523,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L599",
+      "source_location": "L601",
       "weight": 1.0,
       "source": "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa",
       "target": "docs_for_agent_6_5_\u5b89\u5168\u4e2d\u5fc3\u524d\u7aef_safety_html_pages_safety_html",
@@ -20763,7 +21533,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L680",
+      "source_location": "L682",
       "weight": 1.0,
       "source": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "target": "docs_for_agent_\u6570\u636e\u5907\u4efd",
@@ -20773,7 +21543,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L664",
+      "source_location": "L666",
       "weight": 1.0,
       "source": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "target": "docs_for_agent_\u672c\u5730\u5f00\u53d1",
@@ -20783,7 +21553,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L673",
+      "source_location": "L675",
       "weight": 1.0,
       "source": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "target": "docs_for_agent_\u751f\u4ea7\u90e8\u7f72_pm2",
@@ -20793,7 +21563,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L683",
+      "source_location": "L685",
       "weight": 1.0,
       "source": "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "target": "docs_for_agent_\u7d22\u5f15\u7ef4\u62a4",
@@ -20803,7 +21573,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L722",
+      "source_location": "L724",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_1_\u53cc\u91cd\u5b58\u50a8\u6a21\u578b_\u6838\u5fc3\u8ba4\u77e5",
@@ -20813,7 +21583,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L733",
+      "source_location": "L735",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_2_\u4e09\u6761\u8bfb\u53d6_\u4e0b\u53d1\u901a\u9053_\u6ce8\u610f\u8bed\u4e49\u5dee\u5f02",
@@ -20823,7 +21593,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L748",
+      "source_location": "L750",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_3_\u81ea\u52a8\u89e6\u53d1\u70b9\u5b8c\u6574\u6e05\u5355",
@@ -20833,7 +21603,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L767",
+      "source_location": "L769",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_4_\u5199\u5165\u6a21\u5f0f\u7684\u4ee3\u7801\u5f02\u5473_\u7ed9\u540e\u7eed\u7ef4\u62a4\u8005",
@@ -20843,7 +21613,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L774",
+      "source_location": "L776",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_5_\u5b9e\u65f6\u4e0b\u53d1",
@@ -20853,7 +21623,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L779",
+      "source_location": "L781",
       "weight": 1.0,
       "source": "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5",
       "target": "docs_for_agent_14_6_\u5c0f\u7ed3_\u7ed9_ai_agent_\u7684\u901f\u8bb0",
@@ -20863,7 +21633,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L791",
+      "source_location": "L793",
       "weight": 1.0,
       "source": "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "target": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
@@ -20873,7 +21643,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L853",
+      "source_location": "L855",
       "weight": 1.0,
       "source": "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "target": "docs_for_agent_\u4f1a\u8bdd_2_2026_07_13",
@@ -20883,7 +21653,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L865",
+      "source_location": "L867",
       "weight": 1.0,
       "source": "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "target": "docs_for_agent_\u4f1a\u8bdd_3_2026_07_13",
@@ -20893,7 +21663,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L804",
+      "source_location": "L806",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_admin_html_\u4fee\u590d",
@@ -20903,7 +21673,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L818",
+      "source_location": "L820",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_index_html_\u4fee\u590d",
@@ -20913,7 +21683,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L793",
+      "source_location": "L795",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_safety_html_\u4fee\u590d",
@@ -20923,7 +21693,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L839",
+      "source_location": "L841",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_uid_\u79d1\u5b66\u8bb0\u6570\u6cd5\u4fee\u590d",
@@ -20933,7 +21703,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L847",
+      "source_location": "L849",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_\u4e3e\u62a5\u5217\u8868_reporterinfo_\u5c55\u793a",
@@ -20943,7 +21713,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L827",
+      "source_location": "L829",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
       "target": "docs_for_agent_\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
@@ -20953,7 +21723,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L855",
+      "source_location": "L857",
       "weight": 1.0,
       "source": "docs_for_agent_\u4f1a\u8bdd_2_2026_07_13",
       "target": "docs_for_agent_\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898",
@@ -20963,7 +21733,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L887",
+      "source_location": "L889",
       "weight": 1.0,
       "source": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "target": "docs_for_agent_\u4f7f\u7528\u65b9\u5f0f",
@@ -20973,7 +21743,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L895",
+      "source_location": "L897",
       "weight": 1.0,
       "source": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "target": "docs_for_agent_\u5173\u952e\u67a2\u7ebd\u8282\u70b9",
@@ -20983,7 +21753,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L879",
+      "source_location": "L881",
       "weight": 1.0,
       "source": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "target": "docs_for_agent_\u56fe\u8c31\u6587\u4ef6\u8bf4\u660e",
@@ -20993,13 +21763,63 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs_for_agent.md",
-      "source_location": "L907",
+      "source_location": "L909",
       "weight": 1.0,
       "source": "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "target": "docs_for_agent_\u5efa\u8bae\u63a2\u7d22",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "task.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "task",
+      "target": "task_\u4efb\u52a1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "task.md",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "task",
+      "target": "task_\u8981\u6c42",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "task.md",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "task_\u4efb\u52a1",
+      "target": "task_\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "task.md",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "task_\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd",
+      "target": "task_\u641c\u7d22\u5165\u53e3",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "task.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "task_\u4e3a\u9879\u76ee\u52a0\u5165\u641c\u7d22\u7528\u6237\u529f\u80fd",
+      "target": "task_\u641c\u7d22\u5339\u914d\u5185\u5bb9",
+      "confidence_score": 1.0
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6452d73a268a8cfc4e5ee34f54774de53fc3f720"
+  "built_at_commit": "66eb5513f6715544c18f3be7fbeb752edb8a04e3"
 }

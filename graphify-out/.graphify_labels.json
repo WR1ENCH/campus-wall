@@ -21,7 +21,6 @@
   "19": "verifySignedToken",
   "20": "middleware.js",
   "21": "student-council.js",
-  "22": "crypto.js",
   "23": "updateRow",
   "24": "login.js",
   "25": "insertRow",
@@ -42,10 +41,13 @@
   "40": "agent-dev — Campus Wall 开发文档（AI Agent 上手指南）",
   "41": "会话 1 — 2026-07-12",
   "42": "3. 后端架构",
-  "43": "校园墙微信小程序",
   "44": "14. 通知系统深度分析：自动触发通知",
   "45": "6. 前端架构（SPA）",
   "46": "11. 运行 / 部署 / 维护",
   "47": "图谱参考",
-  "48": "4. 数据模型（db.js — SQLite 表）"
+  "48": "4. 数据模型（db.js — SQLite 表）",
+  "49": "Safety Center 重新设计",
+  "50": "📌 校园墙 (Campus Wall)",
+  "52": "校园墙微信小程序",
+  "54": "为项目加入搜索用户功能"
 }
