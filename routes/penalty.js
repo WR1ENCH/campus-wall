@@ -4,6 +4,7 @@ const { generateId, logIdAssignment } = require('../lib/uniqueId');
 const { requireAdmin, requireSuper } = require('../lib/middleware');
 const { verifyUserToken } = require('../lib/crypto');
 const penalty = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 
 function readUsers() { return db.readUsers(); }
 function writeUsers(users) { db.writeUsers(users); }
@@ -91,10 +92,11 @@ module.exports = function (app) {
   // 新建处罚（管理员按 UID 直接创建 / 从举报处理）
   // 处罚自动叠加：同级别合并措施+最长时长，T0升级覆盖T1，T1在T0生效期间入队等待
   app.post('/api/admin/punishments', requireAdmin, (req, res) => {
-    const { userId, level, measures, reason, durationDays, sourceReportId } = req.body;
+    const { userId, level, measures, reason, durationDays, sourceReportId, credibilityDeduction } = req.body;
     if (!userId) return res.json({ ok: false, msg: '缺少被处罚用户ID' });
     if (!level || !['T0', 'T1'].includes(level)) return res.json({ ok: false, msg: '处罚级别无效' });
     if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请填写违规原因' });
+    const credDeduct = Math.max(0, parseInt(credibilityDeduction) || 0);
     const users = readUsers();
     const user = users.find(u => u.id === userId);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
@@ -116,10 +118,14 @@ module.exports = function (app) {
         existingT0.durationDays = Math.max(existingT0.durationDays || 0, durationDays || 0);
         existingT0.expiresAt = existingT0.durationDays ? calcExpiresAt(existingT0.durationDays) : null;
         existingT0.reason = existingT0.reason + '\n' + reason.trim();
+        existingT0.credibilityDeducted = (existingT0.credibilityDeducted || 0) + credDeduct;
         db.updatePunishment(existingT0.punishmentId, existingT0);
         if (existingT1 && existingT1.status === 'active') {
           existingT1.status = 'overridden';
           db.updatePunishment(existingT1.punishmentId, existingT1);
+        }
+        if (credDeduct > 0) {
+          credibility.deductCredibility(userId, credDeduct, '违规处罚追加扣除信用分: ' + (reason || '').slice(0, 100));
         }
         // 更新关联举报
         if (sourceReportId) {
@@ -140,9 +146,13 @@ module.exports = function (app) {
         appealUsed: 0, appealStatus: 'none',
         createdAt: now, expiresAt: calcExpiresAt(durationDays),
         revokedAt: null, revokedBy: null,
+        credibilityDeducted: credDeduct || 0,
       };
       db.insertPunishment(p);
       logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+      if (credDeduct > 0) {
+        credibility.deductCredibility(userId, credDeduct, '违规处罚扣除信用分: ' + (reason || '').slice(0, 100));
+      }
 
       if (existingT1) {
         // T0 + 已有T1: 先执行T0，T1入队等T0结束再执行
@@ -168,7 +178,11 @@ module.exports = function (app) {
         existingT1.durationDays = Math.max(existingT1.durationDays || 0, durationDays || 0);
         existingT1.expiresAt = existingT1.durationDays ? calcExpiresAt(existingT1.durationDays) : null;
         existingT1.reason = existingT1.reason + '\n' + reason.trim();
+        existingT1.credibilityDeducted = (existingT1.credibilityDeducted || 0) + credDeduct;
         db.updatePunishment(existingT1.punishmentId, existingT1);
+        if (credDeduct > 0) {
+          credibility.deductCredibility(userId, credDeduct, '违规合并处罚追加扣除信用分: ' + (reason || '').slice(0, 100));
+        }
         if (sourceReportId) {
           const report = readReports().find(r => r.reportId === sourceReportId);
           if (report) { report.handledResult = 'violation'; report.punishmentId = existingT1.punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
@@ -191,9 +205,13 @@ module.exports = function (app) {
           createdAt: now, expiresAt: calcExpiresAt(durationDays),
           revokedAt: null, revokedBy: null,
           queuedAfter: existingT0.punishmentId,
+          credibilityDeducted: credDeduct || 0,
         };
         db.insertPunishment(p);
         logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+        if (credDeduct > 0) {
+          credibility.deductCredibility(userId, credDeduct, '违规入队处罚扣除信用分: ' + (reason || '').slice(0, 100));
+        }
         if (sourceReportId) {
           const report = readReports().find(r => r.reportId === sourceReportId);
           if (report) { report.handledResult = 'violation'; report.punishmentId = punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
@@ -213,9 +231,13 @@ module.exports = function (app) {
         appealUsed: 0, appealStatus: 'none',
         createdAt: now, expiresAt: calcExpiresAt(durationDays),
         revokedAt: null, revokedBy: null,
+        credibilityDeducted: credDeduct || 0,
       };
       db.insertPunishment(p);
       logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+      if (credDeduct > 0) {
+        credibility.deductCredibility(userId, credDeduct, '违规处罚扣除信用分: ' + (reason || '').slice(0, 100));
+      }
       if (sourceReportId) {
         const report = readReports().find(r => r.reportId === sourceReportId);
         if (report) { report.handledResult = 'violation'; report.punishmentId = punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
@@ -234,7 +256,11 @@ module.exports = function (app) {
     if (!p) return res.json({ ok: false, msg: '处罚记录不存在' });
     if (p.status !== 'active') return res.json({ ok: false, msg: '该处罚已不是active状态，无需撤销' });
     const now = new Date().toISOString();
+    const deducted = p.credibilityDeducted || 0;
     db.updatePunishment(p.punishmentId, { status: 'revoked', revokedAt: now, revokedBy: req.admin.id });
+    if (deducted > 0) {
+      credibility.restoreCredibility(userId, deducted, '处罚撤销，返还信用分');
+    }
     res.json({ ok: true, msg: '处罚已撤销' });
   });
 
@@ -256,6 +282,10 @@ module.exports = function (app) {
 
     if (action === 'approved') {
       db.updatePunishment(p.punishmentId, { appealStatus: 'approved', status: 'revoked', revokedAt: now, revokedBy: req.admin.id });
+      const deducted = p.credibilityDeducted || 0;
+      if (deducted > 0) {
+        credibility.restoreCredibility(p.userId, deducted, '申诉通过，返还信用分');
+      }
       penalty.notifyAppealResult(p.userId, p.punishmentId, true, note);
       res.json({ ok: true, msg: '申诉通过，处罚已撤销' });
     } else {

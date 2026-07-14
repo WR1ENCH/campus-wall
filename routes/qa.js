@@ -6,6 +6,7 @@ const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 
 function readQAQuestions() { return db.readQAQuestions(); }
 function writeQAQuestions(data) { db.writeQAQuestions(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
@@ -96,6 +97,10 @@ app.get('/api/qa/questions', (req, res) => {
 
 app.post('/api/qa/questions', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 信用分检测
+  if (credibility.isFeatureBlocked(session.id, 'qa')) {
+    return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+  }
   // 处罚限制检测
   if (isFeatureBlocked(session.id, 'qa')) {
     return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
@@ -198,6 +203,10 @@ app.get('/api/qa/questions/:id', (req, res) => {
 
 app.post('/api/qa/questions/:id/answers', (req, res) => {
   const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  // 信用分检测
+  if (credibility.isFeatureBlocked(session.id, 'qa')) {
+    return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+  }
   // 处罚限制检测
   if (isFeatureBlocked(session.id, 'qa')) {
     return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });

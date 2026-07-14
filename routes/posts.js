@@ -7,6 +7,7 @@ const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 const maintenance = require('../maintenance');
 
 const CONTENT_MAX_LENGTH = 50;
@@ -168,6 +169,14 @@ app.post('/api/posts', (req, res) => {
     realAuthor = '匿名';
     realAvatar = '🙈';
     anonymousFlag = true;
+  }
+
+  // 信用分检测
+  if (realUserId) {
+    const feature = anonymousFlag ? 'anonymous_post' : 'post';
+    if (credibility.isFeatureBlocked(realUserId, feature)) {
+      return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+    }
   }
 
   // 处罚限制检测
@@ -399,6 +408,11 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!token) return res.json({ ok: false, msg: '请先登录后再评论', code: 'NOT_LOGIN' });
   const session = verifyUserToken(token);
   if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
+
+  // 信用分检测
+  if (credibility.isFeatureBlocked(session.id, 'post')) {
+    return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+  }
 
   // 处罚限制检测
   if (isFeatureBlocked(session.id, 'post')) {

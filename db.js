@@ -443,6 +443,35 @@ function migrate() {
     }
   }
 
+  // 信用分（credibility_score）相关列迁移
+  const credCols = ['credibility_score', 'credibility_exchanged_total', 'credibility_last_refresh'];
+  let existingUserCols = [];
+  try {
+    const colInfo = db.prepare(`PRAGMA table_info("users")`).all();
+    existingUserCols = colInfo.map(r => r.name);
+  } catch {}
+  for (const col of credCols) {
+    if (!existingUserCols.includes(col)) {
+      try {
+        const def = col === 'credibility_score' ? ' INTEGER DEFAULT 90' : ' TEXT';
+        db.exec(`ALTER TABLE "users" ADD COLUMN "${col}"${def}`);
+        console.log(`[db.js] ✅ 已添加列 users.${col}`);
+      } catch (e) {
+        console.warn(`[db.js] ⚠️ 添加列 users.${col} 失败:`, e.message);
+      }
+    }
+  }
+  // credibility_logs 表
+  db.exec(`CREATE TABLE IF NOT EXISTS "credibility_logs" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT,
+    "amount" INTEGER,
+    "score" INTEGER,
+    "reason" TEXT,
+    "type" TEXT DEFAULT 'exchange',
+    "createdAt" TEXT
+  )`);
+
   // 为旧数据回填 reportId，并将旧 r_ 格式 id 统一为 REPO- 格式
   const badReports = db.prepare(`SELECT id, reportId FROM "reports" WHERE reportId IS NULL OR reportId = '' OR id LIKE 'r_%'`).all();
   for (const row of badReports) {
@@ -620,6 +649,11 @@ function writeBullying(data) { dropAndInsert('bullying', data); }
 // Credit logs
 function readCreditLogs() { return all('credit_logs'); }
 function writeCreditLogs(data) { dropAndInsert('credit_logs', data); }
+
+// Credibility logs
+function readCredibilityLogs() { return all('credibility_logs'); }
+function writeCredibilityLogs(data) { dropAndInsert('credibility_logs', data); }
+function insertCredibilityLog(log) { insertRow('credibility_logs', log); }
 
 // Credit cards
 function readCreditCards() { return all('credit_cards'); }
@@ -947,6 +981,7 @@ module.exports = {
   readFeedbacks, writeFeedbacks,
   readBullying, writeBullying,
   readCreditLogs, writeCreditLogs,
+  readCredibilityLogs, writeCredibilityLogs, insertCredibilityLog,
   readCreditCards, writeCreditCards,
   readAnnouncement, writeAnnouncement,
   readDiscussions, writeDiscussions,

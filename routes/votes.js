@@ -8,6 +8,7 @@ const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const credibility = require('../lib/credibility');
 
 function readVotes() { return db.readVotes(); }
 function writeVotes(votes) { db.writeVotes(votes); broadcastSSE('voteUpdate', { t: Date.now() }); }
@@ -87,6 +88,11 @@ module.exports = function(app) {
     if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
     const session = verifyUserToken(token);
     if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+    // 信用分检测
+    if (credibility.isFeatureBlocked(session.id, 'vote')) {
+      return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+    }
+
     // 处罚限制检测
     if (isFeatureBlocked(session.id, 'vote')) {
       return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });

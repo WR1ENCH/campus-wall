@@ -229,6 +229,53 @@ admin → auth → user → posts → discussions → qa → votes → notices
 **被处罚弹窗（`index.html`）**
 - 页面加载时 `checkPunishment()` 调 `/api/user/safety-center`；若 `activePunishment` 存在，弹出 `punishPopup` 告知限制功能与时长，按钮跳转 `safety.html` 查看详情。
 
+### 3.10 信用分系统（`lib/credibility.js` — 本次新增）
+
+**信用分（Credibility Score）** 是独立于 Credit 积分的行为评分体系，用于衡量用户在社区中的可信度。初始 90 分，通过同学验证 +10 分。
+
+**功能限制阈值**：
+- `< 90 分`：禁止悄悄话（whisper）
+- `< 85 分`：禁止匿名发帖/拍卖（anonymous_post）
+- `< 80 分`：禁止你问我答（qa）
+- `< 60 分`：禁止发帖/讨论（post）
+- `< 50 分`：禁止投票（vote）
+
+**Credit 兑换信用分**：
+- 累计兑换 ≤5 分：300 credits = 1 分
+- 累计兑换 6-10 分：700 credits = 1 分
+- 累计兑换 11-15 分：1000 credits = 1 分
+- 每季度上限 15 分
+- 刷新日：1月1日、3月1日、6月1日、9月1日（`credibility_last_refresh` 记录上次刷新时间，`credibility_exchanged_total` 记录本季度已兑换量）
+
+**与处罚系统结合**：
+- `POST /api/admin/punishments` 支持 `credibilityDeduction` 参数，创建处罚时同步扣除信用分
+- `POST /api/admin/punishments/:id/revoke` 撤销处罚时返还信用分
+- `POST /api/admin/punishments/:id/appeal-action` 申诉通过时返还信用分
+- 处罚记录中 `credibilityDeducted` 字段记录扣除量
+
+**核心 API**（`routes/user.js`）：
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/user/credibility-info` | 用户 | 信用分信息（分数/兑换量/汇率/明细/阈值） |
+| POST | `/api/user/exchange-credibility` | 用户 | 用 credits 兑换信用分（body: `{credits}`） |
+| GET | `/api/user/credibility-logs` | 用户 | 信用分变动日志 |
+
+**管理 API**（`routes/admin.js`）：
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/admin/credibility-logs` | 管理员 | 信用分日志（可按 `?userId=` 过滤） |
+| POST | `/api/admin/user/:id/credibility` | 管理员 | 修改信用分（body: `{action:'set'|'add'|'deduct', amount, reason}`） |
+
+**DB 变更**（`db.js` migrate 自动迁移）：
+- `users` 表新增列：`credibility_score`(INTEGER DEFAULT 90)、`credibility_exchanged_total`(TEXT)、`credibility_last_refresh`(TEXT)
+- 新增表 `credibility_logs`：id, userId, amount, score, reason, type, createdAt
+
+**安全中心前端 `safety.html`**：
+- 仪表盘第三列显示信用分概览
+- 信用分明细卡片（日志列表）
+- Credit → 信用分兑换面板（含汇率展示、输入、兑换按钮）
+- 三张说明卡片：信用分说明 / 兑换说明 / 失信处罚说明
+
 ## 4. 数据模型（db.js — SQLite 表）
 
 数据库文件：`data/campus.db`，WAL 模式。所有表在 `migrate()` 中 `CREATE TABLE IF NOT EXISTS` 自动建表（**无需手动迁移**）。代码统一通过 `readXxx()` / `writeXxx()` 接口访问（底层用 `dropAndInsert` 全表替换或 `insertRow` 单行插入）。
@@ -239,7 +286,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 | 表 | 关键字段 | 用途 |
 |----|----------|------|
-| `users` | id(PK), username(UNIQUE), password, nickname, avatar, uid, regIp, createdAt, status('active'/'banned'), postCount, bindAdminId, bindAdminRole, credit, checkedInDate, checkinStreak, banUntil, zhixueStatus, certData(加密), zhixueReviewedBy, zhixueCertType, zhixueUsername/Password, zhixueManual*, certRealName, certClassName, noticePublisher | 用户账号 + 认证 + 积分 |
+| `users` | id(PK), username(UNIQUE), password, nickname, avatar, uid, regIp, createdAt, status('active'/'banned'), postCount, bindAdminId, bindAdminRole, credit, checkedInDate, checkinStreak, banUntil, zhixueStatus, certData(加密), zhixueReviewedBy, zhixueCertType, zhixueUsername/Password, zhixueManual*, certRealName, certClassName, noticePublisher, **credibility_score**(INTEGER DEFAULT 90), **credibility_exchanged_total**(TEXT), **credibility_last_refresh**(TEXT) | 用户账号 + 认证 + 积分 + 信用分 |
 | `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
@@ -249,6 +296,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `feedbacks` | id, type, description, contact, images, time, status, handledBy, handleNote | 用户反馈 |
 | `bullying` | id, reporterRole, victimName, bullyType, description, involved, location, incidentTime, contact, anonymous, images, time, status, handledBy, handleNote, userId | 霸凌举报 |
 | `credit_logs` | id, userId, amount, reason, createdAt | 积分变动日志 |
+| `credibility_logs` | id(PK 'CRDL-'), userId, amount, score, reason, type('exchange'/'deduction'/'restore'/'refresh'/'bonus'/'admin'), createdAt | 信用分变动日志 |
 | `credit_cards` | id, code(UNIQUE), value, status('active'/used), createdBy, createdAt, usedBy, usedAt | 积分卡密 |
 | `announcement` | _id, title, content, createdAt, updatedAt, publishedAt, publishedBy | 全站公告（单行） |
 | `discussions` | id, title, expiresAt, deleted, createdAt, createdBy, commentCount | 讨论话题（最多 3 个活跃） |
@@ -331,6 +379,9 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/user/notifications/mark-read` | 用户 | 标记单条已读 |
 | POST | `/api/user/notifications/mark-all-read` | 用户 | 全部已读 |
 | GET | `/api/user/notice-app-notification` | 用户 | 通知应用提示 |
+| GET | `/api/user/credibility-info` | 用户 | 信用分信息（分数/兑换量/汇率/明细/阈值） |
+| POST | `/api/user/exchange-credibility` | 用户 | credits 兑换信用分（body: `{credits}`） |
+| GET | `/api/user/credibility-logs` | 用户 | 信用分变动日志 |
 
 ### 5.3 帖子 / 评论 / 点赞 / 举报（posts.js）
 | 方法 | 路径 | 权限 | 说明 |
@@ -448,7 +499,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/punishments` | 管理员 | 处罚列表（可按 `status` / `userId` 过滤） |
 | GET | `/api/admin/appeals` | 管理员 | 申诉列表（可按 `status` 过滤，关联处罚 + 用户信息） |
 | GET | `/api/admin/punishments/:id` | 管理员 | 处罚详情（证据快照 + 关联申诉） |
-| POST | `/api/admin/punishments` | 管理员 | 新建处罚（按 `userId`；或从举报 `sourceReportId` 处理，自动回填举报） |
+| POST | `/api/admin/punishments` | 管理员 | 新建处罚（按 `userId`；或从举报 `sourceReportId` 处理，自动回填举报；支持 `credibilityDeduction` 参数扣除信用分） |
 | POST | `/api/admin/punishments/:id/revoke` | 管理员 | 撤销处罚 |
 | POST | `/api/admin/punishments/:id/appeal-action` | 管理员 | 处理申诉（`approved` 撤销处罚 / `rejected`） |
 | GET | `/api/user/punishments` | 用户 | 我的处罚（进行中 + 历史） |
@@ -518,6 +569,8 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | PUT | `/api/admin/zhixue/:userId/review` | 管理员 | 审核认证（通过/拒绝） |
 | POST | `/api/admin/zhixue/:userId/reset` | 管理员 | 重置认证 |
 | GET | `/api/admin/credit-logs` | 管理员 | 积分日志 |
+| GET | `/api/admin/credibility-logs` | 管理员 | 信用分日志（可按 `?userId=` 过滤） |
+| POST | `/api/admin/user/:id/credibility` | 管理员 | 修改信用分（body: `{action:'set'|'add'|'deduct', amount, reason}`） |
 
 ### 5.14 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）
 | 方法 | 路径 | 权限 | 说明 |

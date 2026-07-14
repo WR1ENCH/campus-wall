@@ -4598,6 +4598,41 @@
       }
       html += '</div>';
 
+      // 信用分管理区域
+      html += '<div style="margin-bottom:18px;">';
+      html += '<h4 style="margin:0 0 12px 0;color:#4a3728;font-size:15px;border-bottom:2px solid #d4c5b5;padding-bottom:6px;">⭐ 信用分管理</h4>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px;">';
+      html += '<div style="background:#f5f0e8;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#8a7a6a;">当前信用分</div><div style="font-size:28px;font-weight:700;color:#2c1810;">' + (u.credibility_score != null ? u.credibility_score : 90) + '</div></div>';
+      html += '<div style="background:#f5f0e8;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#8a7a6a;">已兑换总量</div><div style="font-size:20px;font-weight:600;color:#2c1810;">' + (u.credibility_exchanged_total || 0) + '</div></div>';
+      html += '<div style="background:#f5f0e8;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:11px;color:#8a7a6a;">上次刷新</div><div style="font-size:18px;font-weight:500;color:#2c1810;word-break:break-all;">' + (u.credibility_last_refresh ? new Date(u.credibility_last_refresh).toLocaleDateString('zh-CN') : '-') + '</div></div>';
+      html += '</div>';
+
+      // 修改信用分控件
+      html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">';
+      html += '<span style="font-size:13px;color:#5a4638;font-weight:500;">操作：</span>';
+      html += '<input type="number" id="credAdminAmount" value="1" min="1" max="100" style="width:70px;padding:6px 8px;border:2px solid #d4c5b5;border-radius:6px;font-size:13px;">';
+      html += '<button class="btn-view" onclick="credAdminAction(\'' + u.id + '\',\'add\')" style="font-size:12px;padding:6px 12px;">➕ 增加</button>';
+      html += '<button class="btn-del" onclick="credAdminAction(\'' + u.id + '\',\'deduct\')" style="font-size:12px;padding:6px 12px;">➖ 扣除</button>';
+      html += '<input type="text" id="credAdminReason" placeholder="原因（可选）" style="width:150px;padding:6px 8px;border:2px solid #d4c5b5;border-radius:6px;font-size:12px;">';
+      html += '</div>';
+
+      // 信用分日志
+      if (u.credibilityLogs && u.credibilityLogs.length > 0) {
+        html += '<div style="font-size:12px;max-height:200px;overflow-y:auto;">';
+        u.credibilityLogs.forEach(function(l) {
+          html += '<div style="display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid #ede4d6;gap:6px;">';
+          html += '<span class="type-badge ' + (l.amount > 0 ? 'badge-success' : 'badge-danger') + '" style="font-size:10px;">' + (l.amount > 0 ? '+' + l.amount : l.amount) + '</span>';
+          html += '<span style="flex:1;color:#3a2a1a;">' + escHtml(l.reason || '') + '</span>';
+          html += '<span style="color:#8a7a6a;font-size:10px;">信用分: ' + (l.score || '-') + '</span>';
+          html += '<span style="color:#8a7a6a;font-size:10px;">' + (l.createdAt ? new Date(l.createdAt).toLocaleDateString('zh-CN') : '') + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div style="color:#8a7a6a;font-size:12px;text-align:center;padding:12px;">暂无信用分变动记录</div>';
+      }
+      html += '</div>';
+
       body.innerHTML = html;
 
     } catch (e) {
@@ -4608,6 +4643,28 @@
   function closeUserDetail() {
     document.getElementById('userDetailModal').classList.remove('show');
   }
+
+  window.credAdminAction = async function(userId, action) {
+    const amount = parseInt(document.getElementById('credAdminAmount').value);
+    const reason = document.getElementById('credAdminReason').value.trim();
+    if (!amount || amount <= 0) { showToast('请输入有效数值', 'error'); return; }
+    try {
+      const res = await fetch('/api/admin/user/' + userId + '/credibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ action, amount, reason })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 信用分已更新：' + json.data.score, 'success');
+        showUserDetail(userId);
+      } else {
+        showToast('❌ ' + (json.msg || '操作失败'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ 网络错误', 'error');
+    }
+  };
 
   // ===== 修改密码 =====
   function openChangePwdModal() {
@@ -6212,6 +6269,10 @@
         '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;">处罚时长（天，0=永久）</label>' +
         '<input type="number" id="punishDuration" value="7" min="0" max="9999" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;outline:none;font-family:inherit;box-sizing:border-box;">' +
       '</div>' +
+      '<div style="margin-bottom:12px;">' +
+        '<label style="display:block;font-size:12px;color:var(--text-sub);margin-bottom:4px;">扣除信用分（输入 0 或不填则不扣）</label>' +
+        '<input type="number" id="punishCredibilityDeduction" value="0" min="0" max="100" style="width:100%;padding:8px 12px;border:2px solid var(--border);border-radius:8px;font-size:15px;outline:none;font-family:inherit;box-sizing:border-box;">' +
+      '</div>' +
       '<div id="punishError" style="color:#dc2626;font-size:12px;min-height:18px;margin-bottom:8px;"></div>' +
       '<input type="hidden" id="violationUserId" value="' + (userId || '').replace(/'/g, "\\'") + '">' +
       '<input type="hidden" id="violationReportId" value="' + reportId.replace(/'/g, "\\'") + '">' +
@@ -6253,12 +6314,14 @@
       const handleJson = await handleRes.json();
       if (!handleJson.ok) { errEl.textContent = handleJson.msg; return; }
       // 创建处罚
+      const credibilityDeduction = parseInt(document.getElementById('punishCredibilityDeduction')?.value) || 0;
       const punishRes = await fetch('/api/admin/punishments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           userId, level, measures, reason, durationDays,
-          sourceReportId: reportIdVal || reportId
+          sourceReportId: reportIdVal || reportId,
+          credibilityDeduction
         })
       });
       const punishJson = await punishRes.json();
