@@ -4,89 +4,696 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>安全中心 · 校园墙</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--brick-bg:#c4a882;--paper-bg:#fef9e7;--text-main:#2c1810;--text-sub:#6a4a3a;}
+:root{
+  /* 砖墙背景层 */
+  --bg-brick:#c4a882;
+  --bg-brick-light:#d4c5a9;
+
+  /* 纸张层 */
+  --paper:#fef9e7;
+  --paper-2:#faf4dc;
+  --paper-edge:#d4c5a9;
+  --paper-deep:#e8ddd0;
+
+  /* 文字层 */
+  --ink:#2c1810;
+  --ink-2:#5a3e2b;
+  --ink-3:#8b6f5e;
+
+  /* 语义色 */
+  --danger:#b91c1c;
+  --danger-bg:#fef2f2;
+  --danger-edge:#fecaca;
+  --warning:#b45309;
+  --warning-bg:#fef3c7;
+  --warning-edge:#fde68a;
+  --pending:#1d4ed8;
+  --pending-bg:#eff6ff;
+  --pending-edge:#bfdbfe;
+  --success:#166534;
+  --success-bg:#f0fdf4;
+  --success-edge:#bbf7d0;
+
+  /* 装饰 */
+  --accent:#8b6f5e;
+  --accent-light:rgba(139,111,94,.08);
+  --pin:radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b);
+
+  /* 尺寸 */
+  --radius:10px;
+  --radius-sm:6px;
+  --radius-lg:14px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06);
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.18);
+
+  /* 字体 */
+  --font-sans:'Noto Sans SC',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  --font-brush:'Ma Shan Zheng','Noto Sans SC',cursive;
+  --font-mono:'SF Mono','Menlo','Consolas',monospace;
+
+  /* 缓动(沿用项目 spring 风格) */
+  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+}
+
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--brick-bg);padding:30px 16px;
-  background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(0,0,0,0.12) 59px,rgba(0,0,0,0.12) 61px,transparent 61px,transparent 120px),repeating-linear-gradient(90deg,transparent,transparent 119px,rgba(0,0,0,0.12) 119px,rgba(0,0,0,0.12) 121px,transparent 121px,transparent 240px),repeating-linear-gradient(0deg,rgba(180,140,100,0.3) 0,rgba(200,160,120,0.1) 30px,rgba(170,130,90,0.2) 60px,rgba(190,150,110,0.15) 90px,rgba(175,135,95,0.25) 120px);}
-.top-bar{max-width:600px;margin:0 auto 20px;display:flex;align-items:center;gap:10px;}
-.back-btn{background:#e8ddd0;border:2px solid #8b6f5e;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text-main);cursor:pointer;}
-.back-btn:hover{background:#ddd0c0;}
-.page-title{font-size:18px;font-weight:700;color:var(--text-main);letter-spacing:-0.3px;}
-.container{max-width:600px;margin:0 auto;}
-.card{background:var(--paper-bg);border:2px solid #d4c5a9;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(0,0,0,0.08);}
-.tabs{display:flex;gap:0;margin-bottom:20px;background:var(--paper-bg);border:2px solid #d4c5a9;border-radius:12px;overflow:hidden;}
-.tab{flex:1;padding:12px;text-align:center;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;border:none;background:transparent;font-family:inherit;transition:all .15s;}
-.tab.active{background:#2c1810;color:#fff;font-weight:700;}
-.tab:not(.active):hover{background:#ede3d5;}
-.loading{text-align:center;padding:60px 20px;font-size:14px;color:var(--text-sub);}
-.empty{padding:40px 20px;text-align:center;color:var(--text-sub);font-size:14px;}
-.report-item{border-bottom:1px solid #e8ddd0;padding:14px 0;}
-.report-item:last-child{border-bottom:0;}
-.report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
-.report-id{font-size:11px;color:var(--text-sub);font-family:monospace;background:#ede3d5;padding:2px 6px;border-radius:4px;}
-.report-type{font-size:11px;color:#8b6f5e;background:#e8ddd0;padding:2px 8px;border-radius:4px;}
-.report-reason{font-size:13px;color:var(--text-main);line-height:1.5;margin:4px 0;}
-.report-meta{font-size:11px;color:var(--text-sub);display:flex;gap:12px;align-items:center;}
-.status-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;}
-.status-pending{background:#fef3c7;color:#92400e;}
-.status-resolved{background:#d1fae5;color:#065f46;}
-.status-ignored{background:#e5e7eb;color:#374151;}
-.punish-card{border:2px solid #d4c5a9;border-radius:12px;margin-bottom:12px;overflow:hidden;}
-.punish-header{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:#fff;transition:background .1s;}
-.punish-header:hover{background:#f5f0e8;}
-.punish-header.active{background:#fef2f2;border-bottom:1px solid #fecaca;}
-.punish-header.expired{background:#f9f9f9;}
-.punish-id{font-size:11px;font-family:monospace;color:#64748b;}
-.punish-level{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;}
-.punish-T0{background:#fecaca;color:#991b1b;}
-.punish-T1{background:#fef3c7;color:#92400e;}
-.punish-body{padding:12px 16px;background:#fff;border-top:1px solid #e8ddd0;display:none;font-size:13px;line-height:1.8;color:var(--text-main);}
-.punish-body.open{display:block;}
-.punish-body .label{color:var(--text-sub);font-size:12px;}
-.appeal-btn{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
-.appeal-btn:hover{background:#1d4ed8;}
-.appeal-btn:disabled{background:#cbd5e1;color:#94a3b8;cursor:not-allowed;}
-.appeal-btn:disabled:hover{background:#cbd5e1;}
-.appeal-dialog{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);visibility:hidden;opacity:0;transition:visibility .2s,opacity .2s;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-sans);
+  min-height:100vh;
+  background-color:var(--bg-brick);
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(0,0,0,.12) 59px,rgba(0,0,0,.12) 61px,transparent 61px,transparent 120px),
+    repeating-linear-gradient(90deg,transparent,transparent 119px,rgba(0,0,0,.12) 119px,rgba(0,0,0,.12) 121px,transparent 121px,transparent 240px),
+    repeating-linear-gradient(0deg,rgba(180,140,100,.3) 0,rgba(200,160,120,.1) 30px,rgba(170,130,90,.2) 60px,rgba(190,150,110,.15) 90px,rgba(175,135,95,.25) 120px);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* ===== 顶栏 (user.html 风格的 sticky 毛玻璃) ===== */
+.top-bar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(196,168,130,.7);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(139,111,94,.25);
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset;
+}
+.top-bar-inner{
+  max-width:760px;margin:0 auto;padding:0 20px;
+  height:56px;display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;background:rgba(255,255,255,.85);
+  border:1px solid rgba(139,111,94,.3);border-radius:var(--radius);
+  font-size:13px;font-weight:600;color:var(--ink-2);
+  cursor:pointer;text-decoration:none;font-family:inherit;
+  transition:all .2s var(--ease-out);
+}
+.back-btn:hover{background:#fff;border-color:var(--accent);color:var(--accent);transform:translateX(-2px);}
+.back-btn:active{transform:translateX(-2px) scale(.97);}
+.page-title{
+  font-family:var(--font-brush);
+  font-size:24px;font-weight:400;color:var(--ink);
+  letter-spacing:.5px;display:flex;align-items:center;gap:8px;
+  line-height:1;
+}
+.page-title-icon{
+  width:24px;height:24px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent-light);border-radius:50%;
+  color:var(--danger);
+}
+.page-title-icon svg{width:14px;height:14px;}
+
+/* ===== 主容器 ===== */
+.container{
+  max-width:760px;margin:0 auto;padding:24px 20px 80px;
+}
+
+/* ===== Section 通用 ===== */
+.section-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--ink-3);
+  margin-bottom:10px;letter-spacing:.05em;text-transform:uppercase;
+}
+.section-title .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+/* ===== 实时状态区(新加) ===== */
+.dashboard{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  margin-bottom:28px;
+  opacity:0;transform:translateY(12px);
+  animation:fadeUp .6s var(--ease-out) .1s forwards;
+}
+.dashboard-col{
+  background:var(--paper);
+  border:1px solid var(--paper-edge);
+  border-radius:var(--radius-lg);
+  padding:18px;
+  box-shadow:var(--shadow-sm),inset 0 0 0 1px rgba(255,255,255,.4);
+  position:relative;
+  transition:transform .3s var(--ease-out),box-shadow .3s var(--ease-out);
+  display:flex;flex-direction:column;
+  min-height:180px;
+}
+.dashboard-col:hover{transform:translateY(-2px);box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.5);}
+.dashboard-col .col-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;gap:8px;
+}
+.dashboard-col .col-title{
+  font-size:14px;font-weight:700;color:var(--ink);
+  display:flex;align-items:center;gap:6px;
+}
+.dashboard-col .col-title svg{width:14px;height:14px;}
+.col-badge{
+  font-size:11px;font-weight:600;
+  padding:2px 8px;border-radius:99px;
+  display:inline-flex;align-items:center;gap:3px;
+}
+.col-badge.danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-edge);}
+.col-badge.warning{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-edge);}
+.col-badge.pending{background:var(--pending-bg);color:var(--pending);border:1px solid var(--pending-edge);}
+.col-badge.success{background:var(--success-bg);color:var(--success);border:1px solid var(--success-edge);}
+.col-badge .pulse{
+  width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.4;transform:scale(.85);}
+}
+.dashboard-col .col-body{flex:1;display:flex;flex-direction:column;}
+
+/* 进行中处罚卡片内容 */
+.punish-active-card{
+  display:flex;flex-direction:column;gap:10px;
+  flex:1;
+}
+.punish-level-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.level-tag{
+  font-size:11px;font-weight:700;
+  padding:3px 10px;border-radius:99px;letter-spacing:.05em;
+  font-family:var(--font-mono);
+}
+.level-tag.T0{background:var(--danger);color:#fff;}
+.level-tag.T1{background:var(--warning);color:#fff;}
+.punish-id{
+  font-family:var(--font-mono);font-size:11px;
+  color:var(--ink-3);background:var(--paper-2);
+  padding:2px 6px;border-radius:4px;
+}
+.punish-reason{
+  font-size:13px;line-height:1.55;color:var(--ink);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.punish-measures{
+  font-size:12px;color:var(--ink-2);
+  display:flex;align-items:flex-start;gap:4px;
+}
+.punish-measures .label{color:var(--ink-3);white-space:nowrap;}
+
+/* 倒计时 */
+.countdown{margin-top:auto;}
+.countdown-row{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;color:var(--ink-2);margin-bottom:5px;
+}
+.countdown-row .time{
+  font-family:var(--font-mono);font-weight:600;color:var(--danger);
+}
+.countdown-bar{
+  height:4px;background:var(--paper-2);border-radius:99px;overflow:hidden;
+  border:1px solid var(--paper-edge);
+}
+.countdown-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--danger) 0%,#ef4444 100%);
+  width:0%;
+  transition:width 1s linear;
+  border-radius:99px;
+}
+.countdown.permanent .countdown-fill{background:var(--ink-3);}
+.countdown.permanent .time{color:var(--ink-3);font-family:inherit;font-weight:500;}
+.punish-actions{
+  display:flex;gap:8px;margin-top:10px;
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:7px 14px;border-radius:var(--radius-sm);
+  font-size:12px;font-weight:600;
+  cursor:pointer;font-family:inherit;
+  border:1px solid transparent;
+  transition:all .2s var(--ease-out);
+  text-decoration:none;
+}
+.btn:active{transform:scale(.97);}
+.btn svg{width:12px;height:12px;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-primary:hover{background:#000;transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.15);}
+.btn-ghost{background:transparent;color:var(--ink-2);border-color:var(--paper-edge);}
+.btn-ghost:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{background:#991b1b;transform:translateY(-1px);box-shadow:0 4px 10px rgba(185,28,28,.25);}
+
+/* 空状态 */
+.empty-mini{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:16px 8px;gap:8px;
+}
+.empty-mini .ico{
+  width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--success-bg);color:var(--success);
+  animation:popIn .5s var(--ease-spring) .3s both;
+}
+.empty-mini .ico svg{width:22px;height:22px;}
+.empty-mini .title{font-size:13px;font-weight:700;color:var(--success);}
+.empty-mini .desc{font-size:11px;color:var(--ink-3);line-height:1.5;}
+
+/* 处理中举报列表 */
+.pending-list{display:flex;flex-direction:column;gap:6px;flex:1;}
+.pending-item{
+  display:flex;flex-direction:column;gap:3px;
+  padding:8px 10px;border-radius:var(--radius-sm);
+  background:var(--paper-2);
+  border:1px solid transparent;
+  cursor:pointer;
+  transition:all .2s var(--ease-out);
+  opacity:0;transform:translateY(6px);
+  animation:fadeUp .4s var(--ease-out) forwards;
+}
+.pending-item:hover{background:#fff;border-color:var(--pending-edge);transform:translateX(2px);}
+.pending-item:active{transform:translateX(2px) scale(.99);}
+.pending-row1{display:flex;align-items:center;gap:6px;justify-content:space-between;}
+.pending-type{
+  font-size:10px;font-weight:600;
+  padding:1px 6px;border-radius:4px;
+  background:var(--pending-bg);color:var(--pending);
+  border:1px solid var(--pending-edge);
+}
+.pending-id{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);}
+.pending-reason{
+  font-size:12px;color:var(--ink);
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  overflow:hidden;line-height:1.4;
+}
+.pending-time{font-size:10px;color:var(--ink-3);font-family:var(--font-mono);}
+.pending-more{
+  margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:11px;color:var(--pending);font-weight:600;
+  padding:6px;border-radius:var(--radius-sm);
+  background:var(--pending-bg);border:1px dashed var(--pending-edge);
+  cursor:pointer;transition:all .2s var(--ease-out);
+  font-family:inherit;
+}
+.pending-more:hover{background:#fff;border-style:solid;border-color:var(--pending);}
+.pending-more svg{width:10px;height:10px;transition:transform .2s var(--ease-out);}
+.pending-more:hover svg{transform:translateX(2px);}
+
+/* ===== Tabs ===== */
+.tabs-wrap{
+  position:relative;
+  opacity:0;transform:translateY(12px);
+  animation:fadeUp .6s var(--ease-out) .25s forwards;
+}
+.tabs{
+  display:flex;
+  background:var(--paper);
+  border:1px solid var(--paper-edge);
+  border-radius:var(--radius);
+  padding:4px;
+  position:relative;
+  box-shadow:var(--shadow-sm),inset 0 0 0 1px rgba(255,255,255,.4);
+  margin-bottom:16px;
+}
+.tab{
+  flex:1;padding:10px 12px;text-align:center;
+  font-size:13px;font-weight:600;color:var(--ink-3);
+  cursor:pointer;border:none;background:transparent;
+  font-family:inherit;border-radius:var(--radius-sm);
+  transition:color .25s var(--ease-out);
+  position:relative;z-index:2;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.tab.active{color:#fff;}
+.tab svg{width:13px;height:13px;transition:transform .3s var(--ease-spring);}
+.tab:hover:not(.active) svg{transform:scale(1.1);}
+.tab-indicator{
+  position:absolute;top:4px;left:4px;bottom:4px;
+  width:calc(50% - 4px);
+  background:var(--ink);
+  border-radius:var(--radius-sm);
+  transition:transform .35s var(--ease-spring);
+  z-index:1;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;
+  font-size:10px;font-weight:700;
+  background:var(--danger);color:#fff;
+  border-radius:99px;
+  margin-left:4px;
+}
+.tab.active .tab-badge{background:#fff;color:var(--ink);}
+
+.tab-content{
+  position:relative;min-height:200px;
+}
+.tab-panel{
+  display:none;
+  animation:panelIn .3s var(--ease-out);
+}
+.tab-panel.active{display:block;}
+@keyframes panelIn{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ===== 列表卡片(沿用项目卡片模式) ===== */
+.list-card{
+  background:var(--paper);
+  border:1px solid var(--paper-edge);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow-sm),inset 0 0 0 1px rgba(255,255,255,.4);
+}
+.list-card + .list-card{margin-top:12px;}
+
+.report-item{
+  display:flex;flex-direction:column;gap:6px;
+  padding:12px 0;
+  border-bottom:1px dashed var(--paper-edge);
+}
+.report-item:first-child{padding-top:0;}
+.report-item:last-child{padding-bottom:0;border-bottom:0;}
+.report-row1{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.report-id{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);background:var(--paper-2);padding:2px 6px;border-radius:4px;}
+.report-type{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--paper-2);color:var(--ink-2);border:1px solid var(--paper-edge);}
+.report-reason{font-size:13px;color:var(--ink);line-height:1.5;}
+.report-row2{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ink-3);flex-wrap:wrap;}
+.status-badge{
+  font-size:11px;padding:2px 8px;border-radius:4px;
+  font-weight:600;display:inline-flex;align-items:center;gap:3px;
+}
+.status-badge svg{width:10px;height:10px;}
+.status-pending{background:var(--pending-bg);color:var(--pending);border:1px solid var(--pending-edge);}
+.status-resolved{background:var(--success-bg);color:var(--success);border:1px solid var(--success-edge);}
+.status-ignored{background:#e5e7eb;color:#374151;border:1px solid #d1d5db;}
+
+/* 处罚卡片 */
+.section-mini-title{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:700;color:var(--ink-3);
+  margin:18px 0 8px;letter-spacing:.04em;text-transform:uppercase;
+}
+.section-mini-title svg{width:12px;height:12px;}
+.punish-card{
+  border:1px solid var(--paper-edge);
+  border-radius:var(--radius);
+  background:#fff;
+  overflow:hidden;
+  transition:all .25s var(--ease-out);
+  opacity:0;transform:translateY(8px);
+  animation:fadeUp .5s var(--ease-out) forwards;
+}
+.punish-card + .punish-card{margin-top:10px;}
+.punish-card:hover{box-shadow:var(--shadow);}
+.punish-header{
+  padding:12px 14px;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:background .2s;
+  user-select:none;
+}
+.punish-header:hover{background:var(--paper-2);}
+.punish-header.active{background:#fff7f7;}
+.punish-header.expired{background:#fafafa;opacity:.85;}
+.punish-header .ph-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}
+.punish-header .ph-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.punish-duration{font-size:11px;color:var(--ink-3);font-family:var(--font-mono);}
+.chevron{transition:transform .3s var(--ease-out);color:var(--ink-3);}
+.chevron svg{width:14px;height:14px;}
+.punish-header.open .chevron{transform:rotate(180deg);color:var(--accent);}
+.punish-body{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s cubic-bezier(.4,0,.2,1),padding .35s ease;
+  padding:0 14px;
+  font-size:13px;line-height:1.8;color:var(--ink);
+  background:#fff;
+  border-top:1px solid transparent;
+}
+.punish-body.open{max-height:600px;padding:14px;border-top-color:var(--paper-edge);}
+.punish-body .row{display:flex;gap:6px;align-items:flex-start;}
+.punish-body .row + .row{margin-top:4px;}
+.punish-body .label{color:var(--ink-3);font-size:12px;flex-shrink:0;min-width:72px;}
+
+.appeal-status-pending{color:var(--warning);}
+.appeal-status-approved{color:var(--success);}
+.appeal-status-rejected{color:var(--danger);}
+
+.appeal-btn{
+  background:var(--danger);color:#fff;border:none;
+  border-radius:var(--radius-sm);padding:7px 14px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  font-family:inherit;margin-top:10px;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:all .2s var(--ease-out);
+}
+.appeal-btn:hover{background:#991b1b;transform:translateY(-1px);box-shadow:0 4px 10px rgba(185,28,28,.3);}
+.appeal-btn:active{transform:translateY(-1px) scale(.97);}
+.appeal-btn:disabled{background:#cbd5e1;color:#94a3b8;cursor:not-allowed;box-shadow:none;transform:none;}
+.appeal-hint{font-size:11px;color:var(--ink-3);margin-top:8px;display:flex;align-items:center;gap:4px;}
+
+/* 空状态(全量) */
+.empty-state{
+  background:var(--paper);
+  border:1px dashed var(--paper-edge);
+  border-radius:var(--radius);
+  padding:48px 20px;text-align:center;
+  color:var(--ink-3);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.empty-state .ico{
+  width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-light);color:var(--ink-3);
+}
+.empty-state .ico svg{width:28px;height:28px;}
+.empty-state .title{font-size:14px;font-weight:700;color:var(--ink-2);}
+.empty-state .desc{font-size:12px;color:var(--ink-3);}
+
+/* 加载 */
+.loading-state{
+  text-align:center;padding:60px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.loading-state .spinner{
+  width:28px;height:28px;border-radius:50%;
+  border:2.5px solid var(--paper-edge);
+  border-top-color:var(--accent);
+  animation:spin 0.8s linear infinite;
+}
+.loading-state .text{font-size:13px;color:var(--ink-3);}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* 错误 */
+.error-state{
+  background:var(--danger-bg);
+  border:1px solid var(--danger-edge);
+  border-radius:var(--radius);
+  padding:24px;text-align:center;
+  color:var(--danger);font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.error-state svg{width:24px;height:24px;}
+
+/* ===== 申诉弹窗 ===== */
+.appeal-dialog{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:10000;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(2px);
+  visibility:hidden;opacity:0;
+  transition:visibility .25s,opacity .25s;
+  padding:20px;
+}
 .appeal-dialog.open{visibility:visible;opacity:1;}
-.appeal-dialog .appeal-box{transform:scale(0.92) translateY(24px);opacity:0;transition:transform .25s ease-out,opacity .22s ease-out;}
+.appeal-dialog .appeal-box{
+  transform:scale(.92) translateY(24px);
+  opacity:0;
+  transition:transform .35s var(--ease-spring),opacity .25s ease-out;
+}
 .appeal-dialog.open .appeal-box{transform:scale(1) translateY(0);opacity:1;}
-.appeal-box{background:var(--paper-bg);border-radius:14px;padding:24px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.25);}
-.appeal-box h3{font-size:16px;margin-bottom:12px;color:var(--text-main);}
-.appeal-box textarea{width:100%;padding:10px 12px;border:2px solid #d4c5a9;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;height:100px;box-sizing:border-box;}
-.appeal-box .btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
-.appeal-box .btn-row button{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
-.appeal-box .btn-cancel{background:#e8ddd0;color:var(--text-main);}
-.appeal-box .btn-submit{background:#2563eb;color:#fff;}
-.appeal-box .btn-submit:hover{background:#1d4ed8;}
-.appeal-msg{font-size:12px;color:#dc2626;min-height:18px;margin-top:6px;}
-.active-section{margin-bottom:20px;}
-.active-section h3{font-size:14px;font-weight:700;color:#991b1b;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.history-section h3{font-size:14px;font-weight:700;color:var(--text-sub);margin-bottom:10px;}
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;z-index:99999;opacity:0;transition:opacity .3s;}
-.toast.show{opacity:1;}
+.appeal-box{
+  background:var(--paper);
+  border-radius:var(--radius-lg);
+  padding:24px;max-width:420px;width:100%;
+  box-shadow:var(--shadow-lg);
+  border:1px solid var(--paper-edge);
+}
+.appeal-box h3{
+  font-size:16px;margin-bottom:8px;color:var(--ink);
+  display:flex;align-items:center;gap:6px;
+  font-weight:700;
+}
+.appeal-box h3 svg{width:16px;height:16px;color:var(--accent);}
+.appeal-box p{font-size:12px;color:var(--ink-3);margin-bottom:12px;line-height:1.6;}
+.appeal-box textarea{
+  width:100%;padding:10px 12px;
+  border:1.5px solid var(--paper-edge);
+  border-radius:var(--radius-sm);
+  font-size:13px;font-family:inherit;
+  resize:vertical;height:100px;
+  box-sizing:border-box;background:#fff;color:var(--ink);
+  transition:border-color .2s;
+}
+.appeal-box textarea:focus{outline:none;border-color:var(--accent);}
+.appeal-box textarea::placeholder{color:var(--ink-3);}
+.appeal-msg{font-size:12px;color:var(--danger);min-height:18px;margin-top:6px;}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+.btn-row button{padding:8px 18px;border-radius:var(--radius-sm);border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s var(--ease-out);}
+.btn-row button:active{transform:scale(.97);}
+.btn-cancel{background:var(--paper-2);color:var(--ink-2);border:1px solid var(--paper-edge) !important;}
+.btn-cancel:hover{background:var(--paper-deep);}
+.btn-submit{background:var(--danger);color:#fff;}
+.btn-submit:hover{background:#991b1b;transform:translateY(-1px);box-shadow:0 4px 10px rgba(185,28,28,.3);}
+
+/* ===== Toast ===== */
+.toast{
+  position:fixed;bottom:30px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(44,24,16,.95);color:#fff;
+  padding:12px 20px;border-radius:var(--radius);
+  font-size:13px;z-index:99999;
+  opacity:0;visibility:hidden;
+  transition:all .3s var(--ease-out);
+  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:var(--shadow-lg);
+  backdrop-filter:blur(8px);
+}
+.toast.show{
+  opacity:1;visibility:visible;
+  transform:translateX(-50%) translateY(0);
+}
+.toast.error{background:rgba(185,28,28,.95);}
+.toast svg{width:14px;height:14px;}
+
+/* ===== 动画 ===== */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes popIn{
+  0%{opacity:0;transform:scale(.6);}
+  60%{opacity:1;transform:scale(1.08);}
+  100%{opacity:1;transform:scale(1);}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%,60%{transform:translateX(-3px);}
+  40%,80%{transform:translateX(3px);}
+}
+.shake{animation:shake .4s ease;}
+
+/* ===== 响应式 ===== */
+@media (max-width:640px){
+  .dashboard{grid-template-columns:1fr;gap:12px;}
+  .top-bar-inner{padding:0 14px;height:50px;}
+  .page-title{font-size:20px;}
+  .container{padding:18px 14px 60px;}
+  .dashboard-col{padding:16px;min-height:0;}
+  .dashboard-col:first-child .empty-mini{padding:24px 8px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+  }
+  .countdown-fill{transition:none !important;}
+  .col-badge .pulse{animation:none !important;}
+  .loading-state .spinner{animation:none !important;}
+}
 </style>
 </head>
 <body>
+
 <div class="top-bar">
-  <button class="back-btn" onclick="window.top.location.href='/'">← 返回</button>
-  <span class="page-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>安全中心</span>
-</div>
-<div class="container">
-  <div class="tabs">
-    <button class="tab active" data-tab="reports" onclick="switchTab('reports')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>我的举报</button>
-    <button class="tab" data-tab="punishments" onclick="switchTab('punishments')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>我的处罚</button>
+  <div class="top-bar-inner">
+    <button class="back-btn" onclick="safetyGoBack()" aria-label="返回首页">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      返回
+    </button>
+    <span class="page-title">
+      <span class="page-title-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </span>
+      安全中心
+    </span>
   </div>
-  <div id="tabReports"></div>
-  <div id="tabPunishments" style="display:none;"></div>
 </div>
-<div class="appeal-dialog" id="appealDialog">
+
+<div class="container">
+
+  <!-- 实时状态区(新加) -->
+  <div class="dashboard" id="dashboard">
+    <div class="dashboard-col" id="dashPunishCol">
+      <div class="col-header">
+        <div class="col-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          进行中处罚
+        </div>
+        <span class="col-badge danger" id="punishBadge" style="display:none"><span class="pulse"></span>进行中</span>
+      </div>
+      <div class="col-body" id="punishColBody">
+        <div class="loading-state" style="padding:30px 10px"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <div class="dashboard-col" id="dashReportCol">
+      <div class="col-header">
+        <div class="col-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          处理中举报
+        </div>
+        <span class="col-badge pending" id="reportBadge" style="display:none"><span class="pulse"></span>0</span>
+      </div>
+      <div class="col-body" id="reportColBody">
+        <div class="loading-state" style="padding:30px 10px"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-wrap">
+    <div class="tabs" role="tablist">
+      <div class="tab-indicator" id="tabIndicator"></div>
+      <button class="tab active" data-tab="reports" role="tab" aria-selected="true" onclick="switchTab('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        我的举报
+        <span class="tab-badge" id="tabReportBadge" style="display:none">0</span>
+      </button>
+      <button class="tab" data-tab="punishments" role="tab" aria-selected="false" onclick="switchTab('punishments')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        我的处罚
+      </button>
+    </div>
+
+    <div class="tab-content">
+      <div class="tab-panel active" id="panelReports" role="tabpanel">
+        <div id="tabReportsBody">
+          <div class="loading-state"><div class="spinner"></div><div class="text">加载中...</div></div>
+        </div>
+      </div>
+      <div class="tab-panel" id="panelPunishments" role="tabpanel">
+        <div id="tabPunishmentsBody">
+          <div class="loading-state"><div class="spinner"></div><div class="text">加载中...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 申诉弹窗 -->
+<div class="appeal-dialog" id="appealDialog" role="dialog" aria-modal="true" aria-labelledby="appealTitle">
   <div class="appeal-box">
-    <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>提交申诉</h3>
-    <p style="font-size:13px;color:var(--text-sub);margin-bottom:10px;">请说明你认为处罚不合理的原因。申诉后管理员将审核，审核通过将解除处罚。</p>
-    <textarea id="appealContent" placeholder="请详细说明申诉理由…"></textarea>
+    <h3 id="appealTitle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+      提交申诉
+    </h3>
+    <p>请说明你认为处罚不合理的原因。申诉后管理员将审核,审核通过将解除处罚。</p>
+    <textarea id="appealContent" placeholder="请详细说明申诉理由(最多 1000 字)…" maxlength="1000"></textarea>
     <div class="appeal-msg" id="appealMsg"></div>
     <div class="btn-row">
       <button class="btn-cancel" onclick="closeAppeal()">取消</button>
@@ -94,194 +701,556 @@ body{font-family:'Noto Sans SC',sans-serif;min-height:100vh;background:var(--bri
     </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
-var ICON={clock:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',check:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',cross:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',refresh:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',lock:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',scales:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M6 6h12"/><path d="M4 10h16"/><path d="M2 14l4-4 4 4"/><path d="M14 14l4-4 4 4"/></svg>'};
-let currentUser = null;
-let currentPunishId = null;
-let safetyData = null;
+(function(){
+'use strict';
 
-// Token helpers
+// ===== 工具 =====
 function getToken(){return localStorage.getItem('campus_user_token');}
-function clearToken(){localStorage.removeItem('campus_user_token');}
-
-async function api(url, opts){
+function escHtml(s){
+  if(s===null||s===undefined)return'';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+async function api(url,opts){
   const headers={'Content-Type':'application/json'};
   const t=getToken();
   if(t)headers['x-user-token']=t;
   if(opts&&opts.body)opts.body=JSON.stringify(opts.body);
-  const res=await fetch(url,{...opts,headers});
-  return res.json();
+  try{
+    const res=await fetch(url,{...opts,headers});
+    return await res.json();
+  }catch(e){return{ok:false,msg:'网络错误',code:'NETWORK'};}
+}
+function formatDate(iso){
+  if(!iso)return'-';
+  try{
+    const d=new Date(iso);
+    return d.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }catch{return iso;}
+}
+function relativeTime(iso){
+  if(!iso)return'';
+  const diff=Date.now()-new Date(iso).getTime();
+  const s=Math.floor(diff/1000);
+  if(s<60)return'刚刚';
+  if(s<3600)return Math.floor(s/60)+' 分钟前';
+  if(s<86400)return Math.floor(s/3600)+' 小时前';
+  if(s<604800)return Math.floor(s/86400)+' 天前';
+  return formatDate(iso);
+}
+function formatRemain(ms){
+  if(ms<=0)return'即将到期';
+  const s=Math.floor(ms/1000);
+  const d=Math.floor(s/86400);
+  const h=Math.floor((s%86400)/3600);
+  const m=Math.floor((s%3600)/60);
+  if(d>0)return d+'天'+h+'小时';
+  if(h>0)return h+'小时'+m+'分';
+  return m+'分钟';
 }
 
-function escHtml(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-function statusClass(status,result){
-  if(status==='pending')return'status-pending';
-  if(status==='resolved'&&result==='no_violation')return'status-resolved';
-  if(status==='resolved'||result==='violation')return'status-resolved';
-  return'status-ignored';
-}
-function statusText(status,result){
-  if(status==='pending')return ICON.clock+' 待处理';
-  if(result==='no_violation')return ICON.check+' 无违规';
-  if(result==='violation')return ICON.scales+' 已处罚';
-  if(status==='resolved')return ICON.check+' 已处理';
-  if(status==='ignored')return ICON.cross+' 已忽略';
-  return status||'未知';
+const MEASURE_LABELS={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};
+function labelMeasures(arr){
+  if(!Array.isArray(arr))return'-';
+  return arr.map(function(m){return MEASURE_LABELS[m]||m;}).join('、');
 }
 
-function durationText(days){
-  if(!days||days<=0)return'永久';
-  return days+'天';
-}
+const TYPE_LABELS={post:'帖子',comment:'评论',discussion:'讨论',discussion_comment:'讨论评论',qa_question:'提问',qa_answer:'回答',featured:'精选',auction:'失物拍卖'};
+function typeLabel(t){return TYPE_LABELS[t]||t||'-';}
 
-function formatDate(iso){if(!iso)return'-';try{return new Date(iso).toLocaleString('zh-CN');}catch{return iso;}}
+// ===== 状态 =====
+const state={
+  data:null,
+  countdownTimer:null,
+  currentTab:'reports',
+  currentAppealId:null,
+  historyExpanded:new Set(),
+};
 
+window.safetyGoBack=function(){
+  try{
+    if(window.top!==window.self&&window.top.location){
+      window.top.location.href='/';
+    }else{
+      window.location.href='/';
+    }
+  }catch{
+    window.location.href='/';
+  }
+};
+
+// ===== Toast =====
+let toastTimer=null;
 function showToast(msg,type){
-  var el=document.getElementById('toast');
+  const el=document.getElementById('toast');
+  if(!el)return;
   el.innerHTML=msg;
-  el.style.background=type==='error'?'#dc2626':'#333';
+  el.classList.remove('error');
+  if(type==='error')el.classList.add('error');
   el.classList.add('show');
-  setTimeout(function(){el.classList.remove('show');},3000);
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('show');},3000);
 }
+window.showToast=showToast;
 
+// ===== Tab 切换 =====
 function switchTab(name){
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===name);});
-  document.getElementById('tabReports').style.display=name==='reports'?'block':'none';
-  document.getElementById('tabPunishments').style.display=name==='punishments'?'block':'none';
-  if(name==='punishments'&&safetyData)renderPunishments(safetyData);
+  if(state.currentTab===name)return;
+  state.currentTab=name;
+  document.querySelectorAll('.tab').forEach(function(t){
+    const active=t.dataset.tab===name;
+    t.classList.toggle('active',active);
+    t.setAttribute('aria-selected',active?'true':'false');
+  });
+  document.getElementById('panelReports').classList.toggle('active',name==='reports');
+  document.getElementById('panelPunishments').classList.toggle('active',name==='punishments');
+  moveTabIndicator();
+  if(name==='punishments'&&state.data){
+    renderPunishmentsTab(state.data);
+  }
+  if(name==='reports'&&state.data){
+    renderReportsTab(state.data);
+  }
 }
 
-function renderReports(reports){
-  var el=document.getElementById('tabReports');
-  if(!reports||reports.length===0){el.innerHTML='<div class="card"><div class="empty">暂无举报记录</div></div>';return;}
-  el.innerHTML='<div class="card">'+reports.map(function(r){
-    var sc=statusClass(r.status,r.handledResult);
-    var st=statusText(r.status,r.handledResult);
-    return '<div class="report-item">'+
-      '<div class="report-header">'+
-        '<span class="report-id">'+escHtml(r.reportId||'-')+'</span>'+
-        '<span class="report-type">'+escHtml(r.typeLabel||r.type||'')+'</span>'+
+function moveTabIndicator(){
+  const ind=document.getElementById('tabIndicator');
+  if(!ind)return;
+  const active=document.querySelector('.tab.active');
+  if(!active)return;
+  const tabs=document.querySelector('.tabs');
+  const tabsRect=tabs.getBoundingClientRect();
+  const rect=active.getBoundingClientRect();
+  const x=rect.left-tabsRect.left-4;
+  ind.style.transform='translateX('+x+'px)';
+  ind.style.width=rect.width+'px';
+}
+
+// ===== 申诉弹窗 =====
+function openAppeal(id){
+  state.currentAppealId=id;
+  const ta=document.getElementById('appealContent');
+  ta.value='';
+  document.getElementById('appealMsg').textContent='';
+  document.getElementById('appealDialog').classList.add('open');
+  setTimeout(function(){ta.focus();},300);
+}
+function closeAppeal(){
+  document.getElementById('appealDialog').classList.remove('open');
+  state.currentAppealId=null;
+}
+async function submitAppeal(){
+  const content=document.getElementById('appealContent').value.trim();
+  const msgEl=document.getElementById('appealMsg');
+  if(!content){msgEl.textContent='请填写申诉理由';return;}
+  if(!state.currentAppealId){msgEl.textContent='处罚ID缺失';return;}
+  msgEl.textContent='';
+  const box=document.querySelector('.appeal-box');
+  const res=await api('/api/user/punishments/'+encodeURIComponent(state.currentAppealId)+'/appeal',{method:'POST',body:{content}});
+  if(res.ok){
+    showToast(icon('check')+' 申诉已提交,等待管理员审核');
+    closeAppeal();
+    await loadData();
+  }else{
+    msgEl.textContent=res.msg||'提交失败';
+    box.classList.add('shake');
+    setTimeout(function(){box.classList.remove('shake');},500);
+  }
+}
+window.openAppeal=openAppeal;
+window.closeAppeal=closeAppeal;
+window.submitAppeal=submitAppeal;
+window.switchTab=switchTab;
+
+// ===== 图标 =====
+function icon(name){
+  const ICONS={
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    cross:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    warning:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
+    inbox:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+    alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+    scales:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M6 6h12"/><path d="M4 10h16"/><path d="M2 14l4-4 4 4"/><path d="M14 14l4-4 4 4"/></svg>',
+    arrowRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    history:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 16 14"/></svg>',
+  };
+  return ICONS[name]||'';
+}
+
+// ===== 渲染:进行中处罚卡片 =====
+function renderActivePunishment(p){
+  const measuresRaw=p.measures;
+  let measures=[];
+  try{measures=typeof measuresRaw==='string'?JSON.parse(measuresRaw):(measuresRaw||[]);}catch{measures=[];}
+  const measureLabel=p.level==='T0'?'所有交互功能':(measures.length>0?labelMeasures(measures):'-');
+  const remain=getRemaining(p);
+  const canAppeal=p.status==='active'&&!p.appealUsed;
+  const appealPending=p.appealStatus==='pending';
+  const appealApproved=p.appealStatus==='approved';
+  const appealRejected=p.appealStatus==='rejected';
+
+  const html='<div class="punish-active-card">'+
+    '<div class="punish-level-row">'+
+      '<span class="level-tag '+escHtml(p.level||'')+'">'+escHtml(p.level||'')+'</span>'+
+      '<span class="punish-id">'+escHtml(p.punishmentId||'')+'</span>'+
+    '</div>'+
+    '<div class="punish-reason">'+escHtml(p.reason||'(未填写原因)')+'</div>'+
+    '<div class="punish-measures"><span class="label">限制:</span><span>'+escHtml(measureLabel)+'</span></div>'+
+    '<div class="countdown '+ (remain.isPermanent?'permanent':'') +'" id="countdown-'+escHtml(p.punishmentId)+'">'+
+      '<div class="countdown-row">'+
+        '<span>'+(remain.isPermanent?'状态':'剩余时间')+'</span>'+
+        '<span class="time">'+escHtml(remain.text)+'</span>'+
       '</div>'+
-      '<div class="report-reason">'+escHtml(r.reason)+'</div>'+
-      '<div class="report-meta">'+
-        '<span class="status-badge '+sc+'">'+st+'</span>'+
+      (remain.isPermanent?'':'<div class="countdown-bar"><div class="countdown-fill" id="countdownFill-'+escHtml(p.punishmentId)+'" style="width:'+remain.percent.toFixed(1)+'%"></div></div>')+
+    '</div>'+
+    (appealPending?'<div class="appeal-hint">'+icon('clock')+' 申诉处理中, 请耐心等待</div>':'')+
+    (appealApproved?'<div class="appeal-hint" style="color:var(--success)">'+icon('check')+' 申诉已通过</div>':'')+
+    (appealRejected?'<div class="appeal-hint" style="color:var(--danger)">'+icon('cross')+' 申诉被驳回</div>':'')+
+    '<div class="punish-actions">'+
+      (canAppeal
+        ?'<button class="btn btn-danger" onclick="openAppeal(\''+escHtml(p.punishmentId)+'\')">'+icon('edit')+'提交申诉</button>'
+        :(p.status==='active'?'<button class="btn btn-ghost" disabled style="opacity:.5">已申诉</button>':''))+
+      '<button class="btn btn-ghost" onclick="switchTab(\'punishments\')">'+icon('arrowRight')+'详情</button>'+
+    '</div>'+
+  '</div>';
+  return html;
+}
+
+function getRemaining(p){
+  if(!p.durationDays||p.durationDays<=0){
+    return{text:'永久限制',percent:100,isPermanent:true};
+  }
+  const start=new Date(p.createdAt).getTime();
+  const end=p.expiresAt?new Date(p.expiresAt).getTime():(start+p.durationDays*86400000);
+  const now=Date.now();
+  const total=end-start;
+  const passed=now-start;
+  const remain=end-now;
+  if(remain<=0)return{text:'即将到期',percent:100,isPermanent:false};
+  return{
+    text:formatRemain(remain),
+    percent:Math.min(100,Math.max(0,(passed/total)*100)),
+    isPermanent:false
+  };
+}
+
+// ===== 渲染:处理中举报 =====
+function renderPendingReports(reports){
+  const pending=(reports||[]).filter(function(r){return r.status==='pending';})
+    .sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);});
+  const total=pending.length;
+
+  if(total===0){
+    return '<div class="empty-mini">'+
+      '<div class="ico" style="background:var(--success-bg);color:var(--success)">'+icon('shield')+'</div>'+
+      '<div class="title" style="color:var(--success)">一切正常</div>'+
+      '<div class="desc">当前没有处理中的举报</div>'+
+    '</div>';
+  }
+
+  const top3=pending.slice(0,3);
+  let html='<div class="pending-list">';
+  top3.forEach(function(r,i){
+    html+='<div class="pending-item" style="animation-delay:'+(0.1+i*0.08)+'s" onclick="goToReport(\''+escHtml(r.reportId)+'\')">'+
+      '<div class="pending-row1">'+
+        '<span class="pending-type">'+escHtml(typeLabel(r.type))+'</span>'+
+        '<span class="pending-id">'+escHtml(r.reportId||'')+'</span>'+
+      '</div>'+
+      '<div class="pending-reason">'+escHtml(r.reason||'(无理由)')+'</div>'+
+      '<div class="pending-time">'+relativeTime(r.createdAt)+'</div>'+
+    '</div>';
+  });
+  html+='</div>';
+  if(total>3){
+    html+='<button class="pending-more" onclick="switchTab(\'reports\')">查看全部 '+total+' 项举报 '+icon('arrowRight')+'</button>';
+  }
+  return html;
+}
+
+function goToReport(id){
+  switchTab('reports');
+  setTimeout(function(){
+    const el=document.getElementById('report-'+id);
+    if(el){
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      el.style.transition='background .3s';
+      el.style.background='var(--pending-bg)';
+      setTimeout(function(){el.style.background='';},1500);
+    }
+  },300);
+}
+window.goToReport=goToReport;
+
+// ===== 渲染:Tabs 内容 =====
+function renderReportsTab(data){
+  const body=document.getElementById('tabReportsBody');
+  const reports=data.myReports||[];
+  const badge=document.getElementById('tabReportBadge');
+  const pendingCount=reports.filter(function(r){return r.status==='pending';}).length;
+  if(pendingCount>0){
+    badge.style.display='inline-flex';
+    badge.textContent=pendingCount;
+  }else{
+    badge.style.display='none';
+  }
+
+  if(reports.length===0){
+    body.innerHTML='<div class="empty-state">'+
+      '<div class="ico">'+icon('inbox')+'</div>'+
+      '<div class="title">暂无举报记录</div>'+
+      '<div class="desc">你还没有提交过任何举报</div>'+
+    '</div>';
+    return;
+  }
+
+  const sorted=reports.slice().sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);});
+  let html='<div class="list-card">';
+  sorted.forEach(function(r,i){
+    html+='<div class="report-item" id="report-'+escHtml(r.reportId||'')+'" style="animation:fadeUp .4s var(--ease-out) '+(0.05+i*0.04)+'s both">'+
+      '<div class="report-row1">'+
+        '<span class="report-id">'+escHtml(r.reportId||'-')+'</span>'+
+        '<span class="report-type">'+escHtml(typeLabel(r.type))+'</span>'+
+      '</div>'+
+      '<div class="report-reason">'+escHtml(r.reason||'(无理由)')+'</div>'+
+      '<div class="report-row2">'+
+        '<span class="status-badge '+statusClass(r.status,r.handledResult)+'">'+statusText(r.status,r.handledResult)+'</span>'+
         '<span>'+formatDate(r.createdAt)+'</span>'+
       '</div>'+
     '</div>';
-  }).join('')+'</div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
 }
 
-function renderPunishments(data){
-  var el=document.getElementById('tabPunishments');
-  var active=data.activePunishment||null;
-  var history=data.history||[];
-  var html='';
+function statusClass(status,result){
+  if(status==='pending')return'status-pending';
+  if(result==='no_violation')return'status-resolved';
+  if(result==='violation'||status==='resolved')return'status-resolved';
+  return'status-ignored';
+}
+function statusText(status,result){
+  if(status==='pending')return icon('clock')+' 待处理';
+  if(result==='no_violation')return icon('check')+' 无违规';
+  if(result==='violation')return icon('scales')+' 已处罚';
+  if(status==='resolved')return icon('check')+' 已处理';
+  if(status==='ignored')return icon('cross')+' 已忽略';
+  return status||'未知';
+}
+
+function renderPunishmentsTab(data){
+  const body=document.getElementById('tabPunishmentsBody');
+  const active=data.activePunishment||null;
+  const history=data.history||[];
+  let html='';
+
   if(active){
-    html+='<div class="active-section"><h3>'+ICON.warning+' 进行中处罚</h3>';
+    html+='<div class="section-mini-title">'+icon('warning')+' 进行中处罚</div>';
     html+=renderPunishCard(active,true);
+  }
+
+  html+='<div class="section-mini-title">'+icon('history')+' 历史处罚 ('+history.length+')</div>';
+  if(history.length===0){
+    html+='<div class="empty-state">'+
+      '<div class="ico" style="background:var(--success-bg);color:var(--success)">'+icon('shield')+'</div>'+
+      '<div class="title">暂无历史处罚</div>'+
+      '<div class="desc">你保持着良好的使用记录</div>'+
+    '</div>';
+  }else{
+    html+='<div>';
+    history.forEach(function(p,i){
+      html+=renderPunishCard(p,false,i);
+    });
     html+='</div>';
   }
-  html+='<div class="history-section"><h3>'+ICON.refresh+' 历史处罚</h3>';
-  if(history.length===0){
-    html+='<div class="card"><div class="empty">暂无历史处罚记录</div></div>';
-  }else{
-    html+='<div class="card">'+history.map(function(p){return renderPunishCard(p,false);}).join('')+'</div>';
-  }
-  html+='</div>';
-  el.innerHTML=html;
+  body.innerHTML=html;
 }
 
-function renderPunishCard(p,isActive){
-  var levelClass='punish-'+p.level;
-  var headerClass=isActive?'active':'expired';
-  var measures=p.measures&&Array.isArray(p.measures)?p.measures:[];
-  var measureLabel=p.level==='T0'?'全面限制（禁止所有交互）':(measures.length>0?labelMeasures(measures):'-');
-  var duration=durationText(p.durationDays);
-  var canAppeal=isActive&&!p.appealUsed;
-  return '<div class="punish-card">'+
-    '<div class="punish-header '+headerClass+'" onclick="togglePunish(\''+escHtml(p.punishmentId)+'\')">'+
-      '<div><span class="punish-level '+levelClass+'">'+(p.level||'')+'</span> <span class="punish-id">'+escHtml(p.punishmentId)+'</span></div>'+
-      '<span style="font-size:12px;color:var(--text-sub);">'+duration+'</span>'+
+function renderPunishCard(p,isActive,idx){
+  idx=idx||0;
+  const levelClass='level-tag '+escHtml(p.level||'');
+  const headerClass=isActive?'active':'expired';
+  let measures=[];
+  try{measures=typeof p.measures==='string'?JSON.parse(p.measures):(p.measures||[]);}catch{measures=[];}
+  const measureLabel=p.level==='T0'?'所有交互功能':(measures.length>0?labelMeasures(measures):'-');
+  const duration=(!p.durationDays||p.durationDays<=0)?'永久':p.durationDays+'天';
+  const canAppeal=isActive&&!p.appealUsed&&p.status==='active';
+  const isOpen=state.historyExpanded.has(p.punishmentId);
+  const appealPending=p.appealStatus==='pending';
+  const appealApproved=p.appealStatus==='approved';
+  const appealRejected=p.appealStatus==='rejected';
+
+  return '<div class="punish-card" style="animation-delay:'+(0.05+idx*0.06)+'s">'+
+    '<div class="punish-header '+headerClass+' '+ (isOpen?'open':'') +'" onclick="togglePunish(\''+escHtml(p.punishmentId)+'\')" role="button" tabindex="0" aria-expanded="'+isOpen+'">'+
+      '<div class="ph-left">'+
+        '<span class="'+levelClass+'">'+escHtml(p.level||'')+'</span>'+
+        '<span class="punish-id">'+escHtml(p.punishmentId||'')+'</span>'+
+      '</div>'+
+      '<div class="ph-right">'+
+        '<span class="punish-duration">'+duration+'</span>'+
+        '<span class="chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>'+
+      '</div>'+
     '</div>'+
-    '<div class="punish-body" id="punishBody_'+escHtml(p.punishmentId)+'">'+
-      '<div><span class="label">违规原因：</span>'+escHtml(p.reason||'')+'</div>'+
-      '<div><span class="label">限制功能：</span>'+measureLabel+'</div>'+
-      '<div><span class="label">处罚时长：</span>'+duration+'</div>'+
-      '<div><span class="label">处罚时间：</span>'+formatDate(p.createdAt)+'</div>'+
-      (p.expiresAt?'<div><span class="label">到期时间：</span>'+formatDate(p.expiresAt)+'</div>':'')+
-      (p.status==='revoked'?'<div><span class="label">状态：</span>'+ICON.refresh+' 已撤销</div>':'')+
-      (p.appealStatus==='pending'?'<div><span class="label">申诉状态：</span>'+ICON.clock+' 申诉处理中</div>':'')+
-      (p.appealStatus==='approved'?'<div><span class="label">申诉状态：</span>'+ICON.check+' 申诉通过</div>':'')+
-      (p.appealStatus==='rejected'?'<div><span class="label">申诉状态：</span>'+ICON.cross+' 申诉驳回</div>':'')+
-      (canAppeal?'<button class="appeal-btn" onclick="event.stopPropagation();openAppeal(\''+escHtml(p.punishmentId)+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>申诉</button>':'')+
-      (!canAppeal&&isActive&&p.appealUsed?'<div style="font-size:12px;color:#94a3b8;margin-top:6px;">'+ICON.warning+' 已使用过申诉机会，不可重复申诉</div>':'')+
+    '<div class="punish-body '+ (isOpen?'open':'') +'" id="punishBody-'+escHtml(p.punishmentId)+'">'+
+      '<div class="row"><span class="label">违规原因:</span><span>'+escHtml(p.reason||'-')+'</span></div>'+
+      '<div class="row"><span class="label">限制功能:</span><span>'+escHtml(measureLabel)+'</span></div>'+
+      '<div class="row"><span class="label">处罚时长:</span><span>'+duration+'</span></div>'+
+      '<div class="row"><span class="label">处罚时间:</span><span>'+formatDate(p.createdAt)+'</span></div>'+
+      (p.expiresAt?'<div class="row"><span class="label">到期时间:</span><span>'+formatDate(p.expiresAt)+'</span></div>':'')+
+      (p.status==='revoked'?'<div class="row"><span class="label">状态:</span><span style="color:var(--ink-3)">'+icon('refresh')+' 已撤销</span></div>':'')+
+      (appealPending?'<div class="row"><span class="label">申诉状态:</span><span class="appeal-status-pending">'+icon('clock')+' 处理中</span></div>':'')+
+      (appealApproved?'<div class="row"><span class="label">申诉状态:</span><span class="appeal-status-approved">'+icon('check')+' 已通过</span></div>':'')+
+      (appealRejected?'<div class="row"><span class="label">申诉状态:</span><span class="appeal-status-rejected">'+icon('cross')+' 已驳回</span></div>':'')+
+      (canAppeal
+        ?'<button class="appeal-btn" onclick="event.stopPropagation();openAppeal(\''+escHtml(p.punishmentId)+'\')">'+icon('edit')+'提交申诉</button>'
+        :(isActive&&p.appealUsed?'<div class="appeal-hint">'+icon('warning')+' 已使用过申诉机会, 不可重复申诉</div>':''))+
     '</div>'+
   '</div>';
 }
 
-var MEASURE_LABELS={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};
-function labelMeasures(arr){return arr.map(function(m){return MEASURE_LABELS[m]||m;}).join('、');}
 function togglePunish(id){
-  var body=document.getElementById('punishBody_'+id);
-  if(body)body.classList.toggle('open');
-}
-
-function openAppeal(id){
-  currentPunishId=id;
-  document.getElementById('appealContent').value='';
-  document.getElementById('appealMsg').textContent='';
-  document.getElementById('appealDialog').classList.add('open');
-}
-
-function closeAppeal(){
-  document.getElementById('appealDialog').classList.remove('open');
-  currentPunishId=null;
-}
-
-async function submitAppeal(){
-  var content=document.getElementById('appealContent').value.trim();
-  var msgEl=document.getElementById('appealMsg');
-  if(!content){msgEl.textContent='请填写申诉理由';return;}
-  if(!currentPunishId){msgEl.textContent='处罚ID缺失';return;}
-  msgEl.textContent='';
-  try{
-    var res=await api('/api/user/punishments/'+encodeURIComponent(currentPunishId)+'/appeal',{method:'POST',body:{content}});
-    if(res.ok){
-      showToast(ICON.check+' 申诉已提交，等待管理员审核');
-      closeAppeal();
-      loadData();
-    }else{
-      msgEl.textContent=res.msg||'提交失败';
+  const body=document.getElementById('punishBody-'+id);
+  if(body){
+    body.classList.toggle('open');
+    const isOpen=body.classList.contains('open');
+    if(isOpen)state.historyExpanded.add(id);else state.historyExpanded.delete(id);
+    const header=body.previousElementSibling;
+    if(header){
+      header.classList.toggle('open',isOpen);
+      header.setAttribute('aria-expanded',isOpen);
     }
-  }catch(e){
-    msgEl.textContent='网络错误';
+  }
+}
+window.togglePunish=togglePunish;
+
+// ===== 倒计时定时器 =====
+function startCountdownTimer(){
+  stopCountdownTimer();
+  if(!state.data||!state.data.activePunishment)return;
+  state.countdownTimer=setInterval(function(){
+    if(!state.data||!state.data.activePunishment){
+      stopCountdownTimer();
+      return;
+    }
+    const p=state.data.activePunishment;
+    const r=getRemaining(p);
+    const id=p.punishmentId;
+    const container=document.getElementById('countdown-'+id);
+    if(!container)return;
+    const timeEl=container.querySelector('.time');
+    const fillEl=document.getElementById('countdownFill-'+id);
+    if(timeEl)timeEl.textContent=r.text;
+    if(fillEl&&!r.isPermanent)fillEl.style.width=r.percent.toFixed(1)+'%';
+  },1000);
+}
+function stopCountdownTimer(){
+  if(state.countdownTimer){
+    clearInterval(state.countdownTimer);
+    state.countdownTimer=null;
   }
 }
 
+// ===== 数据加载 =====
 async function loadData(){
-  try{
-    var res=await api('/api/user/safety-center');
-    if(res.ok){
-      safetyData=res.data;
-      // Check login by res.ok; if wrong user
-      renderReports(safetyData.myReports);
-      // Only render punishments tab if active
-      var activeTab=document.querySelector('.tab.active');
-      if(activeTab&&activeTab.dataset.tab==='punishments')renderPunishments(safetyData);
-    }else if(res.code==='NOT_LOGIN'){
-      document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">'+ICON.lock+' 请先<a href="/" style="color:#2563eb;">登录</a>后查看</div></div>';
-    }else{
-      showToast(ICON.cross+' '+res.msg,'error');
+  const res=await api('/api/user/safety-center');
+  if(!res.ok){
+    if(res.code==='NOT_LOGIN'){
+      document.getElementById('punishColBody').innerHTML='<div class="empty-mini" style="color:var(--ink-3)"><div class="ico" style="background:var(--paper-2);color:var(--ink-3)">'+icon('alert')+'</div><div class="title" style="color:var(--ink-2)">请先登录</div><div class="desc"><a href="/" style="color:var(--pending)">返回登录</a> 后查看</div></div>';
+      document.getElementById('reportColBody').innerHTML='<div class="empty-mini" style="color:var(--ink-3)"><div class="ico" style="background:var(--paper-2);color:var(--ink-3)">'+icon('alert')+'</div><div class="title" style="color:var(--ink-2)">请先登录</div></div>';
+      return;
     }
-  }catch(e){
-    showToast(ICON.cross+' 网络错误','error');
-    document.getElementById('tabReports').innerHTML='<div class="card"><div class="empty">'+ICON.cross+' 加载失败，请检查网络</div></div>';
+    showToast(icon('cross')+' '+ (res.msg||'加载失败'),'error');
+    document.getElementById('punishColBody').innerHTML='<div class="empty-mini" style="color:var(--danger)"><div class="ico" style="background:var(--danger-bg);color:var(--danger)">'+icon('cross')+'</div><div class="title" style="color:var(--danger)">加载失败</div><div class="desc">'+escHtml(res.msg||'网络错误')+'</div></div>';
+    document.getElementById('reportColBody').innerHTML='';
+    return;
   }
+  state.data=res.data;
+  renderDashboard(state.data);
+  renderReportsTab(state.data);
+  renderPunishmentsTab(state.data);
+  startCountdownTimer();
 }
 
-loadData();
+function renderDashboard(data){
+  // 左:进行中处罚
+  const active=data.activePunishment||null;
+  const pBody=document.getElementById('punishColBody');
+  const pBadge=document.getElementById('punishBadge');
+  if(active){
+    pBadge.style.display='inline-flex';
+    pBody.innerHTML=renderActivePunishment(active);
+  }else{
+    pBadge.style.display='none';
+    pBody.innerHTML='<div class="empty-mini">'+
+      '<div class="ico">'+icon('shield')+'</div>'+
+      '<div class="title">账号一切正常</div>'+
+      '<div class="desc">当前无正在执行的处罚<br>合规从我做起</div>'+
+    '</div>';
+  }
+  // 右:处理中举报
+  const reports=data.myReports||[];
+  const pendingCount=reports.filter(function(r){return r.status==='pending';}).length;
+  const rBody=document.getElementById('reportColBody');
+  const rBadge=document.getElementById('reportBadge');
+  if(pendingCount>0){
+    rBadge.style.display='inline-flex';
+    rBadge.innerHTML='<span class="pulse"></span>'+pendingCount;
+  }else{
+    rBadge.style.display='none';
+  }
+  rBody.innerHTML=renderPendingReports(reports);
+}
+
+// ===== 初始化 =====
+function init(){
+  // 绑定申诉弹窗外部点击关闭
+  document.getElementById('appealDialog').addEventListener('click',function(e){
+    if(e.target===this)closeAppeal();
+  });
+  // ESC 关闭弹窗
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeAppeal();
+  });
+  // 窗口 resize 重定位 tab indicator
+  window.addEventListener('resize',function(){
+    requestAnimationFrame(moveTabIndicator);
+  });
+  // 字体加载完成后重定位(避免字体切换导致 indicator 偏移)
+  if(document.fonts&&document.fonts.ready){
+    document.fonts.ready.then(moveTabIndicator);
+  }
+  // 初次定位 tab indicator
+  requestAnimationFrame(moveTabIndicator);
+  // 加载数据
+  loadData();
+  // 30 分钟自动重新拉取(校准倒计时)
+  setInterval(function(){
+    if(document.visibilityState==='visible')loadData();
+  },30*60*1000);
+  // 页面隐藏时停止倒计时,显示时重启
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'){
+      stopCountdownTimer();
+    }else if(state.data&&state.data.activePunishment){
+      startCountdownTimer();
+    }
+  });
+}
+
+// DOM ready
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',init);
+}else{
+  init();
+}
+
+})();
 </script>
 </body>
 </html>
