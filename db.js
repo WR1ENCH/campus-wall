@@ -234,7 +234,8 @@ function migrate() {
     "deleted" INTEGER DEFAULT 0,
     "createdAt" TEXT,
     "createdBy" TEXT,
-    "commentCount" INTEGER DEFAULT 0
+    "commentCount" INTEGER DEFAULT 0,
+    "official" INTEGER DEFAULT 0
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "discussion_comments" (
     "id" TEXT PRIMARY KEY,
@@ -421,6 +422,7 @@ function migrate() {
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
+    { name: 'discussions', columns: ['official'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -642,7 +644,14 @@ function writeAnnouncement(data) {
 // ponytail: 历史数据 title 可能为数字（如 12313），统一转字符串，
 // 避免前端 escHtml(d.title) / d.title.toLowerCase() 崩溃。升级路径：写入时校验。
 function readDiscussions() {
-  return all('discussions').map(d => ({ ...d, title: d.title == null ? '' : String(d.title) }));
+  const adminNames = readAdmins().map(a => a.name);
+  return all('discussions').map(d => {
+    const row = { ...d, title: d.title == null ? '' : String(d.title) };
+    if (!row.official && adminNames.includes(row.createdBy)) {
+      row.official = true;
+    }
+    return row;
+  });
 }
 function writeDiscussions(data) { dropAndInsert('discussions', data); }
 
