@@ -2263,13 +2263,8 @@
   <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="btn-label">讨论区</span></button>
   <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="btn-label">你问我答</span></button>
   <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <span class="btn-label">投票</span></button>
+  <button class="compose-btn" style="background:#fce4ec;color:#880e4f;border:1.5px solid #f48fb1;" type="button" onclick="openWhisperModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="9" y1="12" x2="15" y2="12"/></svg> <span class="btn-label">悄悄话</span></button>
   <button class="compose-btn search-btn" id="searchUserBtn" type="button" onclick="toggleSearchDropdown(event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> <span class="btn-label">找人</span></button>
-  </div>
-  <div class="search-dropdown" id="searchDropdown">
-    <div class="search-dropdown-input">
-      <input type="text" id="searchUserInput" placeholder="搜索账号、昵称、UID或姓名..." autocomplete="off">
-    </div>
-    <div class="search-dropdown-results" id="searchResults"></div>
   </div>
   </div>
 
@@ -2316,8 +2311,43 @@
 
  <div class="toast-container" id="toastContainer"></div>
 
- <!-- ===== 举报弹窗 ===== -->
- <div class="report-overlay" id="reportOverlay" onclick="if(event.target===this)closeReportModal()">
+<!-- ===== 发悄悄话弹窗 ===== -->
+  <div class="modal-overlay" id="whisperModalOverlay" onclick="closeWhisperModal(event)" style="display:none">
+  <div class="modal-note whisper-modal" onclick="event.stopPropagation()" style="max-width:400px;">
+  <div class="tape" style="--tape-rotate:2deg;"></div>
+  <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="9" y1="12" x2="15" y2="12"/></svg> 发悄悄话</h3>
+  <div class="whisper-search-area" style="margin-bottom:10px;">
+    <input type="text" id="whisperSearchInput" placeholder="搜索接收用户..." autocomplete="off" style="width:100%;padding:8px 10px;border:1.5px solid #d4c4b0;border-radius:6px;font-size:13px;background:#faf6f0;box-sizing:border-box;" oninput="whisperSearch(this.value)">
+    <div id="whisperSearchResults" style="max-height:160px;overflow-y:auto;margin-top:4px;border-radius:6px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:none;"></div>
+  </div>
+  <div id="whisperSelectedUser" style="display:none;padding:6px 8px;background:#f0e6d8;border-radius:6px;margin-bottom:8px;font-size:13px;align-items:center;gap:6px;">
+    <span id="whisperSelectedLabel"></span>
+    <span style="margin-left:auto;cursor:pointer;color:#b71c1c;font-weight:bold;" onclick="clearWhisperUser()">✕</span>
+  </div>
+  <textarea id="whisperContent" placeholder="想对 TA 说什么悄悄话..." maxlength="50" style="width:100%;min-height:60px;padding:8px 10px;border:1.5px solid #d4c4b0;border-radius:6px;font-size:13px;resize:none;background:#faf6f0;box-sizing:border-box;"></textarea>
+  <div style="text-align:right;font-size:11px;color:rgba(90,74,0,0.5);margin-top:2px;"><span id="whisperCount">0</span>/50</div>
+  <div class="modal-actions" style="margin-top:10px;">
+    <button class="modal-cancel" onclick="closeWhisperModal()">取消</button>
+    <button class="modal-submit" onclick="submitWhisper()">发送 <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+  </div>
+  </div>
+  </div>
+
+  <!-- ===== 悄悄话接收通知弹窗 ===== -->
+  <div class="modal-overlay" id="whisperIncomingOverlay" onclick="closeWhisperIncoming(event)" style="display:none">
+  <div class="modal-note whisper-incoming-modal" onclick="event.stopPropagation()" style="max-width:380px;">
+  <div class="tape" style="--tape-rotate:-1deg;"></div>
+  <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 💬 收到一条悄悄话</h3>
+  <div id="whisperIncomingContent" style="background:#faf6f0;border-radius:8px;padding:12px;margin:8px 0;font-size:14px;line-height:1.6;"></div>
+  <div style="display:flex;gap:8px;margin-top:10px;">
+    <button class="modal-cancel" style="flex:1;" onclick="reportCurrentWhisper()">举报</button>
+    <button class="modal-submit" style="flex:2;" onclick="signCurrentWhisper()">签收</button>
+  </div>
+  </div>
+  </div>
+
+  <!-- ===== 举报弹窗 ===== -->
+  <div class="report-overlay" id="reportOverlay" onclick="if(event.target===this)closeReportModal()">
  <div class="report-box" id="reportBoxInner" onclick="event.stopPropagation()">
  <!-- 动态填充 -->
  </div>
@@ -5938,21 +5968,193 @@ async function showPostCaptchaModal() {
  renderNotes(currentFilter);
  }, 30000);
 
- // 窗口大小变化时重新排布
- let resizeTimer;
+  // ===== 悄悄话功能 =====
+  var _whisperSearchTimer = null;
+  var _whisperSelectedUserId = null;
+  var _whisperSelectedUserName = null;
+  var _currentIncomingWhisperId = null;
+
+  function openWhisperModal() {
+    var overlay = document.getElementById('whisperModalOverlay');
+    if (!overlay) return;
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) { showToast('请先登录'); return; }
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('whisperSearchInput').value = '';
+    document.getElementById('whisperSearchResults').style.display = 'none';
+    document.getElementById('whisperSearchResults').innerHTML = '';
+    clearWhisperUser();
+    document.getElementById('whisperContent').value = '';
+    document.getElementById('whisperCount').textContent = '0';
+    setTimeout(function() { document.getElementById('whisperSearchInput').focus(); }, 200);
+  }
+
+  function closeWhisperModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var overlay = document.getElementById('whisperModalOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function whisperSearch(q) {
+    q = q.trim();
+    var resultsEl = document.getElementById('whisperSearchResults');
+    if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; return; }
+    if (_whisperSearchTimer) clearTimeout(_whisperSearchTimer);
+    _whisperSearchTimer = setTimeout(function() {
+      var token = localStorage.getItem('campus_user_token');
+      var headers = {};
+      if (token) headers['x-user-token'] = token;
+      fetch('/api/users/search?q=' + encodeURIComponent(q), { headers: headers })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          if (!j.ok || !j.data) { resultsEl.innerHTML = '<div style="padding:12px;color:#999;font-size:13px;text-align:center;">搜索出错</div>'; resultsEl.style.display = 'block'; return; }
+          var d = j.data;
+          var items = (d.accounts || []).concat(d.nicknames || []).concat(d.uids || []).concat(d.names || []);
+          var deduped = [];
+          var seen = {};
+          items.forEach(function(u) {
+            if (!seen[u.id]) { seen[u.id] = true; deduped.push(u); }
+          });
+          if (deduped.length === 0) { resultsEl.innerHTML = '<div style="padding:12px;color:#999;font-size:13px;text-align:center;">未找到匹配用户</div>'; resultsEl.style.display = 'block'; return; }
+          var html = '';
+          deduped.forEach(function(u) {
+            var avatarHtml = u.avatar ? '<img src="' + escHtml(u.avatar) + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">' : '<span style="width:28px;height:28px;border-radius:50%;background:#d4c4b0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5a4030;flex-shrink:0;">' + escHtml((u.nickname || '?')[0]) + '</span>';
+            html += '<div class="whisper-search-result-item" onclick="selectWhisperUser(\'' + escHtml(u.id) + '\',\'' + escHtml(u.nickname || u.username) + '\')">' + avatarHtml + '<span>' + escHtml(u.nickname || u.username) + '</span></div>';
+          });
+          resultsEl.innerHTML = html;
+          resultsEl.style.display = 'block';
+        })
+        .catch(function() { resultsEl.innerHTML = '<div style="padding:12px;color:#999;font-size:13px;text-align:center;">网络错误</div>'; resultsEl.style.display = 'block'; });
+    }, 300);
+  }
+
+  function selectWhisperUser(id, name) {
+    _whisperSelectedUserId = id;
+    _whisperSelectedUserName = name;
+    document.getElementById('whisperSelectedLabel').textContent = '发送给: ' + name;
+    document.getElementById('whisperSelectedUser').style.display = 'flex';
+    document.getElementById('whisperSearchResults').style.display = 'none';
+    document.getElementById('whisperSearchInput').value = '';
+    document.getElementById('whisperContent').focus();
+  }
+
+  function clearWhisperUser() {
+    _whisperSelectedUserId = null;
+    _whisperSelectedUserName = null;
+    document.getElementById('whisperSelectedUser').style.display = 'none';
+  }
+
+  function submitWhisper() {
+    if (!_whisperSelectedUserId) { showToast('请选择接收用户'); return; }
+    var content = document.getElementById('whisperContent').value.trim();
+    if (!content) { showToast('请输入内容'); return; }
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) { showToast('请先登录'); return; }
+    fetch('/api/whispers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ receiverId: _whisperSelectedUserId, content: content })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) { closeWhisperModal(); showToast('悄悄话已发送'); }
+      else if (j.code === 'SENSITIVE_WORDS' || j.code === 'BULLYING_NAME') {
+        alert(j.warningMsg || j.msg);
+      } else { showToast(j.msg || '发送失败'); }
+    })
+    .catch(function() { showToast('网络错误'); });
+  }
+
+  function checkIncomingWhispers() {
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) return;
+    fetch('/api/whispers/inbox', { headers: { 'x-user-token': token } })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        if (!j.ok || !j.data) return;
+        var unsigned = j.data.filter(function(w) { return !w.signed; });
+        if (unsigned.length > 0) {
+          showWhisperIncoming(unsigned[0]);
+        }
+      })
+      .catch(function() {});
+  }
+
+  function showWhisperIncoming(whisper) {
+    if (document.getElementById('whisperIncomingOverlay').style.display === 'flex') return;
+    _currentIncomingWhisperId = whisper.id;
+    var contentEl = document.getElementById('whisperIncomingContent');
+    contentEl.innerHTML = '<div style="margin-bottom:6px;"><strong>' + escHtml(whisper.senderName) + '</strong> 给你发送了一条悄悄话</div><div style="color:#5a4030;padding:8px;border-left:3px solid #f48fb1;background:#fff;border-radius:4px;">' + escHtml(whisper.content) + '</div><div style="margin-top:6px;font-size:11px;color:#999;">发送时间: ' + whisper.createdAt + '</div>';
+    document.getElementById('whisperIncomingOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeWhisperIncoming(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('whisperIncomingOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function signCurrentWhisper() {
+    if (!_currentIncomingWhisperId) return;
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) return;
+    fetch('/api/whispers/' + _currentIncomingWhisperId + '/sign', {
+      method: 'POST',
+      headers: { 'x-user-token': token }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) {
+        showToast('已签收');
+        closeWhisperIncoming();
+        _currentIncomingWhisperId = null;
+      } else { showToast(j.msg || '操作失败'); }
+    })
+    .catch(function() { showToast('网络错误'); });
+  }
+
+  function reportCurrentWhisper() {
+    if (!_currentIncomingWhisperId) return;
+    var token = localStorage.getItem('campus_user_token');
+    if (!token) return;
+    fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ type: 'whisper', targetId: _currentIncomingWhisperId, reason: '收到违规悄悄话' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (j.ok) { showToast('举报已提交'); closeWhisperIncoming(); _currentIncomingWhisperId = null; }
+      else { showToast(j.msg || '举报失败'); }
+    })
+    .catch(function() { showToast('网络错误'); });
+  }
+
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.id === 'whisperContent') {
+      document.getElementById('whisperCount').textContent = e.target.value.length;
+    }
+  });
+
+  // 窗口大小变化时重新排布
+  let resizeTimer;
  window.addEventListener('resize', () => {
  clearTimeout(resizeTimer);
  resizeTimer = setTimeout(() => renderNotes(currentFilter), 300);
  });
 
  // ===== 启动：从后端加载数据 =====
- (async function init() {
- checkLogin();
- sendHeartbeat();
- refreshStats();
- await fetchPosts();
- renderNotes();
- })();
+  (async function init() {
+  checkLogin();
+  sendHeartbeat();
+  refreshStats();
+  await fetchPosts();
+  renderNotes();
+  setTimeout(checkIncomingWhispers, 3000);
+  })();
 
 	// ===== SSE 实时同步 =====
 	(function initSSE() {
@@ -5964,6 +6166,7 @@ async function showPostCaptchaModal() {
 	es.addEventListener('noticeUpdate', () => {
 		checkNotifBadge();
 		checkPunishment();
+		checkIncomingWhispers();
 	});
 	es.addEventListener('connected', () => {
 			console.log('[SSE] 已连接');
@@ -8010,6 +8213,12 @@ function escJsStr(s) {
 #punishPopup.open .punish-box{transform:scale(1) translateY(0);opacity:1;}
 .dialog-anim{animation:dialogIn .3s ease-out;}
 @keyframes dialogIn{from{opacity:0;transform:scale(0.92) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.whisper-modal .whisper-search-area input:focus{outline:none;border-color:#c4897a;}
+.whisper-search-result-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #f0e6d8;transition:background 0.15s;}
+.whisper-search-result-item:hover{background:#f5ede4;}
+.whisper-search-result-item:last-child{border-bottom:none;}
+.whisper-incoming-modal{animation:fadeSlideIn 0.25s ease-out;}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(-12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 <script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>

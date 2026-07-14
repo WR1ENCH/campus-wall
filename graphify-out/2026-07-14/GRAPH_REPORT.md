@@ -1,16 +1,16 @@
 # Graph Report - campus-wall-dev_z  (2026-07-14)
 
 ## Corpus Check
-- 51 files · ~147,311 words
+- 51 files · ~147,335 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 875 nodes · 1317 edges · 56 communities (52 shown, 4 thin omitted)
+- 836 nodes · 1280 edges · 51 communities (48 shown, 3 thin omitted)
 - Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 153 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c3dc5b6a`
+- Built from commit: `66eb5513`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,7 +37,6 @@
 - verifySignedToken
 - middleware.js
 - student-council.js
-- crypto.js
 - updateRow
 - login.js
 - insertRow
@@ -56,7 +55,6 @@
 - agent-dev — Campus Wall 开发文档（AI Agent 上手指南）
 - 会话 1 — 2026-07-12
 - 3. 后端架构
-- 校园墙微信小程序
 - 14. 通知系统深度分析：自动触发通知
 - 6. 前端架构（SPA）
 - 11. 运行 / 部署 / 维护
@@ -64,40 +62,37 @@
 - 4. 数据模型（db.js — SQLite 表）
 - Safety Center 重新设计
 - 📌 校园墙 (Campus Wall)
-- hotness.js
 - 校园墙微信小程序
-- verifySignedToken
 - 为项目加入搜索用户功能
-- zhixue.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `broadcastSSE()` - 41 edges
 2. `getDb()` - 29 edges
 3. `dropAndInsert()` - 29 edges
 4. `📌 校园墙 (Campus Wall)` - 22 edges
-5. `📌 校园墙 (Campus Wall)` - 22 edges
-6. `verifySignedToken()` - 21 edges
-7. `agent-dev — Campus Wall 开发文档（AI Agent 上手指南）` - 19 edges
-8. `5. API 参考（按功能模块分组）` - 18 edges
-9. `getClientIP()` - 13 edges
-10. `verifyUserToken()` - 12 edges
+5. `verifySignedToken()` - 21 edges
+6. `agent-dev — Campus Wall 开发文档（AI Agent 上手指南）` - 19 edges
+7. `5. API 参考（按功能模块分组）` - 17 edges
+8. `getClientIP()` - 13 edges
+9. `verifyUserToken()` - 12 edges
+10. `check()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `requireAdmin()` --calls--> `verifySignedToken()`  [EXTRACTED]
+  routes/discussions.js → lib/crypto.js
+- `requireAdmin()` --calls--> `verifySignedToken()`  [EXTRACTED]
+  routes/posts.js → lib/crypto.js
 - `writeDiscussions()` --calls--> `broadcastSSE()`  [EXTRACTED]
   routes/discussions.js → lib/sse.js
 - `writeNotices()` --calls--> `broadcastSSE()`  [EXTRACTED]
   routes/discussions.js → lib/sse.js
-- `writePosts()` --calls--> `broadcastSSE()`  [EXTRACTED]
-  routes/discussions.js → lib/sse.js
-- `writeNotices()` --calls--> `broadcastSSE()`  [EXTRACTED]
-  routes/notices.js → lib/sse.js
 - `writeNotices()` --calls--> `broadcastSSE()`  [EXTRACTED]
   routes/pickup.js → lib/sse.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (56 total, 4 thin omitted)
+## Communities (51 total, 3 thin omitted)
 
 ### Community 0 - "admin.js"
 Cohesion: 0.04
@@ -112,16 +107,16 @@ Cohesion: 0.07
 Nodes (33): migrate(), ensureUniqueIds(), { generateId, generateUID, isValidIdFormat, logIdAssignment }, needsMigration(), crypto, fs, generateId(), generateUID() (+25 more)
 
 ### Community 3 - "system.js"
-Cohesion: 0.07
-Nodes (25): addName(), check(), DATA_DIR, ensureDir(), fs, getAll(), loadNames(), NAMES_FILE (+17 more)
+Cohesion: 0.06
+Nodes (32): addName(), check(), DATA_DIR, ensureDir(), fs, getAll(), loadNames(), NAMES_FILE (+24 more)
 
 ### Community 4 - "user.js"
 Cohesion: 0.06
-Nodes (16): { broadcastSSE }, { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX }, { check: checkBullyingNames }, { check: checkSensitive }, cleanupQrCodes(), db, deleteSyncedDiscComment(), { getClientIP } (+8 more)
+Nodes (14): { broadcastSSE }, { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX }, { check: checkBullyingNames }, { check: checkSensitive }, cleanupQrCodes(), db, deleteSyncedDiscComment(), { getClientIP } (+6 more)
 
 ### Community 5 - "notices.js"
-Cohesion: 0.13
-Nodes (7): { broadcastSSE }, { check: checkBullyingNames }, { check: checkSensitive }, db, { requireAdmin }, { verifySignedToken, verifyUserToken }, writeNotices()
+Cohesion: 0.12
+Nodes (10): verifySignedToken(), verifyUserToken(), createCheckMaintenance(), requireAdmin(), { broadcastSSE }, { check: checkBullyingNames }, { check: checkSensitive }, db (+2 more)
 
 ### Community 6 - "package.json"
 Cohesion: 0.06
@@ -136,8 +131,8 @@ Cohesion: 0.05
 Nodes (29): { broadcastSSE }, { check: checkBullyingNames }, { check: checkSensitive }, commentDeleteLimit, db, discussionCreateLimit, { getClientIP }, { isFeatureBlocked } (+21 more)
 
 ### Community 9 - "dropAndInsert"
-Cohesion: 0.07
-Nodes (27): addDeletedItem(), dropAndInsert(), writeAdmins(), writeAppeals(), writeApps(), writeBullying(), writeCreditCards(), writeCreditLogs() (+19 more)
+Cohesion: 0.08
+Nodes (25): addDeletedItem(), dropAndInsert(), writeAppeals(), writeApps(), writeBullying(), writeCreditCards(), writeCreditLogs(), writeDeletedItems() (+17 more)
 
 ### Community 10 - "pickup.js"
 Cohesion: 0.09
@@ -148,20 +143,20 @@ Cohesion: 0.10
 Nodes (24): addIdInput(), all(), allSql(), countRows(), getById(), getDb(), getPostCount(), getPosts() (+16 more)
 
 ### Community 12 - "server.js"
-Cohesion: 0.11
-Nodes (17): sseClients, app, compression, cookieParser, cors, db, { ensureUniqueIds }, envPath (+9 more)
+Cohesion: 0.09
+Nodes (19): sseClients, app, compression, cookieParser, cors, db, { ensureUniqueIds }, envPath (+11 more)
 
 ### Community 13 - "votes.js"
-Cohesion: 0.09
-Nodes (13): { broadcastSSE }, { check: checkBullyingNames }, { check: checkSensitive }, db, { getClientIP }, { isFeatureBlocked }, readSC(), readUsers() (+5 more)
+Cohesion: 0.06
+Nodes (28): { broadcastSSE }, db, emitUserNotice(), FEATURE_LABELS, FEATURES, { generateId }, getActivePunishment(), getReportedContent() (+20 more)
 
 ### Community 14 - "tabBar"
 Cohesion: 0.11
 Nodes (18): pages, sitemapLocation, tabBar, backgroundColor, borderStyle, color, list, selectedColor (+10 more)
 
 ### Community 15 - "qa.js"
-Cohesion: 0.08
-Nodes (32): { broadcastSSE }, db, emitUserNotice(), FEATURE_LABELS, FEATURES, { generateId }, getActivePunishment(), getReportedContent() (+24 more)
+Cohesion: 0.15
+Nodes (17): { broadcastSSE }, changeCredit(), { check: checkBullyingNames }, { check: checkSensitive }, db, { getClientIP }, { isFeatureBlocked }, readCreditLogs() (+9 more)
 
 ### Community 16 - "maintenance.js"
 Cohesion: 0.27
@@ -172,24 +167,20 @@ Cohesion: 0.32
 Nodes (11): closeDetail(), fetchAnnouncement(), fetchCertInfo(), fetchNotices(), filterNotices(), loadAll(), mdToHtml(), onLoad() (+3 more)
 
 ### Community 18 - "auth.js"
-Cohesion: 0.22
-Nodes (10): readAdmins(), readDiscussions(), readLogs(), addLoginLog(), { broadcastSSE }, { getClientIP }, hasAdmins(), { hashPassword, verifyPassword, makeToken, verifySignedToken } (+2 more)
+Cohesion: 0.19
+Nodes (12): readAdmins(), readDiscussions(), readLogs(), writeAdmins(), writeLogs(), addLoginLog(), { broadcastSSE }, { getClientIP } (+4 more)
 
 ### Community 19 - "verifySignedToken"
-Cohesion: 0.17
-Nodes (11): captchaGrantLimit, captchaStore, cardCreateLimits, postRateLimit, qrCodeStore, redeemRateLimit, { captchaStore }, db (+3 more)
+Cohesion: 0.15
+Nodes (12): captchaGrantLimit, captchaStore, cardCreateLimits, loginFailures, postRateLimit, qrCodeStore, redeemRateLimit, { captchaStore } (+4 more)
 
 ### Community 20 - "middleware.js"
-Cohesion: 0.16
-Nodes (11): getClientIP(), { getClientIP }, inputSanitize(), { loginFailures, LOGIN_WINDOW_MS, LOGIN_MAX_FAILS }, rateLimitLogin(), recordLoginFail(), requireSuper(), sanitizeString() (+3 more)
+Cohesion: 0.18
+Nodes (10): getClientIP(), { getClientIP }, inputSanitize(), { loginFailures, LOGIN_WINDOW_MS, LOGIN_MAX_FAILS }, rateLimitLogin(), recordLoginFail(), requireSuper(), sanitizeString() (+2 more)
 
 ### Community 21 - "student-council.js"
 Cohesion: 0.12
 Nodes (15): CERT_ENC_KEY, crypto, decryptCert(), encryptCert(), getDisplayZhixueStatus(), hashPassword(), makeToken(), makeUserToken() (+7 more)
-
-### Community 22 - "crypto.js"
-Cohesion: 0.06
-Nodes (30): 10. 霸凌举报, 11. 管理后台, 12. 人机防御, 13. 安全防护, 14. Credit, 1. 前台主页面, 2. 发帖功能, 3. 帖子详情与评论 (+22 more)
 
 ### Community 23 - "updateRow"
 Cohesion: 0.25
@@ -204,8 +195,8 @@ Cohesion: 0.29
 Nodes (7): addUserNotification(), addWhisper(), insertAppeal(), insertPost(), insertPunishment(), insertRow(), insertUser()
 
 ### Community 26 - "state.js"
-Cohesion: 0.11
-Nodes (18): 5.10 统一举报 / 处罚 / 申诉 / 霸凌（reports/penalty/system/admin）, 5.11 后台管理 — 用户 / 内容管理（admin.js）, 5.12 后台管理 — 安全 / 敏感词（admin.js）, 5.13 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）, 5.14 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）, 5.15 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）, 5.16 系统 / 通用（system.js + maintenance.js + slider）, 5.1 管理员引导与认证（auth.js） (+10 more)
+Cohesion: 0.12
+Nodes (17): 5.10 统一举报 / 处罚 / 申诉 / 霸凌（reports/penalty/system/admin）, 5.11 后台管理 — 用户 / 内容管理（admin.js）, 5.12 后台管理 — 安全 / 敏感词（admin.js）, 5.13 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）, 5.14 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）, 5.15 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）, 5.16 系统 / 通用（system.js + maintenance.js + slider）, 5.1 管理员引导与认证（auth.js） (+9 more)
 
 ### Community 28 - "index.js"
 Cohesion: 0.47
@@ -236,8 +227,8 @@ Cohesion: 0.67
 Nodes (3): pushUserNotice(), readNotices(), writeNotices()
 
 ### Community 39 - "broadcastSSE"
-Cohesion: 0.20
-Nodes (10): broadcastSSE(), writeAnnouncement(), writeDiscussions(), writePickupAuctions(), writePickupReports(), writePosts(), writeQAAnswers(), writeQAQuestions() (+2 more)
+Cohesion: 0.13
+Nodes (15): broadcastSSE(), writeAnnouncement(), writeDiscussions(), writePickupAuctions(), writePickupReports(), writePosts(), writeQAAnswers(), writeQAQuestions() (+7 more)
 
 ### Community 40 - "agent-dev — Campus Wall 开发文档（AI Agent 上手指南）"
 Cohesion: 0.17
@@ -250,10 +241,6 @@ Nodes (11): 15. 会话变更日志, admin.html 修复, index.html 修复, safety
 ### Community 42 - "3. 后端架构"
 Cohesion: 0.20
 Nodes (10): 3.1 请求生命周期（server.js）, 3.2 认证与 Token（`lib/crypto.js`）, 3.3 输入过滤（`inputSanitize`，lib/middleware.js）, 3.4 路由挂载顺序（关键约束）, 3.5 内存状态（`lib/state.js`）, 3.6 SSE 实时推送（`lib/sse.js`）, 3.7 维护模式, 3.8 数据唯一化（`lib/uniqueId.js` + `lib/idMigration.js`） (+2 more)
-
-### Community 43 - "校园墙微信小程序"
-Cohesion: 0.29
-Nodes (6): 开发说明, 校园墙微信小程序, 注意事项, 目录结构, 背景样式（与网页版一致）, 颜色系统
 
 ### Community 44 - "14. 通知系统深度分析：自动触发通知"
 Cohesion: 0.29
@@ -283,38 +270,30 @@ Nodes (35): 1.1 任务原文, 1.2 关键约束(来自 `docs_for_agent.md` §3.9 
 Cohesion: 0.06
 Nodes (30): 10. 霸凌举报, 11. 管理后台, 12. 人机防御, 13. 安全防护, 14. Credit, 1. 前台主页面, 2. 发帖功能, 3. 帖子详情与评论 (+22 more)
 
-### Community 51 - "hotness.js"
-Cohesion: 0.32
-Nodes (7): cache, computeHotness(), db, getCachedHotness(), { onlineUsers }, recompute(), onlineUsers
-
 ### Community 52 - "校园墙微信小程序"
 Cohesion: 0.29
 Nodes (6): 开发说明, 校园墙微信小程序, 注意事项, 目录结构, 背景样式（与网页版一致）, 颜色系统
-
-### Community 53 - "verifySignedToken"
-Cohesion: 0.33
-Nodes (6): verifySignedToken(), verifyUserToken(), createCheckMaintenance(), requireAdmin(), requireAdmin(), requireAdmin()
 
 ### Community 54 - "为项目加入搜索用户功能"
 Cohesion: 0.33
 Nodes (5): 为项目加入搜索用户功能, 任务, 搜索入口, 搜索匹配内容, 要求
 
 ## Knowledge Gaps
-- **363 isolated node(s):** `fs`, `path`, `DATA_DIR`, `NAMES_FILE`, `pages/notice/notice` (+358 more)
+- **330 isolated node(s):** `fs`, `path`, `DATA_DIR`, `NAMES_FILE`, `pages/notice/notice` (+325 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `broadcastSSE()` connect `broadcastSSE` to `admin.js`, `deleteSyncedDiscComment`, `posts.js`, `pushUserNotice`, `system.js`, `notices.js`, `user.js`, `discussions.js`, `pickup.js`, `server.js`, `votes.js`, `qa.js`, `auth.js`, `student-council.js`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `verifySignedToken()` connect `verifySignedToken` to `admin.js`, `posts.js`, `system.js`, `user.js`, `notices.js`, `discussions.js`, `pickup.js`, `server.js`, `votes.js`, `qa.js`, `auth.js`, `verifySignedToken`, `middleware.js`, `student-council.js`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `agent-dev — Campus Wall 开发文档（AI Agent 上手指南）` connect `agent-dev — Campus Wall 开发文档（AI Agent 上手指南）` to `会话 1 — 2026-07-12`, `3. 后端架构`, `14. 通知系统深度分析：自动触发通知`, `6. 前端架构（SPA）`, `11. 运行 / 部署 / 维护`, `图谱参考`, `4. 数据模型（db.js — SQLite 表）`, `state.js`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+- **Why does `verifySignedToken()` connect `notices.js` to `admin.js`, `posts.js`, `system.js`, `user.js`, `discussions.js`, `pickup.js`, `server.js`, `votes.js`, `qa.js`, `auth.js`, `verifySignedToken`, `middleware.js`, `student-council.js`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `getClientIP()` connect `middleware.js` to `admin.js`, `posts.js`, `system.js`, `user.js`, `discussions.js`, `pickup.js`, `votes.js`, `qa.js`, `auth.js`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **What connects `fs`, `path`, `DATA_DIR` to the rest of the system?**
-  _363 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _330 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `admin.js` be split into smaller, more focused modules?**
   _Cohesion score 0.03571428571428571 - nodes in this community are weakly interconnected._
 - **Should `posts.js` be split into smaller, more focused modules?**

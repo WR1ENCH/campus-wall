@@ -195,8 +195,8 @@
     "semantic_hash": "cccadbe188e1262b9935116f2273335a"
   },
   "routes/user.js": {
-    "mtime": 1784015456.3144958,
-    "ast_hash": "7236586ba764225d2ba4203c0456779a",
+    "mtime": 1784016637.185967,
+    "ast_hash": "5f83463a997ad2beed3099633bfc6ea7",
     "semantic_hash": ""
   },
   "routes/votes.js": {
@@ -285,8 +285,8 @@
     "semantic_hash": ""
   },
   "docs_for_agent.md": {
-    "mtime": 1784015795.9244826,
-    "ast_hash": "93d7da398e1f2b257e9c41425bcc8fed",
+    "mtime": 1784017414.5925539,
+    "ast_hash": "646d4809a57fb782ad750241edc57e0a",
     "semantic_hash": ""
   },
   "ecosystem.html": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1784015576.8501964,
-    "ast_hash": "32ac612c4da5f6bc7b830e59d9e5b1f6",
+    "mtime": 1784016646.7021983,
+    "ast_hash": "15c23dc213e8b4caf84f61223f4413e0",
     "semantic_hash": ""
   },
   "knowledge.html": {
