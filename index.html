@@ -2331,7 +2331,7 @@
       <div class="whisper-search-area">
         <div class="whisper-search-input-wrap">
           <svg class="whisper-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="whisperSearchInput" placeholder="搜索账号、昵称、UID或姓名..." autocomplete="off">
+          <input type="text" id="whisperSearchInput" placeholder="搜索账号、昵称、UID或姓名..." autocomplete="off" oninput="whisperSearch(this.value)">
         </div>
         <div id="whisperSearchResults" class="whisper-search-results"></div>
       </div>
