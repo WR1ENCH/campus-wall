@@ -89,6 +89,7 @@ module.exports = function (app) {
   });
 
   // 新建处罚（管理员按 UID 直接创建 / 从举报处理）
+  // 处罚自动叠加：同级别合并措施+最长时长，T0升级覆盖T1，T1在T0生效期间入队等待
   app.post('/api/admin/punishments', requireAdmin, (req, res) => {
     const { userId, level, measures, reason, durationDays, sourceReportId } = req.body;
     if (!userId) return res.json({ ok: false, msg: '缺少被处罚用户ID' });
@@ -100,49 +101,130 @@ module.exports = function (app) {
     if (level === 'T1' && (!measures || !Array.isArray(measures) || measures.length === 0)) {
       return res.json({ ok: false, msg: 'T1 处罚至少选择一个限制措施' });
     }
-    const punishmentId = generateId('PUNI');
-    const now = new Date().toISOString();
-    const p = {
-      punishmentId,
-      userId,
-      level,
-      reason: reason.trim(),
-      measures: level === 'T0' ? JSON.stringify(penalty.FEATURES) : JSON.stringify(measures || []),
-      durationDays: durationDays || 0,
-      status: 'active',
-      sourceReportId: sourceReportId || null,
-      appealUsed: 0,
-      appealStatus: 'none',
-      createdAt: now,
-      expiresAt: calcExpiresAt(durationDays),
-      revokedAt: null,
-      revokedBy: null,
-    };
-    db.insertPunishment(p);
-    logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
 
-    // 如果是从举报处理而来，更新举报的处理结果
-    if (sourceReportId) {
-      const reports = readReports();
-      const report = reports.find(r => r.reportId === sourceReportId);
-      if (report) {
-        report.handledResult = 'violation';
-        report.punishmentId = punishmentId;
-        report.status = 'resolved';
-        report.handledBy = req.admin.id;
-        report.handledAt = now;
-        db.writeReports(reports);
-        // 通知举报人
-        if (report.reportedBy) {
-          penalty.notifyReportReceived(report.reportedBy, sourceReportId,
-            '举报类型：' + (report.type || '') + '\n举报原因：' + (report.reason || '') + '\n\n已确认违规并施加处罚，感谢你的举报！');
+    const now = new Date().toISOString();
+    const nowTs = Date.now();
+    const punishments = readPunishments();
+    const existingActive = punishments.filter(p => p.userId === userId && p.status === 'active' && !(p.expiresAt && nowTs >= new Date(p.expiresAt).getTime()));
+    const existingT0 = existingActive.find(p => p.level === 'T0');
+    const existingT1 = existingActive.find(p => p.level === 'T1');
+
+    // ===== T0 处罚 =====
+    if (level === 'T0') {
+      if (existingT0) {
+        // T0 + T0: 合并到已有处罚，取最长时长
+        existingT0.durationDays = Math.max(existingT0.durationDays || 0, durationDays || 0);
+        existingT0.expiresAt = existingT0.durationDays ? calcExpiresAt(existingT0.durationDays) : null;
+        existingT0.reason = existingT0.reason + '\n' + reason.trim();
+        db.updatePunishment(existingT0.punishmentId, existingT0);
+        if (existingT1 && existingT1.status === 'active') {
+          existingT1.status = 'overridden';
+          db.updatePunishment(existingT1.punishmentId, existingT1);
         }
+        // 更新关联举报
+        if (sourceReportId) {
+          const report = readReports().find(r => r.reportId === sourceReportId);
+          if (report) { report.handledResult = 'violation'; report.punishmentId = existingT0.punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
+        }
+        penalty.notifyPunishmentIssued(userId, existingT0.punishmentId, existingT0);
+        return res.json({ ok: true, data: { punishmentId: existingT0.punishmentId, stacked: true, msg: '已合并到现有T0处罚' } });
       }
+
+      // 没有已有 T0，正常创建
+      const punishmentId = generateId('PUNI');
+      const p = {
+        punishmentId, userId, level, reason: reason.trim(),
+        measures: JSON.stringify(penalty.FEATURES),
+        durationDays: durationDays || 0, status: 'active',
+        sourceReportId: sourceReportId || null,
+        appealUsed: 0, appealStatus: 'none',
+        createdAt: now, expiresAt: calcExpiresAt(durationDays),
+        revokedAt: null, revokedBy: null,
+      };
+      db.insertPunishment(p);
+      logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+
+      if (existingT1) {
+        // T0 + 已有T1: 先执行T0，T1入队等T0结束再执行
+        existingT1.status = 'queued';
+        existingT1.queuedAfter = punishmentId;
+        db.updatePunishment(existingT1.punishmentId, existingT1);
+      }
+      if (sourceReportId) {
+        const report = readReports().find(r => r.reportId === sourceReportId);
+        if (report) { report.handledResult = 'violation'; report.punishmentId = punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
+      }
+      penalty.notifyPunishmentIssued(userId, punishmentId, p);
+      return res.json({ ok: true, data: { punishmentId } });
     }
 
-    // 发 T0 处罚通知给被处罚者
-    penalty.notifyPunishmentIssued(userId, punishmentId, p);
-    res.json({ ok: true, data: { punishmentId } });
+    // ===== T1 处罚 =====
+    if (level === 'T1') {
+      if (existingT1) {
+        // T1 + T1: 合并措施（去重并集）+ 取最长时长
+        const existingMeasures = new Set(penalty.parseMeasures(existingT1.measures));
+        (measures || []).forEach(m => existingMeasures.add(m));
+        existingT1.measures = JSON.stringify([...existingMeasures]);
+        existingT1.durationDays = Math.max(existingT1.durationDays || 0, durationDays || 0);
+        existingT1.expiresAt = existingT1.durationDays ? calcExpiresAt(existingT1.durationDays) : null;
+        existingT1.reason = existingT1.reason + '\n' + reason.trim();
+        db.updatePunishment(existingT1.punishmentId, existingT1);
+        if (sourceReportId) {
+          const report = readReports().find(r => r.reportId === sourceReportId);
+          if (report) { report.handledResult = 'violation'; report.punishmentId = existingT1.punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
+        }
+        penalty.notifyPunishmentIssued(userId, existingT1.punishmentId, existingT1);
+        return res.json({ ok: true, data: { punishmentId: existingT1.punishmentId, stacked: true, msg: '已合并到现有T1处罚' } });
+      }
+
+      if (existingT0) {
+        // T1 + 已有T0: 先执行T0，T1入队等待（T0结束后自动激活）
+        const punishmentId = generateId('PUNI');
+        const p = {
+          punishmentId, userId, level: 'T1',
+          reason: reason.trim(),
+          measures: JSON.stringify(measures || []),
+          durationDays: durationDays || 0,
+          status: 'queued',
+          sourceReportId: sourceReportId || null,
+          appealUsed: 0, appealStatus: 'none',
+          createdAt: now, expiresAt: calcExpiresAt(durationDays),
+          revokedAt: null, revokedBy: null,
+          queuedAfter: existingT0.punishmentId,
+        };
+        db.insertPunishment(p);
+        logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+        if (sourceReportId) {
+          const report = readReports().find(r => r.reportId === sourceReportId);
+          if (report) { report.handledResult = 'violation'; report.punishmentId = punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
+        }
+        penalty.emitUserNotice(userId, '⚠️ 待执行处罚',
+          '经校园墙安全中心认定，你的账号由于违反《校园墙用户公约》，有一条新的处罚记录将在当前处罚结束后自动生效。\n\n如需了解详情请前往「安全中心」。', 'T1');
+        return res.json({ ok: true, data: { punishmentId, queued: true, msg: 'T0生效期间，T1处罚已入队等待' } });
+      }
+
+      // 没有已有处罚，正常创建 T1
+      const punishmentId = generateId('PUNI');
+      const p = {
+        punishmentId, userId, level, reason: reason.trim(),
+        measures: JSON.stringify(measures || []),
+        durationDays: durationDays || 0, status: 'active',
+        sourceReportId: sourceReportId || null,
+        appealUsed: 0, appealStatus: 'none',
+        createdAt: now, expiresAt: calcExpiresAt(durationDays),
+        revokedAt: null, revokedBy: null,
+      };
+      db.insertPunishment(p);
+      logIdAssignment('punishment', punishmentId, (reason || '').slice(0, 100), db);
+      if (sourceReportId) {
+        const report = readReports().find(r => r.reportId === sourceReportId);
+        if (report) { report.handledResult = 'violation'; report.punishmentId = punishmentId; report.status = 'resolved'; report.handledBy = req.admin.id; report.handledAt = now; db.writeReports(readReports()); }
+      }
+      penalty.notifyPunishmentIssued(userId, punishmentId, p);
+      return res.json({ ok: true, data: { punishmentId } });
+    }
+
+    return res.json({ ok: false, msg: '无效的处罚级别' });
   });
 
   // 撤销处罚
