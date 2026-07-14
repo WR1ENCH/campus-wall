@@ -421,6 +421,8 @@ function migrate() {
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
+    { name: 'discussions', columns: ['official'] },
+    { name: 'whispers', columns: ['signed', 'signTime'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];

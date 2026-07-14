@@ -842,6 +842,54 @@ server.js
 |------|------|-----|------|
 | 举报列表"举报人"只显示 raw name 无 UID | `admin.html` | 2166 | 用 `reporterInfo.nickname (username, UID:xxx)` 格式显示 |
 
+### 会话 2 — 2026-07-13
+
+#### 讨论区开放用户创建话题
+
+| 文件 | 改动 |
+|------|------|
+| `routes/discussions.js` | `POST /api/discussions` 新增 `x-user-token` 路径，普通用户可创建话题。增加处罚检测（`isFeatureBlocked`）、频率限制（1分钟最多5次）、敏感词+霸凌姓名检测。原有 admin/SC 路径不变。 |
+| `index.html` | 讨论弹窗话题列表增加「＋创建话题」按钮 + 标题输入表单。仅登录用户可见。创建成功后自动刷新列表。 |
+| `docs_for_agent.md` | 本会话记录。 |
+
+**频率限制**：`discussionCreateLimit` 内存 Map（1分钟窗口，最多5次），`DISCUSSION_CREATE_WINDOW_MS=60000`，`DISCUSSION_CREATE_MAX=5`。清理随 `commentDeleteLimit` 的 `setInterval` 每60秒执行。
+
+### 会话 4 — 2026-07-14
+
+#### 悄悄话功能
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 新增 WHIS 前缀 | `lib/uniqueId.js` | `VALID_PREFIXES` 增加 `'WHIS'` |
+| whispers 表列迁移 | `db.js` | 增加 `signed`、`signTime` 列 |
+| getReportedContent 加 whisper | `lib/penalty.js` | 悄悄话举报证据快照提取 |
+| 新建路由文件 | `routes/whispers.js` | `POST /api/whispers` 发送、`GET /api/whispers/inbox` 收件箱、`POST /api/whispers/:id/sign` 签收 |
+| 挂载新路由 | `server.js` | 在 student-council 后挂载 |
+| 新增悄悄话按钮 | `index.html` | action bar 增加「悄悄话」按钮（粉色主题） |
+| 发悄悄话弹窗 | `index.html` | `#whisperModalOverlay` — 搜索用户 + 输入内容（50字限制） |
+| 接收通知弹窗 | `index.html` | `#whisperIncomingOverlay` — 签收 + 举报入口 |
+| SSE 集成 | `index.html` | `noticeUpdate` 事件触发 `checkIncomingWhispers()` |
+| JS 逻辑 | `index.html` | whisperSearch、submitWhisper、signCurrentWhisper、reportCurrentWhisper |
+
+**悄悄话路由详情**：
+
+| 端点 | 方法 | 鉴权 | 功能 |
+|------|------|------|------|
+| `/api/whispers` | POST | 用户 | 发送：敏感词+霸凌+处罚检测 → 生成 WHIS-ID → 写库 → T1 通知接收方 |
+| `/api/whispers/inbox` | GET | 用户 | 收到的悄悄话列表（未签收优先） |
+| `/api/whispers/:id/sign` | POST | 用户 | 签收（仅接收者可操作）→ T1 通知发送方 |
+
+**举报集成**：接收弹窗「举报」按钮 → `POST /api/reports`，`type: 'whisper'`，经 `getReportedContent('whisper', id)` 提取证据快照，走统一举报处理流程。
+
+### 会话 3 — 2026-07-13
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 话题创建需学认证 | `routes/discussions.js` | 普通用户创建讨论话题时检查 `zhixueStatus === 'approved' && zhixueReviewedBy`，否则返回 `NOT_VERIFIED` |
+| 讨论+问答举报入口 | `index.html` | 话题列表、话题评论、问答问题、问答答案增加举报按钮，统一调用 `POST /api/reports`（`discussion` / `discussion_comment` / `qa_question` / `qa_answer`）|
+| 讨论窗口重设计 | `index.html` CSS + JS + HTML | 暖色调配色（砖棕 `#8b6f5e`），卡片化话题列表，comment 区背景优化，slide-left/slide-right 话题列表↔评论切换动画 |
+| 问答窗口重设计 | `index.html` CSS + JS + HTML | 暖金配色优化，qa-question-card/qa-answer-card 重设计，tab 切换 fade+slide 动画，报告按钮样式统一 |
+| 讨论评论举报修复 | `index.html` | 旧 `reportDiscussionComment` / `promptReportDiscussion` 调用不存在端点 → 改为统一 `/api/reports` |
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
