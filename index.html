@@ -2260,7 +2260,8 @@
   </div>
   <div class="action-btns">
   <button class="hamburger-btn" id="hamburgerBtn2" onclick="toggleSideNav()" style="display:flex;flex-shrink:0;margin-right:auto;"><span></span><span id="hamburgerBadge2" class="hamburger-badge" style="display:none"></span></button>
-  <button class="compose-btn" onclick="openModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span class="btn-label">贴一张</span></button>
+   <button class="compose-btn" style="background:var(--brand-gold);color:var(--brand-brown);" onclick="window.open('credit.html','_blank')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg> <span class="btn-label">Credits</span> <span id="actionBarCredit" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span></button>
+   <button class="compose-btn" onclick="openModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span class="btn-label">贴一张</span></button>
   <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="btn-label">讨论区</span></button>
   <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="btn-label">你问我答</span></button>
   <button class="compose-btn" style="background:#e0f2fe;color:#0c4a6e;border:1.5px solid #7dd3fc;" type="button" onclick="openVoteModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> <span class="btn-label">投票</span></button>
@@ -4080,7 +4081,9 @@
  document.getElementById('topUserAvatar').innerHTML = currentUser.avatar && currentUser.avatar !== '🙈' ? currentUser.avatar : avatarSvg;
  document.getElementById('topUserName').textContent = currentUser.nickname;
  document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
- document.getElementById('topUserCredit').textContent = currentUser.credit || 0;
+  document.getElementById('topUserCredit').textContent = currentUser.credit || 0;
+  var actionBarCredit = document.getElementById('actionBarCredit');
+  if (actionBarCredit) actionBarCredit.textContent = currentUser.credit || 0;
  updateCheckinBtn(currentUser.checkinToday);
  const userProfileUrl = `user.html?id=${currentUser.id}`;
  document.getElementById('topUserNameLink').href = userProfileUrl;
