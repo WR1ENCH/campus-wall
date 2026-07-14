@@ -302,6 +302,22 @@
       background: #DCEADC;
     }
 
+    .btn-credit {
+      background: linear-gradient(135deg, #f5c518, #e0a800);
+      color: #5a3d00;
+      border: 1px solid transparent;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(224,168,0,0.18);
+    }
+
+    .btn-credit:hover {
+      filter: brightness(1.04);
+    }
+
+    .btn-credit:active {
+      transform: scale(0.97);
+    }
+
     .btn-outline {
       background: transparent;
       color: var(--text-secondary);
@@ -1097,6 +1113,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
               同学认证
             </button>
+            <button id="openCreditBtn" class="btn btn-credit" onclick="window.open('credit.html','_blank')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
+              我的积分 <span id="userCreditInline" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span>
+            </button>
           </div>
           <div id="zhixueInfo" class="cert-info">
             <div class="cert-info-header">
@@ -1243,6 +1263,15 @@
       const uidEl = document.getElementById('profileUid');
       if (uidEl) {
         uidEl.querySelector('span').textContent = 'UID: ' + user.id;
+      }
+
+      const creditInline = document.getElementById('userCreditInline');
+      if (creditInline) {
+        if (currentLoggedInUser && currentLoggedInUser.id === user.id) {
+          creditInline.textContent = (currentLoggedInUser.credit || 0);
+        } else {
+          creditInline.textContent = (user.credit || 0);
+        }
       }
     }
 
