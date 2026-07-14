@@ -960,3 +960,15 @@ server.js
 - CTA：兑换引导按钮指向 `https://www.kufaka.com/shop/2XLA5BYC/2niwrg`。
 
 **图谱更新提示**：本次改动涉及 `index.html` / `user.html` / `credit.html` 三处前端文件，建议在提交后运行 `graphify . --update`（或 `graphify . --code-only`）刷新 `graphify-out/`。
+
+### 会话 5 — 2026-07-14 · Credit 页面重设计 + 首页 Credit 按钮
+
+**Credit 页面重设计 `credit.html`**
+- 推翻旧砖墙背景设计，采用新设计语言：浅灰背景 `#F6F5F3`、白色表面卡片、8px 圆角、`Noto Sans SC` 字体，与 `user.html` 风格一致。
+- 保持全部既有 JS 功能：`loadCredit`、`renderCredit`、`animateCount`（数值滚动动画）、`doRedeem`（卡密兑换）、`luhnModN` 前端校验。
+- 布局：sticky 顶栏（品牌 + 返回按钮）→ Hero 余额卡片（渐变光晕、圆形图标、大号 tabular 数字、CTA 按钮）→ 兑换卡密卡片 → 流水记录卡片 → 底部说明区域。
+- 响应式：`max-width: 640px` 内容区，移动端适配 padding/字号。
+
+**首页 Credit 按钮 `index.html`**
+- `.action-btns` 中 hamburger 按钮后新增 Credits 按钮：金黄色 `var(--brand-gold)` 背景，显示积分余额，点击新窗打开 `credit.html`。
+- `updateUserBar()` 中同步刷新 `#actionBarCredit`，覆盖登录态切换、签到后刷新等场景。

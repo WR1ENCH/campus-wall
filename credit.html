@@ -3,356 +3,541 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Credit · 校园墙</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Credits · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brick: #c4a882;
-      --brick-deep: #8b6f5e;
-      --brick-deep-2: #7a5f4e;
-      --ink: #3a2a1a;
-      --ink-soft: #5a4a3a;
-      --ink-mute: #8a7a6a;
-      --paper: #fffdf8;
-      --paper-soft: rgba(255,253,248,0.86);
-      --line: #ece2d4;
-      --gold: #e0a800;
+      --bg: #F6F5F3;
+      --surface: #FFFFFF;
+      --border: #E8E6E4;
+      --text-primary: #1C1B1A;
+      --text-secondary: #8C8A88;
+      --text-muted: #B8B6B4;
+      --accent: #8B6F5E;
+      --accent-light: rgba(139,111,94,0.08);
+      --accent-hover: rgba(139,111,94,0.15);
+      --gold: #f5c518;
       --gold-deep: #5a3d00;
-      --pos: #2f9e57;
-      --neg: #d9473b;
-      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --gold-light: rgba(245,197,24,0.15);
+      --pos: #346538;
+      --pos-light: #EDF3EC;
+      --neg: #DC4A3D;
+      --neg-light: #FDEBEC;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html { scroll-behavior: smooth; }
-
     body {
-      font-family: 'Noto Sans SC', sans-serif;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
       min-height: 100vh;
-      color: var(--ink);
-      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ===== 砖墙背景（项目标识） ===== */
-    .wall {
-      min-height: 100vh;
-      background-color: var(--brick);
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,0,0,0.10) 59px, rgba(0,0,0,0.10) 61px, transparent 61px, transparent 120px),
-        repeating-linear-gradient(90deg, transparent, transparent 119px, rgba(0,0,0,0.10) 119px, rgba(0,0,0,0.10) 121px, transparent 121px, transparent 240px),
-        repeating-linear-gradient(0deg, rgba(180,140,100,0.28) 0px, rgba(200,160,120,0.10) 30px, rgba(170,130,90,0.18) 60px, rgba(190,150,110,0.12) 90px, rgba(175,135,95,0.22) 120px);
-      background-size: 240px 120px;
-      position: relative;
-      padding-bottom: 72px;
-    }
-    .wall::before {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse at 18% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 82% 18%, rgba(255,255,255,0.05) 0%, transparent 42%),
-        radial-gradient(ellipse at 50% 82%, rgba(0,0,0,0.07) 0%, transparent 50%);
-      pointer-events: none; z-index: 0;
-    }
-
-    /* ===== 顶部栏 ===== */
+    /* ===== Top Bar ===== */
     .top-bar {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(139,111,94,0.92);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(246,245,243,0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      padding: 13px 22px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid rgba(0,0,0,0.12);
-      box-shadow: 0 4px 22px rgba(0,0,0,0.18);
+      border-bottom: 1px solid var(--border);
     }
-    .wall-title {
-      display: flex; align-items: center; gap: 10px;
-      color: #fff;
-      font-family: 'ZCOOL KuaiLe', cursive;
-      font-size: 22px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .back-btn {
-      color: rgba(255,255,255,0.88);
-      text-decoration: none;
-      font-size: 13px;
-      padding: 7px 16px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.14);
-      transition: background 0.22s var(--ease), transform 0.22s var(--ease);
-    }
-    .back-btn:hover { background: rgba(255,255,255,0.26); }
-    .back-btn:active { transform: scale(0.96); }
 
-    /* ===== 主内容 ===== */
-    .main {
-      max-width: 540px;
-      margin: 28px auto;
-      padding: 0 18px;
+    .top-bar-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .top-bar-brand svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .top-bar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .top-bar-back:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .top-bar-back svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ===== Balance Hero ===== */
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      margin: 32px 0 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(245,197,24,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--gold-light);
+      color: var(--gold-deep);
+    }
+
+    .hero-icon svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .hero-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
       position: relative;
       z-index: 1;
     }
 
-    /* ===== 卡片基础 ===== */
-    .card {
-      background: var(--paper-soft);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.6);
-      border-radius: 18px;
-      padding: 26px 24px;
-      box-shadow: 0 10px 34px rgba(80,55,30,0.14);
-      margin-bottom: 18px;
-      opacity: 0;
-      transform: translateY(18px);
-      animation: rise 0.7s var(--ease) forwards;
-    }
-    .card:nth-child(1) { animation-delay: 0.05s; }
-    .card:nth-child(2) { animation-delay: 0.13s; }
-    .card:nth-child(3) { animation-delay: 0.21s; }
-    .card:nth-child(4) { animation-delay: 0.29s; }
-    @keyframes rise { to { opacity: 1; transform: translateY(0); } }
-
-    /* ===== 余额 Hero ===== */
-    .hero {
-      text-align: center;
-      padding: 30px 24px 26px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(circle at 50% -10%, rgba(224,168,0,0.10) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .hero-icon {
-      width: 58px; height: 58px;
-      margin: 0 auto 14px;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(245,197,24,0.22), rgba(224,168,0,0.12));
-      color: var(--gold-deep);
-      box-shadow: 0 6px 18px rgba(224,168,0,0.16);
-      animation: pop 0.6s var(--ease) 0.2s both;
-    }
-    @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .hero-label {
-      font-size: 13px;
-      color: var(--ink-mute);
-      letter-spacing: 0.04em;
-      margin-bottom: 10px;
-    }
     .balance {
-      font-size: 54px;
+      font-size: 56px;
       font-weight: 700;
-      line-height: 1.05;
-      color: var(--ink);
+      line-height: 1;
+      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.02em;
-      display: flex; align-items: baseline; justify-content: center; gap: 8px;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
     }
+
     .balance .unit {
       font-size: 16px;
       font-weight: 500;
-      color: var(--ink-mute);
+      color: var(--text-muted);
       letter-spacing: 0;
     }
+
     .hero-sub {
       margin-top: 10px;
       font-size: 13px;
-      color: var(--ink-mute);
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
     }
-    .cta {
-      display: inline-flex; align-items: center; gap: 8px;
-      margin-top: 20px;
-      padding: 12px 30px;
-      background: linear-gradient(135deg, #f5c518, #e0a800);
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 24px;
+      padding: 10px 28px;
+      background: linear-gradient(135deg, var(--gold), #e0a800);
       color: var(--gold-deep);
       border: none;
-      border-radius: 12px;
-      font-size: 15px; font-weight: 700;
-      font-family: inherit;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
       text-decoration: none;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(224,168,0,0.26);
-      transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), filter 0.18s var(--ease);
+      box-shadow: 0 2px 8px rgba(224,168,0,0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      position: relative;
+      z-index: 1;
     }
-    .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(224,168,0,0.34); filter: brightness(1.03); }
-    .cta:active { transform: translateY(0) scale(0.97); }
 
-    /* ===== 区块标题 ===== */
-    .section-title {
+    .hero-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(224,168,0,0.28);
+      filter: brightness(1.04);
+    }
+
+    .hero-cta:active {
+      transform: scale(0.97);
+    }
+
+    .hero-cta svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== Section ===== */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 15px;
       font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
+      color: var(--text-primary);
+      margin-bottom: 18px;
     }
-    .section-title svg { color: var(--brick-deep); }
 
-    /* ===== 兑换区 ===== */
-    .redeem-row { display: flex; gap: 10px; align-items: stretch; }
+    .section-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ===== Redeem ===== */
+    .redeem-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
     .redeem-input {
       flex: 1;
-      padding: 12px 15px;
-      border: 1.5px solid var(--line);
-      border-radius: 12px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       font-size: 14px;
-      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-family: var(--font);
       letter-spacing: 0.04em;
-      color: var(--ink);
+      color: var(--text-primary);
       outline: none;
-      background: rgba(255,255,255,0.7);
-      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+      background: var(--surface);
+      transition: border-color 0.15s ease;
     }
-    .redeem-input::placeholder { color: #b6a994; letter-spacing: 0; }
+
+    .redeem-input::placeholder {
+      color: var(--text-muted);
+      letter-spacing: 0;
+    }
+
     .redeem-input:focus {
-      border-color: var(--brick-deep);
-      box-shadow: 0 0 0 3px rgba(139,111,94,0.14);
+      border-color: var(--accent);
     }
+
     .redeem-btn {
-      padding: 12px 22px;
-      background: var(--brick-deep);
+      padding: 10px 22px;
+      background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      font-size: 14px; font-weight: 600;
-      font-family: inherit;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
       white-space: nowrap;
       cursor: pointer;
-      transition: background 0.2s var(--ease), transform 0.15s var(--ease);
+      transition: background 0.15s ease, transform 0.12s ease;
     }
-    .redeem-btn:hover { background: var(--brick-deep-2); }
-    .redeem-btn:active { transform: scale(0.97); }
-    .redeem-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .redeem-btn:hover {
+      background: #7A5F4E;
+    }
+
+    .redeem-btn:active {
+      transform: scale(0.97);
+    }
+
+    .redeem-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .redeem-result {
       margin-top: 12px;
       font-size: 13px;
       min-height: 20px;
-      display: flex; align-items: center; gap: 6px;
-      opacity: 0; transform: translateY(-4px);
-      transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
-    }
-    .redeem-result.show { opacity: 1; transform: translateY(0); }
-    .redeem-result.success { color: var(--pos); }
-    .redeem-result.error { color: var(--neg); }
-
-    /* ===== 流水记录 ===== */
-    .log-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 2px;
-      border-bottom: 1px solid var(--line);
-      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       opacity: 0;
-      transform: translateY(10px);
-      animation: rise 0.5s var(--ease) forwards;
+      transform: translateY(-4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
     }
-    .log-item:last-child { border-bottom: none; }
-    .log-desc { flex: 1; color: var(--ink); }
+
+    .redeem-result.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .redeem-result.success {
+      color: var(--pos);
+    }
+
+    .redeem-result.error {
+      color: var(--neg);
+    }
+
+    .redeem-result svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ===== Logs ===== */
+    .log-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 2px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-desc {
+      flex: 1;
+      min-width: 0;
+      color: var(--text-primary);
+    }
+
     .log-desc .log-time {
-      font-size: 11px;
-      color: var(--ink-mute);
+      font-size: 12px;
+      color: var(--text-muted);
       display: block;
-      margin-top: 3px;
+      margin-top: 2px;
       font-variant-numeric: tabular-nums;
     }
+
     .log-amount {
-      font-weight: 700;
+      font-weight: 600;
       white-space: nowrap;
-      margin-left: 12px;
+      margin-left: 16px;
       font-variant-numeric: tabular-nums;
-      display: flex; align-items: center; gap: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
     }
-    .log-amount.positive { color: var(--pos); }
-    .log-amount.negative { color: var(--neg); }
+
+    .log-amount.positive {
+      color: var(--pos);
+    }
+
+    .log-amount.negative {
+      color: var(--neg);
+    }
+
+    .log-amount svg {
+      width: 14px;
+      height: 14px;
+    }
+
     .empty-tip {
       text-align: center;
-      padding: 30px 10px;
-      color: var(--ink-mute);
-      font-size: 13px;
-    }
-
-    /* ===== 说明 ===== */
-    .disclaimer {
-      background: rgba(255,253,248,0.7);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.5);
-      border-radius: 14px;
-      padding: 22px 24px;
-      margin: 26px auto 18px;
-      font-size: 13px;
-      color: var(--ink-soft);
-      line-height: 1.9;
-    }
-    .disclaimer-title {
-      font-weight: 700;
+      padding: 32px 10px;
+      color: var(--text-muted);
       font-size: 14px;
-      margin-bottom: 10px;
-      color: var(--ink);
-      display: flex; align-items: center; gap: 8px;
     }
-    .disclaimer-title svg { color: var(--brick-deep); }
-    .disclaimer p { margin: 0 0 10px; }
-    .disclaimer p:last-child { margin-bottom: 0; }
 
-    /* ===== 未登录 / 加载 ===== */
-    .login-prompt, .loading {
+    /* ===== States ===== */
+    .login-prompt,
+    .loading {
       text-align: center;
-      padding: 56px 20px;
-      color: var(--ink-mute);
+      padding: 60px 20px;
+      color: var(--text-muted);
       font-size: 15px;
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
     }
+
     .login-prompt a {
-      color: var(--brick-deep);
+      color: var(--accent);
       font-weight: 600;
       text-decoration: none;
       border-bottom: 1px solid currentColor;
     }
+
+    .login-prompt svg,
+    .loading svg {
+      width: 32px;
+      height: 32px;
+      color: var(--text-muted);
+    }
+
     .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid var(--line);
-      border-top-color: var(--brick-deep);
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== Disclaimer ===== */
+    .disclaimer {
+      margin: 24px 0 48px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .disclaimer-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .disclaimer-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    .disclaimer p {
+      margin-bottom: 8px;
+    }
+
+    .disclaimer p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .top-bar-inner {
+        padding: 0 16px;
+      }
+
+      .hero-card {
+        padding: 32px 24px;
+        margin-top: 24px;
+      }
+
+      .balance {
+        font-size: 46px;
+      }
+    }
 
     @media (max-width: 480px) {
-      .balance { font-size: 46px; }
-      .main { margin-top: 20px; }
+      .section-card {
+        padding: 20px 16px;
+      }
+
+      .balance {
+        font-size: 40px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="wall">
-    <div class="top-bar">
-      <div class="wall-title">
-        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
-        <span>Credit</span>
+  <!-- ===== Top Bar ===== -->
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
+        Credits
       </div>
-      <a href="index.html" class="back-btn">返回首页</a>
+      <a href="index.html" class="top-bar-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        返回
+      </a>
     </div>
+  </div>
 
-    <div class="main">
-      <div id="creditContent">
-        <div class="loading"><div class="spinner"></div>加载中…</div>
+  <div class="container">
+    <div id="creditContent">
+      <div class="loading">
+        <div class="spinner"></div>
+        加载中…
       </div>
     </div>
 
     <div class="disclaimer">
-      <div class="disclaimer-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 关于 Credit</div>
-      <p style="margin:0 0 10px 0;">本平台发行的「Credits」是仅供本平台内使用的虚拟服务凭证，不代表任何形式的法定货币、金融证券、投资代币或储值工具。</p>
-      <p style="margin:0 0 10px 0;">Credit 仅限购买，不可反向兑换为人民币或其他法币（不可提现）。</p>
-      <p style="margin:0 0 10px 0;">您购买的 Credit 实质上是购买了平台提供的特定技术服务时长（如拍卖展示时长），平台保留对 Credit 的最终解释权和管理权。</p>
-      <p style="margin:0 0 10px 0;">Credit 不具备投资属性，请勿基于其进行投机或炒作。</p>
-      <p style="margin:0 0 10px 0;">使用 Credit 发布的任何内容，必须遵守国家法律法规及校规校纪。严禁发布涉政、涉黄、暴力、人身攻击及诈骗信息。违规内容将被下架，已消耗的 Credit 不予退还。</p>
-      <p style="margin:0 0 0 0;">本平台旨在丰富校园文化娱乐生活，倡导理性消费。Credit 是服务工具，而非资产。请您根据自身需求合理充值，切勿沉迷或超额消费。</p>
+      <div class="disclaimer-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
+        关于 Credits
+      </div>
+      <p>本平台发行的「Credits」是仅供本平台内使用的虚拟服务凭证，不代表任何形式的法定货币、金融证券、投资代币或储值工具。</p>
+      <p>Credit 仅限购买，不可反向兑换为人民币或其他法币（不可提现）。</p>
+      <p>您购买的 Credit 实质上是购买了平台提供的特定技术服务时长（如拍卖展示时长），平台保留对 Credit 的最终解释权和管理权。</p>
+      <p>Credit 不具备投资属性，请勿基于其进行投机或炒作。</p>
+      <p>使用 Credit 发布的任何内容，必须遵守国家法律法规及校规校纪。严禁发布涉政、涉黄、暴力、人身攻击及诈骗信息。违规内容将被下架，已消耗的 Credit 不予退还。</p>
+      <p>本平台旨在丰富校园文化娱乐生活，倡导理性消费。Credit 是服务工具，而非资产。请您根据自身需求合理充值，切勿沉迷或超额消费。</p>
     </div>
   </div>
 
@@ -363,11 +548,11 @@
     }
 
     function animateCount(el, target) {
-      const dur = 800, start = performance.now();
-      const from = 0;
+      var dur = 800, start = performance.now();
+      var from = 0;
       function step(now) {
-        const p = Math.min(1, (now - start) / dur);
-        const eased = 1 - Math.pow(1 - p, 3);
+        var p = Math.min(1, (now - start) / dur);
+        var eased = 1 - Math.pow(1 - p, 3);
         el.firstChild.nodeValue = Math.round(from + (target - from) * eased);
         if (p < 1) requestAnimationFrame(step);
       }
@@ -375,91 +560,93 @@
     }
 
     async function loadCredit() {
-      const content = document.getElementById('creditContent');
-      const token = localStorage.getItem('campus_user_token');
+      var content = document.getElementById('creditContent');
+      var token = localStorage.getItem('campus_user_token');
 
       if (!token) {
-        content.innerHTML = `
-          <div class="card">
-            <div class="login-prompt">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              请先<a href="index.html" onclick="event.preventDefault();window.location.href='index.html'">登录</a>后查看
-            </div>
-          </div>`;
+        content.innerHTML =
+          '<div class="section-card">' +
+            '<div class="login-prompt">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+              '请先<a href="index.html" onclick="event.preventDefault();window.location.href=\'index.html\'">登录</a>后查看' +
+            '</div>' +
+          '</div>';
         return;
       }
 
       try {
-        const meRes = await fetch('/api/user/me', { headers: { 'x-user-token': token } });
-        const meJson = await meRes.json();
+        var meRes = await fetch('/api/user/me', { headers: { 'x-user-token': token } });
+        var meJson = await meRes.json();
         if (!meJson.ok) throw new Error(meJson.msg || '获取用户信息失败');
 
-        const user = meJson.data;
-        const balance = user.credit || 0;
+        var user = meJson.data;
+        var balance = user.credit || 0;
 
-        let logs = [];
+        var logs = [];
         try {
-          const logRes = await fetch('/api/user/credit-logs', { headers: { 'x-user-token': token } });
-          const logJson = await logRes.json();
+          var logRes = await fetch('/api/user/credit-logs', { headers: { 'x-user-token': token } });
+          var logJson = await logRes.json();
           if (logJson.ok) logs = logJson.data || [];
         } catch {}
 
         renderCredit(balance, logs);
       } catch (e) {
-        content.innerHTML = `
-          <div class="card">
-            <div class="login-prompt">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-              加载失败：${escHtml(e.message)}
-            </div>
-          </div>`;
+        content.innerHTML =
+          '<div class="section-card">' +
+            '<div class="login-prompt">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+              '加载失败：' + escHtml(e.message) +
+            '</div>' +
+          '</div>';
       }
     }
 
     function renderCredit(balance, logs) {
-      const content = document.getElementById('creditContent');
+      var content = document.getElementById('creditContent');
 
-      let logsHtml = '';
+      var logsHtml = '';
       if (logs.length === 0) {
         logsHtml = '<div class="empty-tip">暂无流水记录</div>';
       } else {
-        logsHtml = logs.slice(0, 50).map((log, i) => {
-          const amount = log.amount || 0;
-          const isPositive = amount > 0;
-          return '<div class="log-item" style="animation-delay:' + (i * 0.05) + 's">'
-            + '<div class="log-desc">'
-            + escHtml(log.reason || (isPositive ? '收入' : '支出'))
-            + '<span class="log-time">' + (log.createdAt ? new Date(log.createdAt).toLocaleString('zh-CN') : '-') + '</span>'
-            + '</div>'
-            + '<div class="log-amount ' + (isPositive ? 'positive' : 'negative') + '">'
-            + (isPositive ? '+' : '') + amount + ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>'
-            + '</div>'
-            + '</div>';
+        logsHtml = logs.slice(0, 50).map(function(log) {
+          var amount = log.amount || 0;
+          var isPositive = amount > 0;
+          return '<div class="log-item">' +
+            '<div class="log-desc">' +
+              escHtml(log.reason || (isPositive ? '收入' : '支出')) +
+              '<span class="log-time">' + (log.createdAt ? new Date(log.createdAt).toLocaleString('zh-CN') : '-') + '</span>' +
+            '</div>' +
+            '<div class="log-amount ' + (isPositive ? 'positive' : 'negative') + '">' +
+              (isPositive ? '+' : '') + amount +
+              ' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>' +
+            '</div>' +
+          '</div>';
         }).join('');
       }
 
-      content.innerHTML = ''
-        + '<div class="card hero">'
-        + '<div class="hero-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg></div>'
-        + '<div class="hero-label">当前Credits余额</div>'
-        + '<div class="balance"><span id="balanceNum">0</span><span class="unit">Credit</span></div>'
-        + '<div class="hero-sub">可用于兑换平台各项服务</div>'
-        + '<a href="https://www.kufaka.com/shop/2XLA5BYC/2niwrg" target="_blank" rel="noopener noreferrer" class="cta">'
-        + '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h12v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2"/><path d="M18 12a2 2 0 0 1-2 2c0 1.1-.9 2-2 2"/></svg> 获取卡密'
-        + '</a>'
-        + '</div>'
-        + '<div class="card">'
-        + '<div class="section-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h12v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2"/><path d="M18 12a2 2 0 0 1-2 2c0 1.1-.9 2-2 2"/></svg> 兑换卡密</div>'
-        + '<div class="redeem-row">'
-        + '<input type="text" id="redeemInput" class="redeem-input" placeholder="输入卡密（如 CW-XXXX-XXXX-XXXX）" maxlength="30" onkeydown="if(event.key===\'Enter\')doRedeem()">'
-        + '<button class="redeem-btn" id="redeemBtn" onclick="doRedeem()">兑换</button>'
-        + '</div>'
-        + '<div class="redeem-result" id="redeemResult"></div>'
-        + '</div>'
-        + '<div class="card">'
-        + '<div class="section-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> 流水记录</div>'
-        + logsHtml
-        + '</div>';
+      content.innerHTML =
+        '<div class="hero-card">' +
+          '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg></div>' +
+          '<div class="hero-label">当前余额</div>' +
+          '<div class="balance"><span id="balanceNum">0</span><span class="unit">Credits</span></div>' +
+          '<div class="hero-sub">可用于平台各项服务</div>' +
+          '<a href="https://www.kufaka.com/shop/2XLA5BYC/2niwrg" target="_blank" rel="noopener noreferrer" class="hero-cta">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h12v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2"/><path d="M18 12a2 2 0 0 1-2 2c0 1.1-.9 2-2 2"/></svg>' +
+            获取卡密' +
+          '</a>' +
+        '</div>' +
+        '<div class="section-card">' +
+          '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h12v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2"/><path d="M18 12a2 2 0 0 1-2 2c0 1.1-.9 2-2 2"/></svg> 兑换卡密</div>' +
+          '<div class="redeem-row">' +
+            '<input type="text" id="redeemInput" class="redeem-input" placeholder="输入卡密（如 CW-XXXX-XXXX-XXXX）" maxlength="30" onkeydown="if(event.key===\'Enter\')doRedeem()">' +
+            '<button class="redeem-btn" id="redeemBtn" onclick="doRedeem()">兑换</button>' +
+          '</div>' +
+          '<div class="redeem-result" id="redeemResult"></div>' +
+        '</div>' +
+        '<div class="section-card">' +
+          '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> 流水记录</div>' +
+          logsHtml +
+        '</div>';
 
       animateCount(document.getElementById('balanceNum'), balance);
     }
@@ -523,13 +710,15 @@
     }
 
     function showResult(el, msg, type) {
-      el.innerHTML = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-        + (type === 'success'
+      el.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        (type === 'success'
           ? '<polyline points="20 6 9 17 4 12"/>'
-          : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>')
-        + '</svg> ' + escHtml(msg);
+          : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>') +
+        '</svg> ' + escHtml(msg);
       el.className = 'redeem-result show ' + type;
     }
+
     function clearResult(el) {
       el.textContent = '';
       el.className = 'redeem-result';
