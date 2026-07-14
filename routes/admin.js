@@ -697,7 +697,6 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   users[userIndex].zhixueStatus = isManual ? 'approved' : 'pending_confirm';
   users[userIndex].zhixueReviewedAt = now;
   users[userIndex].zhixueReviewedBy = req.admin.id;
-  users[userIndex].zhixuePassword = null;
   users[userIndex].zhixueRejectReason = null;
   users[userIndex].zhixueRejectedAt = null;
 

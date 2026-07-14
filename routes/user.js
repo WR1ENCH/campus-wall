@@ -259,7 +259,7 @@ module.exports = function(app) {
     }
   
     const users = readUsers();
-    let user = users.find(u => u.zhixueUsername === zhixueUsername && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
+    let user = users.find(u => String(u.zhixueUsername) === String(zhixueUsername) && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
     // 防御：approved 必须有审核记录
     if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
       console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
@@ -269,9 +269,19 @@ module.exports = function(app) {
       addLoginLog('user', zhixueUsername, false, ip, ua);
       return res.json({ ok: false, msg: '当前账号可能错误或者未绑定校园墙账号' });
     }
-    if (!verifyPassword(password, user.password)) {
-      addLoginLog('user', zhixueUsername, false, ip, ua);
-      return res.json({ ok: false, msg: '当前密码错误' });
+    const decryptedZhixuePwd = user.zhixuePassword ? (decryptCert(user.zhixuePassword) || '') : '';
+    if (password !== decryptedZhixuePwd) {
+      // 旧版代码在审核通过时会清空 zhixuePassword（已知 bug），
+      // 用户密码已不可恢复。此时允许用户重新提交密码来绑定。
+      if (!user.zhixuePassword) {
+        const idx = users.findIndex(u => u.id === user.id);
+        users[idx].zhixuePassword = encryptCert(password);
+        writeUsers(users);
+        console.log('[zhixue-login] 已恢复用户', user.id, '的智学密码');
+      } else {
+        addLoginLog('user', zhixueUsername, false, ip, ua);
+        return res.json({ ok: false, msg: '当前密码错误' });
+      }
     }
     // 自动解封
     if (user.status === 'banned' && user.banUntil) {
@@ -1006,7 +1016,9 @@ app.get('/api/users/search', (req, res) => {
     if (user.id && user.id.toLowerCase().includes(ql) && results.uids.length < LIMIT && !seen.has('u' + user.id)) {
       results.uids.push(base); seen.add('u' + user.id);
     }
-    if (user.certRealName && user.zhixueStatus === 'approved' && user.certRealName.includes(q) && results.names.length < LIMIT && !seen.has('r' + user.id)) {
+    const decryptedName = user.certRealName ? (decryptCert(user.certRealName) || '') : '';
+    const matchedName = (decryptedName && decryptedName.includes(q)) || (user.zhixueManualName && user.zhixueManualName.includes(q));
+    if (matchedName && results.names.length < LIMIT && !seen.has('r' + user.id)) {
       results.names.push(base); seen.add('r' + user.id);
     }
   }
