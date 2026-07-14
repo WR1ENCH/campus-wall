@@ -3,668 +3,1184 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📌 用户主页 · 校园墙</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <title>用户 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --note-yellow: #fff9b1;
-      --note-pink: #ffc9de;
-      --note-green: #b5f5c5;
-      --note-blue: #bde0fe;
-      --note-orange: #ffd6a5;
-      --note-purple: #d5b8ff;
+      --bg: #F6F5F3;
+      --surface: #FFFFFF;
+      --border: #E8E6E4;
+      --text-primary: #1C1B1A;
+      --text-secondary: #8C8A88;
+      --text-muted: #B8B6B4;
+      --accent: #8B6F5E;
+      --accent-light: rgba(139,111,94,0.08);
+      --accent-hover: rgba(139,111,94,0.15);
+      --danger: #DC4A3D;
+      --danger-light: #FDEBEC;
+      --success: #346538;
+      --success-light: #EDF3EC;
+      --warning: #956400;
+      --warning-light: #FBF3DB;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Noto Sans SC', sans-serif;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
       min-height: 100vh;
-      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ===== 砖墙背景 ===== */
-    .wall {
-      min-height: 100vh;
-      background-color: #c4a882;
-      background-image:
-        repeating-linear-gradient(
-          0deg,
-          transparent, transparent 59px,
-          rgba(0,0,0,0.12) 59px, rgba(0,0,0,0.12) 61px,
-          transparent 61px, transparent 120px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          transparent, transparent 119px,
-          rgba(0,0,0,0.12) 119px, rgba(0,0,0,0.12) 121px,
-          transparent 121px, transparent 240px
-        ),
-        repeating-linear-gradient(
-          0deg,
-          rgba(180,140,100,0.3) 0px,
-          rgba(200,160,120,0.1) 30px,
-          rgba(170,130,90,0.2) 60px,
-          rgba(190,150,110,0.15) 90px,
-          rgba(175,135,95,0.25) 120px
-        );
-      background-size: 240px 120px;
-      position: relative;
-      padding-bottom: 80px;
-    }
-
-    .wall::before {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 40%),
-        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.08) 0%, transparent 50%);
-      pointer-events: none; z-index: 0;
-    }
-
-    .wall::after {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(circle at 15% 30%, rgba(139,111,94,0.15) 0%, transparent 8%),
-        radial-gradient(circle at 75% 65%, rgba(139,111,94,0.1) 0%, transparent 6%),
-        radial-gradient(circle at 45% 15%, rgba(0,0,0,0.03) 0%, transparent 10%),
-        radial-gradient(circle at 85% 85%, rgba(139,111,94,0.12) 0%, transparent 7%);
-      pointer-events: none; z-index: 0;
-    }
-
-    /* ===== 顶部栏 ===== */
+    /* ===== Top Bar ===== */
     .top-bar {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(139,111,94,0.92);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(246,245,243,0.85);
       backdrop-filter: blur(12px);
-      padding: 14px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 3px solid rgba(0,0,0,0.15);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      border-bottom: 1px solid var(--border);
     }
 
-    .wall-title {
-      display: flex; align-items: center; gap: 10px;
-      color: #fff;
-      font-family: 'ZCOOL KuaiLe', cursive;
-      font-size: 24px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .back-btn {
-      background: rgba(255,255,255,0.15);
-      border: 2px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-family: 'Noto Sans SC', sans-serif;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .back-btn:hover {
-      background: rgba(255,255,255,0.25);
-      border-color: rgba(255,255,255,0.5);
-    }
-
-    /* ===== 用户信息卡片 ===== */
-    .user-card {
-      max-width: 800px;
-      margin: 40px auto 20px;
-      background: rgba(255,255,255,0.92);
-      border-radius: 24px;
-      padding: 30px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-      border: 3px solid rgba(139,111,94,0.4);
-      position: relative;
-      z-index: 1;
-    }
-
-    .user-header {
+    .top-bar-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 56px;
       display: flex;
       align-items: center;
-      gap: 24px;
-      margin-bottom: 24px;
+      justify-content: space-between;
     }
 
-    .user-avatar {
-      width: 100px;
-      height: 100px;
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .top-bar-brand svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .top-bar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .top-bar-back:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .top-bar-back svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ===== Profile Section ===== */
+    .profile {
+      padding: 48px 0 40px;
+    }
+
+    .profile-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 32px;
+    }
+
+    .profile-avatar {
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
-      border: 4px solid rgba(139,111,94,0.5);
-      background: #e0d3c6;
+      background: var(--accent-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      color: #8b6f5e;
+      font-size: 36px;
+      color: var(--accent);
       overflow: hidden;
+      flex-shrink: 0;
     }
-    .user-avatar img {
+
+    .profile-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .user-info h1 {
-      font-family: 'Ma Shan Zheng', cursive;
-      font-size: 36px;
-      color: #5a4638;
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .profile-name {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .profile-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .profile-badge.super {
+      background: rgba(220,74,61,0.1);
+      color: var(--danger);
+    }
+
+    .profile-badge.admin {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .profile-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .profile-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .profile-meta svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+    }
+
+    .profile-uid {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .profile-uid svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+
+    .profile-stat {
+      text-align: left;
+    }
+
+    .profile-stat-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .profile-stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .profile-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-ghost {
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid transparent;
+    }
+
+    .btn-ghost:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-ghost:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #7A5F4E;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-cert {
+      background: var(--success-light);
+      color: var(--success);
+      border: 1px solid transparent;
+    }
+
+    .btn-cert:hover {
+      background: #DCEADC;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-danger-ghost {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .btn-danger-ghost:hover {
+      background: #FAD5D5;
+    }
+
+    /* ===== Certification Info ===== */
+    .cert-info {
+      margin-top: 16px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    .cert-info-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 8px;
     }
 
-    .user-meta {
-      color: #7a6656;
-      font-size: 15px;
-      display: flex;
-      gap: 20px;
-      margin-bottom: 12px;
+    .cert-info-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--success);
     }
 
-    .user-stats {
-      display: flex;
-      gap: 30px;
-      margin-top: 20px;
-    }
-
-    .stat {
-      text-align: center;
-    }
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #8b6f5e;
-    }
-    .stat-label {
+    .cert-info-header span {
       font-size: 14px;
-      color: #9c8a7a;
+      font-weight: 500;
     }
 
-    /* ===== 帖子区域 ===== */
-    .posts-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 0 20px;
-      position: relative;
-      z-index: 2;
+    .cert-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
     }
 
-    .section-title {
-      font-family: 'Ma Shan Zheng', cursive;
-      font-size: 28px;
-      color: #5a4638;
-      margin: 40px 0 20px;
-      text-align: center;
-      position: relative;
+    .cert-edit-area {
+      margin-top: 8px;
+      text-align: left;
     }
-    .section-title::after {
-      content: '';
-      display: block;
-      width: 60px;
-      height: 4px;
-      background: #8b6f5e;
-      margin: 8px auto;
-      border-radius: 2px;
+
+    /* ===== Divider ===== */
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 32px;
+    }
+
+    /* ===== Posts ===== */
+    .posts-section {
+      padding-bottom: 64px;
+    }
+
+    .posts-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .posts-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .posts-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
     }
 
     .posts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px;
-      margin-bottom: 60px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
     }
 
-    /* 便利贴样式（复用 index.html 的样式） */
-    .note {
-      position: relative;
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 20px;
-      border-radius: 4px;
-      box-shadow: 3px 3px 12px rgba(0,0,0,0.2);
-      transform: rotate(var(--rotate));
-      transition: transform 0.3s, box-shadow 0.3s;
       cursor: pointer;
-      z-index: var(--zIndex);
-      min-height: 180px;
+      transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-    }
-    .note:hover {
-      transform: rotate(0deg) scale(1.02);
-      box-shadow: 5px 5px 20px rgba(0,0,0,0.25);
-      z-index: 100;
     }
 
-    .note-content {
+    .post-card:hover {
+      border-color: #D4D2D0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .post-card:active {
+      transform: scale(0.99);
+    }
+
+    .post-type {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+      align-self: flex-start;
+    }
+
+    .post-type.daily {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .post-type.love {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .post-type.tree {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .post-type.lost {
+      background: #E1F3FE;
+      color: #1F6C9F;
+    }
+
+    .post-type.event {
+      background: #FDF0E6;
+      color: #8D6E4E;
+    }
+
+    .post-type.default {
+      background: #F0EEF0;
+      color: #6B5E6B;
+    }
+
+    .post-content {
       font-size: 15px;
-      line-height: 1.5;
-      margin-bottom: 12px;
-      flex-grow: 1;
+      line-height: 1.7;
+      color: var(--text-primary);
+      flex: 1;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 4;
       -webkit-box-orient: vertical;
+      margin-bottom: 14px;
     }
 
-    .note-meta {
+    .post-footer {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 13px;
-      color: rgba(0,0,0,0.6);
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
     }
 
-    .note-author {
+    .post-author {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .note-avatar {
-      width: 20px;
-      height: 20px;
+    .post-author-avatar {
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: #ccc;
+      background: var(--accent-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 9px;
+      color: var(--accent);
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
-    .note-stats {
-      display: flex;
-      gap: 10px;
+    .post-author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    .note-stats span {
+    .post-author-name {
+      color: var(--text-secondary);
+    }
+
+    .post-stats {
       display: flex;
+      gap: 14px;
+    }
+
+    .post-stats span {
+      display: inline-flex;
       align-items: center;
       gap: 4px;
     }
 
-    .note-type {
-      position: absolute;
-      top: -8px;
-      right: 12px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 2px 10px;
-      border-radius: 12px;
+    .post-stats svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .post-time {
       font-size: 12px;
+      color: var(--text-muted);
     }
 
-    .empty-posts {
+    /* ===== States ===== */
+    .loading-state {
       text-align: center;
-      padding: 60px;
-      background: rgba(255,255,255,0.8);
-      border-radius: 20px;
-      border: 2px dashed rgba(139,111,94,0.4);
-      color: #7a6656;
-      font-size: 18px;
+      padding: 60px 0;
+      color: var(--text-muted);
+      font-size: 14px;
     }
 
-    /* ===== 加载指示器 ===== */
-    .loading {
+    .error-state {
       text-align: center;
-      padding: 40px;
-      color: #8b6f5e;
-      font-size: 18px;
+      padding: 24px 20px;
+      background: var(--danger-light);
+      border: 1px solid #F5C6C6;
+      border-radius: var(--radius);
+      color: var(--danger);
+      font-size: 14px;
+      margin: 24px 0;
     }
 
-    .error {
+    .empty-state {
       text-align: center;
-      padding: 40px;
-      background: rgba(255,200,200,0.8);
-      border-radius: 20px;
-      border: 2px solid #ff6b6b;
-      color: #c44545;
-      font-size: 16px;
-      margin: 40px auto;
-      max-width: 600px;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
     }
 
-    /* ===== 响应式 ===== */
-    @media (max-width: 768px) {
-      .user-header {
-        flex-direction: column;
-        text-align: center;
-      }
-      .user-stats {
-        justify-content: center;
-      }
-      .posts-grid {
-        grid-template-columns: 1fr;
-      }
+    .empty-state svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 12px;
+      color: var(--text-muted);
     }
 
-    /* ===== 编辑资料模态框 ===== */
+    /* ===== Modal ===== */
     .modal-overlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
+      inset: 0;
+      background: rgba(28,27,26,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 200;
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
-      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
-    .modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
+
     .modal-overlay.show {
       opacity: 1;
       visibility: visible;
     }
+
     .modal {
-      background: rgba(255,255,255,0.95);
-      border-radius: 24px;
-      padding: 30px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      border: 3px solid rgba(139,111,94,0.5);
-      position: relative;
-    }
-    .modal-header {
-      font-family: 'Ma Shan Zheng', cursive;
-      font-size: 28px;
-      color: #5a4638;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-    .modal-body {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .form-label {
-      font-weight: bold;
-      color: #7a6656;
-    }
-    .form-input {
-      padding: 12px 16px;
-      border: 2px solid rgba(139,111,94,0.3);
+      background: var(--surface);
       border-radius: 12px;
-      font-family: 'Noto Sans SC', sans-serif;
-      font-size: 16px;
-      transition: border 0.2s;
+      padding: 28px 24px 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      max-height: 85vh;
+      overflow-y: auto;
     }
-    .form-input:focus {
-      outline: none;
-      border-color: #8b6f5e;
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
-    .avatar-preview {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      border: 4px solid rgba(139,111,94,0.5);
-      background: #e0d3c6;
-      margin: 0 auto;
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      color: #8b6f5e;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--accent-light);
+      color: var(--text-primary);
+    }
+
+    .modal-close svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.15s;
+      background: var(--surface);
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .form-status {
+      text-align: center;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .form-status.show {
+      display: block;
+    }
+
+    .form-status.success {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .form-status.error {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 18px;
+    }
+
+    /* ===== Avatar Upload ===== */
+    .avatar-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: var(--accent);
       overflow: hidden;
     }
+
     .avatar-preview img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .file-input-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
+
     .file-input-label {
-      background: rgba(139,111,94,0.1);
-      border: 2px dashed rgba(139,111,94,0.4);
-      border-radius: 12px;
-      padding: 12px 20px;
-      text-align: center;
+      display: inline-block;
+      padding: 8px 18px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--text-secondary);
       cursor: pointer;
-      color: #7a6656;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
+
     .file-input-label:hover {
-      background: rgba(139,111,94,0.2);
-      border-color: #8b6f5e;
+      border-color: var(--accent);
+      color: var(--accent);
     }
+
     .file-input {
       display: none;
     }
+
     .file-hint {
-      font-size: 13px;
-      color: #9c8a7a;
+      font-size: 12px;
+      color: var(--text-muted);
       text-align: center;
     }
-    .modal-actions {
+
+    /* ===== Cert Tab ===== */
+    .cert-tabs {
       display: flex;
-      gap: 16px;
-      margin-top: 30px;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 18px;
     }
-    .modal-btn {
+
+    .cert-tab {
       flex: 1;
+      padding: 9px 0;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+
+    .cert-tab.active {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .cert-tab:not(.active) {
+      background: var(--bg);
+      color: var(--text-secondary);
+    }
+
+    .cert-tab:not(.active):hover {
+      background: #ECEBE8;
+    }
+
+    .cert-panel {
+      display: none;
+    }
+
+    .cert-panel.active {
+      display: block;
+    }
+
+    .cert-notice {
+      font-size: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .cert-notice.info {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .cert-notice.warning {
+      background: var(--warning-light);
+      color: var(--warning);
+      border: 1px solid rgba(149,100,0,0.15);
+    }
+
+    .cert-notice a {
+      color: inherit;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .manual-images-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .manual-image-item {
+      position: relative;
+      width: 72px;
+      height: 72px;
+    }
+
+    .manual-image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .manual-image-remove {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .manual-image-add {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 14px;
-      border: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .manual-image-add:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ===== Flow Popup ===== */
+    .flow-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(28,27,26,0.5);
+      backdrop-filter: blur(4px);
+    }
+
+    .flow-box {
+      background: var(--surface);
       border-radius: 12px;
-      font-family: 'Noto Sans SC', sans-serif;
-      font-weight: bold;
+      padding: 28px 24px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+
+    .flow-title {
       font-size: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
     }
-    .modal-btn-primary {
-      background: #8b6f5e;
-      color: white;
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
     }
-    .modal-btn-primary:hover {
-      background: #7a5f4e;
+
+    .flow-step {
+      background: var(--success);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 200px;
+      line-height: 1.5;
     }
-    .modal-btn-secondary {
-      background: rgba(139,111,94,0.1);
-      color: #7a6656;
-    }
-    .modal-btn-secondary:hover {
-      background: rgba(139,111,94,0.2);
-    }
-    .edit-btn {
-      background: rgba(139,111,94,0.15);
-      border: 2px solid rgba(139,111,94,0.3);
-      color: #5a4638;
-      padding: 10px 24px;
-      border-radius: 12px;
-      font-family: 'Noto Sans SC', sans-serif;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .edit-btn:hover {
-      background: rgba(139,111,94,0.25);
-      border-color: rgba(139,111,94,0.5);
-    }
-    /* 同学认证绿色按钮 */
-    .bind-zhixue-btn {
-      background: #22c55e;
-      color: white;
-      border: none;
-      font-weight: bold;
-    }
-    .bind-zhixue-btn:hover {
-      background: #16a34a;
-    }
-    /* 流程导图样式 */
-    .flow-node {
-      background: #22c55e; color: white; padding: 10px 18px;
-      border-radius: 10px; font-size: 13px; font-weight: 600;
-      text-align: center; box-shadow: 0 3px 10px rgba(34,197,94,0.25);
-      min-width: 200px; line-height: 1.5;
-    }
+
     .flow-arrow {
-      font-size: 20px; color: #22c55e; padding: 4px 0;
-      font-weight: bold; line-height: 1;
+      color: var(--success);
+      font-size: 16px;
+      font-weight: 600;
+      padding: 2px 0;
+    }
+
+    .flow-footer {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .flow-btn {
+      padding: 8px 32px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background 0.15s;
+    }
+
+    .flow-btn:hover {
+      background: #7A5F4E;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .top-bar-inner {
+        padding: 0 16px;
+      }
+
+      .profile {
+        padding: 32px 0 28px;
+      }
+
+      .profile-inner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 20px;
+      }
+
+      .profile-name-row {
+        justify-content: center;
+      }
+
+      .profile-meta {
+        justify-content: center;
+      }
+
+      .profile-stats {
+        justify-content: center;
+      }
+
+      .profile-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .posts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal {
+        padding: 24px 20px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .profile-stats {
+        gap: 24px;
+      }
+
+      .profile-stat-value {
+        font-size: 20px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="wall">
-    <!-- 顶部栏 -->
-    <div class="top-bar">
-      <div class="wall-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
-        校园墙 · 用户主页
+  <!-- ===== Top Bar ===== -->
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <a href="index.html" class="top-bar-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
+        校园墙
+      </a>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <a href="index.html" class="top-bar-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          返回
+        </a>
+        <button id="editProfileBtn" class="btn btn-ghost" style="display:none;padding:6px 14px;font-size:13px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          编辑资料
+        </button>
       </div>
-      <a href="index.html" class="back-btn">返回首页</a>
     </div>
+  </div>
 
-    <!-- 用户信息卡片 -->
-    <div class="user-card">
-      <div class="user-header">
-        <div class="user-avatar" id="userAvatar"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-        <div class="user-info">
-          <h1 id="userNickname">加载中...</h1>
-          <div class="user-meta">
-            <span id="adminBadge" style="display:none; font-size:16px; vertical-align:middle;"></span>
-            <span id="userUsername">@username</span>
-            <span id="userJoinDate">加入日期：--</span>
-            <span id="bindAdminTag" style="display:none; cursor:pointer; text-decoration:underline;" onclick="openBindAdminModal()"></span>
-            <span id="unbindAdminTag" style="display:none; cursor:pointer; color:#c44545; text-decoration:underline; margin-left:8px;">解除绑定</span>
+  <div class="container">
+    <!-- ===== Profile ===== -->
+    <div class="profile">
+      <div class="profile-inner">
+        <div class="profile-avatar" id="userAvatar">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name-row">
+            <span class="profile-name" id="userNickname">加载中...</span>
+            <span id="adminBadge" style="display:none;"></span>
           </div>
-          <div class="user-stats">
-            <div class="stat">
-              <div class="stat-value" id="postCount">0</div>
-              <div class="stat-label">帖子</div>
+          <div class="profile-meta">
+            <span id="userUsername">@--</span>
+            <span id="userJoinDate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>加入于 --</span>
+            </span>
+          </div>
+          <div class="profile-uid" id="profileUid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>UID: --</span>
+          </div>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="postCount">0</div>
+              <div class="profile-stat-label">帖子</div>
             </div>
-            <div class="stat">
-              <div class="stat-value" id="likeCount">0</div>
-              <div class="stat-label">获赞</div>
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="likeCount">0</div>
+              <div class="profile-stat-label">获赞</div>
             </div>
-            <div class="stat">
-              <div class="stat-value" id="commentCount">0</div>
-              <div class="stat-label">评论</div>
+            <div class="profile-stat">
+              <div class="profile-stat-value" id="commentCount">0</div>
+              <div class="profile-stat-label">评论</div>
             </div>
           </div>
-          <div style="margin-top: 20px; text-align: center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-            <button id="editProfileBtn" class="edit-btn" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 编辑资料</button>
-            <button id="bindZhixueBtn" class="edit-btn bind-zhixue-btn" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> 同学认证</button>
+          <div class="profile-actions">
+            <button id="bindZhixueBtn" class="btn btn-cert" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              同学认证
+            </button>
           </div>
-          <!-- 同学认证信息展示 -->
-          <div id="zhixueInfo" style="margin-top:16px; padding:10px 16px; background:var(--bg-main); border-radius:12px; font-size:13px; color:var(--text-sub); display:none;">
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
-              <span style="font-weight:600; color:var(--text-main);">🎓 同学认证</span>
-              <span id="zhixueStatusBadge" style="padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold;"></span>
+          <div id="zhixueInfo" class="cert-info">
+            <div class="cert-info-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>同学认证</span>
+              <span id="zhixueStatusBadge" class="cert-badge"></span>
             </div>
-            <div id="zhixueEditArea" style="margin-top:8px; text-align:center; display:none;">
-              <button id="editCertBtn" class="edit-btn" style="font-size:12px; padding:5px 14px;">✏️ 编辑认证信息</button>
+            <div id="zhixueEditArea" class="cert-edit-area" style="display:none;">
+              <button id="editCertBtn" class="btn btn-ghost" style="font-size:12px; padding:5px 14px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                编辑认证信息
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 帖子区域 -->
-    <div class="posts-container">
-      <div class="section-title">发布的帖子</div>
-      <div id="postsLoading" class="loading">正在加载帖子...</div>
-      <div id="postsError" class="error" style="display:none"></div>
+    <div class="section-divider"></div>
+
+    <!-- ===== Posts ===== -->
+    <div class="posts-section">
+      <div class="posts-header">
+        <span class="posts-title">帖子</span>
+        <span class="posts-count" id="postsCountLabel"></span>
+      </div>
+      <div id="postsLoading" class="loading-state">加载中...</div>
+      <div id="postsError" class="error-state" style="display:none"></div>
       <div id="postsGrid" class="posts-grid" style="display:none"></div>
-      <div id="emptyPosts" class="empty-posts" style="display:none">该用户还没有发布过帖子~</div>
-    </div>
-
-    <!-- 编辑资料模态框 -->
-    <div id="editProfileModal" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">📝 编辑资料</div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">昵称</label>
-            <input type="text" id="editNickname" class="form-input" placeholder="2-12个字符" maxlength="12">
-          </div>
-          <div class="form-group">
-            <label class="form-label">头像</label>
-            <div class="file-input-wrapper">
-              <div class="avatar-preview" id="avatarPreview">
-                <!-- 预览图片或emoji -->
-              </div>
-              <label class="file-input-label">
-                📁 选择 JPG 图片
-                <input type="file" id="editAvatarFile" class="file-input" accept=".jpg,.jpeg" />
-              </label>
-              <div class="file-hint">仅支持 JPG 格式，大小不超过 500KB</div>
-            </div>
-          </div>
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn-secondary" id="cancelEditBtn">取消</button>
-            <button class="modal-btn modal-btn-primary" id="saveEditBtn">保存更改</button>
-          </div>
-        </div>
+      <div id="emptyPosts" class="empty-state" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <div>还没有发布过帖子</div>
       </div>
     </div>
+  </div>
 
-    <!-- 绑定管理员模态框 -->
-    <div id="bindAdminModal" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">🔗 绑定管理员账号</div>
-        <div class="modal-body">
-          <div id="bindAdminStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:16px; font-weight:bold; display:none;"></div>
-          <div class="form-group">
-            <label class="form-label">你的账号密码</label>
-            <input type="password" id="bindUserPwd" class="form-input" placeholder="输入你的账号密码以验证身份">
+  <!-- ===== Edit Profile Modal ===== -->
+  <div id="editProfileModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">编辑资料</span>
+        <button class="modal-close" onclick="closeEditModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">昵称</label>
+          <input type="text" id="editNickname" class="form-input" placeholder="2-12个字符" maxlength="12">
+        </div>
+        <div class="form-group">
+          <label class="form-label">头像</label>
+          <div class="avatar-upload">
+            <div class="avatar-preview" id="avatarPreview"></div>
+            <label class="file-input-label">
+              选择 JPG 图片
+              <input type="file" id="editAvatarFile" class="file-input" accept=".jpg,.jpeg" />
+            </label>
+            <div class="file-hint">仅支持 JPG 格式，大小不超过 500KB</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">管理员账号</label>
-            <input type="text" id="bindAdminId" class="form-input" placeholder="管理员账号">
-          </div>
-          <div class="form-group">
-            <label class="form-label">管理员密码</label>
-            <input type="password" id="bindAdminPwd" class="form-input" placeholder="管理员密码">
-          </div>
-          <div class="modal-actions">
-            <button class="modal-btn modal-btn-secondary" id="cancelBindBtn">取消</button>
-            <button class="modal-btn modal-btn-primary" id="confirmBindBtn">确认绑定</button>
-          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" id="cancelEditBtn">取消</button>
+          <button class="btn btn-primary" id="saveEditBtn">保存更改</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // 从 URL 参数获取用户 ID
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
     if (!userId) {
-      document.body.innerHTML = `<div class="error">无效的用户 ID</div>`;
+      document.body.innerHTML = '<div class="error-state" style="display:block;margin:40px auto;max-width:400px;">无效的用户 ID</div>';
       throw new Error('Missing user ID');
     }
 
-    // API 基地址
     const API_BASE = '/api';
 
-    // 获取用户信息
     async function fetchUserInfo() {
       try {
-        const resp = await fetch(`${API_BASE}/users/${userId}`);
+        const resp = await fetch(API_BASE + '/users/' + userId);
         const data = await resp.json();
-        if (!data.ok) {
-          throw new Error(data.msg || '获取用户信息失败');
-        }
+        if (!data.ok) throw new Error(data.msg || '获取用户信息失败');
         return data.data;
       } catch (err) {
         console.error(err);
@@ -673,14 +1189,11 @@
       }
     }
 
-    // 获取用户帖子
     async function fetchUserPosts() {
       try {
-        const resp = await fetch(`${API_BASE}/users/${userId}/posts`);
+        const resp = await fetch(API_BASE + '/users/' + userId + '/posts');
         const data = await resp.json();
-        if (!data.ok) {
-          throw new Error(data.msg || '获取帖子失败');
-        }
+        if (!data.ok) throw new Error(data.msg || '获取帖子失败');
         return data.data;
       } catch (err) {
         console.error(err);
@@ -689,185 +1202,169 @@
       }
     }
 
-    // 显示错误
     function showError(context, msg) {
       const errorEl = document.getElementById('postsError');
-      errorEl.textContent = `加载${context}失败：${msg}`;
+      errorEl.textContent = '加载' + context + '失败：' + msg;
       errorEl.style.display = 'block';
     }
 
-    // 渲染用户信息
     function renderUser(user) {
       if (!user) return;
       document.getElementById('userNickname').textContent = user.nickname || '匿名';
-      document.getElementById('userUsername').textContent = `@${user.username}`;
+      document.getElementById('userUsername').textContent = '@' + (user.username || '--');
       const joinDate = new Date(user.createdAt).toLocaleDateString('zh-CN');
-      document.getElementById('userJoinDate').textContent = `加入日期：${joinDate}`;
+      document.getElementById('userJoinDate').querySelector('span').textContent = '加入于 ' + joinDate;
       document.getElementById('postCount').textContent = user.postCount || 0;
-      // 头像：如果有 avatar 字段且是 data URL，用 <img> 显示；如果是 emoji，直接显示；否则用昵称首字母
+
       const avatarEl = document.getElementById('userAvatar');
       if (user.avatar && user.avatar.trim()) {
         if (user.avatar.startsWith('data:image')) {
-          avatarEl.innerHTML = `<img src="${user.avatar}" alt="头像">`;
+          avatarEl.innerHTML = '<img src="' + user.avatar + '" alt="头像">';
         } else {
-          avatarEl.textContent = (user.avatar && user.avatar.length <= 4) ? user.avatar : user.nickname.charAt(0) || '👤';
+          avatarEl.textContent = (user.avatar && user.avatar.length <= 4) ? user.avatar : (user.nickname ? user.nickname.charAt(0) : '');
         }
       } else {
-        avatarEl.textContent = user.nickname.charAt(0) || '👤';
+        avatarEl.textContent = user.nickname ? user.nickname.charAt(0) : '';
       }
-      // 管理员认证标识
+
       const badge = document.getElementById('adminBadge');
-      const bindTag = document.getElementById('bindAdminTag');
-      const unbindTag = document.getElementById('unbindAdminTag');
       if (user.bindAdminRole === 'super') {
-        badge.textContent = '🔴 超管认证';
+        badge.textContent = '超管';
+        badge.className = 'profile-badge super';
         badge.style.display = '';
       } else if (user.bindAdminRole === 'admin') {
-        badge.textContent = '🟡 普管认证';
+        badge.textContent = '普管';
+        badge.className = 'profile-badge admin';
         badge.style.display = '';
       } else {
         badge.style.display = 'none';
       }
-      // 绑定/解绑入口：仅当前登录用户查看自己的主页时显示
-      if (currentLoggedInUser && currentLoggedInUser.id === user.id) {
-        if (user.bindAdminRole) {
-          bindTag.style.display = 'none';
-          unbindTag.style.display = '';
-          unbindTag.onclick = doUnbindAdmin;
-        } else {
-          bindTag.textContent = '🔗 绑定管理员账号';
-          bindTag.style.display = '';
-          unbindTag.style.display = 'none';
-        }
-      } else {
-        bindTag.style.display = 'none';
-        unbindTag.style.display = 'none';
+
+      const uidEl = document.getElementById('profileUid');
+      if (uidEl) {
+        uidEl.querySelector('span').textContent = 'UID: ' + user.id;
       }
     }
 
-    // 计算帖子的总点赞和评论
     function calculateStats(posts) {
       let totalLikes = 0;
       let totalComments = 0;
-      posts.forEach(post => {
-        totalLikes += post.likes || 0;
-        totalComments += post.commentsCount || 0;
-      });
+      if (posts) {
+        posts.forEach(function(post) {
+          totalLikes += post.likes || 0;
+          totalComments += post.commentsCount || 0;
+        });
+      }
+      document.getElementById('postCount').textContent = posts ? posts.length : 0;
       document.getElementById('likeCount').textContent = totalLikes;
       document.getElementById('commentCount').textContent = totalComments;
     }
 
-    // 渲染帖子列表
     function renderPosts(posts) {
       const grid = document.getElementById('postsGrid');
       const loading = document.getElementById('postsLoading');
       const empty = document.getElementById('emptyPosts');
+      const countLabel = document.getElementById('postsCountLabel');
+
       if (!posts || posts.length === 0) {
         loading.style.display = 'none';
         empty.style.display = 'block';
+        if (countLabel) countLabel.textContent = '';
         return;
       }
       loading.style.display = 'none';
       grid.style.display = 'grid';
       empty.style.display = 'none';
 
-      // 清空网格
+      if (countLabel) countLabel.textContent = '共 ' + posts.length + ' 篇';
+
       grid.innerHTML = '';
 
-      // 便利贴颜色映射
-      const typeColor = {
-        '日常': 'var(--note-yellow)',
-        '表白': 'var(--note-pink)',
-        '树洞': 'var(--note-green)',
-        '失物招领': 'var(--note-blue)',
-        '活动': 'var(--note-orange)',
-        '默认': 'var(--note-purple)'
+      var typeMap = {
+        '日常': 'daily',
+        '表白': 'love',
+        '树洞': 'tree',
+        '失物招领': 'lost',
+        '活动': 'event'
       };
 
-      posts.forEach(post => {
-        const note = document.createElement('div');
-        note.className = 'note';
-        note.style.setProperty('--rotate', `${post.rotate || (Math.random() - 0.5) * 8}deg`);
-        note.style.setProperty('--zIndex', post.zIndex || Math.floor(Math.random() * 5) + 1);
-        note.style.backgroundColor = typeColor[post.type] || typeColor['默认'];
-
-        // 点击跳转到帖子详情（如果存在详情页）
-        note.addEventListener('click', () => {
-          // 这里可以打开帖子详情弹窗，沿用 index.html 的逻辑
-          // 暂时先打开一个 alert 提示
-          alert(`帖子详情：${post.content.substring(0, 50)}...`);
+      posts.forEach(function(post) {
+        var card = document.createElement('div');
+        card.className = 'post-card';
+        card.addEventListener('click', function() {
+          alert('帖子详情：' + (post.content ? post.content.substring(0, 50) : '') + '...');
         });
 
-        const content = post.content.length > 100 ? post.content.substring(0, 100) + '...' : post.content;
-        const time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        var typeClass = typeMap[post.type] || 'default';
+        var time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        var content = post.content && post.content.length > 120 ? post.content.substring(0, 120) + '...' : (post.content || '');
 
-        note.innerHTML = `
-          <div class="note-type">${post.type || '日常'}</div>
-          <div class="note-content">${content}</div>
-          <div class="note-meta">
-            <div class="note-author">
-              <div class="note-avatar">${post.avatar && post.avatar.startsWith('data:') ? `<img src="${post.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (post.avatar && post.avatar.length <= 4 ? post.avatar : '🙈')}</div>
-              <span>${post.author || '匿名'}${post.authorAdminRole === 'super' ? '🔴 超管认证' : post.authorAdminRole === 'admin' ? '🟡 普管认证' : ''}</span>
-            </div>
-            <div class="note-stats">
-              <span>❤️ ${post.likes || 0}</span>
-              <span>💬 ${post.commentsCount || 0}</span>
-            </div>
-          </div>
-        `;
-        grid.appendChild(note);
+        card.innerHTML =
+          '<span class="post-type ' + typeClass + '">' + (post.type || '日常') + '</span>' +
+          '<div class="post-content">' + content + '</div>' +
+          '<div class="post-footer">' +
+            '<div class="post-author">' +
+              '<div class="post-author-avatar">' +
+                (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
+              '</div>' +
+              '<span class="post-author-name">' + (post.author || '匿名') + '</span>' +
+            '</div>' +
+            '<div class="post-stats">' +
+              '<span>' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
+                (post.likes || 0) +
+              '</span>' +
+              '<span>' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                (post.commentsCount || 0) +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="post-time">' + time + '</div>';
+
+        grid.appendChild(card);
       });
     }
 
-    // ===== 智学网绑定功能 =====
-    const bindZhixueBtn = document.getElementById('bindZhixueBtn');
-    const zhixueInfo = document.getElementById('zhixueInfo');
+    // ===== Zhixue Bind =====
+    var bindZhixueBtn = document.getElementById('bindZhixueBtn');
+    var zhixueInfo = document.getElementById('zhixueInfo');
 
-    // 状态标签样式
-    const statusStyles = {
-      pending: { bg: 'rgba(255,193,7,0.15)', color: '#f57c00', text: '⏳ 待审核' },
-      approved: { bg: 'rgba(76,175,80,0.15)', color: '#388e3c', text: '✅ 已认证' },
-      rejected: { bg: 'rgba(244,67,54,0.15)', color: '#d32f2f', text: '❌ 已拒绝' }
+    var statusStyles = {
+      pending: { bg: 'rgba(255,193,7,0.15)', color: '#f57c00', text: '待审核' },
+      approved: { bg: 'rgba(76,175,80,0.15)', color: '#388e3c', text: '已认证' },
+      rejected: { bg: 'rgba(244,67,54,0.15)', color: '#d32f2f', text: '已拒绝' }
     };
 
-    // 绑定按钮点击事件
     if (bindZhixueBtn) {
-      bindZhixueBtn.addEventListener('click', openBindZhixueModal);
+      bindZhixueBtn.addEventListener('click', function() { openBindZhixueModal(null); });
     }
 
-    let _pendingEditData = null; // 编辑认证时预填数据
+    var _pendingEditData = null;
 
-    // 查询当前用户是否已绑定智学网（同学认证）
     async function loadZhixueInfo() {
       try {
-        const resp = await fetch('/api/user/me/zhixue-info', {
+        var resp = await fetch('/api/user/me/zhixue-info', {
           headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
         });
-        const data = await resp.json();
+        var data = await resp.json();
         if (data.ok && data.data) {
-          const info = data.data;
-          // 状态标签
-          const statusBadge = document.getElementById('zhixueStatusBadge');
-          const style = statusStyles[info.status] || statusStyles.pending;
+          var info = data.data;
+          var statusBadge = document.getElementById('zhixueStatusBadge');
+          var style = statusStyles[info.status] || statusStyles.pending;
           statusBadge.textContent = style.text;
           statusBadge.style.background = style.bg;
           statusBadge.style.color = style.color;
           zhixueInfo.style.display = '';
-
-          // 存储编辑数据，用于预填表单
           _pendingEditData = info.editData || null;
-
-          // pending 或 rejected → 显示编辑按钮
-          const editArea = document.getElementById('zhixueEditArea');
-          const editBtn = document.getElementById('editCertBtn');
+          var editArea = document.getElementById('zhixueEditArea');
+          var editBtn = document.getElementById('editCertBtn');
           if (info.status === 'pending' || info.status === 'rejected') {
             editArea.style.display = '';
-            if (editBtn) editBtn.onclick = () => openBindZhixueModal(_pendingEditData);
+            if (editBtn) editBtn.onclick = function() { openBindZhixueModal(_pendingEditData); };
           } else {
             editArea.style.display = 'none';
           }
-
-          // 只有未认证且不是pending状态时才显示绑定按钮
           if (!info.status || info.status === 'rejected' || info.status === 'none') {
             if (bindZhixueBtn) bindZhixueBtn.style.display = '';
           } else {
@@ -883,193 +1380,154 @@
       }
     }
 
-    // 打开绑定弹窗（同学认证）
     function openBindZhixueModal(editData) {
-      const old = document.getElementById('bindZhixueModal');
+      var old = document.getElementById('bindZhixueModal');
       if (old) old.remove();
-      // 根据编辑模式设置标题和提示
-      const isEdit = editData && (editData.certType === 'zhixue' || editData.certType === 'manual');
-      const headerTitle = isEdit ? '✏️ 修改认证信息' : '🎓 同学认证';
-      const headerDesc = isEdit
+      var isEdit = editData && (editData.certType === 'zhixue' || editData.certType === 'manual');
+      var headerTitle = isEdit ? '修改认证信息' : '同学认证';
+      var headerDesc = isEdit
         ? '修改后将重新提交审核，请确保信息准确'
-        : '我们正致力于维护校园墙真实性<br>为维护本墙环境，建议您即可完成同学认证';
+        : '我们正致力于维护校园墙真实性，为维护本墙环境，建议您完成同学认证';
 
-      const modal = document.createElement('div');
+      var modal = document.createElement('div');
       modal.id = 'bindZhixueModal';
       modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal" style="max-width:420px;">
-          <div class="modal-header">${headerTitle}</div>
-          <div style="padding:0 20px 4px;font-size:13px;color:var(--text-sub);line-height:1.7;text-align:center;">
-            ${headerDesc}
-          </div>
-          <div class="modal-body">
-            <div id="bindZhixueStatus" style="text-align:center; padding:10px; border-radius:12px; margin-bottom:12px; font-weight:bold; display:none;"></div>
-            <!-- Tab 切换 -->
-            <div style="display:flex; gap:0; border-radius:12px; overflow:hidden; border:2px solid var(--border); margin-bottom:16px;">
-              <button id="tabZhixue" onclick="switchCertTab('zhixue')"
-                style="flex:1; padding:9px 0; font-size:13px; font-weight:600; border:none; cursor:pointer;
-                       background:#22c55e; color:#fff; transition:all 0.2s;">
-                🖥️ 智学认证
-              </button>
-              <button id="tabManual" onclick="switchCertTab('manual')"
-                style="flex:1; padding:9px 0; font-size:13px; font-weight:600; border:none; cursor:pointer;
-                       background:var(--bg-main); color:var(--text-sub); transition:all 0.2s;">
-                📄 手动认证
-              </button>
-            </div>
+      modal.innerHTML =
+        '<div class="modal" style="max-width:420px;">' +
+          '<div class="modal-header">' +
+            '<span class="modal-title">' + headerTitle + '</span>' +
+            '<button class="modal-close" onclick="closeBindZhixueModal()">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div style="padding:0 4px 4px;font-size:13px;color:var(--text-secondary);line-height:1.6;text-align:center;">' + headerDesc + '</div>' +
+          '<div class="modal-body">' +
+            '<div id="bindZhixueStatus" class="form-status"></div>' +
+            '<div class="cert-tabs">' +
+              '<button id="tabZhixue" class="cert-tab active" onclick="switchCertTab(\'zhixue\')">智学认证</button>' +
+              '<button id="tabManual" class="cert-tab" onclick="switchCertTab(\'manual\')">手动认证</button>' +
+            '</div>' +
+            '<div id="certPanelZhixue" class="cert-panel active">' +
+              '<div class="cert-notice info">' +
+                '为了维护您的隐私与合法权益，您有权利查看<a onclick="showZhixueFlowPopup()">「智学验证」</a>的运行流程' +
+                '<br>您填写的智学网账号还可用于登录校园墙与找回校园墙的密码' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">智学网账号</label>' +
+                '<input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">智学网密码</label>' +
+                '<input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">' +
+              '</div>' +
+            '</div>' +
+            '<div id="certPanelManual" class="cert-panel">' +
+              '<div class="cert-notice warning">手动认证无法使用智学网账号进行密码重置与快捷登录</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">姓名</label>' +
+                '<input type="text" id="manualName" class="form-input" placeholder="填写你的真实姓名">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">邮箱</label>' +
+                '<input type="email" id="manualEmail" class="form-input" placeholder="填写你的邮箱地址">' +
+                '<div class="form-hint">填写的电子邮件用于向您质询您提交的证明文件，请确保它是可用的</div>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">说明</label>' +
+                '<textarea id="manualNote" class="form-input" rows="3" placeholder="请填写认证说明（如：学校、班级、姓名等）"></textarea>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">证明图片附件</label>' +
+                '<div id="manualImagesPreview" class="manual-images-preview"></div>' +
+                '<label class="manual-image-add" style="cursor:pointer;text-align:center;">' +
+                  '点击选择图片（最多3张，每张不超过10MB）' +
+                  '<input type="file" id="manualImageInput" accept="image/*" multiple style="display:none;" onchange="handleManualImages(event)">' +
+                '</label>' +
+                '<div id="manualImageError" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>' +
+              '</div>' +
+              '<div class="form-hint" style="padding:10px;background:var(--accent-light);border-radius:var(--radius-sm);margin-top:4px;text-align:center;">提交的信息仅用于一次性审核，校园墙承诺保护你的信息安全</div>' +
+            '</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn btn-outline" onclick="closeBindZhixueModal()">取消</button>' +
+              '<button class="btn btn-primary" style="background:var(--success);" onclick="doBindZhixue()">' + (isEdit ? '重新提交审核' : '提交审核') + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
-            <!-- 智学认证表单 -->
-            <div id="certPanelZhixue">
-              <div style="font-size:12px;color:var(--text-sub);background:rgba(34,197,94,0.08);border-radius:10px;padding:12px 14px;margin-bottom:14px;line-height:1.7;text-align:center;">
-                为了维护您的隐私与合法权益，您有权利查看<strong
-                  style="color:#22c55e;cursor:pointer;text-decoration:underline;"
-                  onclick="showZhixueFlowPopup()">「智学验证」</strong>的运行流程
-                <br>
-                您填写的智学网账号还可用于登录校园墙与找回校园墙的密码
-              </div>
-              <div class="form-group">
-                <label class="form-label">智学网账号</label>
-                <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
-              </div>
-              <div class="form-group">
-                <label class="form-label">智学网密码</label>
-                <input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">
-              </div>
-            </div>
-
-            <!-- 手动认证表单 -->
-            <div id="certPanelManual" style="display:none;">
-              <div style="font-size:12px;color:#e8932e;background:rgba(232,147,46,0.08);border:1px solid rgba(232,147,46,0.2);
-                          border-radius:10px;padding:12px 14px;margin-bottom:14px;line-height:1.7;text-align:center;">
-                ⚠️ 手动认证<b>无法</b>使用智学网账号<br>进行密码重置与快捷登录
-              </div>
-              <div class="form-group">
-                <label class="form-label">姓名</label>
-                <input type="text" id="manualName" class="form-input" placeholder="填写你的真实姓名">
-              </div>
-              <div class="form-group">
-                <label class="form-label">邮箱</label>
-                <input type="email" id="manualEmail" class="form-input" placeholder="填写你的邮箱地址">
-                <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">填写的电子邮件用于向您质询您提交的证明文件，请确保它是可用的</div>
-              </div>
-              <div class="form-group">
-                <label class="form-label">说明</label>
-                <textarea id="manualNote" class="form-input" rows="3"
-                  style="resize:vertical; min-height:70px;"
-                  placeholder="请填写认证说明（如：学校、班级、姓名等）"></textarea>
-              </div>
-              <div class="form-group">
-                <label class="form-label">证明图片附件</label>
-                <div id="manualImagesPreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
-                <label style="display:block; padding:10px; text-align:center; border:2px dashed var(--border);
-                              border-radius:12px; cursor:pointer; font-size:13px; color:var(--text-sub);">
-                  📎 点击选择图片（最多3张，每张 ≤10MB）
-                  <input type="file" id="manualImageInput" accept="image/*" multiple
-                    style="display:none;" onchange="handleManualImages(event)">
-                </label>
-                <div id="manualImageError" style="font-size:12px; color:var(--danger); margin-top:4px; display:none;"></div>
-              </div>
-              <div style="font-size:12px;color:var(--text-sub);padding:10px;background:rgba(196,168,130,0.1);border-radius:10px;margin-top:6px;line-height:1.6;text-align:center;">
-                提交的信息仅用于一次性审核，校园墙承诺保护你的信息安全
-              </div>
-            </div>
-
-            <div class="modal-actions">
-              <button class="modal-btn modal-btn-secondary" onclick="closeBindZhixueModal()">取消</button>
-              <button class="modal-btn bind-zhixue-btn" onclick="doBindZhixue()">${isEdit ? '重新提交审核' : '提交审核'}</button>
-            </div>
-          </div>
-        </div>
-      `;
       document.body.appendChild(modal);
 
-      // 预填表单（编辑模式）
       if (editData) {
         if (editData.certType === 'zhixue' && editData.zhixueUsername) {
           document.getElementById('zhixueInputUsername').value = editData.zhixueUsername;
-          // 密码不可解密，留空让用户重新输入
           document.getElementById('zhixueInputPassword').placeholder = '如需修改密码请重新输入';
         } else if (editData.certType === 'manual') {
           if (editData.manualName) document.getElementById('manualName').value = editData.manualName;
           if (editData.manualEmail) document.getElementById('manualEmail').value = editData.manualEmail;
           if (editData.manualNote) document.getElementById('manualNote').value = editData.manualNote;
           if (editData.manualImages && editData.manualImages.length > 0) {
-            // 清空并填充已有图片
-            const preview = document.getElementById('manualImagesPreview');
+            var preview = document.getElementById('manualImagesPreview');
             preview.innerHTML = '';
             manualImages.length = 0;
-            editData.manualImages.forEach((src, i) => {
+            editData.manualImages.forEach(function(src, i) {
               manualImages.push(src);
-              const img = document.createElement('div');
-              img.style.cssText = 'position:relative; width:72px; height:72px;';
-              img.innerHTML = `
-                <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
-                <button onclick="removeManualImage(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
-              `;
+              var img = document.createElement('div');
+              img.className = 'manual-image-item';
+              img.innerHTML =
+                '<img src="' + src + '">' +
+                '<button class="manual-image-remove" onclick="removeManualImage(' + i + ')">\u2715</button>';
               preview.appendChild(img);
             });
-            // 切换到手动认证 tab
             switchCertTab('manual');
           }
         }
       }
 
-      requestAnimationFrame(() => modal.classList.add('show'));
+      requestAnimationFrame(function() { modal.classList.add('show'); });
     }
 
-    // Tab 切换
     function switchCertTab(tab) {
-      const isZhixue = tab === 'zhixue';
-      document.getElementById('certPanelZhixue').style.display = isZhixue ? '' : 'none';
-      document.getElementById('certPanelManual').style.display = isZhixue ? 'none' : '';
-      document.getElementById('tabZhixue').style.background = isZhixue ? '#22c55e' : 'var(--bg-main)';
-      document.getElementById('tabZhixue').style.color = isZhixue ? '#fff' : 'var(--text-sub)';
-      document.getElementById('tabManual').style.background = isZhixue ? 'var(--bg-main)' : '#22c55e';
-      document.getElementById('tabManual').style.color = isZhixue ? 'var(--text-sub)' : '#fff';
+      var isZhixue = tab === 'zhixue';
+      document.getElementById('certPanelZhixue').className = 'cert-panel' + (isZhixue ? ' active' : '');
+      document.getElementById('certPanelManual').className = 'cert-panel' + (isZhixue ? '' : ' active');
+      document.getElementById('tabZhixue').className = 'cert-tab' + (isZhixue ? ' active' : '');
+      document.getElementById('tabManual').className = 'cert-tab' + (isZhixue ? '' : ' active');
     }
 
-    // 处理手动认证图片选择
-    const manualImages = []; // 存储 base64
+    var manualImages = [];
+
     function handleManualImages(event) {
-      const errEl = document.getElementById('manualImageError');
-      const preview = document.getElementById('manualImagesPreview');
+      var errEl = document.getElementById('manualImageError');
+      var preview = document.getElementById('manualImagesPreview');
       errEl.style.display = 'none';
-      const files = Array.from(event.target.files);
+      var files = Array.from(event.target.files);
 
       if (manualImages.length + files.length > 3) {
-        errEl.textContent = '❌ 最多上传3张图片';
+        errEl.textContent = '最多上传3张图片';
         errEl.style.display = '';
         event.target.value = '';
         return;
       }
 
-      files.forEach(file => {
-        // 同时校验后缀名和 MIME 类型，更健壮
+      files.forEach(function(file) {
         if (!file.type.startsWith('image/')) {
-          errEl.textContent = '❌ 只允许上传图片文件（' + file.name + '）';
+          errEl.textContent = '只允许上传图片文件（' + file.name + '）';
           errEl.style.display = '';
           return;
         }
         if (file.size > 10 * 1024 * 1024) {
-          errEl.textContent = '❌ 图片大小不能超过 10MB（' + file.name + '）';
+          errEl.textContent = '图片大小不能超过 10MB（' + file.name + '）';
           errEl.style.display = '';
           return;
         }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-      
-
-
+        var reader = new FileReader();
+        reader.onload = function(e) {
           manualImages.push(e.target.result);
-          // 添加预览
-          const img = document.createElement('div');
-          const idx = manualImages.length - 1;
-          img.style.cssText = 'position:relative; width:72px; height:72px;';
-          img.innerHTML = `
-            <img src="${e.target.result}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
-            <button onclick="removeManualImage(${idx})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
-          `;
+          var idx = manualImages.length - 1;
+          var img = document.createElement('div');
+          img.className = 'manual-image-item';
+          img.innerHTML =
+            '<img src="' + e.target.result + '">' +
+            '<button class="manual-image-remove" onclick="removeManualImage(' + idx + ')">\u2715</button>';
           preview.appendChild(img);
         };
         reader.readAsDataURL(file);
@@ -1079,106 +1537,91 @@
 
     function removeManualImage(idx) {
       manualImages.splice(idx, 1);
-      // 重新渲染预览
-      const preview = document.getElementById('manualImagesPreview');
+      var preview = document.getElementById('manualImagesPreview');
       preview.innerHTML = '';
-      manualImages.forEach((src, i) => {
-        const img = document.createElement('div');
-        img.style.cssText = 'position:relative; width:72px; height:72px;';
-        img.innerHTML = `
-          <img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);">
-          <button onclick="removeManualImage(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1;">✕</button>
-        `;
+      manualImages.forEach(function(src, i) {
+        var img = document.createElement('div');
+        img.className = 'manual-image-item';
+        img.innerHTML =
+          '<img src="' + src + '">' +
+          '<button class="manual-image-remove" onclick="removeManualImage(' + i + ')">\u2715</button>';
         preview.appendChild(img);
       });
     }
 
-    // 智学验证运行流程弹窗
     function showZhixueFlowPopup() {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);';
-      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-      overlay.innerHTML = `
-        <div style="background:#fef9e7;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.35);color:#2c1810;">
-          <h3 style="margin:0 0 18px;font-size:17px;color:#3a2210;text-align:center;">🖥️ 智学验证运行流程</h3>
-          <div style="display:flex;flex-direction:column;align-items:center;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
-              <div class="flow-node">用户端填写账号信息</div>
-              <div class="flow-arrow">↓</div>
-              <div class="flow-node">信息上传至服务器排队等待自动审核</div>
-              <div class="flow-arrow">↓</div>
-              <div class="flow-node">服务器调用相关API自动登录</div>
-              <div class="flow-arrow">↓</div>
-              <div class="flow-node">调用Playwright获取相关信息</div>
-              <div class="flow-arrow">↓</div>
-              <div class="flow-node">完成审核</div>
-            </div>
-          </div>
-          <div style="text-align:center;margin-top:18px;">
-            <button id="flowConfirmBtn"
-              style="padding:8px 32px;background:#5a3e2b;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">我知道了</button>
-          </div>
-        </div>
-      `;
+      var overlay = document.createElement('div');
+      overlay.className = 'flow-overlay';
+      overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+      overlay.innerHTML =
+        '<div class="flow-box">' +
+          '<div class="flow-title">智学验证运行流程</div>' +
+          '<div class="flow-steps">' +
+            '<div class="flow-step">用户端填写账号信息</div>' +
+            '<div class="flow-arrow">\u2193</div>' +
+            '<div class="flow-step">信息上传至服务器排队等待自动审核</div>' +
+            '<div class="flow-arrow">\u2193</div>' +
+            '<div class="flow-step">服务器调用相关API自动登录</div>' +
+            '<div class="flow-arrow">\u2193</div>' +
+            '<div class="flow-step">调用Playwright获取相关信息</div>' +
+            '<div class="flow-arrow">\u2193</div>' +
+            '<div class="flow-step">完成审核</div>' +
+          '</div>' +
+          '<div class="flow-footer">' +
+            '<button id="flowConfirmBtn" class="flow-btn">我知道了</button>' +
+          '</div>' +
+        '</div>';
       document.body.appendChild(overlay);
-      document.getElementById('flowConfirmBtn').onclick = () => overlay.remove();
+      document.getElementById('flowConfirmBtn').onclick = function() { overlay.remove(); };
     }
 
     function closeBindZhixueModal() {
-      const modal = document.getElementById('bindZhixueModal');
+      var modal = document.getElementById('bindZhixueModal');
       if (modal) modal.remove();
     }
 
     async function doBindZhixue() {
-      const statusEl = document.getElementById('bindZhixueStatus');
-      // 判断当前 Tab
-      const isZhixueTab = document.getElementById('certPanelZhixue').style.display !== 'none';
+      var statusEl = document.getElementById('bindZhixueStatus');
+      var isZhixueTab = document.getElementById('certPanelZhixue').classList.contains('active');
 
       function showErr(msg) {
         statusEl.textContent = msg;
-        statusEl.style.display = '';
-        statusEl.style.background = 'rgba(255,68,68,0.1)';
-        statusEl.style.color = 'var(--danger)';
+        statusEl.className = 'form-status show error';
       }
 
-      let body;
+      var body;
       if (isZhixueTab) {
-        // 智学认证
-        const username = document.getElementById('zhixueInputUsername').value.trim();
-        const password = document.getElementById('zhixueInputPassword').value;
-        if (!username) { showErr('❌ 请填写智学网账号'); return; }
-        if (!password) { showErr('❌ 请填写智学网密码'); return; }
+        var username = document.getElementById('zhixueInputUsername').value.trim();
+        var password = document.getElementById('zhixueInputPassword').value;
+        if (!username) { showErr('请填写智学网账号'); return; }
+        if (!password) { showErr('请填写智学网密码'); return; }
         body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
       } else {
-        // 手动认证
-        const name = document.getElementById('manualName').value.trim();
-        const email = document.getElementById('manualEmail').value.trim();
-        const note = document.getElementById('manualNote').value.trim();
-        if (!name) { showErr('❌ 请填写姓名'); return; }
-        if (!email) { showErr('❌ 请填写邮箱'); return; }
-        if (!note) { showErr('❌ 请填写认证说明'); return; }
-        if (manualImages.length === 0) { showErr('❌ 请至少上传一张证明图片'); return; }
-        body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: [...manualImages] };
+        var name = document.getElementById('manualName').value.trim();
+        var email = document.getElementById('manualEmail').value.trim();
+        var note = document.getElementById('manualNote').value.trim();
+        if (!name) { showErr('请填写姓名'); return; }
+        if (!email) { showErr('请填写邮箱'); return; }
+        if (!note) { showErr('请填写认证说明'); return; }
+        if (manualImages.length === 0) { showErr('请至少上传一张证明图片'); return; }
+        body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: manualImages.slice() };
       }
 
-      statusEl.textContent = '⏳ 正在提交...';
-      statusEl.style.display = '';
-      statusEl.style.background = 'rgba(76,175,80,0.1)';
-      statusEl.style.color = 'var(--success)';
+      statusEl.textContent = '正在提交...';
+      statusEl.className = 'form-status show success';
 
       try {
-        const token = localStorage.getItem('campus_user_token');
-        const resp = await fetch('/api/user/bind-zhixue', {
+        var token = localStorage.getItem('campus_user_token');
+        var resp = await fetch('/api/user/bind-zhixue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': token },
           body: JSON.stringify(body)
         });
-        const data = await resp.json();
+        var data = await resp.json();
         if (data.ok) {
-          statusEl.textContent = '✅ ' + data.msg;
-          statusEl.style.background = 'rgba(76,175,80,0.1)';
-          statusEl.style.color = 'var(--success)';
-          setTimeout(() => {
+          statusEl.textContent = data.msg;
+          statusEl.className = 'form-status show success';
+          setTimeout(function() {
             closeBindZhixueModal();
             loadZhixueInfo();
           }, 1500);
@@ -1186,33 +1629,27 @@
           throw new Error(data.msg || '提交失败');
         }
       } catch (e) {
-        statusEl.textContent = '❌ ' + e.message;
-        statusEl.style.background = 'rgba(255,68,68,0.1)';
-        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = e.message;
+        statusEl.className = 'form-status show error';
       }
     }
 
+    // ===== Edit Profile =====
+    var currentLoggedInUser = null;
 
-
-    // ===== 编辑资料功能 =====
-    let currentLoggedInUser = null;
-
-    // 检查当前登录用户
     async function checkCurrentUser() {
-      const token = localStorage.getItem('campus_user_token');
+      var token = localStorage.getItem('campus_user_token');
       if (!token) return;
       try {
-        const resp = await fetch('/api/user/me', {
+        var resp = await fetch('/api/user/me', {
           headers: { 'x-user-token': token }
         });
-        const data = await resp.json();
+        var data = await resp.json();
         if (data.ok) {
           currentLoggedInUser = data.data;
-          // 如果当前登录用户正在查看自己的主页，显示编辑按钮和认证信息
           if (currentLoggedInUser.id === userId) {
-            document.getElementById('editProfileBtn').style.display = 'inline-block';
-            if (bindZhixueBtn) bindZhixueBtn.style.display = 'inline-block';
-            // 仅在自己的主页加载认证信息
+            document.getElementById('editProfileBtn').style.display = '';
+            if (bindZhixueBtn) bindZhixueBtn.style.display = '';
             loadZhixueInfo();
           }
         }
@@ -1221,98 +1658,81 @@
       }
     }
 
-    // 打开编辑模态框
     function openEditModal() {
       if (!currentLoggedInUser) return;
-      // 填充当前资料
       document.getElementById('editNickname').value = currentLoggedInUser.nickname || '';
-      // 设置头像预览
-      const avatarPreview = document.getElementById('avatarPreview');
+      var avatarPreview = document.getElementById('avatarPreview');
       if (currentLoggedInUser.avatar && currentLoggedInUser.avatar.startsWith('data:image')) {
-        avatarPreview.innerHTML = `<img src="${currentLoggedInUser.avatar}" alt="头像">`;
-        // 存储当前头像的 base64，以便检测是否更改
+        avatarPreview.innerHTML = '<img src="' + currentLoggedInUser.avatar + '" alt="头像">';
         avatarPreview.dataset.base64 = currentLoggedInUser.avatar;
       } else {
-        avatarPreview.textContent = currentLoggedInUser.avatar || currentLoggedInUser.nickname.charAt(0) || '👤';
-        // 清除 base64 数据，因为当前头像不是 data URL
+        avatarPreview.textContent = currentLoggedInUser.avatar || (currentLoggedInUser.nickname ? currentLoggedInUser.nickname.charAt(0) : '');
         avatarPreview.dataset.base64 = '';
       }
-      // 重置文件输入
       document.getElementById('editAvatarFile').value = '';
-      // 显示模态框
       document.getElementById('editProfileModal').classList.add('show');
     }
 
-    // 关闭编辑模态框
     function closeEditModal() {
       document.getElementById('editProfileModal').classList.remove('show');
     }
 
-    // 处理头像文件选择
     function handleAvatarFileSelect(event) {
-      const file = event.target.files[0];
+      var file = event.target.files[0];
       if (!file) return;
-      // 验证文件类型（只要求文件是图片且后缀为 jpg/jpeg）
-      const isImage = file.type.startsWith('image/');
-      const hasJpgExt = file.name.match(/\.jpe?g$/i);
+      var isImage = file.type.startsWith('image/');
+      var hasJpgExt = file.name.match(/\.jpe?g$/i);
       if (!isImage || !hasJpgExt) {
         alert('请选择 JPG 格式的图片');
         event.target.value = '';
         return;
       }
-      // 验证文件大小（500KB）
       if (file.size > 500 * 1024) {
         alert('图片大小不能超过 500KB');
         event.target.value = '';
         return;
       }
-      // 预览图片
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(e) {
-        const avatarPreview = document.getElementById('avatarPreview');
-        avatarPreview.innerHTML = `<img src="${e.target.result}" alt="头像">`;
-        // 存储 base64 数据，稍后用于上传
+        var avatarPreview = document.getElementById('avatarPreview');
+        avatarPreview.innerHTML = '<img src="' + e.target.result + '" alt="头像">';
         avatarPreview.dataset.base64 = e.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    // 保存资料
     async function saveProfile() {
-      const nickname = document.getElementById('editNickname').value.trim();
-      const avatarPreview = document.getElementById('avatarPreview');
-      const avatarBase64 = avatarPreview.dataset.base64; // 新选择的头像 base64
-      const currentAvatar = currentLoggedInUser.avatar; // 原有头像
+      var nickname = document.getElementById('editNickname').value.trim();
+      var avatarPreview = document.getElementById('avatarPreview');
+      var avatarBase64 = avatarPreview.dataset.base64;
+      var currentAvatar = currentLoggedInUser.avatar;
 
-      // 验证昵称
       if (nickname.length < 2 || nickname.length > 12) {
         alert('昵称需 2-12 个字符');
         return;
       }
 
-      const updateData = {};
+      var updateData = {};
       if (nickname !== currentLoggedInUser.nickname) {
         updateData.nickname = nickname;
       }
-      // 处理头像更新：仅当 avatarBase64 存在且与当前头像不同时才更新
       if (avatarBase64 && avatarBase64 !== currentAvatar) {
         updateData.avatar = avatarBase64;
       }
 
-      // 如果没有更改，直接关闭
       if (Object.keys(updateData).length === 0) {
         closeEditModal();
         return;
       }
 
-      const token = localStorage.getItem('campus_user_token');
+      var token = localStorage.getItem('campus_user_token');
       if (!token) {
         alert('登录已过期，请重新登录');
         return;
       }
 
       try {
-        const resp = await fetch('/api/user/me', {
+        var resp = await fetch('/api/user/me', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -1320,16 +1740,11 @@
           },
           body: JSON.stringify(updateData)
         });
-        const data = await resp.json();
-        if (!data.ok) {
-          throw new Error(data.msg || '更新失败');
-        }
-        // 更新本地当前用户信息
+        var data = await resp.json();
+        if (!data.ok) throw new Error(data.msg || '更新失败');
         if (updateData.nickname) currentLoggedInUser.nickname = updateData.nickname;
         if (updateData.avatar) currentLoggedInUser.avatar = updateData.avatar;
-        // 重新渲染用户信息
         renderUser(currentLoggedInUser);
-        // 关闭模态框
         closeEditModal();
         alert('资料更新成功！');
       } catch (err) {
@@ -1338,113 +1753,23 @@
       }
     }
 
-    // 打开绑定管理员模态框
-    function openBindAdminModal() {
-      document.getElementById('bindUserPwd').value = '';
-      document.getElementById('bindAdminId').value = '';
-      document.getElementById('bindAdminPwd').value = '';
-      document.getElementById('bindAdminStatus').style.display = 'none';
-      document.getElementById('bindAdminModal').classList.add('show');
-    }
-
-    // 关闭绑定管理员模态框
-    function closeBindAdminModal() {
-      document.getElementById('bindAdminModal').classList.remove('show');
-    }
-
-    // 确认绑定管理员
-    async function doBindAdmin() {
-      const password = document.getElementById('bindUserPwd').value.trim();
-      const adminId = document.getElementById('bindAdminId').value.trim();
-      const adminPassword = document.getElementById('bindAdminPwd').value;
-      if (!password || !adminId || !adminPassword) {
-        alert('请填写完整信息');
-        return;
-      }
-      const token = localStorage.getItem('campus_user_token');
-      if (!token) {
-        alert('登录已过期，请重新登录');
-        return;
-      }
-      try {
-        const resp = await fetch('/api/user/bind-admin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-token': token
-          },
-          body: JSON.stringify({ password, adminId, adminPassword })
-        });
-        const data = await resp.json();
-        if (!data.ok) {
-          throw new Error(data.msg || '绑定失败');
-        }
-        // 更新当前用户信息
-        currentLoggedInUser.bindAdminId = data.data.bindAdminId;
-        currentLoggedInUser.bindAdminRole = data.data.bindAdminRole;
-        // 重新渲染（user 对象来自 currentLoggedInUser）
-        renderUser(currentLoggedInUser);
-        closeBindAdminModal();
-        alert('绑定成功！');
-      } catch (err) {
-        alert('绑定失败：' + err.message);
-      }
-    }
-
-    // 解除绑定
-    async function doUnbindAdmin() {
-      if (!confirm('确定要解除管理员绑定吗？')) return;
-      const token = localStorage.getItem('campus_user_token');
-      if (!token) {
-        alert('登录已过期，请重新登录');
-        return;
-      }
-      try {
-        const resp = await fetch('/api/user/bind-admin', {
-          method: 'DELETE',
-          headers: { 'x-user-token': token }
-        });
-        const data = await resp.json();
-        if (!data.ok) throw new Error(data.msg || '解除绑定失败');
-        currentLoggedInUser.bindAdminId = null;
-        currentLoggedInUser.bindAdminRole = null;
-        renderUser(currentLoggedInUser);
-        alert('已解除绑定');
-      } catch (err) {
-        alert('解除绑定失败：' + err.message);
-      }
-    }
-
-    // 初始化事件监听器
+    // ===== Init =====
     function initEventListeners() {
-      // 编辑按钮
       document.getElementById('editProfileBtn').addEventListener('click', openEditModal);
-      // 取消按钮
       document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
-      // 保存按钮
       document.getElementById('saveEditBtn').addEventListener('click', saveProfile);
-      // 头像文件选择
       document.getElementById('editAvatarFile').addEventListener('change', handleAvatarFileSelect);
-      // 点击模态框外部关闭
       document.getElementById('editProfileModal').addEventListener('click', function(event) {
         if (event.target === this) closeEditModal();
       });
-      // 绑定管理员模态框
-      document.getElementById('cancelBindBtn').addEventListener('click', closeBindAdminModal);
-      document.getElementById('confirmBindBtn').addEventListener('click', doBindAdmin);
-      document.getElementById('bindAdminModal').addEventListener('click', function(event) {
-        if (event.target === this) closeBindAdminModal();
-      });
     }
 
-    // 初始化
     async function init() {
-      // 初始化事件监听器
       initEventListeners();
-      // 检查当前登录用户
       await checkCurrentUser();
-      // 加载用户信息和帖子
-      const [user, posts] = await Promise.all([fetchUserInfo(), fetchUserPosts()]);
+      var results = await Promise.all([fetchUserInfo(), fetchUserPosts()]);
+      var user = results[0];
+      var posts = results[1];
       if (user) {
         renderUser(user);
         calculateStats(posts);
@@ -1456,6 +1781,5 @@
 
     init();
   </script>
-
 </body>
 </html>

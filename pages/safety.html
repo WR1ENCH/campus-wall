@@ -1,4 +1,19 @@
 <!-- 安全中心 SPA 内容 -->
+<!-- 注: 安全中心功能已迁移到独立页 safety.html(2026-07-14 重新设计) -->
+<!-- 本片段保持占位以兼容 SPA 切页路径(index.html -> /safety.html) -->
 <div class="safety-container" id="safetyContainer">
-  <div class="loading">加载中...</div>
+  <div class="loading">正在打开安全中心…</div>
+  <script>
+    (function(){
+      try{
+        if(window.parent&&window.parent!==window){
+          window.parent.location.href='/safety.html';
+        }else{
+          window.location.href='/safety.html';
+        }
+      }catch(e){
+        window.location.href='/safety.html';
+      }
+    })();
+  </script>
 </div>

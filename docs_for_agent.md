@@ -203,13 +203,21 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - 创建时调用 `penalty.getReportedContent()` 取被举报内容的**证据快照**（正文 + 图片），写入 `evidenceContent` JSON，使后续处理不依赖原文是否被删改。
 - 同时向举报人发系统通知（含 `reportId`）。`GET /api/reports/:reportId` 详情（举报人或管理员可见）；`GET /api/user/my-reports` 我的举报（安全中心用）。
 - 拍卖举报（`routes/pickup.js`）在写入 `pickup_reports` 后，会同步调用 `createReport({type:'auction'})` 进入统一举报表，便于统一管理与用户安全中心查看。
+- **自动合并**：同一条内容有已创建的 `pending` 举报时，新举报不会创建新记录，而是将新举报人加入已有举报的 `reporters` 数组并合并举报原因（去重）。`reportedBy` 保持首位举报人。原举报人收到已合并通知。
 
 **处罚机制（`lib/penalty.js` + `routes/penalty.js`）**
 - 两级处罚：
   - `T0`（全面限制）：`isFeatureBlocked()` 直接返回 `true`，禁止所有交互。
   - `T1`（部分限制）：仅禁止 `measures` 中列出的功能。
 - `FEATURES = ['whisper','anonymous_post','qa','post','vote']`；`isFeatureBlocked(userId, feature)` 在 `routes/posts.js`（发帖/匿名发帖）、`routes/discussions.js`、`routes/qa.js`、`routes/votes.js`、`routes/pickup.js`（拍卖）的发帖/互动入口前被调用，命中则拒绝并提示。
-- `getActivePunishment()` 带**自动过期翻转**（到期自动置 `expired`）。
+- `getActivePunishment()` 带**自动过期翻转**（到期自动置 `expired`）。同一用户同时有 T0 和 T1 时，始终返回 T0（T0 优先）。T0 过期后自动检查 `queued` 状态的 T1 并将其激活。
+- **处罚自动叠加规则**（`POST /api/admin/punishments` 内实现）：
+  - `T0 + 已有 T0`：合并到已有 T0，取最长有效期。若有关联 T1 则标记为 `overridden`。
+  - `T0 + 已有 T1`：创建新 T0，已有 T1 入队等待（`status=queued`），T0 过期后自动激活 T1。
+  - `T0（单独）`：正常创建新 T0。
+  - `T1 + 已有 T1`：合并措施去重并集 + 取最长有效期。
+  - `T1 + 已有 T0`：将新 T1 创建为 `status: 'queued'`，标记 `queuedAfter: existingT0.punishmentId`。用户收到「待执行处罚」通知而非完整的处罚通知。T0 过期后由 `getActivePunishment()` 自动激活入队的 T1。
+  - `T1（单独）`：正常创建新 T1。
 - 管理员接口：`GET/POST /api/admin/punishments`、详情 `:id`、撤销 `:id/revoke`、申诉处理 `:id/appeal-action`（`approved` 撤销处罚并通知 / `rejected`）。从举报处理处罚时，回填 `report.handledResult='violation'`、`report.punishmentId`，并通知举报人。
 - 申诉列表接口：`GET /api/admin/appeals`（可按 `status=pending|approved|rejected` 过滤），返回每条申诉并关联处罚信息（级别/原因/状态/限制功能）与用户昵称/UID，供后台「申诉处理」页使用。
 
@@ -235,8 +243,8 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
-| `reports` | id(PK), type, targetId, postId, reason, reportedBy, reporterName, reportedUserId, createdAt, status('pending'/'resolved'/'ignored'), handledBy, handledAt, action, **reportId**(`REPO-` 唯一ID，用户可见), **evidenceContent**(证据快照 JSON), **handledResult**('violation'/'no_violation'), **punishmentId**(关联处罚) | 统一举报（见 §3.9；`reportId`/`evidenceContent`/`handledResult`/`punishmentId` 由 db.js 列迁移自动补齐） |
-| `punishments` | punishmentId(PK), userId, level('T0'/'T1'), reason, measures(JSON), durationDays, status('active'/'expired'/'revoked'), sourceReportId, appealUsed, appealStatus('none'/'pending'/'approved'/'rejected'), createdAt, expiresAt, revokedAt, revokedBy | 处罚记录（见 §3.9） |
+| `reports` | id(PK), type, targetId, postId, reason, reportedBy, reporterName, reportedUserId, createdAt, status('pending'/'resolved'/'ignored'), handledBy, handledAt, action, **reportId**(`REPO-` 唯一ID，用户可见), **evidenceContent**(证据快照 JSON), **handledResult**('violation'/'no_violation'), **punishmentId**(关联处罚), **reporters**(JSON, 合并举报人数组 [{id,name,reportedAt}]), **mergedCount**(合并次数) | 统一举报（见 §3.9；`reportId`/`evidenceContent`/`handledResult`/`punishmentId` 由 db.js 列迁移自动补齐）。同内容举报自动合并到 `reporters` 数组 |
+| `punishments` | punishmentId(PK), userId, level('T0'/'T1'), reason, measures(JSON), durationDays, status('active'/'expired'/'revoked'/'queued'/'overridden'), sourceReportId, appealUsed, appealStatus('none'/'pending'/'approved'/'rejected'), createdAt, expiresAt, revokedAt, revokedBy, **queuedAfter**(被 T0 入队时记录阻塞的 T0 处罚ID) | 处罚记录（见 §3.9）。`queued`=T0 生效期间入队等待，`overridden`=被升级的 T0 覆盖 |
 | `appeals` | id(PK), punishmentId, userId, content, status('pending'/'approved'/'rejected'), createdAt, handledAt, handledBy, resultNote | 申诉记录（见 §3.9，每处罚限一次） |
 | `feedbacks` | id, type, description, contact, images, time, status, handledBy, handleNote | 用户反馈 |
 | `bullying` | id, reporterRole, victimName, bullyType, description, involved, location, incidentTime, contact, anonymous, images, time, status, handledBy, handleNote, userId | 霸凌举报 |

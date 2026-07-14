@@ -19,7 +19,45 @@ const TYPE_LABELS = {
 };
 
 // 统一创建举报：生成 REPO- ID、存证据快照、发受理通知
+// 同一条内容有多条举报时自动合并为一条，不重复创建
 function createReport({ type, targetId, postId, reason, reporterId, reporterName, extra }) {
+  const reports = readReports();
+
+  // 查找同一条内容已有的 pending 举报
+  const existing = reports.find(r => r.targetId === targetId && r.type === type && r.status === 'pending');
+
+  if (existing) {
+    // 合并到已有举报
+    if (reporterId) {
+      if (!existing.reporters) {
+        existing.reporters = [];
+        if (existing.reportedBy) {
+          existing.reporters.push({ id: existing.reportedBy, name: existing.reporterName || '匿名用户', reportedAt: existing.createdAt });
+        }
+      }
+      const alreadyIn = existing.reporters.some(r => r.id === reporterId) || existing.reportedBy === reporterId;
+      if (!alreadyIn) {
+        existing.reporters.push({ id: reporterId, name: reporterName || '匿名用户', reportedAt: new Date().toISOString() });
+      }
+    }
+    // 合并举报原因（去重）
+    if (reason && reason.trim()) {
+      const reasonsList = existing.reason ? existing.reason.split('、').filter(Boolean) : [];
+      const newReasons = reason.trim().split('、').filter(Boolean);
+      newReasons.forEach(r => { if (!reasonsList.includes(r)) reasonsList.push(r); });
+      existing.reason = reasonsList.join('、');
+    }
+    existing.mergedCount = (existing.mergedCount || 0) + 1;
+    writeReports(reports);
+
+    if (reporterId) {
+      penalty.notifyReportReceived(reporterId, existing.reportId,
+        '举报类型：' + (TYPE_LABELS[type] || type) + '\n举报原因：' + (reason || ''));
+    }
+    return existing;
+  }
+
+  // 没有已有举报，正常创建新记录
   const reportId = generateId('REPO');
   const content = penalty.getReportedContent(type === 'featured' ? 'post' : type, targetId);
   const evidence = {
@@ -43,11 +81,9 @@ function createReport({ type, targetId, postId, reason, reporterId, reporterName
     punishmentId: null,
   };
   if (extra) Object.assign(report, extra);
-  const reports = readReports();
   reports.push(report);
   writeReports(reports);
   logIdAssignment('report', reportId, (reason || '').slice(0, 100), db);
-  // 举报受理通知（含举报ID）
   if (reporterId) {
     penalty.notifyReportReceived(reporterId, reportId,
       '举报类型：' + (TYPE_LABELS[type] || type) + '\n举报原因：' + report.reason);
