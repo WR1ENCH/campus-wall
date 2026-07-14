@@ -6006,6 +6006,7 @@ async function showPostCaptchaModal() {
     q = q.trim();
     var resultsEl = document.getElementById('whisperSearchResults');
     if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; return; }
+    if (q.length < 2) { resultsEl.innerHTML = '<div style="padding:12px;color:#999;font-size:13px;text-align:center;">输入至少2个字符搜索</div>'; resultsEl.style.display = 'block'; return; }
     if (_whisperSearchTimer) clearTimeout(_whisperSearchTimer);
     _whisperSearchTimer = setTimeout(function() {
       var token = localStorage.getItem('campus_user_token');
@@ -7930,7 +7931,7 @@ function escJsStr(s) {
     var input = document.getElementById('searchUserInput');
     var q = input.value.trim();
     var resultsEl = document.getElementById('searchResults');
-    if (!q) { resultsEl.innerHTML = '<div class="search-empty">输入关键词开始搜索用户</div>'; return; }
+    if (!q || q.length < 2) { resultsEl.innerHTML = '<div class="search-empty">输入至少2个字符开始搜索用户</div>'; return; }
     resultsEl.innerHTML = '<div class="search-empty" style="padding:32px">搜索中...</div>';
     var token = localStorage.getItem('campus_user_token');
     var headers = {};

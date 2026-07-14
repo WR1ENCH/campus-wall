@@ -353,7 +353,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 ### 5.4 用户搜索 / 主页 / 公开资料
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | `/api/users/search?q=xxx` | 无 | 搜索用户，按 `q` 匹配账号/昵称/UID(user.id)/实名姓名，返回分类结果（accounts/nicknames/uids/names，每类上限 20） |
+| GET | `/api/users/search?q=xxx` | 无 | 搜索用户，按 `q` 匹配账号/昵称/UID(user.id)/实名姓名，返回分类结果（accounts/nicknames/uids/names，每类上限 20）。`q` 需至少 2 个非空格字符 |
 | GET | `/api/users/:id` | 无 | 用户公开资料 |
 | GET | `/api/users/:id/posts` | 无 | 用户历史帖子 |
 | GET | `/api/user/notices` | 用户 | 用户相关通知 |
@@ -585,10 +585,10 @@ admin → auth → user → posts → discussions → qa → votes → notices
   - 管理员：`x-admin-token`
   - 学生会：`x-sc-token`
 - 响应判断：`const j = await res.json(); if (j.ok) { ... } else { alert(j.msg) }`。
-- 用户搜索：`index.html` 操作栏 `action-btns` 最右侧有「找人」按钮（`.search-btn`），点击弹出带渐入动画的下拉气泡 `#searchDropdown`（`.open` 时 `opacity`/`transform` 过渡），输入关键词后 300ms 防抖调 `GET /api/users/search?q=xxx`，结果按「匹配账号/匹配昵称/匹配UID(user.id)/匹配姓名」四类分组展示，点击结果打开 `user.html?id=xxx`。点击外部或按 Esc 关闭。
+- 用户搜索：`index.html` 操作栏 `action-btns` 最右侧有「找人」按钮（`.search-btn`），点击弹出带渐入动画的下拉气泡 `#searchDropdown`（`.open` 时 `opacity`/`transform` 过渡），输入关键词后 300ms 防抖调 `GET /api/users/search?q=xxx`，结果按「匹配账号/匹配昵称/匹配UID(user.id)/匹配姓名」四类分组展示，点击结果打开 `user.html?id=xxx`。点击外部或按 Esc 关闭。**搜索需要至少 2 个非空格字符**（空格不计入字符数），后端 `/api/users/search` 与前端（`doSearch`/`whisperSearch`）均有此限制。
 - 错误 `code` 常见：`NOT_LOGIN` / `INVALID_TOKEN` / `TOKEN_EXPIRED` / `FORBIDDEN` / `MAINTENANCE` / `RATE_LIMITED` / `ALREADY_INIT`。
 - 富文本渲染：引入 `marked.min.js`（CDN）做 Markdown；内容经 `inputSanitize` + 客户端转义防 XSS。
-- 滑块验证码：`slider-captcha/longbow.slidercaptcha.min.js`，先 `POST /api/slider-captcha/grant` 拿 `captchaId`，用户拖动完成后提交 `captchaId` + `captchaText`。
+- 滑块验证码：`slider-captcha/longbow.slidercaptcha.min.js`，先 `POST /api/slider-captcha/grant` 拿 `captchaId`，用户拖动完成后提交 `captchaId` + `captchaText`。**captcha token 仅在业务成功后才被消费（`captchaStore.delete`）**，登录/注册/智学登录若因输入错误失败，captcha 仍有效，用户修正后可重试无需再次验证。
 
 ### 6.4 如何新增一个前端页面
 1. 在根目录新建 `xxx.html`（完整独立页，参考现有页面结构）。
