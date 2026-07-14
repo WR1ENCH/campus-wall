@@ -1002,3 +1002,16 @@ server.js
 
 **API 增强**：用户搜索 `/api/users/search` 返回结果增加 `zhixueStatus` 和 `certRealName` 字段，供前端展示认证状态。
 - 影响文件：`routes/user.js`
+
+### 会话 7 — 2026-07-14 · 修复智学登录认证 + 搜索匹配认证姓名
+
+**Bug 1：智学网账号密码登录失败 & 管理页用户详情缺失智学信息**
+
+| 修复点 | 文件 | 改动 |
+|--------|------|------|
+| 1a 登录密码校验 | `routes/user.js:272` | 解密 `user.zhixuePassword` 后与用户输入的智学密码进行字符串比较（原代码误用 `verifyPassword` 对 campus-wall 的 PBKDF2 哈希做校验） |
+| 1b 审核清空密码 | `routes/admin.js:700` | 删除 `zhixuePassword = null`，保留加密的智学密码供后续登录使用 |
+| 1c 管理详情弹窗 | `admin.html:4522-4526` | 在「同学认证信息」区块追加智学账号/密码显示（仅 `zhixueCertType === 'zhixue'` 时渲染） |
+
+**Bug 2：搜索无法匹配同学认证姓名**
+- `routes/user.js:1010-1014`：解密 `certRealName` 后再与搜索词比较（原代码对密文做 includes 永不相符）；同时补充 `zhixueManualName` 搜索，覆盖手动认证场景。

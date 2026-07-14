@@ -269,7 +269,8 @@ module.exports = function(app) {
       addLoginLog('user', zhixueUsername, false, ip, ua);
       return res.json({ ok: false, msg: '当前账号可能错误或者未绑定校园墙账号' });
     }
-    if (!verifyPassword(password, user.password)) {
+    const decryptedZhixuePwd = user.zhixuePassword ? (decryptCert(user.zhixuePassword) || '') : '';
+    if (password !== decryptedZhixuePwd) {
       addLoginLog('user', zhixueUsername, false, ip, ua);
       return res.json({ ok: false, msg: '当前密码错误' });
     }
@@ -1006,7 +1007,9 @@ app.get('/api/users/search', (req, res) => {
     if (user.id && user.id.toLowerCase().includes(ql) && results.uids.length < LIMIT && !seen.has('u' + user.id)) {
       results.uids.push(base); seen.add('u' + user.id);
     }
-    if (user.certRealName && user.zhixueStatus === 'approved' && user.certRealName.includes(q) && results.names.length < LIMIT && !seen.has('r' + user.id)) {
+    const decryptedName = user.certRealName ? (decryptCert(user.certRealName) || '') : '';
+    const matchedName = (decryptedName && decryptedName.includes(q)) || (user.zhixueManualName && user.zhixueManualName.includes(q));
+    if (matchedName && results.names.length < LIMIT && !seen.has('r' + user.id)) {
       results.names.push(base); seen.add('r' + user.id);
     }
   }
