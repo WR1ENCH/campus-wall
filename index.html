@@ -4649,6 +4649,8 @@ function openNotifModal() {
  let currentFilter = '全部';
  let postImages = []; // 发帖附图，最多4张
  let _selectedDiscussionId = null; // 发帖同步到讨论区的话题ID
+ let _suggestItems = []; // 话题自动补全数据
+ let _suggestIndex = -1; // 当前高亮索引
 
  // ===== API 调用 =====
  async function fetchPosts() {
@@ -5676,69 +5678,104 @@ async function showPostCaptchaModal() {
  hideDiscussionSuggest();
  }
 
- // 发帖字数实时统计 & #话题自动补全
- var _suggestTimer = null;
- document.getElementById('noteInput').addEventListener('input', function() {
- const count = this.value.length;
- const el = document.getElementById('noteCount');
- el.textContent = count;
- el.style.color = count > 50 ? '#d32f2f' : 'inherit';
+  // 发帖字数实时统计 & #话题自动补全
+  var _suggestTimer = null;
+  document.getElementById('noteInput').addEventListener('input', function() {
+  const count = this.value.length;
+  const el = document.getElementById('noteCount');
+  el.textContent = count;
+  el.style.color = count > 50 ? '#d32f2f' : 'inherit';
 
- var val = this.value;
- var cursorPos = this.selectionStart;
- var textBefore = val.substring(0, cursorPos);
- var hashIdx = textBefore.lastIndexOf('#');
- if (hashIdx >= 0 && (hashIdx === 0 || /\s/.test(textBefore[hashIdx - 1]))) {
- var query = textBefore.substring(hashIdx + 1);
- if (query.length > 0 && !/\s/.test(query)) {
- if (_suggestTimer) clearTimeout(_suggestTimer);
- _suggestTimer = setTimeout(function() { fetchDiscussionSuggest(query); }, 200);
- return;
- }
- }
- hideDiscussionSuggest();
- });
+  var val = this.value;
+  var cursorPos = this.selectionStart;
+  var textBefore = val.substring(0, cursorPos);
+  var hashIdx = textBefore.lastIndexOf('#');
+  if (hashIdx >= 0 && (hashIdx === 0 || /\s/.test(textBefore[hashIdx - 1]))) {
+  var query = textBefore.substring(hashIdx + 1);
+  if (query.length > 0 && !/\s/.test(query)) {
+  if (_suggestTimer) clearTimeout(_suggestTimer);
+  _suggestTimer = setTimeout(function() { fetchDiscussionSuggest(query); }, 200);
+  return;
+  }
+  }
+  hideDiscussionSuggest();
+  });
 
- function fetchDiscussionSuggest(q) {
- fetch('/api/discussions?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(j) {
- if (!j.ok || !j.data || j.data.length === 0) { hideDiscussionSuggest(); return; }
- var box = document.getElementById('discussionSuggest');
- var input = document.getElementById('noteInput');
- var rect = input.getBoundingClientRect();
- // 定位到文本框下方
- box.style.top = (rect.bottom + 4) + 'px';
- box.style.left = rect.left + 'px';
- box.style.width = Math.max(rect.width, 200) + 'px';
- box.innerHTML = j.data.map(function(d) {
- return '<div onclick="selectDiscussionSuggest(\'' + d.id + '\',\'' + escHtml(d.title) + '\')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8a0;transition:background 0.1s;" onmouseover="this.style.background=\'#fef7d0\'" onmouseout="this.style.background=\'\'"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + escHtml(d.title) + '</div>';
- }).join('');
- box.style.display = 'block';
- }).catch(function() { hideDiscussionSuggest(); });
- }
+  document.getElementById('noteInput').addEventListener('keydown', function(e) {
+  var box = document.getElementById('discussionSuggest');
+  if (box.style.display !== 'block') return;
+  var items = box.querySelectorAll('[data-index]');
+  if (e.key === 'ArrowDown') {
+  e.preventDefault();
+  _suggestIndex = Math.min(_suggestIndex + 1, items.length - 1);
+  updateSuggestHighlight(items);
+  } else if (e.key === 'ArrowUp') {
+  e.preventDefault();
+  _suggestIndex = Math.max(_suggestIndex - 1, 0);
+  updateSuggestHighlight(items);
+  } else if (e.key === 'Enter') {
+  e.preventDefault();
+  if (_suggestIndex >= 0 && _suggestIndex < items.length) {
+  items[_suggestIndex].click();
+  }
+  } else if (e.key === 'Escape') {
+  e.preventDefault();
+  hideDiscussionSuggest();
+  }
+  });
 
- function hideDiscussionSuggest() {
- var box = document.getElementById('discussionSuggest');
- if (box) box.style.display = 'none';
- }
+  function fetchDiscussionSuggest(q) {
+  fetch('/api/discussions?q=' + encodeURIComponent(q)).then(function(r) { return r.json(); }).then(function(j) {
+  if (!j.ok || !j.data || j.data.length === 0) { hideDiscussionSuggest(); return; }
+  _suggestItems = j.data;
+  _suggestIndex = 0;
+  var box = document.getElementById('discussionSuggest');
+  var input = document.getElementById('noteInput');
+  var rect = input.getBoundingClientRect();
+  // 定位到文本框下方
+  box.style.top = (rect.bottom + 4) + 'px';
+  box.style.left = rect.left + 'px';
+  box.style.width = Math.max(rect.width, 200) + 'px';
+  box.innerHTML = j.data.map(function(d, i) {
+  return '<div data-index="' + i + '" onclick="selectDiscussionSuggestByIndex(' + i + ')" onmouseenter="_suggestIndex=' + i + ';updateSuggestHighlight(document.getElementById(\'discussionSuggest\').querySelectorAll(\'[data-index]\'))" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0e8a0;transition:background 0.1s;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + escHtml(d.title) + '</div>';
+  }).join('');
+  box.style.display = 'block';
+  var firstItems = box.querySelectorAll('[data-index]');
+  updateSuggestHighlight(firstItems);
+  }).catch(function() { hideDiscussionSuggest(); });
+  }
 
- function selectDiscussionSuggest(id, title) {
- _selectedDiscussionId = id;
- var input = document.getElementById('noteInput');
- var val = input.value;
- var cursorPos = input.selectionStart;
- var textBefore = val.substring(0, cursorPos);
- var hashIdx = textBefore.lastIndexOf('#');
- if (hashIdx >= 0) {
- var afterHash = textBefore.substring(hashIdx);
- var spaceIdx = afterHash.indexOf(' ');
- var replaceEnd = spaceIdx >= 0 ? hashIdx + spaceIdx : cursorPos;
- input.value = val.substring(0, hashIdx) + '#' + title + ' ' + val.substring(cursorPos);
- input.focus();
- input.selectionStart = input.selectionEnd = hashIdx + title.length + 2;
- }
- hideDiscussionSuggest();
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 已关联讨论：' + title);
- }
+  function updateSuggestHighlight(items) {
+  if (!items) items = document.getElementById('discussionSuggest').querySelectorAll('[data-index]');
+  items.forEach(function(el, idx) {
+  el.style.background = idx === _suggestIndex ? '#dbeafe' : '';
+  });
+  }
+
+  function hideDiscussionSuggest() {
+  var box = document.getElementById('discussionSuggest');
+  if (box) box.style.display = 'none';
+  _suggestItems = [];
+  _suggestIndex = -1;
+  }
+
+  function selectDiscussionSuggestByIndex(idx) {
+  var d = _suggestItems[idx];
+  if (!d) return;
+  _selectedDiscussionId = d.id;
+  var input = document.getElementById('noteInput');
+  var val = input.value;
+  var cursorPos = input.selectionStart;
+  var textBefore = val.substring(0, cursorPos);
+  var hashIdx = textBefore.lastIndexOf('#');
+  if (hashIdx >= 0) {
+  input.value = val.substring(0, hashIdx) + '#' + d.title + ' ' + val.substring(cursorPos);
+  input.focus();
+  input.selectionStart = input.selectionEnd = hashIdx + d.title.length + 2;
+  }
+  hideDiscussionSuggest();
+  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 已关联讨论：' + escHtml(d.title));
+  }
 
  // ===== 发帖附图 =====
  function addPostImage(input) {
