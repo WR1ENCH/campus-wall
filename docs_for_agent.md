@@ -180,6 +180,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `QAAN` | QA 回答 | `routes/qa.js` 创建回答 |
 | `VOTE` | 投票 | `routes/votes.js` 创建投票 |
 | `AURQ` | 代拿请求 | `routes/pickup.js` 创建代拿 |
+| `CRDL` | 信用分日志 | `lib/credibility.js` 信用分变动 |
 | (无前缀) | 用户 uid | 16 位随机数字 `0-9` |
 
 **核心 API**：
@@ -321,7 +322,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `vote_ip_records` | id, voteId, ip, userId, createdAt | 同 IP 去重 |
 | `trust_score_logs` | id, userId, amount, score, reason, createdAt | 信任分日志 |
 | `trust_tokens` | _key, userId, userAgent, createdAt, expiresAt | 浏览器信任令牌 |
-| `deleted_items` | _id, id, type, content, author, userId, deletedAt, deletedBy, extra | 软删除内容归档 |
+| `deleted_items` | _id, id, type, content, author, userId, deletedAt, deletedBy, extra | 软删除内容归档（type: post/comment/discussion/disc_comment/qa_question/qa_answer/auction） |
 | `maintenance` | _key(PK), _value | 维护模式状态（key-value） |
 
 > 索引：posts(deleted/userId/time)、users(id)、reports(status) 等（见 db.js `INDEXES`）。
@@ -476,6 +477,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/pickup/current` | 无 | 当前拍卖 |
 | GET | `/api/pickup/today-content` | 无 | 今日内容 |
 | GET | `/api/pickup/my-bids` | 用户 | 我的出价 |
+| DELETE | `/api/pickup/my-bid/:bidId` | 用户 | 删除自己的出价（仅审核前可删，退还冻结 Credits） |
 | GET | `/api/pickup/auction-detail/:slot` | 无 | 某时段详情 |
 | POST | `/api/pickup/bid` | 用户 | 出价 |
 | POST | `/api/pickup/report-content/:bidId` | 用户 | 举报内容 |

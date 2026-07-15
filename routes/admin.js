@@ -138,6 +138,12 @@ function readDiscussions() { return db.readDiscussions(); }
 function writeDiscussions(discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 function saveDeletedItem(type, item, deletedBy, extra) {
+  const extraData = Object.assign({
+    time: item.time || item.createdAt || null,
+    likeCount: item.likes || 0,
+    commentCount: item.commentsCount || 0,
+    title: item.title || null,
+  }, typeof extra === 'object' ? extra : {});
   db.addDeletedItem({
     id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: type,
@@ -146,7 +152,7 @@ function saveDeletedItem(type, item, deletedBy, extra) {
     userId: item.userId || item.createdBy || null,
     deletedAt: new Date().toISOString(),
     deletedBy: deletedBy,
-    extra: extra || ''
+    extra: JSON.stringify(extraData)
   });
 }
 
@@ -1137,30 +1143,33 @@ app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
-  const users = readUsers();
-  const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '用户不存在' });
-  const { password, certRealName, certClassName, ...safeUser } = user;
-  safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
-  safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
-  // ponytail: user/:id/detail 返回的 zhixuePassword 是加密原文，前端直接展示成乱码/哈希；
-  // zhixue-records API 已做 decryptCert，此处对齐。
-  safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
-  const posts = readPosts();
-  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
-    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
-    .slice(0, 20)
-    .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
-  const reports = readReports();
-  const userReports = reports.filter(r => r.targetUserId === user.id || r.targetAuthor === user.nickname)
-    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
-    .slice(0, 20)
-    .map(r => ({ id: r.id, time: r.time, reason: r.reason, type: r.type, status: r.status }));
-  const credibilityLogs = db.readCredibilityLogs()
-    .filter(l => l.userId === user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
-  res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
+  try {
+    const users = readUsers();
+    const user = users.find(u => u.id === req.params.id);
+    if (!user) return res.json({ ok: false, msg: '用户不存在' });
+    const { password, certRealName, certClassName, ...safeUser } = user;
+    safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
+    safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+    safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
+    const posts = readPosts();
+    const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
+      .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+      .slice(0, 20)
+      .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
+    const reports = readReports();
+    const userReports = reports.filter(r => r.targetUserId === user.id || r.reportedBy === user.id)
+      .sort((a, b) => new Date(b.createdAt || b.time || 0) - new Date(a.createdAt || a.time || 0))
+      .slice(0, 20)
+      .map(r => ({ id: r.id, time: r.createdAt || r.time, reason: r.reason, type: r.type, status: r.status }));
+    const credibilityLogs = db.readCredibilityLogs()
+      .filter(l => l.userId === user.id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
+    res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
+  } catch (e) {
+    console.error('[admin] user detail error:', e);
+    res.json({ ok: false, msg: '服务器内部错误' });
+  }
 });
 
 // ===== Credit / 卡密管理 =====
@@ -1518,11 +1527,24 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
 // ===== 已删除内容 =====
 app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
   const items = readDeletedItems();
-  const posts = items.filter(i => i.type === 'post');
-  const comments = items.filter(i => i.type === 'comment');
-  const discussions = items.filter(i => i.type === 'discussion');
-  const discComments = items.filter(i => i.type === 'disc_comment');
-  res.json({ ok: true, data: { posts: posts.reverse(), postComments: comments.reverse(), discussions: discussions.reverse(), discussionComments: discComments.reverse() } });
+  const parseItem = (item) => {
+    let extra = {};
+    try { extra = typeof item.extra === 'string' ? JSON.parse(item.extra) : (item.extra || {}); } catch (_) {}
+    return Object.assign({}, item, extra, { extra: undefined });
+  };
+  const posts = items.filter(i => i.type === 'post').map(parseItem);
+  const comments = items.filter(i => i.type === 'comment').map(parseItem);
+  const discussions = items.filter(i => i.type === 'discussion').map(parseItem);
+  const discComments = items.filter(i => i.type === 'disc_comment').map(parseItem);
+  const qaQuestions = items.filter(i => i.type === 'qa_question').map(parseItem);
+  const qaAnswers = items.filter(i => i.type === 'qa_answer').map(parseItem);
+  const auctions = items.filter(i => i.type === 'auction').map(parseItem);
+  res.json({ ok: true, data: {
+    posts: posts.reverse(), postComments: comments.reverse(),
+    discussions: discussions.reverse(), discussionComments: discComments.reverse(),
+    qaQuestions: qaQuestions.reverse(), qaAnswers: qaAnswers.reverse(),
+    auctions: auctions.reverse()
+  } });
 });
 
 // ===== 霸凌状态管理 =====

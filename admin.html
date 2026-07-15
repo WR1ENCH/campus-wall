@@ -1735,7 +1735,7 @@
     <div style="font-size:13px;color:var(--text-sub);">内容删除后至少保留一年，仅管理员可见</div>
   </div>
   <!-- 统计概览 -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
     <div class="stat-card" style="background:linear-gradient(135deg,#6366f1,#818cf8);border:none;flex-direction:column;gap:4px;">
       <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删帖子</div>
       <div class="stat-value" style="color:#fff;" id="deletedPostCount">0</div>
@@ -1752,19 +1752,37 @@
       <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删讨论评论</div>
       <div class="stat-value" style="color:#fff;" id="deletedDiscCommentCount">0</div>
     </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#06b6d4,#22d3ee);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删问答</div>
+      <div class="stat-value" style="color:#fff;" id="deletedQaQuestionCount">0</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#14b8a6,#5eead4);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删回答</div>
+      <div class="stat-value" style="color:#fff;" id="deletedQaAnswerCount">0</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#f43f5e,#fb7185);border:none;flex-direction:column;gap:4px;">
+      <div class="stat-label" style="color:rgba(255,255,255,0.75);">已删拍卖</div>
+      <div class="stat-value" style="color:#fff;" id="deletedAuctionCount">0</div>
+    </div>
   </div>
   <!-- Tab 切换 -->
-  <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px;">
+  <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap;">
     <button class="deleted-tab active" onclick="switchDeletedTab('posts')" id="tabDelPosts">帖子</button>
     <button class="deleted-tab" onclick="switchDeletedTab('comments')" id="tabDelComments">评论</button>
     <button class="deleted-tab" onclick="switchDeletedTab('discussions')" id="tabDelDiscussions">讨论</button>
     <button class="deleted-tab" onclick="switchDeletedTab('discComments')" id="tabDelDiscComments">讨论评论</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('qaQuestions')" id="tabDelQaQuestions">问答问题</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('qaAnswers')" id="tabDelQaAnswers">问答回答</button>
+    <button class="deleted-tab" onclick="switchDeletedTab('auctions')" id="tabDelAuctions">拍卖</button>
   </div>
   <div id="deletedLoading" class="loading"><div class="spinner"></div>加载中…</div>
   <div id="deletedPostsPanel" style="display:none;"><div id="deletedPostsBody"></div></div>
   <div id="deletedCommentsPanel" style="display:none;"><div id="deletedCommentsBody"></div></div>
   <div id="deletedDiscussionsPanel" style="display:none;"><div id="deletedDiscussionsBody"></div></div>
   <div id="deletedDiscCommentsPanel" style="display:none;"><div id="deletedDiscCommentsBody"></div></div>
+  <div id="deletedQaQuestionsPanel" style="display:none;"><div id="deletedQaQuestionsBody"></div></div>
+  <div id="deletedQaAnswersPanel" style="display:none;"><div id="deletedQaAnswersBody"></div></div>
+  <div id="deletedAuctionsPanel" style="display:none;"><div id="deletedAuctionsBody"></div></div>
 </div>
 
   </div>
@@ -5556,23 +5574,23 @@
   async function loadDeletedContent() {
     const loading = document.getElementById('deletedLoading');
     loading.style.display = '';
-    document.getElementById('deletedPostsPanel').style.display = 'none';
-    document.getElementById('deletedCommentsPanel').style.display = 'none';
-    document.getElementById('deletedDiscussionsPanel').style.display = 'none';
-    document.getElementById('deletedDiscCommentsPanel').style.display = 'none';
+    ['Posts','Comments','Discussions','DiscComments','QaQuestions','QaAnswers','Auctions'].forEach(p => {
+      document.getElementById('deleted' + p + 'Panel').style.display = 'none';
+    });
     try {
       const res = await fetch('/api/admin/deleted-content', { headers: authHeaders() });
       const json = await res.json();
       if (!json.ok) { loading.innerHTML = '<div class="empty-tip">❌ ' + escHtml(json.msg || '加载失败') + '</div>'; return; }
       _deletedData = json.data;
       loading.style.display = 'none';
-      // 更新统计
       const d = json.data;
       document.getElementById('deletedPostCount').textContent = d.posts.length;
       document.getElementById('deletedCommentCount').textContent = d.postComments.length;
       document.getElementById('deletedDiscussionCount').textContent = d.discussions.length;
       document.getElementById('deletedDiscCommentCount').textContent = d.discussionComments.length;
-      // 渲染当前 tab
+      document.getElementById('deletedQaQuestionCount').textContent = d.qaQuestions.length;
+      document.getElementById('deletedQaAnswerCount').textContent = d.qaAnswers.length;
+      document.getElementById('deletedAuctionCount').textContent = d.auctions.length;
       switchDeletedTab(_deletedActiveTab);
     } catch (e) {
       loading.innerHTML = '<div class="empty-tip">❌ 网络错误：' + escHtml(e.message) + '</div>';
@@ -5582,22 +5600,17 @@
   // 切换已删除内容 tab
   function switchDeletedTab(tab) {
     _deletedActiveTab = tab;
-    // 更新 tab 高亮
     document.querySelectorAll('.deleted-tab').forEach(t => t.classList.remove('active'));
-    const tabMap = { posts: 'tabDelPosts', comments: 'tabDelComments', discussions: 'tabDelDiscussions', discComments: 'tabDelDiscComments' };
-    document.getElementById(tabMap[tab]).classList.add('active');
-    // 隐藏所有面板
-    ['Posts', 'Comments', 'Discussions', 'DiscComments'].forEach(p => {
+    const tabMap = { posts:'tabDelPosts', comments:'tabDelComments', discussions:'tabDelDiscussions', discComments:'tabDelDiscComments', qaQuestions:'tabDelQaQuestions', qaAnswers:'tabDelQaAnswers', auctions:'tabDelAuctions' };
+    if (tabMap[tab]) document.getElementById(tabMap[tab]).classList.add('active');
+    ['Posts','Comments','Discussions','DiscComments','QaQuestions','QaAnswers','Auctions'].forEach(p => {
       document.getElementById('deleted' + p + 'Panel').style.display = 'none';
     });
-    // 清空所有 body
     if (!_deletedData) return;
-    // 显示对应面板
-    const panelId = tab === 'posts' ? 'Posts' : tab === 'comments' ? 'Comments' : tab === 'discussions' ? 'Discussions' : 'DiscComments';
-    document.getElementById('deleted' + panelId + 'Panel').style.display = '';
-    const bodyId = 'deleted' + panelId + 'Body';
-    const items = tab === 'posts' ? _deletedData.posts : tab === 'comments' ? _deletedData.postComments : tab === 'discussions' ? _deletedData.discussions : _deletedData.discussionComments;
-    renderDeletedItems(bodyId, items, tab);
+    const panelMap = { posts:'Posts', comments:'Comments', discussions:'Discussions', discComments:'DiscComments', qaQuestions:'QaQuestions', qaAnswers:'QaAnswers', auctions:'Auctions' };
+    const dataMap = { posts:'posts', comments:'postComments', discussions:'discussions', discComments:'discussionComments', qaQuestions:'qaQuestions', qaAnswers:'qaAnswers', auctions:'auctions' };
+    document.getElementById('deleted' + panelMap[tab] + 'Panel').style.display = '';
+    renderDeletedItems('deleted' + panelMap[tab] + 'Body', _deletedData[dataMap[tab]] || [], tab);
   }
 
   function renderDeletedItems(bodyId, items, type) {
@@ -5621,10 +5634,10 @@
           '<div class="deleted-card">' +
           '<div style="font-weight:600;font-size:14px;word-break:break-word;">' + escHtml(item.content || '(无内容)') + '</div>' +
           '<div class="del-meta">' +
-          '<span>📝 ' + escHtml(item.type) + '</span>' +
-          '<span>👤 ' + escHtml(item.author) + '</span>' +
+          '<span>📝 ' + escHtml(item.type || '帖子') + '</span>' +
+          '<span>👤 ' + escHtml(item.author || '未知') + '</span>' +
           '<span>📅 ' + time + '</span>' +
-          '<span>❤️ ' + item.likeCount + ' 💬 ' + item.commentCount + '</span>' +
+          '<span>❤️ ' + (item.likeCount || 0) + ' 💬 ' + (item.commentCount || 0) + '</span>' +
           '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
           '<span>🗑️ ' + delTime + '</span>' +
           '</div></div>';
@@ -5642,9 +5655,9 @@
       } else if (type === 'discussions') {
         html +=
           '<div class="deleted-card">' +
-          '<div style="font-weight:600;font-size:14px;">💬 ' + escHtml(item.title || '(无标题)') + '</div>' +
+          '<div style="font-weight:600;font-size:14px;">💬 ' + escHtml(item.title || item.content || '(无标题)') + '</div>' +
           '<div class="del-meta">' +
-          '<span>👤 ' + escHtml(item.createdBy) + '</span>' +
+          '<span>👤 ' + escHtml(item.author || item.createdBy || '未知') + '</span>' +
           '<span>📅 ' + time + '</span>' +
           '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
           '<span>🗑️ ' + delTime + '</span>' +
@@ -5656,6 +5669,42 @@
           '<div class="del-meta">' +
           '<span>👤 ' + escHtml(item.author) + '</span>' +
           '<span>📅 ' + time + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'qaQuestions') {
+        const bounty = item.bounty ? ('悬赏 ' + item.bounty + ' credits') : '';
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:600;font-size:14px;word-break:break-word;">❓ ' + escHtml(item.title || item.content || '(无标题)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.author || '未知') + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          (bounty ? '<span>💰 ' + bounty + '</span>' : '') +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'qaAnswers') {
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:500;font-size:13px;word-break:break-word;">✅ ' + escHtml(item.content || '(无内容)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.author || '未知') + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span>👍 ' + (item.likes || 0) + '</span>' +
+          '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
+          '<span>🗑️ ' + delTime + '</span>' +
+          '</div></div>';
+      } else if (type === 'auctions') {
+        const slotName = item.slot === 1 ? '早' : item.slot === 2 ? '中' : '晚';
+        html +=
+          '<div class="deleted-card">' +
+          '<div style="font-weight:500;font-size:13px;word-break:break-word;">🏷️ ' + escHtml(item.content || '(无内容)') + '</div>' +
+          '<div class="del-meta">' +
+          '<span>👤 ' + escHtml(item.author || '匿名用户') + '</span>' +
+          '<span>📅 ' + time + '</span>' +
+          '<span>🕐 ' + slotName + '</span>' +
+          '<span>💰 ' + (item.amount || 0) + ' credits</span>' +
           '<span class="del-badge ' + badgeClass + '">' + badgeText + '</span>' +
           '<span>🗑️ ' + delTime + '</span>' +
           '</div></div>';
