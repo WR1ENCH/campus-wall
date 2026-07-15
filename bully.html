@@ -1004,7 +1004,7 @@
         input.style.cursor = 'default';
         if (hint) hint.textContent = '已根据您的同学认证自动填充，不可修改';
       } else if (document.getElementById('submitBtn').dataset.mode === 'emergency') {
-        input.value = '';
+        // ponytail: 不强制清空，避免 restoreDraft 后 applyVictimNameField 覆盖已恢复的值
         input.readOnly = false;
         input.style.background = '#fffbf0';
         input.style.color = 'var(--text-main)';
@@ -1229,19 +1229,22 @@
   }
 
   function confirmPostId(val) {
-    if (!val) {
+    try {
+      if (!val) {
+        var input = document.getElementById('postIdInput');
+        val = input.value.trim();
+      }
+      if (val) {
+        confirmedPostIds.push(val);
+        renderConfirmedIds();
+        try { saveDraft(); } catch(e) {}
+      }
+    } finally {
+      var o = document.querySelector('.postid-confirm-overlay');
+      if (o) o.remove();
       var input = document.getElementById('postIdInput');
-      val = input.value.trim();
+      if (input) input.value = '';
     }
-    if (val) {
-      confirmedPostIds.push(val);
-      renderConfirmedIds();
-      saveDraft();
-    }
-    var o = document.querySelector('.postid-confirm-overlay');
-    if (o) o.remove();
-    var input = document.getElementById('postIdInput');
-    if (input) input.value = '';
   }
 
   function renderConfirmedIds() {
@@ -1315,6 +1318,9 @@
       .then(function(r) { return r.json(); })
       .then(function(j) {
         var resultsEl = document.getElementById('involvedSearchResults');
+        var input = document.getElementById('involvedSearchInput');
+        // 若输入已被清空或失去焦点，不再展开结果（防止添加按钮点击后异步回调重新打开）
+        if (!input || input.value.trim().length < 2) { resultsEl.style.display = 'none'; return; }
         if (!j.ok || !j.data) { resultsEl.style.display = 'none'; return; }
         var d = j.data;
         var hasAny = d.accounts.length || d.nicknames.length || d.uids.length || d.names.length;
@@ -1448,7 +1454,7 @@
         '<p class="confirm-note">确认后该内容将作为证据附加到本次举报中。</p>' +
         '<div class="confirm-btns">' +
           '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
-          '<button class="btn-confirm-id" onclick="this.disabled=true;this.textContent=\'添加中…\';confirmPostId(\'' + val.replace(/'/g, "\\'") + '\')">✓ 确认添加</button>' +
+          '<button class="btn-confirm-id" onclick="this.disabled=true;this.textContent=\'添加中…\';confirmPostId(\'' + val.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\')">✓ 确认添加</button>' +
         '</div>';
     });
   }

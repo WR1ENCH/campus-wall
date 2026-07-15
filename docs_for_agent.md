@@ -989,6 +989,34 @@ server.js
 | 讨论窗口重设计 | `index.html` CSS + JS + HTML | 暖色调配色（砖棕 `#8b6f5e`），卡片化话题列表，comment 区背景优化，slide-left/slide-right 话题列表↔评论切换动画 |
 | 问答窗口重设计 | `index.html` CSS + JS + HTML | 暖金配色优化，qa-question-card/qa-answer-card 重设计，tab 切换 fade+slide 动画，报告按钮样式统一 |
 | 讨论评论举报修复 | `index.html` | 旧 `reportDiscussionComment` / `promptReportDiscussion` 调用不存在端点 → 改为统一 `/api/reports` |
+
+### 会话 9 — 2026-07-15 — 5 项 Bug 修复（补全）
+
+#### Bug 1：发帖 #话题 自动同步到讨论区（蓝色可点击链接）
+- `routes/posts.js:281-308`：`POST /api/posts` 中新增自动话题识别逻辑。当内容以 `#` 开头且未指定 `syncDiscussionId` 时，提取话题名（空格前或整行），查找现有讨论区话题，未找到则自动创建（7天过期），设置 `post.discussionId` 并同步评论到讨论区。
+- 前端 `renderPostContent()` 已有蓝色链接渲染逻辑（`post.discussionId` 存在且内容以 `#` 开头时渲染可点击话题链接）。
+
+#### Bug 2：涉事用户搜索添加后下拉栏重新弹出
+- `bully.html:1318-1321`：`doInvolvedSearch()` 的 fetch 回调中增加输入框内容检查。若输入框已被清空（添加按钮点击后），不再展开搜索结果，防止异步回调覆盖 `display:none`。
+
+#### Bug 3：内容ID确认弹窗点击添加后卡在"添加中…"
+- `bully.html:1231-1245`：`confirmPostId()` 用 `try/finally` 包裹，确保弹窗始终被关闭；`saveDraft()` 包在 `try/catch` 中防止 `localStorage` 异常导致弹窗卡死。
+- `bully.html:1454`：`val` 的 HTML 属性转义增加反斜杠处理（`replace(/\\/g, '\\\\')`），防止 `\` 破坏 `onclick` 中 JS 字符串语法。
+
+#### Bug 4：紧急模式提交时不弹出同学验证窗口
+- `bully.html:1007`：`applyVictimNameField()` 中紧急模式下不再强制 `input.value = ''`，避免 `restoreDraft()` 恢复受害人姓名后又被 `applyVictimNameField()` 清空，导致提交时 `victimName` 为空而提前返回。
+
+#### Bug 5：霸凌处理窗口涉事用户/内容始终显示 0
+- `routes/admin.js:1615-1635`：`GET /api/admin/bullying/:id` 中 `involvedUsers`/`contentIds` 增加字符串 JSON 兼容解析，防止 `tryParse` 偶发失败时 `Array.isArray` 为 false 导致返回空数组。
+- `admin.html` 详情弹窗 `showBullyingDetail()` 和处理弹窗 `openProcessWindow()` 增加降级显示：若 `involvedUserDetails` 为空但 `involvedUsers` 有数据，直接使用原始数据渲染。
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 自动话题识别 | `routes/posts.js` | 发帖 `#话题` 自动创建/关联讨论区，设置 `discussionId` 并同步评论 |
+| 涉事搜索防抖 | `bully.html` | doInvolvedSearch 回调检查输入框内容，防止异步重新展开 |
+| 确认弹窗异常 | `bully.html` | confirmPostId try/finally + 反斜杠转义 |
+| 紧急模式清空 | `bully.html` | applyVictimNameField 不清空紧急模式输入框 |
+| 霸凌详情健壮 | `routes/admin.js` + `admin.html` | 兼容字符串 JSON + 前端降级显示 |
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
