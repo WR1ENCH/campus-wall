@@ -963,7 +963,24 @@ server.js
 | `/api/whispers/:id/sign` | POST | 用户 | 签收（仅接收者可操作）→ T1 通知发送方 |
 
 **举报集成**：接收弹窗「举报」按钮 → `POST /api/reports`，`type: 'whisper'`，经 `getReportedContent('whisper', id)` 提取证据快照，走统一举报处理流程。
-### 会话 3 — 2026-07-13
+### 会话 8 — 2026-07-15 — 5 项 Bug 修复
+
+#### Bug 1：话题帖子无法发送（# 被特殊字符检测拦截）
+- `index.html:3505`：从 `SPECIAL_CHAR_REG` 中移除 `#`，避免 `hasSpecialChars()` 误拦截包含 `#话题` 的帖子。
+
+#### Bug 2：涉事用户搜索结果在添加后重新弹出
+- `bully.html:1299`：在「添加」按钮 click 处理函数中增加 `clearTimeout(_involvedSearchTimer)`，防止搜索防抖在关闭下拉后重新打开结果。
+
+#### Bug 3：内容ID确认弹窗重读输入框过期值
+- `bully.html:1451`：确认按钮传递 `val`（已捕获的输入值）给 `confirmPostId(val)`，而非再次读取 `postIdInput.value`（可能在等待确认期间被修改或清空）。
+- 修改 `confirmPostId(val)` 接受可选参数，有参数时优先使用；保留 fallback 回退读取输入框 **（向后兼容）**。
+
+#### Bug 4：紧急模式草稿恢复后无法提交认证
+- `bully.html:1144-1157`：草稿恢复函数 `restoreDraft()` 删除「self 且无 victimRealName 则丢弃草稿」逻辑；改为检测紧急模式并设置 `submitBtn.dataset.mode = 'emergency'`，确保提交时弹出认证窗。
+
+#### Bug 5：霸凌处理窗口涉事用户/内容始终显示 0
+- `db.js:186-204`：`bullying` 表 schema 缺失 `involvedUsers` 和 `contentIds` 列，导致 `dropAndInsert()` 生成的 INSERT 中包含不存在的列，SQLite 静默失败，所有 bullying 行丢失。新增列迁移（`tableMigrations`）及 CREATE TABLE 定义。
+- `db.js:427`：列迁移增加 `{ name: 'bullying', columns: ['involvedUsers', 'contentIds'] }`。
 
 | 改动 | 文件 | 说明 |
 |------|------|------|
