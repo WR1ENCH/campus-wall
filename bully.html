@@ -426,8 +426,20 @@
     }
     .emergency-box strong { color: #b91c1c; }
 
+    /* 弹窗动画 */
+    @keyframes popup-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes popup-scale-in {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
     /* 帖子ID确认弹窗 */
-    .postid-confirm-overlay {
+    .postid-confirm-overlay,
+    .cert-popup-overlay,
+    .emergency-choice-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.45);
@@ -437,6 +449,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      animation: popup-fade-in 0.2s ease-out;
     }
 
     .postid-confirm-box {
@@ -447,6 +460,7 @@
       width: 100%;
       box-shadow: 0 8px 40px rgba(0,0,0,0.28);
       text-align: center;
+      animation: popup-scale-in 0.25s ease-out;
     }
 
     .postid-confirm-box .confirm-icon { font-size: 36px; margin-bottom: 10px; }
@@ -1286,9 +1300,9 @@
       var selected = results.querySelector('.involved-search-item.selected');
       if (selected) {
         addInvolvedUser(selected.dataset);
-        results.style.display = 'none';
         document.getElementById('involvedSearchInput').value = '';
       }
+      results.style.display = 'none';
     });
   }
 
@@ -1433,7 +1447,7 @@
         '<p class="confirm-note">确认后该内容将作为证据附加到本次举报中。</p>' +
         '<div class="confirm-btns">' +
           '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
-          '<button class="btn-confirm-id" onclick="confirmPostId()">✓ 确认添加</button>' +
+          '<button class="btn-confirm-id" onclick="this.disabled=true;this.textContent=\'添加中…\';confirmPostId()">✓ 确认添加</button>' +
         '</div>';
     });
   }
@@ -1535,6 +1549,7 @@
 
   // ── 同学认证弹窗（在紧急模式下提交前弹出）───────
   var _pendingSubmitData = null;
+  var _certImages = [];
 
   function showCertPopup(submitData) {
     var old = document.querySelector('.cert-popup-overlay');
@@ -1545,7 +1560,7 @@
     overlay.className = 'cert-popup-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.innerHTML =
-      '<div style="background:var(--paper-bg);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.28);">' +
+      '<div class="cert-popup-box" style="background:var(--paper-bg);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.28);animation:popup-scale-in 0.25s ease-out;">' +
         '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:16px;text-align:center;">📋 请完成同学认证</div>' +
         '<div style="font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:16px;text-align:center;">提交霸凌报告前需要先完成同学认证，请填写以下信息：</div>' +
         '<div class="form-group">' +
@@ -1579,7 +1594,7 @@
     _pendingSubmitData = submitData;
 
     // 图片上传
-    var _certImages = [];
+    _certImages = [];
     document.getElementById('certImgInput').addEventListener('change', function() {
       for (var i = 0; i < this.files.length; i++) {
         if (_certImages.length >= 3) { showMsg('最多3张图片', 'error'); break; }
@@ -1757,7 +1772,7 @@
 
     // self 角色且紧急模式 → 先弹认证窗
     var isEmergency = document.getElementById('submitBtn').dataset.mode === 'emergency';
-    if (reporterRole === 'self' && isEmergency) {
+    if (reporterRole === 'self' && (isEmergency || !victimRealName)) {
       if (!victimName) { showMsg('请填写您的姓名', 'error'); return; }
       var submitData = {
         reporterRole: reporterRole,
