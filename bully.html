@@ -550,6 +550,36 @@
       color: #9ca3af;
     }
 
+    /* 涉事用户搜索结果 */
+    .involved-search-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.12s;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+    .involved-search-item:hover { background: #f5f0ea; }
+    .involved-search-item .isi-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #e8e0d8;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: #8a7a6a; overflow: hidden;
+    }
+    .involved-search-item .isi-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .involved-search-item .isi-info { flex: 1; min-width: 0; }
+    .involved-search-item .isi-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .involved-search-item .isi-match { font-size: 11px; color: var(--text-sub); }
+    .involved-search-category {
+      padding: 4px 12px 2px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #9a8a7a;
+    }
+
     /* 已确认帖子ID标签列表 */
     .confirmed-ids {
       display: flex;
@@ -726,15 +756,14 @@
       </div>
     </div>
 
-    <!-- 受害者姓名（仅自我举报时显示，自动填充，不可修改） -->
+    <!-- 受害者姓名（仅自我举报时显示） -->
     <div class="form-group" id="victimNameRow" style="display:none;">
       <label class="form-label">您的姓名 <span class="required">*</span></label>
       <div style="position:relative;">
-        <input type="text" class="form-input" id="victimNameInput" readonly
+        <input type="text" class="form-input" id="victimNameInput"
                style="background:#f5f0e8;color:#6a4a3a;cursor:default;padding-right:36px;">
-        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;" title="根据同学认证自动填充，不可修改"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
       </div>
-      <div class="form-hint">已根据您的同学认证自动填充，不可修改</div>
+      <div class="form-hint" id="victimNameHint">已根据您的同学认证自动填充，不可修改</div>
     </div>
 
     <!-- 事件描述 -->
@@ -745,32 +774,48 @@
       <div class="form-hint">至少20个字，最多1000字（<span id="charCount">0</span>/1000）</div>
     </div>
 
-    <!-- 涉事用户 -->
-    <div class="form-group">
-      <label class="form-label">涉事用户</label>
-      <input type="text" class="form-input" id="involvedInput"
-             placeholder="霸凌者的平台昵称或用户ID（选填，便于核查）" maxlength="100">
-      <div class="form-hint">如有多个，请用逗号分隔</div>
-    </div>
-
-    <!-- 相关帖子ID -->
-    <div class="form-group">
-      <label class="form-label">相关帖子ID
+    <!-- 涉事用户（搜索 + 多选） -->
+    <div class="form-group" id="involvedUsersGroup">
+      <label class="form-label">涉事用户
         <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，可添加多个）</span>
       </label>
-      <div style="display:flex;gap:8px;">
-        <input type="text" class="form-input" id="postIdInput"
-               placeholder="输入帖子ID后按 Enter 或点击添加" maxlength="100"
-               style="font-family:monospace;flex:1;"
-               onkeydown="if(event.key==='Enter'){event.preventDefault();triggerPostIdConfirm();}">
-        <button type="button" onclick="triggerPostIdConfirm()"
+      <div style="display:flex;gap:8px;position:relative;">
+        <div style="flex:1;position:relative;">
+          <input type="text" class="form-input" id="involvedSearchInput"
+                 placeholder="搜索账号、昵称、UID或姓名..." maxlength="50"
+                 style="font-family:inherit;"
+                 autocomplete="off">
+          <div id="involvedSearchResults"
+               style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--brick-light);border-radius:0 0 10px 10px;max-height:260px;overflow-y:auto;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,0.15);"></div>
+        </div>
+        <button type="button" id="addInvolvedUserBtn"
                 style="padding:10px 16px;background:var(--brick-dark);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
                 onmouseover="this.style.background='#6b4c3b'" onmouseout="this.style.background='var(--brick-dark)'">
           ＋ 添加
         </button>
       </div>
-      <div class="form-hint">从帖子详情左下角点击 <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> 复制ID后粘贴，每次添加一个，需确认后计入证据</div>
-      <!-- 已确认帖子ID标签 -->
+      <div class="form-hint">搜索平台用户，选择后点击添加</div>
+      <div class="confirmed-ids" id="involvedUsersList"></div>
+    </div>
+
+    <!-- 相关内容ID -->
+    <div class="form-group">
+      <label class="form-label">相关内容ID
+        <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，可添加多个）</span>
+      </label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" class="form-input" id="postIdInput"
+               placeholder="输入内容ID后按 Enter 或点击添加" maxlength="100"
+               style="font-family:monospace;flex:1;"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();triggerContentIdConfirm();}">
+        <button type="button" onclick="triggerContentIdConfirm()"
+                style="padding:10px 16px;background:var(--brick-dark);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+                onmouseover="this.style.background='#6b4c3b'" onmouseout="this.style.background='var(--brick-dark)'">
+          ＋ 添加
+        </button>
+      </div>
+      <div class="form-hint">支持帖子ID(POST-)、评论ID(POCM-)、讨论ID(DISC-)等，输入后自动匹配内容</div>
+      <!-- 已确认内容ID标签 -->
       <div class="confirmed-ids" id="confirmedIdsList"></div>
     </div>
 
@@ -813,7 +858,7 @@
     </div>
 
     <!-- 提交按钮 -->
-    <button class="submit-btn" id="submitBtn" onclick="doSubmit()">
+    <button class="submit-btn" id="submitBtn" data-mode="" onclick="doSubmit()">
       <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 提交报告
     </button>
   </form>
@@ -839,81 +884,142 @@
   var TOKEN_KEY = 'campus_user_token';
   var victimRealName = null;   // 认证通过后存入的真实姓名（仅 self 角色使用）
 
-  // ── 角色选择（先验证同学认证）────────────────────
+  // ── 角色选择（witness 无需认证，self 需要）─────
   function selectReporterRole(role) {
     var token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
-      showCertAlert('not_login');
+      showLoginAlert();
       return;
     }
 
-    // 异步检查同学认证状态
+    if (role === 'witness') {
+      // 目击者无需同学认证
+      reporterRole = role;
+      victimRealName = null;
+      applyVictimNameField();
+      document.getElementById('roleSelect').style.display = 'none';
+      document.getElementById('formContent').style.display = 'block';
+      saveDraft();
+      return;
+    }
+
+    // self 角色：检查同学认证
     fetch('/api/user/me/zhixue-info', {
       headers: { 'x-user-token': token }
     }).then(function(r) { return r.json(); })
       .then(function(json) {
-        if (!json.ok || !json.data || json.data.status !== 'approved') {
-          showCertAlert('not_approved');
-          return;
+        if (json.ok && json.data && json.data.status === 'approved') {
+          victimRealName = (json.data && json.data.realName) ? json.data.realName : null;
+          reporterRole = role;
+          applyVictimNameField();
+          document.getElementById('roleSelect').style.display = 'none';
+          document.getElementById('formContent').style.display = 'block';
+          saveDraft();
+        } else {
+          // 未认证 → 弹窗：前往认证 / 紧急情况
+          showEmergencyChoice();
         }
-        // 认证通过，保存姓名
-        victimRealName = (json.data && json.data.realName) ? json.data.realName : null;
-        reporterRole = role;
-        // 根据角色决定是否显示姓名栏
-        applyVictimNameField();
-        document.getElementById('roleSelect').style.display = 'none';
-        document.getElementById('formContent').style.display = 'block';
-        saveDraft();
       })
       .catch(function() {
-        showCertAlert('not_approved');
+        showEmergencyChoice();
       });
+  }
+
+  // ── 未认证弹窗：前往认证 / 紧急情况 ────────────
+  function showEmergencyChoice() {
+    var old = document.querySelector('.emergency-choice-overlay');
+    if (old) old.remove();
+
+    var overlay = document.createElement('div');
+    overlay.className = 'emergency-choice-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML =
+      '<div style="background:var(--paper-bg);border-radius:16px;padding:32px 28px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.28);">' +
+        '<div style="font-size:48px;margin-bottom:14px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 6h16M4 12h16M4 18h12"/><path d="M2 6l10-4 10 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/></svg></div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:8px;">尚未通过同学认证</div>' +
+        '<div style="font-size:14px;color:var(--text-sub);line-height:1.7;margin-bottom:6px;">举报自己遭受霸凌需要完成同学认证。</div>' +
+        '<div style="font-size:13px;color:#dc2626;line-height:1.6;margin-bottom:20px;background:#fef2f2;padding:10px 14px;border-radius:8px;">如情况紧急，可选择「紧急情况」先提交报告，<br>提交时我们会引导您完成认证。</div>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="closeEmergencyChoice();goCertPage()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">前往认证</button>' +
+          '<button onclick="closeEmergencyChoice();enterEmergencyMode()" style="flex:1;padding:11px;border-radius:10px;border:2px solid #dc2626;background:#fff;font-size:14px;font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;">紧急情况</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
+  function closeEmergencyChoice() {
+    var o = document.querySelector('.emergency-choice-overlay');
+    if (o) o.remove();
+  }
+
+  // ── 紧急模式：手动填写姓名 ─────────────────────
+  function enterEmergencyMode() {
+    reporterRole = 'self';
+    victimRealName = null;
+    var row = document.getElementById('victimNameRow');
+    var input = document.getElementById('victimNameInput');
+    if (row) row.style.display = 'block';
+    if (input) {
+      input.value = '';
+      input.readOnly = false;
+      input.style.background = '#fffbf0';
+      input.style.color = 'var(--text-main)';
+      input.style.cursor = 'text';
+      input.placeholder = '请填写您的真实姓名';
+    }
+    document.getElementById('victimNameHint').textContent = '紧急情况下，请手动填写您的真实姓名';
+    document.getElementById('roleSelect').style.display = 'none';
+    document.getElementById('formContent').style.display = 'block';
+    document.getElementById('submitBtn').dataset.mode = 'emergency';
+    saveDraft();
   }
 
   // ── 显示/隐藏姓名栏（self 角色才显示）──────────
   function applyVictimNameField() {
     var row = document.getElementById('victimNameRow');
     var input = document.getElementById('victimNameInput');
+    var hint = document.getElementById('victimNameHint');
     if (!row || !input) return;
-    if (reporterRole === 'self' && victimRealName) {
-      input.value = victimRealName;
+    if (reporterRole === 'self') {
       row.style.display = 'block';
+      if (victimRealName) {
+        input.value = victimRealName;
+        input.readOnly = true;
+        input.style.background = '#f5f0e8';
+        input.style.color = '#6a4a3a';
+        input.style.cursor = 'default';
+        if (hint) hint.textContent = '已根据您的同学认证自动填充，不可修改';
+      } else if (document.getElementById('submitBtn').dataset.mode === 'emergency') {
+        input.value = '';
+        input.readOnly = false;
+        input.style.background = '#fffbf0';
+        input.style.color = 'var(--text-main)';
+        input.style.cursor = 'text';
+        input.placeholder = '请填写您的真实姓名';
+        if (hint) hint.textContent = '紧急情况下，请手动填写您的真实姓名';
+      }
     } else {
       input.value = '';
       row.style.display = 'none';
     }
   }
 
-  // ── 同学认证提示弹窗 ─────────────────────────────
-  function showCertAlert(type) {
-    // 移除旧的
+  // ── 登录提示弹窗 ────────────────────────────────
+  function showLoginAlert() {
     var old = document.querySelector('.cert-alert-overlay');
     if (old) old.remove();
-
-    var icon, title, msg, btnText;
-    if (type === 'not_login') {
-      icon = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
-      title = '请先登录';
-      msg = '霸凌举报功能需要登录后方可使用。';
-      btnText = '去登录';
-    } else {
-      icon = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 6h16M4 12h16M4 18h12"/><path d="M2 6l10-4 10 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/></svg>';
-      title = '尚未通过同学认证';
-      msg = '霸凌举报功能需要先完成同学认证，请前往认证后再继续。';
-      btnText = '去认证';
-    }
 
     var overlay = document.createElement('div');
     overlay.className = 'cert-alert-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.innerHTML =
       '<div style="background:var(--paper-bg);border-radius:16px;padding:32px 28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.28);">' +
-        '<div style="font-size:48px;margin-bottom:14px;">' + icon + '</div>' +
-        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:10px;">' + title + '</div>' +
-        '<div style="font-size:14px;color:var(--text-sub);line-height:1.7;margin-bottom:24px;">' + msg + '</div>' +
+        '<div style="font-size:48px;margin-bottom:14px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:10px;">请先登录</div>' +
+        '<div style="font-size:14px;color:var(--text-sub);line-height:1.7;margin-bottom:24px;">霸凌举报功能需要登录后方可使用。</div>' +
         '<div style="display:flex;gap:10px;">' +
           '<button onclick="closeCertAlert()" style="flex:1;padding:11px;border-radius:10px;border:2px solid var(--brick-light);background:#fff;font-size:14px;font-weight:600;color:var(--text-main);cursor:pointer;font-family:inherit;">取消</button>' +
-          '<button onclick="goCertPage()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">' + btnText + '</button>' +
+          '<button onclick="goCertPage()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">去登录</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
@@ -926,7 +1032,7 @@
 
   function goCertPage() {
     closeCertAlert();
-    // 有 token → 主页（主页有同学认证入口）；无 token → 主页（主页有登录入口）
+    closeEmergencyChoice();
     window.location.href = '/';
   }
 
@@ -942,17 +1048,20 @@
   function saveDraft() {
     if (_formSubmitted) return;
     var bullyType = document.querySelector('input[name="bullyType"]:checked');
+    var input = document.getElementById('victimNameInput');
     var draft = {
       reporterRole: reporterRole,
       victimRealName: victimRealName,
       bullyType:  bullyType ? bullyType.value : '',
       desc:       document.getElementById('descInput').value,
       involved:   document.getElementById('involvedInput').value,
+      victimName: input ? input.value : '',
       time:       document.getElementById('timeInput').value,
       contact:    document.getElementById('contactInput').value,
       isAnonymous: isAnonymous,
       confirmedPostIds: confirmedPostIds.slice(),
-      attachedImages:   attachedImages.slice()
+      attachedImages:   attachedImages.slice(),
+      involvedUsers:    _selectedInvolvedUsers.slice()
     };
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
   }
@@ -1003,6 +1112,16 @@
       confirmedPostIds = draft.confirmedPostIds.slice();
       renderConfirmedIds();
     }
+    // 恢复涉事用户
+    if (Array.isArray(draft.involvedUsers) && draft.involvedUsers.length) {
+      _selectedInvolvedUsers = draft.involvedUsers.slice();
+      renderInvolvedUsers();
+    }
+    // 恢复受害者姓名（紧急模式）
+    if (draft.victimName && reporterRole === 'self' && !victimRealName) {
+      var input = document.getElementById('victimNameInput');
+      if (input) input.value = draft.victimName;
+    }
     // 恢复截图
     if (Array.isArray(draft.attachedImages) && draft.attachedImages.length) {
       attachedImages = draft.attachedImages.slice();
@@ -1031,7 +1150,7 @@
   }
 
   // 监听所有字段变化，自动保存草稿
-  ['descInput','involvedInput','timeInput','contactInput'].forEach(function(id) {
+  ['descInput','involvedInput','timeInput','contactInput','victimNameInput'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', saveDraft);
   });
@@ -1041,6 +1160,9 @@
 
   // 页面加载时恢复草稿
   restoreDraft();
+
+  // 初始化涉事用户搜索
+  initInvolvedUserSearch();
 
   // 兜底：没有任何角色时强制隐藏表单，确保一定经过角色选择
   if (!reporterRole) {
@@ -1056,7 +1178,7 @@
         input.value = pid;
         // 页面加载完成后自动弹出确认框
         window.addEventListener('load', function() {
-          setTimeout(function() { triggerPostIdConfirm(); }, 300);
+          setTimeout(function() { triggerContentIdConfirm(); }, 300);
         });
       }
     }
@@ -1087,91 +1209,7 @@
   document.getElementById('anonymousToggle').classList.add('active');
 
   // ── 帖子ID确认弹窗 ────────────────────────────────
-  function triggerPostIdConfirm() {
-    var input = document.getElementById('postIdInput');
-    var val = input.value.trim();
-    if (!val) { input.focus(); return; }
-
-    // 检查重复
-    if (confirmedPostIds.indexOf(val) !== -1) {
-      showMsg('该帖子ID已在证据列表中', 'error');
-      input.value = '';
-      return;
-    }
-
-    // 先渲染加载中骨架
-    var overlay = document.createElement('div');
-    overlay.className = 'postid-confirm-overlay';
-    overlay.innerHTML =
-      '<div class="postid-confirm-box">' +
-        '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>' +
-        '<h3>正在获取帖子内容…</h3>' +
-        '<div class="confirm-loading">' +
-          '<div class="loading-bar"></div>' +
-          '<div class="loading-bar" style="width:70%;margin-top:8px;"></div>' +
-          '<div class="loading-bar" style="width:85%;margin-top:8px;"></div>' +
-        '</div>' +
-        '<div class="confirm-btns" style="margin-top:20px;">' +
-          '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-
-    // 异步拉取帖子内容
-    fetch('/api/posts/' + encodeURIComponent(val))
-      .then(function(r) { return r.json(); })
-      .then(function(json) {
-        var box = document.querySelector('.postid-confirm-box');
-        if (!box) return;
-        if (!json.ok || !json.data) {
-          // 帖子不存在
-          box.innerHTML =
-            '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
-            '<h3>找不到该帖子</h3>' +
-            '<div class="confirm-id">' + escapeHtml(val) + '</div>' +
-            '<p class="confirm-note" style="color:#dc2626;">该帖子ID不存在或已被删除，请核实后重试。</p>' +
-            '<div class="confirm-btns">' +
-              '<button class="btn-confirm-id" onclick="closePostIdConfirm()" style="background:#6b7280;">知道了</button>' +
-            '</div>';
-          return;
-        }
-        var post = json.data;
-        var typeColors = { '吐槽': '#f59e0b', '求助': '#3b82f6', '分享': '#10b981', '表白': '#ec4899', '失物': '#8b5cf6' };
-        var typeColor = typeColors[post.type] || '#6b7280';
-        var contentPreview = (post.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        if (contentPreview.length > 120) contentPreview = contentPreview.slice(0, 120) + '…';
-        box.innerHTML =
-          '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>' +
-          '<h3>确认将此帖子加入举报证据？</h3>' +
-          // 帖子预览卡片
-          '<div class="post-preview-card">' +
-            '<div class="post-preview-header">' +
-              '<span class="post-preview-type" style="background:' + typeColor + ';">' + escapeHtml(post.type || '帖子') + '</span>' +
-              '<span class="post-preview-author">' + escapeHtml(post.author || '匿名') + '</span>' +
-            '</div>' +
-            '<div class="post-preview-content">' + contentPreview + '</div>' +
-            '<div class="post-preview-id">ID：' + escapeHtml(val) + '</div>' +
-          '</div>' +
-          '<p class="confirm-note">确认后该帖子将作为证据附加到本次举报中。</p>' +
-          '<div class="confirm-btns">' +
-            '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
-            '<button class="btn-confirm-id" onclick="confirmPostId()">✓ 确认添加</button>' +
-          '</div>';
-      })
-      .catch(function() {
-        var box = document.querySelector('.postid-confirm-box');
-        if (!box) return;
-        box.innerHTML =
-          '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
-          '<h3>网络错误，无法获取帖子</h3>' +
-          '<div class="confirm-id">' + escapeHtml(val) + '</div>' +
-          '<p class="confirm-note">无法连接到服务器，是否仍要将此ID加入证据？</p>' +
-          '<div class="confirm-btns">' +
-            '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
-            '<button class="btn-confirm-id" onclick="confirmPostId()">仍然添加</button>' +
-          '</div>';
-      });
-  }
+  // 已迁移到 triggerContentIdConfirm
 
   function closePostIdConfirm() {
     var o = document.querySelector('.postid-confirm-overlay');
@@ -1213,6 +1251,219 @@
 
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── 涉事用户搜索 ─────────────────────────────────
+  var _involvedSearchTimer = null;
+  var _selectedInvolvedUsers = [];
+
+  function initInvolvedUserSearch() {
+    var input = document.getElementById('involvedSearchInput');
+    if (!input) return;
+    input.addEventListener('input', function() {
+      if (_involvedSearchTimer) clearTimeout(_involvedSearchTimer);
+      var q = this.value.trim();
+      if (!q || q.length < 2) {
+        document.getElementById('involvedSearchResults').style.display = 'none';
+        return;
+      }
+      _involvedSearchTimer = setTimeout(function() {
+        doInvolvedSearch(q);
+      }, 300);
+    });
+    input.addEventListener('focus', function() {
+      var results = document.getElementById('involvedSearchResults');
+      if (results.children.length > 0) results.style.display = 'block';
+    });
+    document.addEventListener('click', function(e) {
+      var results = document.getElementById('involvedSearchResults');
+      if (results && !e.target.closest('#involvedUsersGroup')) {
+        results.style.display = 'none';
+      }
+    });
+    document.getElementById('addInvolvedUserBtn').addEventListener('click', function() {
+      var results = document.getElementById('involvedSearchResults');
+      var selected = results.querySelector('.involved-search-item.selected');
+      if (selected) {
+        addInvolvedUser(selected.dataset);
+        results.style.display = 'none';
+        document.getElementById('involvedSearchInput').value = '';
+      }
+    });
+  }
+
+  function doInvolvedSearch(q) {
+    var token = localStorage.getItem(TOKEN_KEY);
+    var headers = {};
+    if (token) headers['x-user-token'] = token;
+    fetch('/api/users/search?q=' + encodeURIComponent(q), { headers: headers })
+      .then(function(r) { return r.json(); })
+      .then(function(j) {
+        var resultsEl = document.getElementById('involvedSearchResults');
+        if (!j.ok || !j.data) { resultsEl.style.display = 'none'; return; }
+        var d = j.data;
+        var hasAny = d.accounts.length || d.nicknames.length || d.uids.length || d.names.length;
+        if (!hasAny) {
+          resultsEl.innerHTML = '<div style="padding:12px;text-align:center;color:#999;font-size:12px;">未找到匹配的用户</div>';
+          resultsEl.style.display = 'block';
+          return;
+        }
+        var html = '';
+        var categoryLabels = { accounts: '匹配账号', nicknames: '匹配昵称', uids: '匹配UID', names: '匹配姓名' };
+        ['accounts','nicknames','uids','names'].forEach(function(cat) {
+          if (d[cat].length) {
+            html += '<div class="involved-search-category">' + categoryLabels[cat] + '</div>';
+            d[cat].forEach(function(u) {
+              var avatarHtml = u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" alt="">' : escapeHtml((u.nickname || '?')[0]);
+              html += '<div class="involved-search-item" data-id="' + escapeHtml(u.id) + '" data-nickname="' + escapeHtml(u.nickname || '') + '" data-username="' + escapeHtml(u.username || '') + '" onclick="selectInvolvedUser(this)">' +
+                '<div class="isi-avatar">' + avatarHtml + '</div>' +
+                '<div class="isi-info"><div class="isi-name">' + escapeHtml(u.nickname || u.username || '未知') + '</div>' +
+                '<div class="isi-match">' + escapeHtml(u.username || u.id || '') + '</div></div></div>';
+            });
+          }
+        });
+        resultsEl.innerHTML = html;
+        resultsEl.style.display = 'block';
+      })
+      .catch(function() {
+        var resultsEl = document.getElementById('involvedSearchResults');
+        resultsEl.innerHTML = '<div style="padding:12px;text-align:center;color:#999;font-size:12px;">搜索出错</div>';
+        resultsEl.style.display = 'block';
+      });
+  }
+
+  function selectInvolvedUser(el) {
+    document.querySelectorAll('.involved-search-item').forEach(function(i) { i.classList.remove('selected'); });
+    el.classList.add('selected');
+    el.style.background = '#e8f0fe';
+  }
+
+  function addInvolvedUser(data) {
+    var id = data.id;
+    if (!id) return;
+    if (_selectedInvolvedUsers.some(function(u) { return u.id === id; })) {
+      showMsg('该用户已在列表中', 'error');
+      return;
+    }
+    _selectedInvolvedUsers.push({ id: id, nickname: data.nickname || data.username || '', username: data.username || '' });
+    renderInvolvedUsers();
+    saveDraft();
+  }
+
+  function renderInvolvedUsers() {
+    var list = document.getElementById('involvedUsersList');
+    if (!list) return;
+    list.innerHTML = '';
+    _selectedInvolvedUsers.forEach(function(u, i) {
+      var tag = document.createElement('span');
+      tag.className = 'confirmed-id-tag';
+      tag.style.borderColor = '#fca5a5';
+      tag.style.color = '#9d174d';
+      tag.innerHTML =
+        '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' +
+        escapeHtml(u.nickname || u.username || u.id) +
+        '<button class="remove-tag" onclick="removeInvolvedUser(' + i + ')" title="移除">×</button>';
+      list.appendChild(tag);
+    });
+  }
+
+  function removeInvolvedUser(index) {
+    _selectedInvolvedUsers.splice(index, 1);
+    renderInvolvedUsers();
+    saveDraft();
+  }
+
+  // ── 相关内容ID确认 ──────────────────────────────
+  function triggerContentIdConfirm() {
+    var input = document.getElementById('postIdInput');
+    var val = input.value.trim();
+    if (!val) { input.focus(); return; }
+
+    if (confirmedPostIds.indexOf(val) !== -1) {
+      showMsg('该内容ID已在列表中', 'error');
+      input.value = '';
+      return;
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'postid-confirm-overlay';
+    overlay.innerHTML =
+      '<div class="postid-confirm-box">' +
+        '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>' +
+        '<h3>正在获取内容…</h3>' +
+        '<div class="confirm-loading">' +
+          '<div class="loading-bar"></div>' +
+          '<div class="loading-bar" style="width:70%;margin-top:8px;"></div>' +
+          '<div class="loading-bar" style="width:85%;margin-top:8px;"></div>' +
+        '</div>' +
+        '<div class="confirm-btns" style="margin-top:20px;">' +
+          '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    fetchContentByAnyId(val, function(content) {
+      var box = document.querySelector('.postid-confirm-box');
+      if (!box) return;
+      if (!content) {
+        box.innerHTML =
+          '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
+          '<h3>找不到该内容</h3>' +
+          '<div class="confirm-id">' + escapeHtml(val) + '</div>' +
+          '<p class="confirm-note" style="color:#dc2626;">该ID不存在或已被删除，请核实后重试。</p>' +
+          '<div class="confirm-btns">' +
+            '<button class="btn-confirm-id" onclick="closePostIdConfirm()" style="background:#6b7280;">知道了</button>' +
+          '</div>';
+        return;
+      }
+      var contentPreview = (content.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      if (contentPreview.length > 120) contentPreview = contentPreview.slice(0, 120) + '…';
+      var hasImages = content.hasImages;
+      box.innerHTML =
+        '<div class="confirm-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>' +
+        '<h3>确认将此内容加入举报证据？</h3>' +
+        '<div class="post-preview-card">' +
+          '<div class="post-preview-header">' +
+            '<span class="post-preview-type" style="background:' + (content.typeColor || '#6b7280') + ';">' + escapeHtml(content.typeLabel || '内容') + '</span>' +
+          '</div>' +
+          '<div class="post-preview-content">' + contentPreview + '</div>' +
+          (hasImages ? '<div class="post-preview-content" style="color:#9ca3af;font-style:italic;">(图片)</div>' : '') +
+          '<div class="post-preview-id">ID：' + escapeHtml(val) + '</div>' +
+        '</div>' +
+        '<p class="confirm-note">确认后该内容将作为证据附加到本次举报中。</p>' +
+        '<div class="confirm-btns">' +
+          '<button class="btn-cancel-id" onclick="closePostIdConfirm()">取消</button>' +
+          '<button class="btn-confirm-id" onclick="confirmPostId()">✓ 确认添加</button>' +
+        '</div>';
+    });
+  }
+
+  function fetchContentByAnyId(id, callback) {
+    // 尝试各种内容类型
+    var apis = [
+      { url: '/api/posts/' + encodeURIComponent(id), type: 'post', label: '帖子' },
+    ];
+    // 可以扩展更多类型
+    fetch(apis[0].url)
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.ok && json.data) {
+          var d = json.data;
+          var typeColors = { '吐槽': '#f59e0b', '求助': '#3b82f6', '分享': '#10b981', '表白': '#ec4899', '失物': '#8b5cf6' };
+          callback({
+            text: d.content || '',
+            hasImages: d.images && d.images.length > 0,
+            typeLabel: d.type || '帖子',
+            typeColor: typeColors[d.type] || '#6b7280',
+            author: d.author || ''
+          });
+        } else {
+          callback(null);
+        }
+      })
+      .catch(function() {
+        callback(null);
+      });
   }
 
   // ── 图片上传 ──────────────────────────────────────
@@ -1282,6 +1533,205 @@
     if (type === 'success') setTimeout(function() { box.style.display = 'none'; }, 5000);
   }
 
+  // ── 同学认证弹窗（在紧急模式下提交前弹出）───────
+  var _pendingSubmitData = null;
+
+  function showCertPopup(submitData) {
+    var old = document.querySelector('.cert-popup-overlay');
+    if (old) old.remove();
+
+    var victimName = document.getElementById('victimNameInput').value.trim();
+    var overlay = document.createElement('div');
+    overlay.className = 'cert-popup-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML =
+      '<div style="background:var(--paper-bg);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.28);">' +
+        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:16px;text-align:center;">📋 请完成同学认证</div>' +
+        '<div style="font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:16px;text-align:center;">提交霸凌报告前需要先完成同学认证，请填写以下信息：</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label" style="font-size:13px;">您的真实姓名 <span class="required">*</span></label>' +
+          '<input type="text" class="form-input" id="certNameInput" value="' + escapeHtml(victimName) + '" maxlength="30" style="font-size:14px;">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label" style="font-size:13px;">班级/年级 <span class="required">*</span></label>' +
+          '<input type="text" class="form-input" id="certClassInput" placeholder="例如：高一(3)班" maxlength="30" style="font-size:14px;">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label" style="font-size:13px;">联系邮箱 <span class="required">*</span></label>' +
+          '<input type="email" class="form-input" id="certEmailInput" placeholder="用于接收审核通知" maxlength="50" style="font-size:14px;">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label" style="font-size:13px;">证明材料 <span class="required">*</span> <span style="font-weight:400;color:#999;font-size:11px;">（至少1张，如学生证、校园卡）</span></label>' +
+          '<div class="img-upload-area" id="certUploadArea" onclick="document.getElementById(\'certImgInput\').click()" style="padding:16px;">' +
+            '<div style="font-size:13px;color:var(--text-sub);">点击上传证明图片</div>' +
+            '<div style="font-size:11px;color:#aaa;margin-top:4px;">支持 JPG/PNG，最多3张</div>' +
+          '</div>' +
+          '<input type="file" id="certImgInput" accept="image/jpeg,image/png,image/gif" multiple style="display:none;">' +
+          '<div class="img-previews" id="certImgPreviews"></div>' +
+          '<div id="certNameError" style="color:#dc2626;font-size:12px;margin-top:6px;display:none;"></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;margin-top:8px;">' +
+          '<button onclick="closeCertPopup()" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--brick-light);background:#fff;font-size:14px;font-weight:600;color:var(--text-main);cursor:pointer;font-family:inherit;">取消</button>' +
+          '<button onclick="submitCertAndReport()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">提交认证</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    _pendingSubmitData = submitData;
+
+    // 图片上传
+    var _certImages = [];
+    document.getElementById('certImgInput').addEventListener('change', function() {
+      for (var i = 0; i < this.files.length; i++) {
+        if (_certImages.length >= 3) { showMsg('最多3张图片', 'error'); break; }
+        var file = this.files[i];
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 10 * 1024 * 1024) { showMsg('图片超过10MB', 'error'); continue; }
+        (function(f) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            _certImages.push(e.target.result);
+            renderCertPreviews(_certImages);
+          };
+          reader.readAsDataURL(f);
+        })(file);
+      }
+      this.value = '';
+    });
+
+    // 保存 certImages 到提交数据
+    overlay._certImages = _certImages;
+  }
+
+  function renderCertPreviews(images) {
+    var container = document.getElementById('certImgPreviews');
+    if (!container) return;
+    container.innerHTML = '';
+    images.forEach(function(src, i) {
+      var div = document.createElement('div');
+      div.className = 'img-preview-item';
+      div.innerHTML = '<img src="' + src + '" alt="证明' + (i+1) + '">' +
+        '<button class="remove-btn" onclick="removeCertImage(' + i + ')">×</button>';
+      container.appendChild(div);
+    });
+  }
+
+  var _certImages = [];
+  function removeCertImage(idx) {
+    _certImages.splice(idx, 1);
+    renderCertPreviews(_certImages);
+  }
+
+  function closeCertPopup() {
+    var o = document.querySelector('.cert-popup-overlay');
+    if (o) o.remove();
+    _pendingSubmitData = null;
+    _certImages = [];
+  }
+
+  function submitCertAndReport() {
+    var certName = document.getElementById('certNameInput').value.trim();
+    var certClass = document.getElementById('certClassInput').value.trim();
+    var certEmail = document.getElementById('certEmailInput').value.trim();
+    var errEl = document.getElementById('certNameError');
+
+    if (!certName) { errEl.textContent = '请输入姓名'; errEl.style.display = 'block'; return; }
+    if (!certClass) { errEl.textContent = '请输入班级/年级'; errEl.style.display = 'block'; return; }
+    if (!certEmail) { errEl.textContent = '请输入联系邮箱'; errEl.style.display = 'block'; return; }
+
+    // 检查姓名是否与霸凌报告中的姓名一致
+    var reportName = document.getElementById('victimNameInput').value.trim();
+    if (reportName && certName !== reportName) {
+      errEl.textContent = '认证姓名与举报填写的姓名不一致，请保持一致'; errEl.style.display = 'block'; return;
+    }
+
+    var images = _certImages;
+    if (images.length === 0) { errEl.textContent = '请至少上传一张证明图片'; errEl.style.display = 'block'; return; }
+
+    errEl.style.display = 'none';
+
+    // 先提交认证
+    var token = localStorage.getItem(TOKEN_KEY);
+    fetch('/api/user/bind-zhixue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({
+        type: 'manual',
+        manualName: certName,
+        manualEmail: certEmail,
+        manualNote: '通过霸凌举报提交的同学认证',
+        manualImages: images
+      })
+    }).then(function(r) { return r.json(); })
+      .then(function(certJson) {
+        if (certJson.ok) {
+          // 认证提交成功，再提交霸凌报告
+          closeCertPopup();
+          submitBullyingReport(_pendingSubmitData);
+        } else {
+          showMsg('认证提交失败：' + (certJson.msg || '请重试'), 'error');
+          var btn = document.getElementById('submitBtn');
+          if (btn) { btn.disabled = false; btn.textContent = '提交报告'; }
+        }
+      })
+      .catch(function() {
+        showMsg('认证提交网络错误，请重试', 'error');
+        var btn = document.getElementById('submitBtn');
+        if (btn) { btn.disabled = false; btn.textContent = '提交报告'; }
+      });
+  }
+
+  function submitBullyingReport(body) {
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+
+    fetch('/api/bullying-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': (localStorage.getItem(TOKEN_KEY) || '') },
+      body: JSON.stringify(body)
+    }).then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.ok) {
+          _formSubmitted = true;
+          clearDraft();
+          showMsg('举报已提交，管理员将尽快处理！', 'success');
+          resetForm();
+        } else {
+          showMsg('提交失败：' + (json.msg || '未知错误'), 'error');
+          btn.disabled = false;
+          btn.textContent = '提交报告';
+        }
+      })
+      .catch(function(e) {
+        showMsg('网络错误：' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '提交报告';
+      });
+  }
+
+  function resetForm() {
+    document.querySelectorAll('input[name="bullyType"]').forEach(function(r) { r.checked = false; });
+    document.getElementById('descInput').value = '';
+    document.getElementById('involvedInput').value = '';
+    document.getElementById('postIdInput').value = '';
+    document.getElementById('timeInput').value = '';
+    document.getElementById('contactInput').value = '';
+    charCount.textContent = '0';
+    charCount.style.color = '#dc2626';
+    confirmedPostIds = [];
+    renderConfirmedIds();
+    attachedImages = [];
+    renderPreviews();
+    isAnonymous = true;
+    document.getElementById('anonymousToggle').classList.add('active');
+    document.getElementById('anonymousText').textContent = '匿名提交（推荐，保护您的隐私）';
+    reporterRole = null;
+    document.getElementById('submitBtn').dataset.mode = '';
+    document.getElementById('formContent').style.display = 'none';
+    document.getElementById('roleSelect').style.display = 'block';
+    setTimeout(function() { document.getElementById('msgBox').style.display = 'none'; }, 6000);
+  }
+
   // ── 提交 ──────────────────────────────────────────
   function doSubmit() {
     if (!reporterRole) { showMsg('请先选择您的身份', 'error'); return; }
@@ -1298,73 +1748,51 @@
     // 若输入框还有未确认的ID，给出提示
     var pendingId = document.getElementById('postIdInput').value.trim();
     if (pendingId) {
-      showMsg('检测到未确认的帖子ID，请点击「＋ 添加」确认后再提交', 'error');
+      showMsg('检测到未确认的内容ID，请点击「＋ 添加」确认后再提交', 'error');
       document.getElementById('postIdInput').focus();
       return;
     }
 
-    var btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.textContent = '提交中…';
+    var victimName = document.getElementById('victimNameInput').value.trim();
 
+    // self 角色且紧急模式 → 先弹认证窗
+    var isEmergency = document.getElementById('submitBtn').dataset.mode === 'emergency';
+    if (reporterRole === 'self' && isEmergency) {
+      if (!victimName) { showMsg('请填写您的姓名', 'error'); return; }
+      var submitData = {
+        reporterRole: reporterRole,
+        victimName: victimName,
+        bullyType: bullyType.value,
+        description: desc,
+        involved: document.getElementById('involvedInput').value.trim(),
+        involvedUsers: window._selectedInvolvedUsers || [],
+        contentIds: confirmedPostIds.slice(),
+        location: confirmedPostIds.length > 0 ? confirmedPostIds.join(', ') : '',
+        time: document.getElementById('timeInput').value.trim(),
+        contact: isAnonymous ? '' : contact,
+        anonymous: isAnonymous,
+        images: attachedImages.slice()
+      };
+      showCertPopup(submitData);
+      return;
+    }
+
+    // 普通提交
     var body = {
       reporterRole: reporterRole,
-      victimName: (reporterRole === 'self' && victimRealName) ? victimRealName : null,
+      victimName: (reporterRole === 'self' && victimName) ? victimName : null,
       bullyType: bullyType.value,
       description: desc,
       involved: document.getElementById('involvedInput').value.trim(),
-      postIds: confirmedPostIds.slice(),          // 已确认帖子ID列表
-      location: confirmedPostIds.length > 0
-                  ? confirmedPostIds.join(', ')   // 兼容旧location字段
-                  : '',
+      involvedUsers: window._selectedInvolvedUsers || [],
+      contentIds: confirmedPostIds.slice(),
+      location: confirmedPostIds.length > 0 ? confirmedPostIds.join(', ') : '',
       time: document.getElementById('timeInput').value.trim(),
       contact: isAnonymous ? '' : contact,
       anonymous: isAnonymous,
       images: attachedImages.slice()
     };
-
-    fetch('/api/bullying-report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-token': (localStorage.getItem(TOKEN_KEY) || '') },
-      body: JSON.stringify(body)
-    }).then(function(r) { return r.json(); })
-      .then(function(json) {
-        if (json.ok) {
-          _formSubmitted = true;  // 提交成功，解除离开拦截
-          clearDraft();           // 清除草稿
-          showMsg('举报已提交，管理员将尽快处理！', 'success');
-          // 清空表单
-          document.querySelectorAll('input[name="bullyType"]').forEach(function(r) { r.checked = false; });
-          document.getElementById('descInput').value = '';
-          document.getElementById('involvedInput').value = '';
-          document.getElementById('postIdInput').value = '';
-          document.getElementById('timeInput').value = '';
-          document.getElementById('contactInput').value = '';
-          charCount.textContent = '0';
-          charCount.style.color = '#dc2626';
-          confirmedPostIds = [];
-          renderConfirmedIds();
-          attachedImages = [];
-          renderPreviews();
-          isAnonymous = true;
-          document.getElementById('anonymousToggle').classList.add('active');
-          document.getElementById('anonymousText').textContent = '匿名提交（推荐，保护您的隐私）';
-          // 重置角色选择
-          reporterRole = null;
-          document.getElementById('formContent').style.display = 'none';
-          document.getElementById('roleSelect').style.display = 'block';
-          setTimeout(function() { document.getElementById('msgBox').style.display = 'none'; }, 6000);
-        } else {
-          showMsg('提交失败：' + (json.msg || '未知错误'), 'error');
-          btn.disabled = false;
-          btn.textContent = '提交报告';
-        }
-      })
-      .catch(function(e) {
-        showMsg('网络错误：' + e.message, 'error');
-        btn.disabled = false;
-        btn.textContent = '提交报告';
-      });
+    submitBullyingReport(body);
   }
 </script>
 

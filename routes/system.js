@@ -7,6 +7,7 @@ const db = require('../db');
 const hotness = require('../lib/hotness');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames, addName: addBullyingName } = require('../bullyingNames');
+const { generateId, logIdAssignment } = require('../lib/uniqueId');
 const maintenance = require('../maintenance');
 
 const ONLINE_TIMEOUT = 120000;
@@ -143,13 +144,17 @@ module.exports = function(app, opts) {
       addBullyingName(victimName);
     }
 
+    const reportId = generateId('BULL');
     const newReport = {
-      id: 'bl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      id: reportId,
+      reportId: reportId,
       reporterRole: reporterRole,
       victimName: (reporterRole === 'self' && victimName) ? victimName : null,
       bullyType: bullyType,
       description: description,
       involved: involved || '',
+      involvedUsers: (req.body.involvedUsers || []),
+      contentIds: (req.body.contentIds || []),
       location: location || '',
       incidentTime: time || '',
       contact: anonymous ? '' : (contact || ''),
@@ -164,6 +169,7 @@ module.exports = function(app, opts) {
     };
     reports.unshift(newReport);
     writeBullying(reports);
+    logIdAssignment('bullying', reportId, (bullyType || ''), db);
 
     // 发送 T1 通知
     if (reporterUserId) {

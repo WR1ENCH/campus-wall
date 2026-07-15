@@ -499,6 +499,11 @@ app.get('/api/admin/bullying', requireAdmin, (req, res) => {
     bullyType: r.bullyType,
     description: r.description,
     involved: r.involved,
+    involvedUsers: r.involvedUsers || [],
+    contentIds: r.contentIds || [],
+    victimName: r.victimName || null,
+    reporterRole: r.reporterRole || null,
+    userId: r.userId || null,
     location: r.location,
     incidentTime: r.incidentTime,
     anonymous: !!r.anonymous,
@@ -508,7 +513,8 @@ app.get('/api/admin/bullying', requireAdmin, (req, res) => {
     time: r.time,
     status: r.status || 'pending',
     handledBy: r.handledBy,
-    handledAt: r.handledAt
+    handledAt: r.handledAt,
+    handledResult: r.handledResult || null
   }));
   res.json({ ok: true, data: result });
 });
@@ -1594,7 +1600,113 @@ app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   const reports = readBullying();
   const report = reports.find(r => r.id === req.params.id);
   if (!report) return res.json({ ok: false, msg: '报告不存在' });
-  res.json({ ok: true, data: report });
+
+  // 丰富数据：举报人信息、涉事用户详情、相关内容详情
+  const users = readUsers();
+  const posts = readPosts();
+
+  // 举报人信息
+  let reporterInfo = null;
+  if (report.userId) {
+    const u = users.find(x => x.id === report.userId);
+    if (u) reporterInfo = { id: u.id, nickname: u.nickname, username: u.username, avatar: u.avatar, uid: u.uid };
+  }
+
+  // 涉事用户详情
+  let involvedUserDetails = [];
+  if (Array.isArray(report.involvedUsers)) {
+    involvedUserDetails = report.involvedUsers.map(iv => {
+      const u = users.find(x => x.id === iv.id);
+      if (u) return { id: u.id, nickname: u.nickname, username: u.username, status: u.status, uid: u.uid };
+      return iv;
+    });
+  }
+
+  // 相关内容详情
+  let contentDetails = [];
+  if (Array.isArray(report.contentIds)) {
+    contentDetails = report.contentIds.map(cid => {
+      const p = posts.find(x => x.id === cid);
+      if (p) return { id: p.id, content: (p.content || '').substring(0, 200), hasImages: p.images && p.images.length > 0, author: p.author, type: p.type || 'post', deleted: !!p.deleted };
+      return { id: cid, content: null, error: 'Not found or not a post' };
+    });
+  }
+
+  res.json({ ok: true, data: Object.assign({}, report, { reporterInfo, involvedUserDetails, contentDetails }) });
+});
+
+// 霸凌报告处理：封禁涉事用户 + 删除相关内容
+app.post('/api/admin/bullying/:id/process', requireAdmin, (req, res) => {
+  const { banUserIds, deleteContentIds, result } = req.body; // result: 'bullying' | 'not_bullying'
+  if (!['bullying', 'not_bullying'].includes(result)) return res.json({ ok: false, msg: '无效的处理结果' });
+
+  const reports = readBullying();
+  const idx = reports.findIndex(r => r.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
+
+  // 封禁涉事用户
+  const users = readUsers();
+  const bannedUsers = [];
+  if (Array.isArray(banUserIds)) {
+    banUserIds.forEach(uid => {
+      const u = users.find(x => x.id === uid);
+      if (u && u.status !== 'banned') {
+        u.status = 'banned';
+        u.banUntil = null;
+        bannedUsers.push({ id: u.id, nickname: u.nickname });
+      }
+    });
+    writeUsers(users);
+  }
+
+  // 删除相关内容
+  const posts = readPosts();
+  const deletedContents = [];
+  if (Array.isArray(deleteContentIds)) {
+    deleteContentIds.forEach(cid => {
+      const p = posts.find(x => x.id === cid);
+      if (p && !p.deleted) {
+        p.deleted = true;
+        p.deletedAt = new Date().toISOString();
+        p.deletedBy = req.admin.name || req.admin.id;
+        // 写入 deleted_items
+        db.addDeletedItem({
+          id: p.id,
+          type: 'post',
+          content: (p.content || '').substring(0, 500),
+          author: p.author || '匿名',
+          userId: p.userId || null,
+          deletedAt: new Date().toISOString(),
+          deletedBy: req.admin.name || req.admin.id,
+          extra: JSON.stringify({ time: p.time, likeCount: p.likes || 0, reason: '霸凌处理' })
+        });
+        deletedContents.push({ id: p.id });
+      }
+    });
+    writePosts(posts);
+  }
+
+  // 更新霸凌报告状态
+  reports[idx].status = 'resolved';
+  reports[idx].handledResult = result;
+  reports[idx].handledBy = req.admin.name || req.admin.id;
+  reports[idx].handledAt = new Date().toISOString();
+  reports[idx].handleNote = result === 'bullying' ? '确认霸凌，已处理' : '确认非霸凌';
+  writeBullying(reports);
+
+  // 发送通知
+  if (reports[idx].userId) {
+    const { emitUserNotice } = require('../lib/penalty');
+    if (result === 'bullying') {
+      emitUserNotice(reports[idx].userId, '🛡️ 霸凌举报处理结果',
+        '你提交的霸凌事件报告（ID: ' + reports[idx].id + '）经管理员核实，确认为霸凌行为。\n\n相关涉事用户已封禁，相关内容已删除。\n\n感谢你对校园安全的贡献！', 'T0');
+    } else {
+      emitUserNotice(reports[idx].userId, '🛡️ 霸凌举报处理结果',
+        '你提交的霸凌事件报告（ID: ' + reports[idx].id + '）经管理员核实，未认定为霸凌行为。\n\n如仍有疑问，请重新提交报告或联系学校相关部门。', 'T0');
+    }
+  }
+
+  res.json({ ok: true, data: { bannedUsers, deletedContents, result } });
 });
 
 // ===== 反馈管理 =====

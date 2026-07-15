@@ -295,7 +295,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `punishments` | punishmentId(PK), userId, level('T0'/'T1'), reason, measures(JSON), durationDays, status('active'/'expired'/'revoked'/'queued'/'overridden'), sourceReportId, appealUsed, appealStatus('none'/'pending'/'approved'/'rejected'), createdAt, expiresAt, revokedAt, revokedBy, **queuedAfter**(被 T0 入队时记录阻塞的 T0 处罚ID) | 处罚记录（见 §3.9）。`queued`=T0 生效期间入队等待，`overridden`=被升级的 T0 覆盖 |
 | `appeals` | id(PK), punishmentId, userId, content, status('pending'/'approved'/'rejected'), createdAt, handledAt, handledBy, resultNote | 申诉记录（见 §3.9，每处罚限一次） |
 | `feedbacks` | id, type, description, contact, images, time, status, handledBy, handleNote | 用户反馈 |
-| `bullying` | id, reporterRole, victimName, bullyType, description, involved, location, incidentTime, contact, anonymous, images, time, status, handledBy, handleNote, userId | 霸凌举报 |
+| `bullying` | id(PK), reportId(BULL-唯一ID), reporterRole('self'/'witness'), victimName, bullyType, description, involved, involvedUsers(JSON [{id,nickname}]), contentIds(JSON [内容ID]), location, incidentTime, contact, anonymous, images(JSON), time, status('pending'/'processing'/'resolved'), handledBy, handledAt, handleNote, handledResult('bullying'/'not_bullying'), userId | 霸凌举报（含涉事用户列表+相关内容ID列表） |
 | `credit_logs` | id, userId, amount, reason, createdAt | 积分变动日志 |
 | `credibility_logs` | id(PK 'CRDL-'), userId, amount, score, reason, type('exchange'/'deduction'/'restore'/'refresh'/'bonus'/'admin'), createdAt | 信用分变动日志 |
 | `credit_cards` | id, code(UNIQUE), value, status('active'/used), createdBy, createdAt, usedBy, usedAt | 积分卡密 |
@@ -562,10 +562,11 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/feedbacks/:id/handle` | 管理员 | 处理反馈 |
 | GET | `/api/admin/feedback/:id` | 管理员 | 反馈详情 |
 | POST | `/api/admin/feedback/:id/handle` | 管理员 | 处理反馈（别名） |
-| GET | `/api/admin/bullying` | 管理员 | 霸凌举报列表 |
-| GET | `/api/admin/bullying/:id` | 管理员 | 霸凌详情 |
+| GET | `/api/admin/bullying` | 管理员 | 霸凌举报列表（含新字段：involvedUsers, contentIds, victimName, reporterRole, handledResult） |
+| GET | `/api/admin/bullying/:id` | 管理员 | 霸凌详情（丰富数据：reporterInfo, involvedUserDetails, contentDetails） |
 | POST | `/api/admin/bullying/:id` | 管理员 | 更新霸凌 |
-| POST | `/api/admin/bullying/:id/handle` | 管理员 | 处理霸凌 |
+| POST | `/api/admin/bullying/:id/handle` | 管理员 | 处理霸凌（已弃用，改用 /process） |
+| POST | `/api/admin/bullying/:id/process` | 管理员 | ⚖️ 综合处理：封禁涉事用户 + 删除相关内容 + 设定结果 + T0通知举报人 |
 | GET | `/api/admin/zhixue-pending` | 管理员 | 待审智学认证 |
 | GET | `/api/admin/zhixue-records` | 管理员 | 认证记录 |
 | PUT | `/api/admin/zhixue/:userId/review` | 管理员 | 审核认证（通过/拒绝） |
@@ -612,7 +613,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/stats` | 无 | 公开统计（帖子数等） |
 | GET | `/api/stream` | 无 | SSE 实时事件流 |
 | POST | `/api/user/heartbeat` | 用户(可选) | 在线心跳（见 3.5） |
-| POST | `/api/bullying-report` | 用户 | 霸凌举报提交（system.js） |
+| POST | `/api/bullying-report` | 用户 | 霸凌举报提交（system.js，支持 reporterRole/self-witness、emergency mode、involvedUsers、contentIds、reportId BULL-唯一ID） |
 | GET | `/api/maintenance/info` | 无 | 维护页轮询状态 |
 | POST | `/api/maintenance/verify` | 无 | 测试密钥 + 滑块验证后签发 bypass token |
 | POST | `/api/slider-captcha/grant` | 无 | 滑块验证通过，下发 captcha 会话 token |
@@ -811,8 +812,8 @@ server.js
 | 1 | 用户提交帖子举报成功 | `posts.js:540` | 举报人 `reporterId` | 📋 举报已收到 (T1) | 内联 |
 | 2 | 管理员处理举报=resolved | `admin.js:1378` `pushUserNotice` | 举报人 `report.reportedBy` | 📋 举报已处理 (T1) | 封装函数 |
 | 3 | 管理员处理举报=ignored | `admin.js:1381` `pushUserNotice` | 举报人 | 📋 举报已忽略 (T1) | 封装函数 |
-| 4 | 提交霸凌事件举报 | `system.js:175` | 举报人 `reporterUserId` | 🛡️ 霸凌举报已收到 (T1) | 内联 |
-| 5 | 管理员确认处理霸凌(resolved) | `admin.js:1443` | 举报人 `reports[idx].userId` | 🛡️ 霸凌举报已确认处理 (**T0**) | 内联 |
+| 4 | 提交霸凌事件举报 | `system.js` | 举报人 `reporterUserId` | 🛡️ 霸凌举报已收到 (T1) | 内联 |
+| 5 | 管理员确认处理霸凌(process) | `admin.js:proxyquire` | 举报人 `reports[idx].userId` | 🛡️ 霸凌举报处理结果 (**T0**，含处理结果详情) | `emitUserNotice` |
 | 6 | 学生认证被驳回 | `admin.js:641` `pushUserNotice` | 申请人 | ❌ 学生认证未通过 (T1) | 封装函数 |
 | 7 | 学生认证通过/初审通过 | `admin.js:680` `pushUserNotice` | 申请人 | ✅ 学生认证已通过 (T1) | 封装函数 |
 | 8 | 拍卖内容审核通过 | `pickup.js:300` | 出价人 `bid.userId` | 🏆 拍卖内容已通过审核 (**T0**) | 内联 |
@@ -825,7 +826,7 @@ server.js
 
 自动通知的写入**没有统一抽象**，存在明显重复：
 - **`pushUserNotice(targetUserId,title,content,level)`**（`admin.js:77`）是较规整的封装：先 `notices.push({id,title,content,author:'系统',auto:true,level,createdAt,targetUserId})`，再 `db.addUserNotification(...)`。被认证驳回/通过、举报处理(admin.js:1378/1381/641/680) 复用。
-- 但**霸凌确认(`admin.js:1443`)、霸凌受理(`system.js:175`)、帖子举报受理(`posts.js:540`)、拍卖审核/举报(`pickup.js` 三处)**全部是**复制粘贴同款逻辑**的 `notices.push`+`addUserNotification`，且字段命名/缩进风格不统一（如 `targetUserId` 有的缩进错位）。
+- 但**霸凌确认(`admin.js /process` route)、霸凌受理(`system.js`)、帖子举报受理(`posts.js:540`)、拍卖审核/举报(`pickup.js` 三处)**全部是**复制粘贴同款逻辑**的 `notices.push`+`addUserNotification`，且字段命名/缩进风格不统一（如 `targetUserId` 有的缩进错位）。
 - **建议**：抽一个 `emitUserNotice(targetUserId, {title, content, level})` 公共函数（放 `admin.js` 或 `lib/`），所有自动触发点统一调用，避免「漏写桥接表 / 风格漂移」类 bug。改动时注意 `pushUserNotice` 当前定义在 `admin.js`，其它 route 文件需 `require` 进该函数。
 
 ### 14.5 实时下发
@@ -906,6 +907,23 @@ server.js
 | 问题 | 文件 | 行 | 改动 |
 |------|------|-----|------|
 | 举报列表"举报人"只显示 raw name 无 UID | `admin.html` | 2166 | 用 `reporterInfo.nickname (username, UID:xxx)` 格式显示 |
+
+### 会话 2.5 — 2026-07-15 — 霸凌举报红esign
+
+#### 后端变更
+
+| 文件 | 改动 |
+|------|------|
+| `lib/uniqueId.js` | 新增 `'BULL'` 到 `VALID_PREFIXES`，支持 `generateId('BULL')` |
+| `routes/system.js` | `POST /api/bullying-report` 重构：支持 `reporterRole: 'self'|'witness'`，目击者无需认证；当事人含紧急模式；新增 `involvedUsers`(JSON)、`contentIds`(JSON) 字段；提交时生成 BULL-唯一ID (`logIdAssignment`) |
+| `routes/admin.js` | `GET /api/admin/bullying` 列表新增 `involvedUsers`/`contentIds`/`victimName`/`reporterRole`/`handledResult`；新增 `GET /api/admin/bullying/:id` 丰富数据（reporterInfo、involvedUserDetails、contentDetails）；新增 `POST /api/admin/bullying/:id/process` 综合处理（封禁用户→删除内容→写deleted_items→发T0通知） |
+
+#### 前端变更
+
+| 文件 | 改动 |
+|------|------|
+| `bully.html` | 重写举报表单：self/witness 角色选择 → 自认证判断 → 紧急模式；用户搜索（`/api/users/search?q=`）多选涉事用户；内容ID 改为 `/api/posts/:id` 实时校验；保存/恢复草稿；submit 防抖 |
+| `admin.html` | 霸凌列表显示涉事用户数/内容数；详情弹窗丰富（涉事用户详情、内容详情、举报人信息）；新增 `openProcessWindow()` 处理弹窗（可选封禁用户/删除内容/定结果）→ `confirmProcess()` 调用 `/process` |
 
 ### 会话 2 — 2026-07-13
 

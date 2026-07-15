@@ -2457,16 +2457,17 @@
         '</div>' +
         (r.victimName ? '<div style="font-size:12px;color:#9d174d;margin-bottom:4px;font-weight:600;">👤 受害者：' + escHtml(r.victimName) + '</div>' : '') +
         '<div style="margin-bottom:6px;"><span class="type-badge badge-normal" style="font-size:11px;">🛡️ ' + escHtml(r.bullyType || '') + '</span></div>' +
-        (r.location ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">📍 ' + escHtml(r.location) + '</div>' : '') +
-        (r.involved ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">👤 涉事：' + escHtml(r.involved) + '</div>' : '') +
+      (r.location ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">📍 ' + escHtml(r.location) + '</div>' : '') +
+      (r.involved ? '<div style="font-size:12px;color:var(--text-sub);margin-bottom:4px;">👤 涉事：' + escHtml(r.involved) + '</div>' : '') +
+      (r.involvedUsers && r.involvedUsers.length ? '<div style="font-size:12px;color:#9d174d;margin-bottom:4px;">👥 涉事用户(' + r.involvedUsers.length + '人)</div>' : '') +
+      (r.contentIds && r.contentIds.length ? '<div style="font-size:12px;color:#0369a1;margin-bottom:4px;">📄 相关内容(' + r.contentIds.length + '条)</div>' : '') +
         '<div style="font-size:13px;color:var(--text-main);margin-bottom:8px;line-height:1.6;">' + escHtml(r.description.substring(0, 120)) + (r.description.length > 120 ? '…' : '') + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sub);margin-bottom:10px;">' +
           (r.hasContact ? '📞 有联系方式' : '📞 无联系方式') +
           (hasImages ? '  ' + hasImages : '') +
         '</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-          (st === 'pending' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="handleBullying(\'' + r.id + '\',\'processing\')">🔄 开始处理</button>' : '') +
-          (st === 'processing' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="handleBullying(\'' + r.id + '\',\'resolved\')">✅ 已处理</button>' : '') +
+          (st === 'pending' || st === 'processing' ? '<button class="btn-primary" style="font-size:12px;padding:5px 14px;" onclick="openProcessWindow(\'' + r.id + '\')">⚖️ 处理</button>' : '') +
           '<button class="action-btn" style="font-size:12px;padding:5px 12px;background:#e0d3c6;color:#5a4638;" onclick="showBullyingDetail(\'' + r.id + '\')">📋 详情</button>' +
         '</div>' +
       '</div>';
@@ -2497,36 +2498,191 @@
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
       overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
       let imgHtml = '';
       if (r.images && r.images.length > 0) {
         imgHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:8px;">图片证据：</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
         r.images.forEach(function(img) { imgHtml += '<img src="' + img + '" style="max-width:120px;max-height:120px;border-radius:6px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(\'' + img + '\')">'; });
         imgHtml += '</div></div>';
       }
+
+      // 涉事用户详情
+      let involvedHtml = '';
+      if (Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length) {
+        involvedHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">👤 涉事用户详情：</div>';
+        r.involvedUserDetails.forEach(function(u) {
+          involvedHtml += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;font-size:12px;">' +
+            '<span style="font-weight:600;">' + escHtml(u.nickname || u.id) + '</span>' +
+            '<span style="color:var(--text-sub);">(' + escHtml(u.username || '') + ')</span>' +
+            '<span style="color:' + (u.status === 'banned' ? '#dc2626' : '#22c55e') + ';">' + (u.status === 'banned' ? '已封禁' : '正常') + '</span>' +
+          '</div>';
+        });
+        involvedHtml += '</div>';
+      }
+
+      // 相关内容详情
+      let contentHtml = '';
+      if (Array.isArray(r.contentDetails) && r.contentDetails.length) {
+        contentHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">📄 相关内容：</div>';
+        r.contentDetails.forEach(function(c) {
+          var preview = c.content ? escHtml(c.content.substring(0, 100)) : '<span style="color:#999;">内容不存在</span>';
+          contentHtml += '<div style="padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;font-size:12px;">' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<span style="font-family:monospace;font-size:11px;color:var(--text-sub);">' + escHtml(c.id) + '</span>' +
+              (c.hasImages ? '<span style="color:#9ca3af;font-style:italic;">(图片)</span>' : '') +
+              (c.deleted ? '<span style="color:#dc2626;font-size:11px;">已删除</span>' : '') +
+            '</div>' +
+            '<div style="margin-top:2px;color:var(--text-main);">' + preview + '</div>' +
+          '</div>';
+        });
+        contentHtml += '</div>';
+      }
+
+      // 举报人信息
+      let reporterHtml = '';
+      if (r.reporterInfo) {
+        reporterHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">📝 举报人信息：</div>' +
+          '<div style="padding:8px 10px;background:var(--bg-card);border-radius:6px;font-size:12px;">' +
+            '<div>昵称：' + escHtml(r.reporterInfo.nickname || '') + '</div>' +
+            '<div>账号：' + escHtml(r.reporterInfo.username || '') + '</div>' +
+            '<div>UID：' + escHtml(r.reporterInfo.uid || r.reporterInfo.id || '') + '</div>' +
+          '</div></div>';
+      }
+
       const st = r.status || 'pending';
-      overlay.innerHTML = '<div style="background:var(--bg-main);border-radius:12px;padding:24px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
+      overlay.innerHTML = '<div style="background:var(--bg-main);border-radius:12px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-          '<h3 style="font-size:16px;color:var(--text-main);">🛡️ 平台霸凌举报详情</h3>' +
+          '<h3 style="font-size:16px;color:var(--text-main);">🛡️ 霸凌举报详情</h3>' +
           '<button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-sub);line-height:1;">×</button>' +
         '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">' +
+          '<span class="type-badge" style="background:' + (r.reporterRole === 'self' ? '#fce7f3' : '#e0f2fe') + ';color:' + (r.reporterRole === 'self' ? '#9d174d' : '#0369a1') + ';">' + (r.reporterRole === 'self' ? '🆘 当事人' : '👁️ 目击者') + '</span>' +
+          '<span class="type-badge badge-danger">' + escHtml(r.bullyType || '') + '</span>' +
+          '<span class="type-badge ' + (st === 'pending' ? 'badge-danger' : st === 'resolved' ? 'badge-admin' : 'badge-super') + '">' + (st === 'pending' ? '待处理' : st === 'resolved' ? '已处理' : '处理中') + '</span>' +
+          (r.anonymous ? '<span class="type-badge" style="background:#fef3c7;color:#92400e;">匿名</span>' : '') +
+        '</div>' +
         '<div style="font-size:13px;line-height:1.8;color:var(--text-main);">' +
-          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">举报者身份：</span>' + (r.reporterRole === 'self' ? '🆘 当事人（自我举报）' : '👁️ 目击者（代他人举报）') + '</div>' +
-          (r.victimName ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">受害者姓名：</span><strong>' + escHtml(r.victimName) + '</strong></div>' : '') +
-          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">霸凌类型：</span>' + escHtml(r.bullyType || '') + '</div>' +
-          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">提交时间：</span>' + (r.time ? new Date(r.time).toLocaleString('zh-CN') : '-') + '</div>' +
-          (r.anonymous ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">提交方式：</span>🔒 匿名提交</div>' : '') +
-          (r.contact ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">联系方式：</span>' + escHtml(r.contact) + '</div>' : '') +
-          (r.location ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">发生地点：</span>' + escHtml(r.location) + '</div>' : '') +
-          (r.incidentTime ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">发生时间：</span>' + escHtml(r.incidentTime) + '</div>' : '') +
-          (r.involved ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">涉事人员：</span>' + escHtml(r.involved) + '</div>' : '') +
-          '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">当前状态：</span>' + (st === 'pending' ? '⏳ 待处理' : st === 'resolved' ? '✅ 已处理' : '🔄 处理中') + '</div>' +
-          (r.handledBy ? '<div style="margin-bottom:8px;"><span style="color:var(--text-sub);">处理人：</span>' + escHtml(r.handledBy) + ' / ' + (r.handledAt ? new Date(r.handledAt).toLocaleString('zh-CN') : '') + '</div>' : '') +
-          '<div style="margin-top:12px;padding:12px;background:var(--bg-card);border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap;">' + escHtml(r.description) + '</div>' +
-          imgHtml +
+          '<table style="width:100%;border-collapse:collapse;">' +
+            '<tr><td style="padding:4px 8px;color:var(--text-sub);width:90px;">报告ID</td><td style="padding:4px 8px;font-family:monospace;font-size:12px;">' + escHtml(r.id || '') + '</td></tr>' +
+            (r.reportId ? '<tr><td style="padding:4px 8px;color:var(--text-sub);">唯一ID</td><td style="padding:4px 8px;font-family:monospace;font-size:12px;">' + escHtml(r.reportId) + '</td></tr>' : '') +
+            (r.victimName ? '<tr><td style="padding:4px 8px;color:var(--text-sub);">受害者</td><td style="padding:4px 8px;font-weight:600;">' + escHtml(r.victimName) + '</td></tr>' : '') +
+            '<tr><td style="padding:4px 8px;color:var(--text-sub);">提交时间</td><td style="padding:4px 8px;">' + (r.time ? new Date(r.time).toLocaleString('zh-CN') : '-') + '</td></tr>' +
+            (r.contact ? '<tr><td style="padding:4px 8px;color:var(--text-sub);">联系方式</td><td style="padding:4px 8px;">' + escHtml(r.contact) + '</td></tr>' : '') +
+            (r.incidentTime ? '<tr><td style="padding:4px 8px;color:var(--text-sub);">发生时间</td><td style="padding:4px 8px;">' + escHtml(r.incidentTime) + '</td></tr>' : '') +
+          '</table>' +
+          '<div style="margin-top:12px;font-weight:600;">事件描述：</div>' +
+          '<div style="padding:10px 12px;background:var(--bg-card);border-radius:8px;margin-top:4px;font-size:13px;line-height:1.7;white-space:pre-wrap;">' + escHtml(r.description) + '</div>' +
+          imgHtml + involvedHtml + contentHtml + reporterHtml +
+        '</div>' +
+        '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">' +
+          (st === 'pending' || st === 'processing' ? '<button class="btn-primary" onclick="openProcessWindow(\'' + id + '\')" style="font-size:13px;padding:8px 20px;">⚖️ 确定处理</button>' : '') +
+          (r.handledResult ? '<span class="type-badge ' + (r.handledResult === 'bullying' ? 'badge-danger' : 'badge-normal') + '" style="font-size:13px;padding:8px 16px;">处理结果：' + (r.handledResult === 'bullying' ? '确认霸凌' : '非霸凌') + '</span>' : '') +
         '</div>' +
       '</div>';
       document.body.appendChild(overlay);
     } catch (e) { alert('加载详情失败：' + e.message); }
+  }
+
+  // ── 霸凌处理弹窗 ──────────────────────────────
+  var _currentProcessId = null;
+
+  async function openProcessWindow(id) {
+    _currentProcessId = id;
+    try {
+      const res = await fetch('/api/admin/bullying/' + id, { headers: authHeaders() });
+      const json = await res.json();
+      if (!json.ok) { alert('加载失败'); return; }
+      const r = json.data;
+
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+      // 涉事用户选择
+      var userCheckboxes = '';
+      if (Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length) {
+        r.involvedUserDetails.forEach(function(u, i) {
+          userCheckboxes += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13px;">' +
+            '<input type="checkbox" class="process-ban-user" value="' + escHtml(u.id) + '" checked>' +
+            '<span style="font-weight:600;">' + escHtml(u.nickname || u.id) + '</span>' +
+            '<span style="color:var(--text-sub);font-size:12px;">(' + escHtml(u.username || '') + ')</span>' +
+          '</label>';
+        });
+      } else {
+        userCheckboxes = '<div style="color:var(--text-sub);font-size:12px;padding:8px;">无私涉事用户</div>';
+      }
+
+      // 相关内容选择
+      var contentCheckboxes = '';
+      if (Array.isArray(r.contentDetails) && r.contentDetails.length) {
+        r.contentDetails.forEach(function(c, i) {
+          var preview = c.content ? escHtml(c.content.substring(0, 60)) : '<span style="color:#999;">内容不存在</span>';
+          contentCheckboxes += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13px;">' +
+            '<input type="checkbox" class="process-delete-content" value="' + escHtml(c.id) + '" ' + (c.content ? 'checked' : '') + '>' +
+            '<div style="flex:1;min-width:0;"><div style="font-family:monospace;font-size:11px;color:var(--text-sub);">' + escHtml(c.id) + '</div>' +
+            '<div style="font-size:12px;">' + preview + (c.hasImages ? ' <span style="color:#9ca3af;font-style:italic;">(图片)</span>' : '') + '</div></div>' +
+          '</label>';
+        });
+      } else {
+        contentCheckboxes = '<div style="color:var(--text-sub);font-size:12px;padding:8px;">无相关内容</div>';
+      }
+
+      overlay.innerHTML = '<div style="background:var(--bg-main);border-radius:12px;padding:24px;max-width:540px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+          '<h3 style="font-size:16px;color:var(--text-main);">⚖️ 霸凌事件处理</h3>' +
+          '<button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-sub);line-height:1;">×</button>' +
+        '</div>' +
+        '<div style="margin-bottom:12px;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">选择要封禁的涉事用户：</div>' +
+          userCheckboxes +
+        '</div>' +
+        '<div style="margin-bottom:16px;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">选择要删除的相关内容：</div>' +
+          contentCheckboxes +
+        '</div>' +
+        '<div style="margin-bottom:16px;">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">处理结果：</div>' +
+          '<select id="processResultSelect" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">' +
+            '<option value="bullying">确认为霸凌行为</option>' +
+            '<option value="not_bullying">确认非霸凌行为</option>' +
+          '</select>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<button onclick="this.closest(\'div\').parentElement.remove()" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--bg-card);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">取消</button>' +
+          '<button onclick="confirmProcess()" style="flex:1;padding:10px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">确认处理</button>' +
+        '</div>' +
+      '</div>';
+      document.body.appendChild(overlay);
+    } catch (e) { alert('加载失败：' + e.message); }
+  }
+
+  async function confirmProcess() {
+    var banIds = [];
+    document.querySelectorAll('.process-ban-user:checked').forEach(function(cb) { banIds.push(cb.value); });
+    var deleteIds = [];
+    document.querySelectorAll('.process-delete-content:checked').forEach(function(cb) { deleteIds.push(cb.value); });
+    var result = document.getElementById('processResultSelect').value;
+
+    if (!confirm('确定执行此处理？\n\n封禁用户：' + banIds.length + ' 人\n删除内容：' + deleteIds.length + ' 条\n处理结果：' + (result === 'bullying' ? '确认霸凌' : '非霸凌'))) return;
+
+    try {
+      const res = await fetch('/api/admin/bullying/' + _currentProcessId + '/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ banUserIds: banIds, deleteContentIds: deleteIds, result: result })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 处理完成！封禁 ' + (json.data.bannedUsers.length) + ' 人，删除 ' + (json.data.deletedContents.length) + ' 条内容', 'success');
+        // 关闭所有弹窗
+        document.querySelectorAll('[style*="z-index:9999"]').forEach(function(el) { el.remove(); });
+        loadBullying();
+      } else {
+        showToast('❌ ' + (json.msg || '处理失败'), 'error');
+      }
+    } catch (e) {
+      showToast('❌ 网络错误', 'error');
+    }
   }
 
   // ===== 违禁词管理 =====
