@@ -27,6 +27,12 @@ function readNotices() { return db.readNotices(); }
 function writeNotices(notices) { db.writeNotices(notices); broadcastSSE('noticeUpdate', { t: Date.now() }); }
 
 function saveDeletedItem(type, item, deletedBy, extra) {
+  const extraData = Object.assign({
+    time: item.time || item.createdAt || null,
+    likeCount: item.likes || 0,
+    commentCount: item.commentsCount || 0,
+    title: item.title || null,
+  }, typeof extra === 'object' ? extra : {});
   db.addDeletedItem({
     id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: type,
@@ -35,7 +41,7 @@ function saveDeletedItem(type, item, deletedBy, extra) {
     userId: item.userId || item.createdBy || null,
     deletedAt: new Date().toISOString(),
     deletedBy: deletedBy,
-    extra: extra || ''
+    extra: JSON.stringify(extraData)
   });
 }
 

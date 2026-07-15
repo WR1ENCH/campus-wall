@@ -174,12 +174,18 @@ app.delete('/api/qa/questions/:id', (req, res) => {
   const idx = questions.findIndex(x => x.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
   if (questions[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
-  if (questions[idx].status !== 'closed' && questions[idx].bounty > 0) {
-    // 退还未发放的悬赏
-    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
+  const q = questions[idx];
+  if (q.status !== 'closed' && q.bounty > 0) {
+    const remain = Math.max(0, q.bounty - (q.distributedCredits || 0));
     if (remain > 0) changeCredit(session.id, remain, '删除问题退还剩余悬赏');
   }
-  questions[idx].deleted = true;
+  db.addDeletedItem({
+    id: q.id, type: 'qa_question', content: q.content || q.title || '',
+    author: q.author || '未知', userId: q.userId,
+    deletedAt: new Date().toISOString(), deletedBy: 'user',
+    extra: JSON.stringify({ time: q.createdAt, title: q.title, bounty: q.bounty || 0 })
+  });
+  q.deleted = true;
   writeQAQuestions(questions);
   res.json({ ok: true });
 });
@@ -270,7 +276,14 @@ app.delete('/api/qa/answers/:id', (req, res) => {
   const idx = answers.findIndex(a => a.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
   if (answers[idx].userId !== session.id) return res.json({ ok: false, msg: '无权删除' });
-  answers[idx].deleted = true;
+  const a = answers[idx];
+  db.addDeletedItem({
+    id: a.id, type: 'qa_answer', content: a.content || '',
+    author: a.author || '未知', userId: a.userId,
+    deletedAt: new Date().toISOString(), deletedBy: 'user',
+    extra: JSON.stringify({ time: a.createdAt, questionId: a.questionId, likes: a.likes || 0 })
+  });
+  a.deleted = true;
   writeQAAnswers(answers);
   res.json({ ok: true });
 });

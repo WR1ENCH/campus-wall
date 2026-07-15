@@ -261,9 +261,44 @@ app.get('/api/pickup/my-bids', (req, res) => {
       });
     }
   }
-  // 按时间倒序
   myBids.sort((a, b) => new Date(b.time) - new Date(a.time));
   res.json({ ok: true, data: myBids });
+});
+
+// 用户删除自己的拍卖出价（仅审核前可删）
+app.delete('/api/pickup/my-bid/:bidId', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+  const auctions = readPickupAuctions();
+  for (const auction of auctions) {
+    const bi = auction.bids.findIndex(b => b.id === req.params.bidId && b.userId === session.id);
+    if (bi !== -1) {
+      const bid = auction.bids[bi];
+      if (bid.reviewStatus && bid.reviewStatus !== 'pending_review') {
+        return res.json({ ok: false, msg: '该内容已审核，无法删除' });
+      }
+      // 退还冻结的 credit
+      changeCredit(session.id, bid.amount, '校园墙拍卖出价取消 - 退还 ' + bid.amount + ' Credits');
+      // 存入已删除内容
+      db.addDeletedItem({
+        id: bid.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        type: 'auction',
+        content: bid.content || '',
+        author: bid.anonymous ? '匿名用户' : bid.username,
+        userId: bid.userId,
+        deletedAt: new Date().toISOString(),
+        deletedBy: 'user',
+        extra: JSON.stringify({ time: bid.time, amount: bid.amount, slot: auction.slot, date: auction.date })
+      });
+      auction.bids.splice(bi, 1);
+      writePickupAuctions(auctions);
+      return res.json({ ok: true, msg: '已删除拍卖内容并退还 ' + bid.amount + ' Credits' });
+    }
+  }
+  return res.json({ ok: false, msg: '未找到该出价记录' });
 });
 
 // ===== 管理员：拍卖审核 =====
@@ -331,9 +366,19 @@ app.post('/api/admin/pickup/review/:bidId', requireAdmin, (req, res) => {
             createdAt: new Date().toISOString()
           });
         } else {
-          // 拒绝：标记为rejected，退还冻结的credit
+          // 拒绝：标记为rejected，退还冻结的credit，存入已删除内容
           auction.bids[bi].reviewStatus = 'rejected';
           changeCredit(auction.bids[bi].userId, auction.bids[bi].amount, '校园墙拍卖内容审核未通过 - 退还出价 ' + auction.bids[bi].amount + ' Credits');
+          db.addDeletedItem({
+            id: auction.bids[bi].id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            type: 'auction',
+            content: auction.bids[bi].content || '',
+            author: auction.bids[bi].anonymous ? '匿名用户' : auction.bids[bi].username,
+            userId: auction.bids[bi].userId,
+            deletedAt: new Date().toISOString(),
+            deletedBy: 'system',
+            extra: JSON.stringify({ time: auction.bids[bi].time, amount: auction.bids[bi].amount, slot: auction.slot, date: auction.date, reason: '审核未通过' })
+          });
           // 发送 T1 通知
           const bid = auction.bids[bi];
           const slotLabelStr = slotLabel(auction.slot);

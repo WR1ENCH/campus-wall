@@ -138,6 +138,12 @@ function readDiscussions() { return db.readDiscussions(); }
 function writeDiscussions(discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
 
 function saveDeletedItem(type, item, deletedBy, extra) {
+  const extraData = Object.assign({
+    time: item.time || item.createdAt || null,
+    likeCount: item.likes || 0,
+    commentCount: item.commentsCount || 0,
+    title: item.title || null,
+  }, typeof extra === 'object' ? extra : {});
   db.addDeletedItem({
     id: item.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: type,
@@ -146,7 +152,7 @@ function saveDeletedItem(type, item, deletedBy, extra) {
     userId: item.userId || item.createdBy || null,
     deletedAt: new Date().toISOString(),
     deletedBy: deletedBy,
-    extra: extra || ''
+    extra: JSON.stringify(extraData)
   });
 }
 
@@ -493,6 +499,11 @@ app.get('/api/admin/bullying', requireAdmin, (req, res) => {
     bullyType: r.bullyType,
     description: r.description,
     involved: r.involved,
+    involvedUsers: r.involvedUsers || [],
+    contentIds: r.contentIds || [],
+    victimName: r.victimName || null,
+    reporterRole: r.reporterRole || null,
+    userId: r.userId || null,
     location: r.location,
     incidentTime: r.incidentTime,
     anonymous: !!r.anonymous,
@@ -502,7 +513,8 @@ app.get('/api/admin/bullying', requireAdmin, (req, res) => {
     time: r.time,
     status: r.status || 'pending',
     handledBy: r.handledBy,
-    handledAt: r.handledAt
+    handledAt: r.handledAt,
+    handledResult: r.handledResult || null
   }));
   res.json({ ok: true, data: result });
 });
@@ -1137,30 +1149,33 @@ app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
 });
 
 app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => {
-  const users = readUsers();
-  const user = users.find(u => u.id === req.params.id);
-  if (!user) return res.json({ ok: false, msg: '用户不存在' });
-  const { password, certRealName, certClassName, ...safeUser } = user;
-  safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
-  safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
-  // ponytail: user/:id/detail 返回的 zhixuePassword 是加密原文，前端直接展示成乱码/哈希；
-  // zhixue-records API 已做 decryptCert，此处对齐。
-  safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
-  const posts = readPosts();
-  const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
-    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
-    .slice(0, 20)
-    .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
-  const reports = readReports();
-  const userReports = reports.filter(r => r.targetUserId === user.id || r.targetAuthor === user.nickname)
-    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
-    .slice(0, 20)
-    .map(r => ({ id: r.id, time: r.time, reason: r.reason, type: r.type, status: r.status }));
-  const credibilityLogs = db.readCredibilityLogs()
-    .filter(l => l.userId === user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
-  res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
+  try {
+    const users = readUsers();
+    const user = users.find(u => u.id === req.params.id);
+    if (!user) return res.json({ ok: false, msg: '用户不存在' });
+    const { password, certRealName, certClassName, ...safeUser } = user;
+    safeUser.certRealNameDecrypted = decryptCert(certRealName) || null;
+    safeUser.certClassNameDecrypted = decryptCert(certClassName) || null;
+    safeUser.zhixuePassword = safeUser.zhixuePassword ? (decryptCert(safeUser.zhixuePassword) || '') : '';
+    const posts = readPosts();
+    const userPosts = posts.filter(p => p.userId === user.id || p.author === user.nickname)
+      .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
+      .slice(0, 20)
+      .map(p => ({ id: p.id, content: p.content, type: p.type, time: p.time, likes: p.likes || 0, commentsCount: p.commentsCount || 0 }));
+    const reports = readReports();
+    const userReports = reports.filter(r => r.targetUserId === user.id || r.reportedBy === user.id)
+      .sort((a, b) => new Date(b.createdAt || b.time || 0) - new Date(a.createdAt || a.time || 0))
+      .slice(0, 20)
+      .map(r => ({ id: r.id, time: r.createdAt || r.time, reason: r.reason, type: r.type, status: r.status }));
+    const credibilityLogs = db.readCredibilityLogs()
+      .filter(l => l.userId === user.id)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
+    res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
+  } catch (e) {
+    console.error('[admin] user detail error:', e);
+    res.json({ ok: false, msg: '服务器内部错误' });
+  }
 });
 
 // ===== Credit / 卡密管理 =====
@@ -1518,11 +1533,24 @@ app.post('/api/admin/reports/:id/ban-user', requireAdmin, (req, res) => {
 // ===== 已删除内容 =====
 app.get('/api/admin/deleted-content', requireAdmin, (req, res) => {
   const items = readDeletedItems();
-  const posts = items.filter(i => i.type === 'post');
-  const comments = items.filter(i => i.type === 'comment');
-  const discussions = items.filter(i => i.type === 'discussion');
-  const discComments = items.filter(i => i.type === 'disc_comment');
-  res.json({ ok: true, data: { posts: posts.reverse(), postComments: comments.reverse(), discussions: discussions.reverse(), discussionComments: discComments.reverse() } });
+  const parseItem = (item) => {
+    let extra = {};
+    try { extra = typeof item.extra === 'string' ? JSON.parse(item.extra) : (item.extra || {}); } catch (_) {}
+    return Object.assign({}, item, extra, { extra: undefined });
+  };
+  const posts = items.filter(i => i.type === 'post').map(parseItem);
+  const comments = items.filter(i => i.type === 'comment').map(parseItem);
+  const discussions = items.filter(i => i.type === 'discussion').map(parseItem);
+  const discComments = items.filter(i => i.type === 'disc_comment').map(parseItem);
+  const qaQuestions = items.filter(i => i.type === 'qa_question').map(parseItem);
+  const qaAnswers = items.filter(i => i.type === 'qa_answer').map(parseItem);
+  const auctions = items.filter(i => i.type === 'auction').map(parseItem);
+  res.json({ ok: true, data: {
+    posts: posts.reverse(), postComments: comments.reverse(),
+    discussions: discussions.reverse(), discussionComments: discComments.reverse(),
+    qaQuestions: qaQuestions.reverse(), qaAnswers: qaAnswers.reverse(),
+    auctions: auctions.reverse()
+  } });
 });
 
 // ===== 霸凌状态管理 =====
@@ -1572,7 +1600,113 @@ app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
   const reports = readBullying();
   const report = reports.find(r => r.id === req.params.id);
   if (!report) return res.json({ ok: false, msg: '报告不存在' });
-  res.json({ ok: true, data: report });
+
+  // 丰富数据：举报人信息、涉事用户详情、相关内容详情
+  const users = readUsers();
+  const posts = readPosts();
+
+  // 举报人信息
+  let reporterInfo = null;
+  if (report.userId) {
+    const u = users.find(x => x.id === report.userId);
+    if (u) reporterInfo = { id: u.id, nickname: u.nickname, username: u.username, avatar: u.avatar, uid: u.uid };
+  }
+
+  // 涉事用户详情
+  let involvedUserDetails = [];
+  if (Array.isArray(report.involvedUsers)) {
+    involvedUserDetails = report.involvedUsers.map(iv => {
+      const u = users.find(x => x.id === iv.id);
+      if (u) return { id: u.id, nickname: u.nickname, username: u.username, status: u.status, uid: u.uid };
+      return iv;
+    });
+  }
+
+  // 相关内容详情
+  let contentDetails = [];
+  if (Array.isArray(report.contentIds)) {
+    contentDetails = report.contentIds.map(cid => {
+      const p = posts.find(x => x.id === cid);
+      if (p) return { id: p.id, content: (p.content || '').substring(0, 200), hasImages: p.images && p.images.length > 0, author: p.author, type: p.type || 'post', deleted: !!p.deleted };
+      return { id: cid, content: null, error: 'Not found or not a post' };
+    });
+  }
+
+  res.json({ ok: true, data: Object.assign({}, report, { reporterInfo, involvedUserDetails, contentDetails }) });
+});
+
+// 霸凌报告处理：封禁涉事用户 + 删除相关内容
+app.post('/api/admin/bullying/:id/process', requireAdmin, (req, res) => {
+  const { banUserIds, deleteContentIds, result } = req.body; // result: 'bullying' | 'not_bullying'
+  if (!['bullying', 'not_bullying'].includes(result)) return res.json({ ok: false, msg: '无效的处理结果' });
+
+  const reports = readBullying();
+  const idx = reports.findIndex(r => r.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '报告不存在' });
+
+  // 封禁涉事用户
+  const users = readUsers();
+  const bannedUsers = [];
+  if (Array.isArray(banUserIds)) {
+    banUserIds.forEach(uid => {
+      const u = users.find(x => x.id === uid);
+      if (u && u.status !== 'banned') {
+        u.status = 'banned';
+        u.banUntil = null;
+        bannedUsers.push({ id: u.id, nickname: u.nickname });
+      }
+    });
+    writeUsers(users);
+  }
+
+  // 删除相关内容
+  const posts = readPosts();
+  const deletedContents = [];
+  if (Array.isArray(deleteContentIds)) {
+    deleteContentIds.forEach(cid => {
+      const p = posts.find(x => x.id === cid);
+      if (p && !p.deleted) {
+        p.deleted = true;
+        p.deletedAt = new Date().toISOString();
+        p.deletedBy = req.admin.name || req.admin.id;
+        // 写入 deleted_items
+        db.addDeletedItem({
+          id: p.id,
+          type: 'post',
+          content: (p.content || '').substring(0, 500),
+          author: p.author || '匿名',
+          userId: p.userId || null,
+          deletedAt: new Date().toISOString(),
+          deletedBy: req.admin.name || req.admin.id,
+          extra: JSON.stringify({ time: p.time, likeCount: p.likes || 0, reason: '霸凌处理' })
+        });
+        deletedContents.push({ id: p.id });
+      }
+    });
+    writePosts(posts);
+  }
+
+  // 更新霸凌报告状态
+  reports[idx].status = 'resolved';
+  reports[idx].handledResult = result;
+  reports[idx].handledBy = req.admin.name || req.admin.id;
+  reports[idx].handledAt = new Date().toISOString();
+  reports[idx].handleNote = result === 'bullying' ? '确认霸凌，已处理' : '确认非霸凌';
+  writeBullying(reports);
+
+  // 发送通知
+  if (reports[idx].userId) {
+    const { emitUserNotice } = require('../lib/penalty');
+    if (result === 'bullying') {
+      emitUserNotice(reports[idx].userId, '🛡️ 霸凌举报处理结果',
+        '你提交的霸凌事件报告（ID: ' + reports[idx].id + '）经管理员核实，确认为霸凌行为。\n\n相关涉事用户已封禁，相关内容已删除。\n\n感谢你对校园安全的贡献！', 'T0');
+    } else {
+      emitUserNotice(reports[idx].userId, '🛡️ 霸凌举报处理结果',
+        '你提交的霸凌事件报告（ID: ' + reports[idx].id + '）经管理员核实，未认定为霸凌行为。\n\n如仍有疑问，请重新提交报告或联系学校相关部门。', 'T0');
+    }
+  }
+
+  res.json({ ok: true, data: { bannedUsers, deletedContents, result } });
 });
 
 // ===== 反馈管理 =====
