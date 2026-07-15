@@ -278,6 +278,34 @@ if (!content || !content.trim()) {
   posts.unshift(newPost);
   writePosts(posts);
 
+  // 自动话题识别：内容以 # 开头时，提取话题名并关联/创建讨论区
+  var finalSyncDiscussionId = req.body.syncDiscussionId;
+  if (!finalSyncDiscussionId && content.trim().startsWith('#')) {
+    var spaceIdx = content.indexOf(' ');
+    var topicName = spaceIdx > 0 ? content.substring(0, spaceIdx) : content.trim();
+    if (topicName.length > 1) {
+      var _discussions = readDiscussions();
+      var _disc = _discussions.find(function(d) { return d.title === topicName && !d.deleted; });
+      if (!_disc) {
+        _disc = {
+          id: uniqueId.generateId('DISC'),
+          title: topicName,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          deleted: false,
+          createdAt: new Date().toISOString(),
+          createdBy: realUserId,
+          commentCount: 0
+        };
+        _discussions.push(_disc);
+        writeDiscussions(_discussions);
+      }
+      finalSyncDiscussionId = _disc.id;
+      newPost.discussionId = _disc.id;
+      // 写回 posts 以保存 discussionId
+      writePosts(posts);
+    }
+  }
+
   // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
     const reports = readReports();
@@ -304,16 +332,15 @@ if (!content || !content.trim()) {
     incUserPostCount(realAuthor);
   }
 
-  // 同步到讨论区（如果用户指定了话题）
-  const syncDiscussionId = req.body.syncDiscussionId;
-  if (syncDiscussionId && realUserId) {
+  // 同步到讨论区（如果用户指定了话题或自动识别了话题）
+  if (finalSyncDiscussionId && realUserId) {
     var discussions = readDiscussions();
-    var disc = discussions.find(function(d) { return d.id === syncDiscussionId; });
+    var disc = discussions.find(function(d) { return d.id === finalSyncDiscussionId; });
     if (disc && !disc.deleted) {
       var discComments = readDiscussionComments();
       var newDiscComment = {
         id: uniqueId.generateId('DICM'),
-        discussionId: syncDiscussionId,
+        discussionId: finalSyncDiscussionId,
         parentId: null,
         content: content.trim(),
         author: realAuthor,

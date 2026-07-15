@@ -1612,25 +1612,25 @@ app.get('/api/admin/bullying/:id', requireAdmin, (req, res) => {
     if (u) reporterInfo = { id: u.id, nickname: u.nickname, username: u.username, avatar: u.avatar, uid: u.uid };
   }
 
-  // 涉事用户详情
-  let involvedUserDetails = [];
-  if (Array.isArray(report.involvedUsers)) {
-    involvedUserDetails = report.involvedUsers.map(iv => {
-      const u = users.find(x => x.id === iv.id);
-      if (u) return { id: u.id, nickname: u.nickname, username: u.username, status: u.status, uid: u.uid };
-      return iv;
-    });
-  }
+  // 涉事用户详情（兼容字符串 JSON）
+  let involvedUsers = report.involvedUsers;
+  if (typeof involvedUsers === 'string') { try { involvedUsers = JSON.parse(involvedUsers); } catch { involvedUsers = []; } }
+  if (!Array.isArray(involvedUsers)) involvedUsers = [];
+  let involvedUserDetails = involvedUsers.map(iv => {
+    const u = users.find(x => x.id === iv.id);
+    if (u) return { id: u.id, nickname: u.nickname, username: u.username, status: u.status, uid: u.uid };
+    return iv;
+  });
 
-  // 相关内容详情
-  let contentDetails = [];
-  if (Array.isArray(report.contentIds)) {
-    contentDetails = report.contentIds.map(cid => {
-      const p = posts.find(x => x.id === cid);
-      if (p) return { id: p.id, content: (p.content || '').substring(0, 200), hasImages: p.images && p.images.length > 0, author: p.author, type: p.type || 'post', deleted: !!p.deleted };
-      return { id: cid, content: null, error: 'Not found or not a post' };
-    });
-  }
+  // 相关内容详情（兼容字符串 JSON）
+  let contentIds = report.contentIds;
+  if (typeof contentIds === 'string') { try { contentIds = JSON.parse(contentIds); } catch { contentIds = []; } }
+  if (!Array.isArray(contentIds)) contentIds = [];
+  let contentDetails = contentIds.map(cid => {
+    const p = posts.find(x => x.id === cid);
+    if (p) return { id: p.id, content: (p.content || '').substring(0, 200), hasImages: p.images && p.images.length > 0, author: p.author, type: p.type || 'post', deleted: !!p.deleted };
+    return { id: cid, content: null, error: 'Not found or not a post' };
+  });
 
   res.json({ ok: true, data: Object.assign({}, report, { reporterInfo, involvedUserDetails, contentDetails }) });
 });

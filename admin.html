@@ -2506,25 +2506,29 @@
         imgHtml += '</div></div>';
       }
 
-      // 涉事用户详情
+      // 涉事用户详情（优先用详情，降级用原始数组）
       let involvedHtml = '';
-      if (Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length) {
+      var _involvedList = Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length ? r.involvedUserDetails :
+                          (Array.isArray(r.involvedUsers) && r.involvedUsers.length ? r.involvedUsers : []);
+      if (_involvedList.length) {
         involvedHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">👤 涉事用户详情：</div>';
-        r.involvedUserDetails.forEach(function(u) {
+        _involvedList.forEach(function(u) {
           involvedHtml += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;font-size:12px;">' +
             '<span style="font-weight:600;">' + escHtml(u.nickname || u.id) + '</span>' +
             '<span style="color:var(--text-sub);">(' + escHtml(u.username || '') + ')</span>' +
-            '<span style="color:' + (u.status === 'banned' ? '#dc2626' : '#22c55e') + ';">' + (u.status === 'banned' ? '已封禁' : '正常') + '</span>' +
+            (u.status ? '<span style="color:' + (u.status === 'banned' ? '#dc2626' : '#22c55e') + ';">' + (u.status === 'banned' ? '已封禁' : '正常') + '</span>' : '') +
           '</div>';
         });
         involvedHtml += '</div>';
       }
 
-      // 相关内容详情
+      // 相关内容详情（优先用详情，降级用原始数组）
       let contentHtml = '';
-      if (Array.isArray(r.contentDetails) && r.contentDetails.length) {
+      var _contentList = Array.isArray(r.contentDetails) && r.contentDetails.length ? r.contentDetails :
+                         (Array.isArray(r.contentIds) && r.contentIds.length ? r.contentIds.map(function(cid) { return { id: cid, content: null }; }) : []);
+      if (_contentList.length) {
         contentHtml = '<div style="margin-top:12px;"><div style="font-size:13px;font-weight:600;color:var(--text-main);margin-bottom:6px;">📄 相关内容：</div>';
-        r.contentDetails.forEach(function(c) {
+        _contentList.forEach(function(c) {
           var preview = c.content ? escHtml(c.content.substring(0, 100)) : '<span style="color:#999;">内容不存在</span>';
           contentHtml += '<div style="padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;font-size:12px;">' +
             '<div style="display:flex;align-items:center;gap:6px;">' +
@@ -2598,10 +2602,12 @@
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
       overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 
-      // 涉事用户选择
+      // 涉事用户选择（优先用详情，降级用原始数组）
       var userCheckboxes = '';
-      if (Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length) {
-        r.involvedUserDetails.forEach(function(u, i) {
+      var userList = Array.isArray(r.involvedUserDetails) && r.involvedUserDetails.length ? r.involvedUserDetails :
+                     (Array.isArray(r.involvedUsers) && r.involvedUsers.length ? r.involvedUsers : []);
+      if (userList.length) {
+        userList.forEach(function(u, i) {
           userCheckboxes += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13px;">' +
             '<input type="checkbox" class="process-ban-user" value="' + escHtml(u.id) + '" checked>' +
             '<span style="font-weight:600;">' + escHtml(u.nickname || u.id) + '</span>' +
@@ -2612,10 +2618,12 @@
         userCheckboxes = '<div style="color:var(--text-sub);font-size:12px;padding:8px;">无私涉事用户</div>';
       }
 
-      // 相关内容选择
+      // 相关内容选择（优先用详情，降级用原始数组）
       var contentCheckboxes = '';
-      if (Array.isArray(r.contentDetails) && r.contentDetails.length) {
-        r.contentDetails.forEach(function(c, i) {
+      var contentList = Array.isArray(r.contentDetails) && r.contentDetails.length ? r.contentDetails :
+                        (Array.isArray(r.contentIds) && r.contentIds.length ? r.contentIds.map(function(cid) { return { id: cid, content: null }; }) : []);
+      if (contentList.length) {
+        contentList.forEach(function(c, i) {
           var preview = c.content ? escHtml(c.content.substring(0, 60)) : '<span style="color:#999;">内容不存在</span>';
           contentCheckboxes += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-card);border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13px;">' +
             '<input type="checkbox" class="process-delete-content" value="' + escHtml(c.id) + '" ' + (c.content ? 'checked' : '') + '>' +
