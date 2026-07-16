@@ -427,6 +427,7 @@ function migrate() {
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
     { name: 'discussions', columns: ['official'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
+    { name: 'punishments', columns: ['credibilityDeducted'] },
     { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
   ];
   for (const t of tableMigrations) {
