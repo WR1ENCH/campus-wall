@@ -219,4 +219,17 @@ module.exports = function(app, opts) {
     }
   });
 
+  // 获取当前用户的霸凌举报状态和保护状态
+  app.get('/api/user/bullying-status', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+    const reports = readBullying().filter(r => r.userId === session.id);
+    const users = readUsers();
+    const user = users.find(u => u.id === session.id);
+    const underProtection = !!(user && user.bullyingProtection);
+    res.json({ ok: true, data: { reports, underProtection } });
+  });
+
 };

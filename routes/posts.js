@@ -332,6 +332,12 @@ if (!content || !content.trim()) {
     incUserPostCount(realAuthor);
   }
 
+  // 通过 syncDiscussionId 自动补全的场景：确保 post.discussionId 已设置
+  if (finalSyncDiscussionId && !newPost.discussionId) {
+    newPost.discussionId = finalSyncDiscussionId;
+    writePosts(posts);
+  }
+
   // 同步到讨论区（如果用户指定了话题或自动识别了话题）
   if (finalSyncDiscussionId && realUserId) {
     var discussions = readDiscussions();
