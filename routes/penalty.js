@@ -259,7 +259,7 @@ module.exports = function (app) {
     const deducted = p.credibilityDeducted || 0;
     db.updatePunishment(p.punishmentId, { status: 'revoked', revokedAt: now, revokedBy: req.admin.id });
     if (deducted > 0) {
-      credibility.restoreCredibility(userId, deducted, '处罚撤销，返还信用分');
+      credibility.restoreCredibility(p.userId, deducted, '处罚撤销，返还信用分');
     }
     res.json({ ok: true, msg: '处罚已撤销' });
   });
