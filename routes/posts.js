@@ -88,7 +88,20 @@ module.exports = function(app) {
 app.get('/api/posts', (req, res) => {
   const posts = readPosts();
   // 过滤已删除的帖子（普通用户不可见）
-  const activePosts = posts.filter(p => !p.deleted);
+  let activePosts = posts.filter(p => !p.deleted);
+  // 仅自己可见的帖子：仅作者本人可见
+  const token = req.headers['x-user-token'];
+  let currentUserId = null;
+  if (token) {
+    const session = verifyUserToken(token);
+    if (session) currentUserId = session.id;
+  }
+  activePosts = activePosts.filter(p => {
+    if (p.visibility === 'self_only') {
+      return p.userId && currentUserId && p.userId === currentUserId;
+    }
+    return true;
+  });
   const users = readUsers();
   const admins = readAdmins(); // 用于验证管理员绑定是否仍有效
   // 为每个帖子附加作者的管理员角色信息
@@ -130,6 +143,18 @@ app.get('/api/posts/:id', (req, res) => {
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   if (post.deleted) return res.json({ ok: false, msg: '帖子已被删除' });
+  // 仅自己可见：非作者不可查看
+  if (post.visibility === 'self_only') {
+    const token = req.headers['x-user-token'];
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session && post.userId && session.id === post.userId) isOwner = true;
+    }
+    if (!isOwner) {
+      return res.json({ ok: false, msg: '此内容仅自己可见', code: 'SELF_ONLY' });
+    }
+  }
   // 过滤已删除的评论
   if (Array.isArray(post.comments)) {
     post.comments = post.comments.filter(c => !c.deleted);
@@ -167,7 +192,7 @@ app.post('/api/posts', (req, res) => {
     realAvatar = (user && user.avatar) || '🙈';
   }
 
-  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous } = req.body;
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments } = req.body;
 
   // 如果勾选了匿名发布，覆盖为匿名显示
   let anonymousFlag = false;
@@ -305,6 +330,14 @@ if (!content || !content.trim()) {
       writePosts(posts);
     }
   }
+
+  // 敏感词继续发送：帖子在审核通过前仅自己可见
+  if (hasSensitive && visibility !== 'self_only') {
+    newPost.visibility = 'self_only';
+  } else {
+    newPost.visibility = visibility === 'self_only' ? 'self_only' : 'public';
+  }
+  newPost.allowComments = allowComments !== false;
 
   // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
@@ -495,6 +528,9 @@ app.post('/api/posts/:id/comments', (req, res) => {
   const post = posts.find(p => p.id === req.params.id);
   if (!post) {
     return res.json({ ok: false, msg: '帖子不存在' });
+  }
+  if (post.allowComments === false) {
+    return res.json({ ok: false, msg: '本帖不允许评论', code: 'COMMENTS_DISABLED' });
   }
   if (!Array.isArray(post.comments)) post.comments = [];
   const newComment = {
