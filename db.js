@@ -201,7 +201,8 @@ function migrate() {
     "handleNote" TEXT,
     "userId" TEXT,
     "involvedUsers" TEXT,
-    "contentIds" TEXT
+    "contentIds" TEXT,
+    "handledResult" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "credit_logs" (
     "id" TEXT PRIMARY KEY,
@@ -426,7 +427,7 @@ function migrate() {
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
     { name: 'discussions', columns: ['official'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
-    { name: 'bullying', columns: ['involvedUsers', 'contentIds'] },
+    { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];

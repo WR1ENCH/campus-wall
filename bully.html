@@ -681,6 +681,48 @@
       .card-title h1 { font-size: 24px; }
       .bully-types { grid-template-columns: 1fr; }
     }
+    /* ── 同学认证弹窗 ─────────────────────────── */
+    .cert-tabs { display:flex;gap:0;border:1px solid rgba(0,0,0,0.15);border-radius:8px;overflow:hidden;margin-bottom:18px; }
+    .cert-tab { flex:1;padding:9px 0;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all 0.15s;font-family:inherit; }
+    .cert-tab.active { background:#2d7a3a;color:#fff; }
+    .cert-tab:not(.active) { background:#f5f0e8;color:var(--text-sub); }
+    .cert-tab:not(.active):hover { background:#e8e3db; }
+    .cert-panel { display:none; }
+    .cert-panel.active { display:block; }
+    .cert-notice { font-size:12px;padding:12px 14px;border-radius:6px;margin-bottom:14px;line-height:1.6;text-align:center; }
+    .cert-notice.info { background:#e8f5e9;color:#2d7a3a; }
+    .cert-notice a { color:inherit;text-decoration:underline;cursor:pointer;font-weight:600; }
+    .form-status { font-size:13px;padding:8px 12px;border-radius:6px;margin-bottom:12px;display:none;text-align:center; }
+    .form-status.show { display:block; }
+    .form-status.error { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+    .form-status.success { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
+    .manual-images-preview { display:flex;flex-wrap:wrap;gap:8px;margin-top:8px; }
+    .manual-image-item { position:relative;width:72px;height:72px; }
+    .manual-image-item img { width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid rgba(0,0,0,0.15); }
+    .manual-image-remove { position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center; }
+    .manual-image-add { display:flex;align-items:center;justify-content:center;padding:14px;border:1px dashed rgba(0,0,0,0.25);border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-sub);transition:all 0.15s;margin-top:8px; }
+    .manual-image-add:hover { border-color:var(--brick-dark);color:var(--brick-dark); }
+    .flow-overlay { position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(28,27,26,0.5);backdrop-filter:blur(4px); }
+    .flow-box { background:var(--paper-bg);border-radius:12px;padding:28px 24px;width:90%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.15); }
+    .flow-title { font-size:16px;font-weight:600;margin-bottom:20px;text-align:center;color:var(--text-main); }
+    .flow-steps { display:flex;flex-direction:column;align-items:center;gap:4px; }
+    .flow-step { background:#2d7a3a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;text-align:center;min-width:200px;line-height:1.5; }
+    .flow-arrow { color:#2d7a3a;font-size:16px;font-weight:600;padding:2px 0; }
+    .flow-footer { text-align:center;margin-top:20px; }
+    .flow-btn { padding:8px 32px;background:var(--brick-dark);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit; }
+    .cert-modal-box .form-group { margin-bottom:14px; }
+    .cert-modal-box .form-group label { font-size:13px;font-weight:500;color:var(--text-main); }
+    .cert-modal-box .form-group input,.cert-modal-box .form-group textarea { width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.2);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:var(--text-main);outline:none; }
+    .cert-modal-box .form-group input:focus,.cert-modal-box .form-group textarea:focus { border-color:var(--brick-dark); }
+    .cert-modal-box .form-group textarea { resize:vertical;min-height:60px; }
+    .cert-modal-box .modal-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+    .cert-modal-box .modal-header .modal-title { font-size:17px;font-weight:700;color:var(--text-main); }
+    .cert-modal-box .modal-header .modal-close { background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-sub);padding:4px;line-height:1; }
+    .cert-modal-box .modal-header .modal-close svg { width:20px;height:20px;vertical-align:middle; }
+    .cert-modal-box .modal-actions { display:flex;gap:10px;margin-top:20px; }
+    .cert-modal-box .modal-actions button { flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit; }
+    .cert-modal-box .modal-actions .btn-outline { border:2px solid rgba(0,0,0,0.15);background:#fff;color:var(--text-main); }
+    .cert-modal-box .modal-actions .btn-primary { border:none;background:var(--brick-dark);color:#fff; }
   </style>
 </head>
 <body>
@@ -1068,7 +1110,7 @@
       victimRealName: victimRealName,
       bullyType:  bullyType ? bullyType.value : '',
       desc:       document.getElementById('descInput').value,
-      involved:   document.getElementById('involvedInput').value,
+      involved:   (_selectedInvolvedUsers || []).map(function(u){return u.nickname||u.username||u.id}).join(', '),
       victimName: input ? input.value : '',
       time:       document.getElementById('timeInput').value,
       contact:    document.getElementById('contactInput').value,
@@ -1098,7 +1140,6 @@
     }
     // 恢复文本字段
     if (draft.desc)     document.getElementById('descInput').value     = draft.desc;
-    if (draft.involved) document.getElementById('involvedInput').value = draft.involved;
     if (draft.time)     document.getElementById('timeInput').value     = draft.time;
     if (draft.contact)  document.getElementById('contactInput').value  = draft.contact;
     // 恢复字符计数
@@ -1161,7 +1202,7 @@
   }
 
   // 监听所有字段变化，自动保存草稿
-  ['descInput','involvedInput','timeInput','contactInput','victimNameInput'].forEach(function(id) {
+  ['descInput','timeInput','contactInput','victimNameInput'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', saveDraft);
   });
@@ -1556,7 +1597,7 @@
 
   // ── 同学认证弹窗（在紧急模式下提交前弹出）───────
   var _pendingSubmitData = null;
-  var _certImages = [];
+  var _manualImages = [];
 
   function showCertPopup(submitData) {
     var old = document.querySelector('.cert-popup-overlay');
@@ -1567,136 +1608,197 @@
     overlay.className = 'cert-popup-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.innerHTML =
-      '<div class="cert-popup-box" style="background:var(--paper-bg);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.28);animation:popup-scale-in 0.25s ease-out;">' +
-        '<div style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:16px;text-align:center;">📋 请完成同学认证</div>' +
-        '<div style="font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:16px;text-align:center;">提交霸凌报告前需要先完成同学认证，请填写以下信息：</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label" style="font-size:13px;">您的真实姓名 <span class="required">*</span></label>' +
-          '<input type="text" class="form-input" id="certNameInput" value="' + escapeHtml(victimName) + '" maxlength="30" style="font-size:14px;">' +
+      '<div class="cert-modal-box" style="background:var(--paper-bg);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.28);animation:popup-scale-in 0.25s ease-out;">' +
+        '<div class="modal-header">' +
+          '<span class="modal-title">请完成同学认证</span>' +
+          '<button class="modal-close" onclick="closeCertPopup()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label" style="font-size:13px;">班级/年级 <span class="required">*</span></label>' +
-          '<input type="text" class="form-input" id="certClassInput" placeholder="例如：高一(3)班" maxlength="30" style="font-size:14px;">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label" style="font-size:13px;">联系邮箱 <span class="required">*</span></label>' +
-          '<input type="email" class="form-input" id="certEmailInput" placeholder="用于接收审核通知" maxlength="50" style="font-size:14px;">' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<label class="form-label" style="font-size:13px;">证明材料 <span class="required">*</span> <span style="font-weight:400;color:#999;font-size:11px;">（至少1张，如学生证、校园卡）</span></label>' +
-          '<div class="img-upload-area" id="certUploadArea" onclick="document.getElementById(\'certImgInput\').click()" style="padding:16px;">' +
-            '<div style="font-size:13px;color:var(--text-sub);">点击上传证明图片</div>' +
-            '<div style="font-size:11px;color:#aaa;margin-top:4px;">支持 JPG/PNG，最多3张</div>' +
+        '<div style="padding:0 4px 4px;font-size:13px;color:var(--text-sub);line-height:1.6;text-align:center;">提交霸凌报告前需要先完成同学认证</div>' +
+        '<div class="modal-body">' +
+          '<div id="certStatus" class="form-status"></div>' +
+          '<div class="cert-tabs">' +
+            '<button id="tabZhixue" class="cert-tab active" onclick="switchCertTab(\'zhixue\')">智学认证</button>' +
+            '<button id="tabManual" class="cert-tab" onclick="switchCertTab(\'manual\')">手动认证</button>' +
           '</div>' +
-          '<input type="file" id="certImgInput" accept="image/jpeg,image/png,image/gif" multiple style="display:none;">' +
-          '<div class="img-previews" id="certImgPreviews"></div>' +
-          '<div id="certNameError" style="color:#dc2626;font-size:12px;margin-top:6px;display:none;"></div>' +
-        '</div>' +
-        '<div style="display:flex;gap:10px;margin-top:8px;">' +
-          '<button onclick="closeCertPopup()" style="flex:1;padding:10px;border-radius:8px;border:2px solid var(--brick-light);background:#fff;font-size:14px;font-weight:600;color:var(--text-main);cursor:pointer;font-family:inherit;">取消</button>' +
-          '<button onclick="submitCertAndReport()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--brick-dark);font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;">提交认证</button>' +
+          '<div id="certPanelZhixue" class="cert-panel active">' +
+            '<div class="cert-notice info">为了维护您的隐私与合法权益，您有权利查看<a onclick="showZhixueFlowPopup()">「智学验证」</a>的运行流程</div>' +
+            '<div class="form-group">' +
+              '<label>智学网账号 <span style="color:var(--danger);">*</span></label>' +
+              '<input type="text" id="zhixueUsername" placeholder="输入智学网账号">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>智学网密码 <span style="color:var(--danger);">*</span></label>' +
+              '<input type="password" id="zhixuePassword" placeholder="输入智学网密码">' +
+            '</div>' +
+          '</div>' +
+          '<div id="certPanelManual" class="cert-panel">' +
+            '<div class="form-group">' +
+              '<label>姓名 <span style="color:var(--danger);">*</span></label>' +
+              '<input type="text" id="certManualName" value="' + escapeHtml(victimName) + '" maxlength="30" placeholder="填写你的真实姓名">' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>邮箱 <span style="color:var(--danger);">*</span></label>' +
+              '<input type="email" id="certManualEmail" placeholder="填写你的邮箱地址">' +
+              '<div style="font-size:11px;color:var(--text-sub);margin-top:4px;">用于向您质询提交的证明文件</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>说明 <span style="color:var(--danger);">*</span></label>' +
+              '<textarea id="certManualNote" rows="3" placeholder="请填写认证说明（如：学校、班级、姓名等）"></textarea>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label>证明图片附件 <span style="color:var(--danger);">*</span></label>' +
+              '<div id="manualImagesPreview" class="manual-images-preview"></div>' +
+              '<label class="manual-image-add" style="cursor:pointer;text-align:center;">' +
+                '点击选择图片（最多3张，每张不超过10MB）' +
+                '<input type="file" id="manualImageInput" accept="image/*" multiple style="display:none;" onchange="handleManualImages(event)">' +
+              '</label>' +
+              '<div id="manualImageError" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="modal-actions">' +
+            '<button class="btn-outline" onclick="closeCertPopup()">取消</button>' +
+            '<button class="btn-primary" onclick="submitCertAndReport()">提交审核</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
     _pendingSubmitData = submitData;
-
-    // 图片上传
-    _certImages = [];
-    document.getElementById('certImgInput').addEventListener('change', function() {
-      for (var i = 0; i < this.files.length; i++) {
-        if (_certImages.length >= 3) { showMsg('最多3张图片', 'error'); break; }
-        var file = this.files[i];
-        if (!file.type.startsWith('image/')) continue;
-        if (file.size > 10 * 1024 * 1024) { showMsg('图片超过10MB', 'error'); continue; }
-        (function(f) {
-          var reader = new FileReader();
-          reader.onload = function(e) {
-            _certImages.push(e.target.result);
-            renderCertPreviews(_certImages);
-          };
-          reader.readAsDataURL(f);
-        })(file);
-      }
-      this.value = '';
-    });
-
-    // 保存 certImages 到提交数据
-    overlay._certImages = _certImages;
   }
 
-  function renderCertPreviews(images) {
-    var container = document.getElementById('certImgPreviews');
+  function switchCertTab(tab) {
+    var isZhixue = tab === 'zhixue';
+    document.getElementById('certPanelZhixue').className = 'cert-panel' + (isZhixue ? ' active' : '');
+    document.getElementById('certPanelManual').className = 'cert-panel' + (isZhixue ? '' : ' active');
+    document.getElementById('tabZhixue').className = 'cert-tab' + (isZhixue ? ' active' : '');
+    document.getElementById('tabManual').className = 'cert-tab' + (isZhixue ? '' : ' active');
+    document.getElementById('certStatus').className = 'form-status';
+  }
+
+  function handleManualImages(event) {
+    var files = event.target.files;
+    if (!files || files.length === 0) return;
+    var errEl = document.getElementById('manualImageError');
+    for (var i = 0; i < files.length; i++) {
+      if (_manualImages.length >= 3) { errEl.textContent = '最多只能上传3张图片'; errEl.style.display = 'block'; break; }
+      var file = files[i];
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 10 * 1024 * 1024) { errEl.textContent = '图片超过10MB限制'; errEl.style.display = 'block'; continue; }
+      errEl.style.display = 'none';
+      (function(f) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          _manualImages.push(e.target.result);
+          renderManualImages();
+        };
+        reader.readAsDataURL(f);
+      })(file);
+    }
+    event.target.value = '';
+  }
+
+  function removeManualImage(idx) {
+    _manualImages.splice(idx, 1);
+    renderManualImages();
+  }
+
+  function renderManualImages() {
+    var container = document.getElementById('manualImagesPreview');
     if (!container) return;
     container.innerHTML = '';
-    images.forEach(function(src, i) {
+    _manualImages.forEach(function(src, i) {
       var div = document.createElement('div');
-      div.className = 'img-preview-item';
+      div.className = 'manual-image-item';
       div.innerHTML = '<img src="' + src + '" alt="证明' + (i+1) + '">' +
-        '<button class="remove-btn" onclick="removeCertImage(' + i + ')">×</button>';
+        '<button class="manual-image-remove" onclick="removeManualImage(' + i + ')">×</button>';
       container.appendChild(div);
     });
   }
 
-  var _certImages = [];
-  function removeCertImage(idx) {
-    _certImages.splice(idx, 1);
-    renderCertPreviews(_certImages);
+  function showZhixueFlowPopup() {
+    var overlay = document.createElement('div');
+    overlay.className = 'flow-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML =
+      '<div class="flow-box">' +
+        '<div class="flow-title">智学验证运行流程</div>' +
+        '<div class="flow-steps">' +
+          '<div class="flow-step">用户端填写账号信息</div>' +
+          '<div class="flow-arrow">↓</div>' +
+          '<div class="flow-step">信息上传至服务器排队等待自动审核</div>' +
+          '<div class="flow-arrow">↓</div>' +
+          '<div class="flow-step">服务器调用相关API自动登录</div>' +
+          '<div class="flow-arrow">↓</div>' +
+          '<div class="flow-step">调用Playwright获取相关信息</div>' +
+          '<div class="flow-arrow">↓</div>' +
+          '<div class="flow-step">完成审核</div>' +
+        '</div>' +
+        '<div class="flow-footer"><button class="flow-btn" onclick="this.closest(\'.flow-overlay\').remove()">知道了</button></div>' +
+      '</div>';
+    document.body.appendChild(overlay);
   }
 
   function closeCertPopup() {
     var o = document.querySelector('.cert-popup-overlay');
     if (o) o.remove();
     _pendingSubmitData = null;
-    _certImages = [];
+    _manualImages = [];
   }
 
   function submitCertAndReport() {
-    var certName = document.getElementById('certNameInput').value.trim();
-    var certClass = document.getElementById('certClassInput').value.trim();
-    var certEmail = document.getElementById('certEmailInput').value.trim();
-    var errEl = document.getElementById('certNameError');
+    var statusEl = document.getElementById('certStatus');
+    var isZhixueTab = document.getElementById('certPanelZhixue').classList.contains('active');
 
-    if (!certName) { errEl.textContent = '请输入姓名'; errEl.style.display = 'block'; return; }
-    if (!certClass) { errEl.textContent = '请输入班级/年级'; errEl.style.display = 'block'; return; }
-    if (!certEmail) { errEl.textContent = '请输入联系邮箱'; errEl.style.display = 'block'; return; }
-
-    // 检查姓名是否与霸凌报告中的姓名一致
-    var reportName = document.getElementById('victimNameInput').value.trim();
-    if (reportName && certName !== reportName) {
-      errEl.textContent = '认证姓名与举报填写的姓名不一致，请保持一致'; errEl.style.display = 'block'; return;
+    function showErr(msg) {
+      statusEl.textContent = msg;
+      statusEl.className = 'form-status show error';
     }
 
-    var images = _certImages;
-    if (images.length === 0) { errEl.textContent = '请至少上传一张证明图片'; errEl.style.display = 'block'; return; }
+    var body;
+    if (isZhixueTab) {
+      var username = document.getElementById('zhixueUsername').value.trim();
+      var password = document.getElementById('zhixuePassword').value;
+      if (!username) { showErr('请填写智学网账号'); return; }
+      if (!password) { showErr('请填写智学网密码'); return; }
+      body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
+    } else {
+      var name = document.getElementById('certManualName').value.trim();
+      var email = document.getElementById('certManualEmail').value.trim();
+      var note = document.getElementById('certManualNote').value.trim();
+      if (!name) { showErr('请填写姓名'); return; }
+      if (!email) { showErr('请填写邮箱'); return; }
+      if (!note) { showErr('请填写认证说明'); return; }
+      if (_manualImages.length === 0) { showErr('请至少上传一张证明图片'); return; }
+      // 检查姓名是否与霸凌报告中的姓名一致
+      var reportName = document.getElementById('victimNameInput').value.trim();
+      if (reportName && name !== reportName) {
+        showErr('认证姓名与举报填写的姓名不一致，请保持一致');
+        return;
+      }
+      body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: _manualImages.slice() };
+    }
 
-    errEl.style.display = 'none';
+    statusEl.textContent = '正在提交...';
+    statusEl.className = 'form-status show success';
 
-    // 先提交认证
     var token = localStorage.getItem(TOKEN_KEY);
     fetch('/api/user/bind-zhixue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-      body: JSON.stringify({
-        type: 'manual',
-        manualName: certName,
-        manualEmail: certEmail,
-        manualNote: '通过霸凌举报提交的同学认证',
-        manualImages: images
-      })
+      body: JSON.stringify(body)
     }).then(function(r) { return r.json(); })
       .then(function(certJson) {
         if (certJson.ok) {
-          // 认证提交成功，再提交霸凌报告
+          var data = _pendingSubmitData;
           closeCertPopup();
-          submitBullyingReport(_pendingSubmitData);
+          submitBullyingReport(data);
         } else {
-          showMsg('认证提交失败：' + (certJson.msg || '请重试'), 'error');
+          showErr(certJson.msg || '提交失败');
           var btn = document.getElementById('submitBtn');
           if (btn) { btn.disabled = false; btn.textContent = '提交报告'; }
         }
       })
       .catch(function() {
-        showMsg('认证提交网络错误，请重试', 'error');
+        showErr('网络错误，请重试');
         var btn = document.getElementById('submitBtn');
         if (btn) { btn.disabled = false; btn.textContent = '提交报告'; }
       });
@@ -1734,7 +1836,6 @@
   function resetForm() {
     document.querySelectorAll('input[name="bullyType"]').forEach(function(r) { r.checked = false; });
     document.getElementById('descInput').value = '';
-    document.getElementById('involvedInput').value = '';
     document.getElementById('postIdInput').value = '';
     document.getElementById('timeInput').value = '';
     document.getElementById('contactInput').value = '';
@@ -1757,6 +1858,30 @@
   // ── 提交 ──────────────────────────────────────────
   function doSubmit() {
     if (!reporterRole) { showMsg('请先选择您的身份', 'error'); return; }
+
+    // self 角色且紧急/未认证 → 先弹认证窗（跳过表单校验）
+    var isEmergency = document.getElementById('submitBtn').dataset.mode === 'emergency';
+    if (reporterRole === 'self' && (isEmergency || !victimRealName)) {
+      var victimName = document.getElementById('victimNameInput').value.trim();
+      if (!victimName) { showMsg('请填写您的姓名', 'error'); return; }
+      var submitData = {
+        reporterRole: reporterRole,
+        victimName: victimName,
+        bullyType: document.querySelector('input[name="bullyType"]:checked')?.value || '',
+        description: document.getElementById('descInput').value.trim(),
+        involved: (_selectedInvolvedUsers || []).map(function(u){return u.nickname||u.username||u.id}).join(', '),
+        involvedUsers: _selectedInvolvedUsers || [],
+        contentIds: confirmedPostIds.slice(),
+        location: confirmedPostIds.length > 0 ? confirmedPostIds.join(', ') : '',
+        time: document.getElementById('timeInput').value.trim(),
+        contact: isAnonymous ? '' : document.getElementById('contactInput').value.trim(),
+        anonymous: isAnonymous,
+        images: attachedImages.slice()
+      };
+      showCertPopup(submitData);
+      return;
+    }
+
     var bullyType = document.querySelector('input[name="bullyType"]:checked');
     if (!bullyType) { showMsg('请选择霸凌类型', 'error'); return; }
 
@@ -1776,37 +1901,14 @@
     }
 
     var victimName = document.getElementById('victimNameInput').value.trim();
-
-    // self 角色且紧急模式 → 先弹认证窗
-    var isEmergency = document.getElementById('submitBtn').dataset.mode === 'emergency';
-    if (reporterRole === 'self' && (isEmergency || !victimRealName)) {
-      if (!victimName) { showMsg('请填写您的姓名', 'error'); return; }
-      var submitData = {
-        reporterRole: reporterRole,
-        victimName: victimName,
-        bullyType: bullyType.value,
-        description: desc,
-        involved: document.getElementById('involvedInput').value.trim(),
-        involvedUsers: window._selectedInvolvedUsers || [],
-        contentIds: confirmedPostIds.slice(),
-        location: confirmedPostIds.length > 0 ? confirmedPostIds.join(', ') : '',
-        time: document.getElementById('timeInput').value.trim(),
-        contact: isAnonymous ? '' : contact,
-        anonymous: isAnonymous,
-        images: attachedImages.slice()
-      };
-      showCertPopup(submitData);
-      return;
-    }
-
     // 普通提交
     var body = {
       reporterRole: reporterRole,
       victimName: (reporterRole === 'self' && victimName) ? victimName : null,
       bullyType: bullyType.value,
       description: desc,
-      involved: document.getElementById('involvedInput').value.trim(),
-      involvedUsers: window._selectedInvolvedUsers || [],
+      involved: (_selectedInvolvedUsers || []).map(function(u){return u.nickname||u.username||u.id}).join(', '),
+      involvedUsers: _selectedInvolvedUsers || [],
       contentIds: confirmedPostIds.slice(),
       location: confirmedPostIds.length > 0 ? confirmedPostIds.join(', ') : '',
       time: document.getElementById('timeInput').value.trim(),

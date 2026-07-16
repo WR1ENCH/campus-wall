@@ -147,7 +147,6 @@ module.exports = function(app, opts) {
     const reportId = generateId('BULL');
     const newReport = {
       id: reportId,
-      reportId: reportId,
       reporterRole: reporterRole,
       victimName: (reporterRole === 'self' && victimName) ? victimName : null,
       bullyType: bullyType,
