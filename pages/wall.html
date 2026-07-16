@@ -1,4 +1,91 @@
 <!-- 校园墙首页 SPA 内容 -->
+<style>
+.wall-header {
+  text-align: center;
+  padding: 40px 20px 20px;
+}
+.wall-header h1 {
+  position: relative;
+  display: inline-block;
+  font-size: 42px;
+  font-family: 'ZCOOL KuaiLe', cursive;
+  color: #5a3d00;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  animation: projectorReveal 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center;
+  margin: 0;
+}
+.wall-header h1::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -20%;
+  width: 140%;
+  height: 160%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,245,200,0) 25%,
+    rgba(255,245,200,0.35) 45%,
+    rgba(255,255,230,0.5) 50%,
+    rgba(255,245,200,0.35) 55%,
+    rgba(255,245,200,0) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transform: skewX(-25deg);
+  animation: projectorBeam 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 1;
+}
+.wall-header h1::after {
+  content: '';
+  position: absolute;
+  inset: -4px -8px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0,0,0,0.02) 1px,
+    rgba(0,0,0,0.02) 2px
+  );
+  pointer-events: none;
+  opacity: 0;
+  animation: scanlineFade 3s ease forwards;
+  z-index: 0;
+}
+.wall-subtitle {
+  font-size: 15px;
+  color: #8a7a6a;
+  margin-top: 10px;
+  opacity: 0;
+  animation: subtitleFade 0.8s ease 2.5s forwards;
+}
+@keyframes subtitleFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes projectorReveal {
+  0% { opacity: 0; filter: blur(6px); }
+  25% { opacity: 0.25; filter: blur(3px); }
+  40% { opacity: 1; filter: blur(0); }
+  48% { opacity: 0.6; }
+  52% { opacity: 1; }
+  58% { opacity: 0.8; }
+  62% { opacity: 1; }
+  100% { opacity: 1; filter: blur(0); }
+}
+@keyframes projectorBeam {
+  0% { left: -100%; opacity: 0; }
+  8% { opacity: 1; }
+  35% { left: 120%; opacity: 0.6; }
+  50% { left: 120%; opacity: 0; }
+  100% { left: 120%; opacity: 0; }
+}
+@keyframes scanlineFade {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+</style>
 <div class="wall-container">
   <div class="wall-header">
     <h1>校园墙</h1>

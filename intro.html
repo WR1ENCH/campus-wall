@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园墙 — 让每一张便利贴都被看见</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #010101;
+      --text-white: #ffffff;
+      --text-white-40: rgba(255,255,255,0.4);
+      --text-white-65: rgba(255,255,255,0.65);
+      --text-white-100: rgba(255,255,255,1);
+      --mint-green: rgba(131,235,149,0.6);
+      --amber-gold: rgba(255,179,64,0.6);
+      --coral-orange: #ff8469;
+      --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-serif: 'Instrument Serif', Georgia, Cambria, "Times New Roman", serif;
+      --text-display: 225px;
+      --text-heading: 78px;
+      --text-subheading: 39px;
+      --text-body: 18px;
+      --text-body-sm: 16px;
+      --text-caption: 12px;
+      --text-label: 11px;
+      --leading-display: 1.25;
+      --leading-heading: 1.1;
+      --leading-subheading: 1.19;
+      --leading-body: 1.21;
+      --leading-body-sm: 1.15;
+      --leading-caption: 1.19;
+      --leading-label: 1.36;
+      --spacing-8: 8px;
+      --spacing-14: 14px;
+      --spacing-28: 28px;
+      --spacing-40: 40px;
+      --spacing-48: 48px;
+      --spacing-64: 64px;
+      --spacing-152: 152px;
+      --page-max-width: 1078px;
+      --radius-full: 75px;
+      --ease-glide: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    body {
+      font-family: var(--font-display);
+      color: var(--text-white);
+      background: var(--bg-deep);
+      line-height: var(--leading-body);
+      overflow-x: hidden;
+    }
+
+    /* ===== Typography ===== */
+    .text-display {
+      font-family: var(--font-display);
+      font-size: var(--text-display);
+      line-height: var(--leading-display);
+      font-weight: 400;
+      letter-spacing: -0.03em;
+    }
+    .text-heading {
+      font-family: var(--font-display);
+      font-size: var(--text-heading);
+      line-height: var(--leading-heading);
+      font-weight: 300;
+      letter-spacing: -0.01em;
+    }
+    .text-subheading {
+      font-family: var(--font-display);
+      font-size: var(--text-subheading);
+      line-height: var(--leading-subheading);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    .text-body {
+      font-family: var(--font-display);
+      font-size: var(--text-body);
+      line-height: var(--leading-body);
+      font-weight: 400;
+    }
+    .text-body-sm {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm);
+      line-height: var(--leading-body-sm);
+      font-weight: 400;
+    }
+    .text-caption {
+      font-family: var(--font-display);
+      font-size: var(--text-caption);
+      line-height: var(--leading-caption);
+      font-weight: 400;
+    }
+    .text-label {
+      font-family: var(--font-display);
+      font-size: var(--text-label);
+      line-height: var(--leading-label);
+      font-weight: 400;
+    }
+    .text-serif-italic {
+      font-family: var(--font-serif);
+      font-style: italic;
+    }
+
+    /* ===== Container ===== */
+    .container { max-width: var(--page-max-width); margin: 0 auto; padding: 0 var(--spacing-40); }
+
+    /* ===== Sections ===== */
+    .section { padding-top: var(--spacing-152); padding-bottom: var(--spacing-152); }
+    .section--tight { padding-top: 0; padding-bottom: var(--spacing-64); }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 11px 33px; border-radius: var(--radius-full);
+      font-family: var(--font-display); font-size: var(--text-body-sm);
+      font-weight: 400; text-decoration: none; line-height: var(--leading-body-sm);
+      transition: all 0.5s var(--ease-glide); cursor: pointer; border: none;
+    }
+    .btn--filled {
+      background: var(--text-white); color: var(--bg-deep);
+    }
+    .btn--filled:hover {
+      background: linear-gradient(270deg, rgba(131,235,149,1), rgba(255,179,64,1), var(--coral-orange));
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease-in-out infinite;
+      transform: scale(1.1);
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .btn--outline {
+      background: transparent; color: var(--text-white);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn--outline:hover {
+      border-color: rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.03);
+    }
+    .btn--text {
+      background: none; border: none; color: var(--text-white-65);
+      padding: 0; text-decoration: none; transition: color 0.5s var(--ease-glide);
+    }
+    .btn--text:hover { color: var(--text-white-100); }
+    .btn--text .arrow {
+      display: inline-block; margin-left: 6px;
+      transition: transform 0.5s var(--ease-glide);
+    }
+    .btn--text:hover .arrow { transform: translateX(50%); }
+
+    /* ===== Nav ===== */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px var(--spacing-40);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(1,1,1,0.6);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .nav__brand {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm); font-weight: 600;
+      letter-spacing: -0.01em; color: var(--text-white); text-decoration: none;
+    }
+    .nav__links { display: flex; gap: var(--spacing-40); align-items: center; }
+    .nav__link {
+      font-family: var(--font-display); font-size: var(--text-caption);
+      font-weight: 400; color: var(--text-white-40); text-decoration: none;
+      letter-spacing: 0.02em; transition: color 0.8s var(--ease-glide);
+    }
+    .nav__link:hover { color: var(--text-white-100); }
+
+    /* ===== Hero-specific Lens Canvas ===== */
+    .hero__lens {
+      position: absolute; inset: 0; z-index: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .hero__lens canvas {
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; position: relative;
+      overflow: hidden; z-index: 1;
+    }
+
+    .hero__content {
+      position: relative; z-index: 2;
+      padding: 0 var(--spacing-40);
+    }
+
+    .hero__eyebrow {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); font-weight: 400;
+      letter-spacing: 0.1em;
+      color: var(--text-white-40); margin-bottom: var(--spacing-40);
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 4.5vw, 72px);
+      font-weight: 700; line-height: 1.3;
+      letter-spacing: -0.01em; color: var(--text-white);
+      margin-bottom: var(--spacing-40);
+      text-shadow: 0.03em 0 0 currentColor, -0.01em 0 0 currentColor, 0 0 12px rgba(255,255,255,0.08);
+    }
+
+    .hero__tagline {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(18px, 2.5vw, var(--text-body));
+      line-height: var(--leading-body);
+      color: var(--text-white-65);
+      max-width: 40ch; margin: 0 auto var(--spacing-48) auto;
+    }
+
+    .hero__actions {
+      display: flex; gap: var(--spacing-28);
+      justify-content: center; align-items: center; flex-wrap: wrap;
+    }
+
+    /* ===== Hero Bottom Gradient Mask ===== */
+    .hero__mask {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 5.21vw; z-index: 2;
+      background: linear-gradient(to top, var(--bg-deep) 0%, var(--bg-deep) 10%, var(--bg-deep) 30%, rgba(1,1,1,0));
+      pointer-events: none;
+    }
+
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      color: rgba(255,255,255,0.3);
+      pointer-events: none;
+      opacity: 0;
+      animation: scrollBounce 2s ease-in-out infinite, fadeInDelay 1s ease 3s forwards;
+    }
+    .scroll-hint svg {
+      width: 28px; height: 28px;
+    }
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+    @keyframes fadeInDelay {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* ===== Scroll Indicator (Rotating Logo) ===== */
+    .scroll-indicator {
+      position: absolute; bottom: var(--spacing-40); left: 50%;
+      transform: translateX(-50%); z-index: 3;
+      animation: rotating 10s linear infinite;
+    }
+    @keyframes rotating {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+    .scroll-indicator svg circle {
+      fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 1;
+    }
+    .scroll-indicator svg text {
+      font-family: var(--font-display);
+      font-size: 8px; fill: rgba(255,255,255,0.6);
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== Manifesto — Line Reveal Effect ===== */
+    .manifesto {
+      text-align: center;
+      padding: var(--spacing-152) var(--spacing-40);
+      background: var(--bg-deep);
+      position: relative; z-index: 1;
+    }
+    .manifesto__text {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(22px, 3vw, 36px);
+      line-height: 1.6;
+      font-weight: 400;
+      color: rgba(255,255,255,0.25);
+      max-width: 55ch; margin: 0 auto;
+    }
+    .manifesto__text strong {
+      color: rgba(255,255,255,0.6);
+      font-weight: 400;
+    }
+
+    /* ===== Feature Rows ===== */
+    .feature-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-40); align-items: center;
+      padding: var(--spacing-40) 0;
+    }
+    .feature-row--reverse { direction: rtl; }
+    .feature-row--reverse > * { direction: ltr; }
+
+    .feature-row__visual {
+      aspect-ratio: 16 / 10;
+      background: var(--bg-deep);
+      border: 1px solid rgba(255,255,255,0.04);
+      position: relative; overflow: hidden;
+    }
+    .feature-row__visual img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.8s var(--ease-glide);
+    }
+    .feature-row__visual:hover img {
+      transform: scale(1.0);
+    }
+    .feature-row__visual::after {
+      content: ''; position: absolute; inset: 0;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .feature-row__body { padding: var(--spacing-20) 0; }
+
+    .feature-row__index {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); font-weight: 400;
+      color: var(--text-white-40); margin-bottom: var(--spacing-16);
+      letter-spacing: 0.04em;
+    }
+
+    .feature-row__title {
+      font-family: var(--font-display);
+      font-size: var(--text-subheading);
+      line-height: var(--leading-subheading);
+      font-weight: 500; letter-spacing: -0.01em;
+      color: var(--text-white); margin-bottom: var(--spacing-20);
+    }
+
+    .feature-row__desc {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm);
+      line-height: var(--leading-body-sm);
+      color: var(--text-white-40);
+      max-width: 48ch;
+    }
+
+    /* ===== Stats Band ===== */
+    .stats-band {
+      background: #080808;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: var(--spacing-64) var(--spacing-40);
+    }
+    .stats-grid {
+      max-width: var(--page-max-width); margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-40); text-align: center;
+    }
+    .stats-grid__number {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5vw, 54px);
+      line-height: 1.39;
+      font-weight: 300; letter-spacing: -0.03em;
+      color: var(--text-white);
+    }
+    .stats-grid__number--accent {
+      background: linear-gradient(270deg, var(--mint-green), var(--amber-gold), var(--coral-orange));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 6s ease-in-out infinite;
+    }
+    .stats-grid__label {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); font-weight: 400;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-white-40); margin-top: var(--spacing-12);
+    }
+
+    /* ===== Editorial List ===== */
+    .editorial-list { border-top: 1px solid rgba(255,255,255,0.06); }
+    .editorial-list__item {
+      display: grid; grid-template-columns: 60px 1fr;
+      gap: var(--spacing-40); padding: var(--spacing-40) 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      align-items: start;
+    }
+    .editorial-list__num {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); color: var(--text-white-40);
+    }
+    .editorial-list__title {
+      font-family: var(--font-display);
+      font-size: var(--text-subheading);
+      line-height: var(--leading-subheading);
+      font-weight: 500; letter-spacing: -0.01em;
+      color: var(--text-white); margin-bottom: var(--spacing-16);
+    }
+    .editorial-list__desc {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm);
+      line-height: var(--leading-body-sm);
+      color: var(--text-white-40);
+      max-width: 50ch;
+    }
+
+    /* ===== Use Cases ===== */
+    .use-cases {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .use-case {
+      background: var(--bg-deep);
+      padding: var(--spacing-48);
+    }
+    .use-case__num {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); font-weight: 400;
+      color: var(--text-white-40); margin-bottom: var(--spacing-24);
+      letter-spacing: 0.04em;
+    }
+    .use-case__title {
+      font-family: var(--font-display);
+      font-size: var(--text-subheading);
+      line-height: var(--leading-subheading);
+      font-weight: 500; letter-spacing: -0.01em;
+      color: var(--text-white); margin-bottom: var(--spacing-16);
+    }
+    .use-case__desc {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm);
+      line-height: var(--leading-body-sm);
+      color: var(--text-white-40);
+    }
+
+    /* ===== CTA ===== */
+    .cta-section {
+      text-align: center;
+      padding: var(--spacing-152) var(--spacing-40);
+      position: relative; z-index: 1;
+    }
+    .cta-section__headline {
+      font-family: var(--font-display);
+      font-size: var(--text-heading);
+      line-height: var(--leading-heading);
+      font-weight: 300; letter-spacing: -0.01em;
+      color: var(--text-white); margin-bottom: var(--spacing-40);
+      min-height: 1.2em;
+    }
+    .cta-section__sub {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: var(--text-body);
+      line-height: var(--leading-body);
+      color: var(--text-white-40);
+      max-width: 45ch; margin: 0 auto var(--spacing-48) auto;
+      min-height: 1.5em;
+    }
+    .typewriter-cursor::after {
+      content: '|';
+      display: inline-block;
+      color: var(--text-white-60);
+      animation: cursorBlink 0.8s step-end infinite;
+      margin-left: 1px;
+      font-weight: 300;
+    }
+    .typewriter-cursor.done::after {
+      display: none;
+    }
+    @keyframes cursorBlink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .cta-section__actions {
+      display: flex; gap: var(--spacing-28);
+      justify-content: center; flex-wrap: wrap;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: var(--spacing-48) 0;
+    }
+    .footer__inner {
+      max-width: var(--page-max-width); margin: 0 auto;
+      padding: 0 var(--spacing-40);
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: var(--spacing-24);
+    }
+    .footer__copy {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); color: var(--text-white-40);
+    }
+    .footer__links { display: flex; gap: var(--spacing-40); }
+    .footer__link {
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm); color: var(--text-white-40);
+      text-decoration: none; transition: color 0.5s var(--ease-glide);
+    }
+    .footer__link:hover { color: var(--text-white-100); }
+    .footer__link--gradient {
+      background: linear-gradient(270deg, var(--mint-green), var(--amber-gold), var(--coral-orange));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 6s ease-in-out infinite;
+      transition: opacity 0.5s var(--ease-glide);
+    }
+    .footer__link--gradient:hover { opacity: 0.8; }
+
+    /* ===== 电影放映式入场动画 ===== */
+    .text-entrance {
+      opacity: 0;
+      filter: blur(4px);
+      animation: projectorReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-play-state: paused;
+    }
+    .text-entrance.visible {
+      animation-play-state: running;
+    }
+    .text-entrance-delay-1 {
+      animation-delay: 0.4s;
+      animation-duration: 4s !important;
+      animation-name: titleReveal !important;
+    }
+    .text-entrance-delay-2 { animation-delay: 0.9s; }
+    .text-entrance-delay-3 { animation-delay: 1.4s; }
+    .hero__eyebrow.text-entrance { animation-delay: 0s; }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -20%;
+      width: 140%;
+      height: 160%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,248,220,0) 20%,
+        rgba(255,248,220,0.25) 42%,
+        rgba(255,255,240,0.40) 48%,
+        rgba(255,255,240,0.45) 50%,
+        rgba(255,248,220,0.25) 58%,
+        rgba(255,248,220,0) 80%,
+        transparent 100%
+      );
+      pointer-events: none;
+      transform: skewX(-20deg);
+      z-index: 3;
+      opacity: 0;
+      animation: heroBeam 3.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+    }
+
+    @keyframes projectorReveal {
+      0% {
+        opacity: 0;
+        filter: blur(5px);
+      }
+      20% {
+        opacity: 0.3;
+        filter: blur(2px);
+      }
+      40% {
+        opacity: 1;
+        filter: blur(0);
+      }
+      48% { opacity: 0.55; }
+      52% { opacity: 1; }
+      58% { opacity: 0.7; }
+      62% { opacity: 1; }
+      100% { opacity: 1; filter: blur(0); }
+    }
+    @keyframes titleReveal {
+      0% { opacity: 0; filter: blur(5px); }
+      20% { opacity: 0.15; filter: blur(3px); }
+      45% { opacity: 0.6; filter: blur(1px); }
+      65% { opacity: 1; filter: blur(0); }
+      73% { opacity: 0.55; }
+      78% { opacity: 1; }
+      85% { opacity: 0.7; }
+      90% { opacity: 1; }
+      100% { opacity: 1; filter: blur(0); }
+    }
+    @keyframes heroBeam {
+      0% {
+        left: -80%;
+        opacity: 0;
+      }
+      10% { opacity: 0.8; }
+      45% { left: 120%; opacity: 0.4; }
+      65% { left: 120%; opacity: 0; }
+      100% { left: 120%; opacity: 0; }
+    }
+
+    /* ===== Scroll Reveal ===== */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 1s var(--ease-glide), transform 1s var(--ease-glide);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ===== Reduced Motion ===== */
+    @media (prefers-reduced-motion: reduce) {
+      .text-entrance { opacity: 1; transform: none; transition: none; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .scroll-indicator { animation: none; }
+      .btn--filled:hover { animation: none; transform: none; }
+      .stats-grid__number--accent { animation: none; }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .container { padding: 0 var(--spacing-24); }
+      .section { padding-top: var(--spacing-64); padding-bottom: var(--spacing-64); }
+      .nav { padding: 16px var(--spacing-24); }
+      .nav__links { gap: var(--spacing-20); }
+      .hero__tagline { font-size: var(--text-body-sm); }
+      .feature-row { grid-template-columns: 1fr; gap: var(--spacing-40); }
+      .feature-row--reverse { direction: ltr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: var(--spacing-40); }
+      .editorial-list__item { grid-template-columns: 1fr; gap: var(--spacing-8); }
+      .use-cases { grid-template-columns: 1fr; }
+      .footer__inner { flex-direction: column; text-align: center; }
+      .footer__links { flex-wrap: wrap; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部公告横幅 -->
+  <div style="background:#fff;text-align:center;padding:10px 16px;font-size:14px;color:#333;font-family:var(--font-display);box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+    🚀 <strong>校园墙2.0</strong> 即将到来，敬请期待 ✨
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero__lens" id="lensContainer"></div>
+    <div class="hero__content">
+      <p class="hero__eyebrow text-entrance">Paper meet infinity</p>
+      <h1 class="hero__title text-entrance text-entrance-delay-1">请勿敲打 墙正在思考</h1>
+      <p class="hero__tagline text-entrance text-entrance-delay-2">
+        墙不说话，但他让一切开始
+      </p>
+      <div class="hero__actions text-entrance text-entrance-delay-3">
+        <a href="#start" class="btn btn--filled">开始使用</a>
+        <a href="#features" class="btn btn--text">
+          了解更多
+          <span class="arrow">→</span>
+        </a>
+      </div>
+    </div>
+    <div class="hero__mask"></div>
+    <div class="scroll-hint">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </section>
+
+  <!-- Manifesto -->
+  <section class="manifesto">
+    <p class="manifesto__text reveal">
+      校园墙。数字广场。可匿名也可实名。分享，提问，讨论，投票。不是便利贴复制品。是便利贴进化——纸变光，一人到全部人。每张贴子都可能开启对话，解决问题，连接两个本来不会相遇的人。
+    </p>
+    <p class="manifesto__text reveal" style="margin-top:1em;">
+      墙不记录历史。墙创造历史。
+    </p>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="container">
+      <p class="text-caption reveal" style="color: var(--text-white-40); margin-bottom: var(--spacing-64); letter-spacing: 0.06em; text-transform: uppercase;">01 — 核心功能</p>
+
+      <div class="feature-row">
+        <div class="feature-row__visual reveal">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, rgba(131,235,149,0.08), rgba(255,179,64,0.06), rgba(255,132,105,0.08));"></div>
+        </div>
+        <div class="feature-row__body">
+          <span class="feature-row__index reveal">01</span>
+          <h3 class="feature-row__title reveal reveal-delay-1">Wall Knows</h3>
+          <p class="feature-row__desc reveal reveal-delay-2">
+            分享想法，无需顾虑。支持实名或匿名发布，点赞、评论、举报一应俱全。敏感词自动过滤，让讨论保持健康。
+          </p>
+        </div>
+      </div>
+
+      <div class="feature-row feature-row--reverse">
+        <div class="feature-row__visual reveal">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, rgba(255,179,64,0.08), rgba(131,235,149,0.06), rgba(255,132,105,0.08));"></div>
+        </div>
+        <div class="feature-row__body">
+          <span class="feature-row__index reveal">02</span>
+          <h3 class="feature-row__title reveal reveal-delay-1">墙,懂你</h3>
+          <p class="feature-row__desc reveal reveal-delay-2">
+            让'传纸条'赛博化，全新的'悄悄话'功能，再次定义了端对端对话。现实中说不出的话，墙帮你说。
+          </p>
+          <p class="feature-row__desc reveal reveal-delay-2" style="margin-top:0.8em;">
+            你永远不知道下一张纸条藏着什么，但墙知道。
+          </p>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row__visual reveal">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, rgba(255,132,105,0.08), rgba(131,235,149,0.06), rgba(255,179,64,0.08));"></div>
+        </div>
+        <div class="feature-row__body">
+          <span class="feature-row__index reveal">03</span>
+          <h3 class="feature-row__title reveal reveal-delay-1">一夫当关，万夫莫开</h3>
+          <p class="feature-row__desc reveal reveal-delay-2">
+            创新安全机制，特调敏感检测机制，引入全新霸凌保护机制，改版用户公约，让墙内内容保持健康。
+          </p>
+          <p class="feature-row__desc reveal reveal-delay-2" style="margin-top:0.8em;">
+            墙不仅挡住了危险，更让墙内永远焕发生机。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-band">
+    <div class="stats-grid">
+      <div class="reveal">
+        <div class="stats-grid__number stats-grid__number--accent">600次+</div>
+        <div class="stats-grid__label">版本提交</div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="stats-grid__number stats-grid__number--accent">99%</div>
+        <div class="stats-grid__label">危险拦截率</div>
+      </div>
+      <div class="reveal reveal-delay-2">
+        <div class="stats-grid__number stats-grid__number--accent">24/7</div>
+        <div class="stats-grid__label">全天候守护</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- More Features -->
+  <section class="section section--tight">
+    <div class="container">
+      <p class="text-caption reveal" style="color: var(--text-white-40); margin-bottom: var(--spacing-64); letter-spacing: 0.06em; text-transform: uppercase;">02 — 更多能力</p>
+
+      <div class="editorial-list">
+        <div class="editorial-list__item">
+          <span class="editorial-list__num reveal">04</span>
+          <div>
+            <h3 class="editorial-list__title reveal reveal-delay-1">投票表决</h3>
+            <p class="editorial-list__desc reveal reveal-delay-2">
+              创建投票，多选支持，设置结束时间。IP 去重防刷票，结果实时更新。民主决策，让集体声音被听见。
+            </p>
+          </div>
+        </div>
+        <div class="editorial-list__item">
+          <span class="editorial-list__num reveal">05</span>
+          <div>
+            <h3 class="editorial-list__title reveal reveal-delay-1">校园通知</h3>
+            <p class="editorial-list__desc reveal reveal-delay-2">
+              发布校园通知，置顶重要信息。多级通知分类，同步到墙。申请发布权限，让信息流通更顺畅。
+            </p>
+          </div>
+        </div>
+        <div class="editorial-list__item">
+          <span class="editorial-list__num reveal">06</span>
+          <div>
+            <h3 class="editorial-list__title reveal reveal-delay-1">安全中心</h3>
+            <p class="editorial-list__desc reveal reveal-delay-2">
+              信用分体系，处罚机制，霸凌保护。实名认证，举报处理，申诉渠道。让校园社区更安全、更可信。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use Cases -->
+  <section class="section" id="cases">
+    <div class="container">
+      <p class="text-caption reveal" style="color: var(--text-white-40); margin-bottom: var(--spacing-64); letter-spacing: 0.06em; text-transform: uppercase;">适用场景</p>
+      <div class="use-cases reveal">
+        <div class="use-case">
+          <div class="use-case__num">[01]</div>
+          <h3 class="use-case__title">校园生活</h3>
+          <p class="use-case__desc">寻物启事、失物招领、活动通知、二手交易、学习互助</p>
+        </div>
+        <div class="use-case">
+          <div class="use-case__num">[02]</div>
+          <h3 class="use-case__title">学术交流</h3>
+          <p class="use-case__desc">课程讨论、作业答疑、论文分享、学术资源、项目合作</p>
+        </div>
+        <div class="use-case">
+          <div class="use-case__num">[03]</div>
+          <h3 class="use-case__title">社交连接</h3>
+          <p class="use-case__desc">兴趣小组、社团招新、活动组织、校友网络、校园交友</p>
+        </div>
+        <div class="use-case">
+          <div class="use-case__num">[04]</div>
+          <h3 class="use-case__title">校园治理</h3>
+          <p class="use-case__desc">意见征集、投票表决、建议反馈、校园建设、民主参与</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="start">
+    <h2 class="cta-section__headline" data-typewriter data-typewriter-speed="160">躬身入局</h2>
+    <p class="cta-section__sub" data-typewriter data-typewriter-speed="80" data-typewriter-delay="800">
+      墙会将你的存在延伸到校园的每一个角落。
+    </p>
+    <p class="cta-section__sub" style="margin-top:-1.2em;" data-typewriter data-typewriter-speed="80" data-typewriter-delay="2600">
+      而你，只需站在那里。
+    </p>
+    <div class="cta-section__actions reveal reveal-delay-2">
+      <a href="#" class="btn btn--filled">开始使用</a>
+      <a href="#" class="btn btn--outline">了解更多</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__inner" style="justify-content:center;flex-direction:column;gap:4px;">
+      <p style="font-style:italic;color:var(--text-white-40);font-size:var(--text-caption);margin:0;font-family:var(--font-serif);">此页面由wr1Ench构建</p>
+      <p style="font-style:italic;color:var(--text-white-30);font-size:12px;margin:0;font-family:var(--font-serif);">powered by wr1Ench</p>
+    </div>
+  </footer>
+
+  <!-- WebGL Lens Refraction Shader — Hero only -->
+  <script>
+    (function() {
+      var container = document.getElementById('lensContainer');
+      if (!container) return;
+
+      var canvas = document.createElement('canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.display = 'block';
+      container.appendChild(canvas);
+
+      var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+      if (!gl) { container.style.display = 'none'; return; }
+
+      function resize() {
+        var rect = container.getBoundingClientRect();
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Vertex shader
+      var vsSource = `
+        attribute vec2 aPosition;
+        void main() {
+          gl_Position = vec4(aPosition, 0.0, 1.0);
+        }
+      `;
+
+      // Fragment shader — ENHANCED lens refraction with strong light/shadow
+      var fsSource = `
+        precision highp float;
+        uniform float uTime;
+        uniform vec2 uResolution;
+
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
+        vec2 mod289(vec2 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
+        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+        float snoise(vec2 v) {
+          const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                             -0.577350269189626, 0.024390243902439);
+          vec2 i = floor(v + dot(v, C.yy));
+          vec2 x0 = v - i + dot(i, C.xx);
+          vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+          vec4 x12 = x0.xyxy + C.xxzz;
+          x12.xy += i1;
+          i = mod289(i);
+          vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0))
+            + i.x + vec3(0.0, i1.x, 1.0));
+          vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
+            dot(x12.zw,x12.zw)), 0.0);
+          m = m*m; m = m*m;
+          vec3 x = 2.0 * fract(p * C.www) - 1.0;
+          vec3 h = abs(x) - 0.5;
+          vec3 ox = floor(x + 0.5);
+          vec3 a0 = x - ox;
+          m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+          vec3 g;
+          g.x = a0.x * x0.x + h.x * x0.y;
+          g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+          return 130.0 * dot(m, g);
+        }
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uResolution;
+          vec2 uvCenter = uv - 0.5;
+          float t = uTime * 0.12;
+
+          // ===== STRONGER DISTORTION =====
+          float n1 = snoise(uvCenter * 1.8 + t * 0.8) * 0.6;
+          float n2 = snoise(uvCenter * 2.5 - t * 0.5 + 10.0) * 0.4;
+          float n3 = snoise(uvCenter * 1.2 + t * 0.3 + 20.0) * 0.5;
+          float distortion = n1 + n2 + n3;
+
+          // ===== CHROMATIC ABERRATION — stronger =====
+          float caStrength = 0.015 + abs(distortion) * 0.025;
+          vec2 caOffset = vec2(distortion * caStrength, distortion * caStrength * 0.6);
+
+          // ===== RGB CHANNELS WITH SEPARATE NOISE =====
+          float rVal = snoise(uvCenter * 2.2 + t + caOffset * 1.5) * 0.5 + 0.5;
+          float gVal = snoise(uvCenter * 2.2 + t * 1.1 - caOffset * 0.8) * 0.5 + 0.5;
+          float bVal = snoise(uvCenter * 2.2 + t * 0.9 + caOffset * 1.0) * 0.5 + 0.5;
+
+          // ===== BRIGHTER COLORS =====
+          vec3 mintGreen = vec3(0.514, 0.910, 0.584);
+          vec3 amberGold = vec3(1.0, 0.702, 0.251);
+          vec3 coralOrange = vec3(1.0, 0.518, 0.412);
+
+          // ===== WIDER COLOR BLEND =====
+          float blend = rVal * 0.4 + gVal * 0.35 + bVal * 0.25;
+          vec3 color;
+          if (blend < 0.25) {
+            color = mix(mintGreen, amberGold, blend * 4.0);
+          } else if (blend < 0.5) {
+            color = mix(amberGold, coralOrange, (blend - 0.25) * 4.0);
+          } else if (blend < 0.75) {
+            color = mix(coralOrange, mintGreen, (blend - 0.5) * 4.0);
+          } else {
+            color = mix(mintGreen, amberGold, (blend - 0.75) * 4.0);
+          }
+
+          // ===== MUCH STRONGER ALPHA — 3x brighter =====
+          float alpha = smoothstep(0.2, 0.8, blend) * 0.35;
+
+          // ===== STRONG CAUSTIC PATTERNS =====
+          float caustic1 = snoise(uvCenter * 4.0 + t * 1.2) * 0.5 + 0.5;
+          caustic1 = pow(caustic1, 2.0);
+          alpha += caustic1 * 0.15;
+
+          float caustic2 = snoise(uvCenter * 6.0 - t * 0.8 + 5.0) * 0.5 + 0.5;
+          caustic2 = pow(caustic2, 1.5);
+          alpha += caustic2 * 0.1;
+
+          // ===== INTENSE EDGE GLOW =====
+          float dist = length(uvCenter);
+          float fresnel = pow(1.0 - dist * 1.0, 3.0);
+          alpha += fresnel * 0.12;
+
+          // ===== BRIGHT CENTER SPOTLIGHT =====
+          float spot = exp(-dist * 3.0);
+          alpha += spot * 0.08;
+
+          // ===== ADDITIONAL BLOOM LAYER =====
+          float bloom = snoise(uvCenter * 1.0 + t * 0.4) * 0.5 + 0.5;
+          bloom = pow(bloom, 1.5);
+          alpha += bloom * 0.06;
+
+          // ===== ANIMATED LIGHT BEAMS =====
+          float beam = sin(uvCenter.x * 8.0 + t * 2.0 + distortion * 3.0) * 0.5 + 0.5;
+          beam *= sin(uvCenter.y * 6.0 - t * 1.5 + distortion * 2.0) * 0.5 + 0.5;
+          alpha += beam * 0.04;
+
+          // Soft edge fade
+          alpha *= smoothstep(0.0, 0.15, uv.x) * smoothstep(1.0, 0.85, uv.x);
+          alpha *= smoothstep(0.0, 0.15, uv.y) * smoothstep(1.0, 0.85, uv.y);
+
+          gl_FragColor = vec4(color, alpha);
+        }
+      `;
+
+      function createShader(type, source) {
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          gl.deleteShader(shader);
+          return null;
+        }
+        return shader;
+      }
+
+      var vs = createShader(gl.VERTEX_SHADER, vsSource);
+      var fs = createShader(gl.FRAGMENT_SHADER, fsSource);
+      if (!vs || !fs) { container.style.display = 'none'; return; }
+
+      var program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        container.style.display = 'none';
+        return;
+      }
+
+      gl.useProgram(program);
+
+      var vertices = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+      var aPos = gl.getAttribLocation(program, 'aPosition');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      var uTime = gl.getUniformLocation(program, 'uTime');
+      var uRes = gl.getUniformLocation(program, 'uResolution');
+
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+      var startTime = Date.now();
+
+      function render() {
+        var time = (Date.now() - startTime) * 0.001;
+        gl.uniform1f(uTime, time);
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(render);
+      }
+      render();
+    })();
+  </script>
+
+  <!-- Scroll Reveal & Mask -->
+  <script>
+    function typeWriter(el) {
+      var text = el.textContent.trim();
+      var speed = parseInt(el.getAttribute('data-typewriter-speed')) || 80;
+      var delay = parseInt(el.getAttribute('data-typewriter-delay')) || 0;
+      el.textContent = '';
+      el.classList.add('typewriter-cursor');
+      var i = 0;
+      setTimeout(function() {
+        var timer = setInterval(function() {
+          if (i < text.length) {
+            el.textContent += text.charAt(i);
+            i++;
+          } else {
+            clearInterval(timer);
+            el.classList.remove('typewriter-cursor');
+            el.classList.add('done');
+          }
+        }, speed);
+      }, delay);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Intersection Observer for reveals
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            if (entry.target.hasAttribute('data-typewriter')) {
+              typeWriter(entry.target);
+            }
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal, .text-entrance').forEach(function(el) {
+        observer.observe(el);
+      });
+      document.querySelectorAll('[data-typewriter]').forEach(function(el) {
+        observer.observe(el);
+      });
+
+      // Hero mask on scroll
+      var hero = document.getElementById('hero');
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 100) {
+          hero.classList.add('scrolled');
+        } else {
+          hero.classList.remove('scrolled');
+        }
+      }, { passive: true });
+    });
+  </script>
+</body>
+</html>
