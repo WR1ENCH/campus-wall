@@ -1163,3 +1163,34 @@ server.js
 - `routes/user.js:262`：`zhixueUsername` 在 DB 中以 Number 存储，登录时用 `String()` 统一转字符串再比较，修复类型不匹配导致用户找不到
 - `routes/user.js:273-282`：当 `zhixuePassword` 为 null（旧版代码审核清空导致）时，将用户输入的密码加密存储并放行登录，实现自动恢复
 - `lib/middleware.js:123,139-145`：将 `password` / `zhixuePassword` / `oldPwd` / `newPwd` 等密码字段加入 `inputSanitize` 白名单，防止特殊字符被静默清除
+
+### 会话 11 — 2026-07-16 · 帖子分享海报功能
+
+#### 任务1：帖子卡片图片生成功能
+
+- 引入 `html2canvas@1.4.1` CDN（`index.html` + `post.html`）
+- 新增核心函数：
+  - `waitForFonts()` — 预加载 `Ma Shan Zheng` / `Noto Sans SC` 字体，确保截图字体一致
+  - `buildShareCard(post)` — 在 DOM 中创建隐藏的帖子卡片副本（复现 `sticky-note` 完整样式）
+  - `generateShareImage(postId)` — 主入口：字体加载 → html2canvas 截图 → Canvas 合成砖墙背景 + 居中卡片 + 底部 "From 校园墙 MM.DD" 水印 → `toBlob` 生成 PNG
+  - `showSharePreview(blob)` — 弹窗预览生成的海报，右下角「保存海报」SVG 下载按钮，点击自动下载 `campus-wall-{timestamp}.png`
+- 图片规格：1080×1080 PNG，CSS 复现砖墙背景（`#c4a882` + repeating-linear-gradient），帖子卡片居中缩放，底部白色横条 + "From 校园墙 月.日"
+
+#### 任务2：index.html 帖子卡片分享按钮
+
+- 在 `renderNotes()` 的帖子卡片 footer 操作按钮组中新增分享 SVG 按钮（向上箭头图标）
+- 点击调用 `generateShareImage(post.id)`
+
+#### 任务3：post.html 帖子详情分享按钮
+
+- 在帖子详情页的三点菜单（`menu-dropdown`）中新增「分享海报」菜单项（含 SVG 图标）
+- 点击调用 `generateShareImagePost(POST_ID)`，逻辑与 index.html 类似但针对 `.note-card` 元素
+- 删除菜单按钮和操作按钮以保持海报干净
+
+#### 影响文件
+| 文件 | 改动 |
+|------|------|
+| `index.html` | 新增 html2canvas CDN + 分享按钮 + 海报生成函数 + 预览弹窗 |
+| `post.html` | 新增 html2canvas CDN + 分享海报菜单项 + 海报生成函数 + 预览弹窗 |
+| `docs_for_agent.md` | 本会话记录 |
+

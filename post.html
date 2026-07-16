@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>帖子详情 · 校园墙</title>
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.cn/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     :root {
       --note-yellow: #fff9b1;
@@ -561,6 +562,7 @@
               <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋯</button>
               <div class="menu-dropdown" id="menuDropdown">
                 ${isOwner ? `<div class="menu-item danger" onclick="doDelete()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除帖子</div>` : ''}
+                <div class="menu-item" onclick="generateShareImagePost('${POST_ID}')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> 分享海报</div>
                 <div class="${isOwner ? '' : ''}menu-item" onclick="openReport()" style="${isOwner ? '' : 'color:#ef4444;'}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${isOwner ? '举报' : '举报帖子'}</div>
               </div>
             </div>
@@ -831,6 +833,140 @@
 
   // ===== 启动 =====
   loadPost();
+
+  // ===== 分享海报生成 =====
+  var shareImageOverlay = null;
+
+  function waitForFontsPost() {
+    return document.fonts.ready.then(function() {
+      return Promise.all([
+        document.fonts.load('26px "Ma Shan Zheng"'),
+        document.fonts.load('14px "Noto Sans SC"'),
+        document.fonts.load('700 13px "Noto Sans SC"')
+      ]);
+    });
+  }
+
+  function generateShareImagePost(postId) {
+    if (!postData || postData.id !== postId) {
+      toast('帖子不存在');
+      return;
+    }
+
+    waitForFontsPost().then(function() {
+      var card = document.querySelector('.note-card');
+      if (!card) { toast('生成失败，请重试'); return; }
+
+      var temp = card.cloneNode(true);
+      temp.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;width:500px;';
+      temp.querySelectorAll('.note-actions, .menu-btn, .menu-dropdown').forEach(function(el) { el.remove(); });
+      document.body.appendChild(temp);
+
+      setTimeout(function() {
+        var W = 1080, H = 1080;
+        var cardW = temp.offsetWidth;
+        var cardH = temp.offsetHeight;
+        var scale = Math.min((W - 120) / cardW, (H - 200) / cardH, 1.8);
+        var renderW = Math.round(cardW * scale);
+        var renderH = Math.round(cardH * scale);
+
+        html2canvas(temp, {
+          width: renderW,
+          height: renderH,
+          scale: 1,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: null,
+          logging: false
+        }).then(function(cardCanvas) {
+          if (temp.parentNode) document.body.removeChild(temp);
+
+          var exportCanvas = document.createElement('canvas');
+          exportCanvas.width = W;
+          exportCanvas.height = H;
+          var ctx = exportCanvas.getContext('2d');
+
+          ctx.fillStyle = '#c4a882';
+          ctx.fillRect(0, 0, W, H);
+          var brickH = 60, brickW = 120;
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+          ctx.lineWidth = 2;
+          for (var row = 0; row < H / brickH + 1; row++) {
+            var offset = (row % 2) * (brickW / 2);
+            for (var col = -1; col < W / brickW + 1; col++) {
+              var x = col * brickW + offset;
+              var y = row * brickH;
+              ctx.strokeRect(x, y, brickW, brickH);
+            }
+          }
+          for (var i = 0; i < H; i += 120) {
+            ctx.fillStyle = 'rgba(180,140,100,0.15)';
+            ctx.fillRect(0, i, W, 30);
+          }
+
+          var cx = (W - renderW) / 2;
+          var cy = (H - renderH) / 2 - 20;
+          ctx.drawImage(cardCanvas, cx, cy, renderW, renderH);
+
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          ctx.fillRect(0, H - 70, W, 70);
+          ctx.fillStyle = '#5a3d00';
+          ctx.font = '600 22px "Noto Sans SC", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          var d = new Date(postData.time || postData.createdAt);
+          var monthDay = (d.getMonth() + 1) + '.' + d.getDate();
+          ctx.fillText('From 校园墙 ' + monthDay, W / 2, H - 35);
+
+          exportCanvas.toBlob(function(blob) {
+            showSharePreviewPost(blob);
+          }, 'image/png');
+        }).catch(function(e) {
+          if (temp.parentNode) document.body.removeChild(temp);
+          console.error('generateShareImage error:', e);
+          toast('生成失败，请重试');
+        });
+      }, 100);
+    }).catch(function(e) {
+      console.error('font wait error:', e);
+      toast('字体加载失败');
+    });
+  }
+
+  function showSharePreviewPost(blob) {
+    if (shareImageOverlay) document.body.removeChild(shareImageOverlay);
+    shareImageOverlay = document.createElement('div');
+    shareImageOverlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);';
+    var imgSrc = URL.createObjectURL(blob);
+    shareImageOverlay.innerHTML = '<div style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;animation:scaleIn .3s cubic-bezier(0.16,1,0.3,1);">' +
+      '<img src="' + imgSrc + '" style="max-width:90vw;max-height:80vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);" />' +
+      '<div style="margin-top:16px;display:flex;gap:10px;">' +
+      '<button id="shareDownloadBtn" style="padding:10px 24px;border-radius:10px;border:none;background:#5a3d00;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 保存海报</button>' +
+      '<button id="shareCloseBtn" style="padding:10px 24px;border-radius:10px;border:1.5px solid #d4c4b0;background:#fff;color:#5a3d00;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">关闭</button>' +
+      '</div></div>';
+
+    var style = document.createElement('style');
+    style.textContent = '@keyframes scaleIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}';
+    shareImageOverlay.appendChild(style);
+    document.body.appendChild(shareImageOverlay);
+
+    shareImageOverlay.querySelector('#shareDownloadBtn').onclick = function() {
+      var a = document.createElement('a');
+      a.href = imgSrc;
+      a.download = 'campus-wall-' + Date.now() + '.png';
+      a.click();
+    };
+    shareImageOverlay.querySelector('#shareCloseBtn').onclick = function() {
+      if (shareImageOverlay) document.body.removeChild(shareImageOverlay);
+      shareImageOverlay = null;
+      URL.revokeObjectURL(imgSrc);
+    };
+    shareImageOverlay.addEventListener('click', function(e) {
+      if (e.target === shareImageOverlay) {
+        shareImageOverlay.querySelector('#shareCloseBtn').click();
+      }
+    });
+  }
 </script>
 
 </body>
