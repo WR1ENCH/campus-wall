@@ -677,6 +677,26 @@ admin → auth → user → posts → discussions → qa → votes → notices
 3. 在 `server.js` 的 `PAGE_MAP` 增加 `'/xxx.html': 'pages/xxx.html'`。
 4. 用 `<a data-spa href="/xxx.html">` 链接即可被 SPA 接管。
 
+### 6.6 帖子详情页（post.html — 2026-07-17 重设计）
+
+独立可访问的「帖子详情」页，重设计后采用精致便利贴风格。
+
+**设计系统**：
+- CSS 变量 Design Token：完整色板（`--note-*`、`--accent-*`、`--text-*`、`--surface`）
+- 字体：`Ma Shan Zheng`（正文）/ `Noto Sans SC`（UI）/ `ZCOOL KuaiLe`（标题）
+- 动效：全局 `cubic-bezier(0.22, 1, 0.36, 1)` spring easing
+- 响应式：`600px` 断点，移动端导航按钮隐藏文字、评论输入行紧凑化
+- 无障碍：`prefers-reduced-motion` 媒体查询禁用全部动画
+
+**结构**：
+- `.topbar` — 深色毛玻璃导航 + SVG logo + 返回首页按钮
+- `.note-card` — 便利贴卡片（胶带装饰 + 4层阴影 + 微旋转 + spring 入场）
+- `.divider-pin` — 评论区上方装饰分隔（双线条 + 图钉圆点）
+- `.comment-section` — 评论输入 + 评论列表
+- `.report-overlay` — 举报弹窗（圆角 20px + 模糊背景）
+
+**SVG 图标策略**：所有图标均为内联 SVG（stroke-based，统一 `stroke-width: 2`），无 emoji、无图标字体依赖（除 Google Fonts 外）。
+
 ---
 
 ### 6.5 安全中心前端（safety.html / pages/safety.html）
@@ -1187,3 +1207,41 @@ server.js
 - `routes/user.js:262`：`zhixueUsername` 在 DB 中以 Number 存储，登录时用 `String()` 统一转字符串再比较，修复类型不匹配导致用户找不到
 - `routes/user.js:273-282`：当 `zhixuePassword` 为 null（旧版代码审核清空导致）时，将用户输入的密码加密存储并放行登录，实现自动恢复
 - `lib/middleware.js:123,139-145`：将 `password` / `zhixuePassword` / `oldPwd` / `newPwd` 等密码字段加入 `inputSanitize` 白名单，防止特殊字符被静默清除
+
+### 会话 8 — 2026-07-17 · post.html 帖子详情页重设计
+
+**设计目标**：推翻原有 post.html 设计，保留便利贴卡片核心视觉，大幅提升现代感、精致度与交互体验。
+
+**设计定位**：Reading this as: 校园社区帖子详情页 for 中学生用户, with a warm/playful/refined language, leaning toward native CSS + 便利贴隐喻 + spring 动效。
+
+** Dial 设定**：`DESIGN_VARIANCE: 7 / MOTION_INTENSITY: 6 / VISUAL_DENSITY: 4`
+
+| 模块 | 原设计 | 新设计 |
+|------|--------|--------|
+| 背景 | 纯棕色 + 网格线 | 增加 radial-gradient 光晕 + 更细腻的网格，模拟真实木板质感 |
+| 顶部导航 | 粗糙半透明棕色 | 深色毛玻璃导航 + z-index 品牌 logo + 圆角返回按钮 |
+| 便利贴卡片 | 矩形圆角2px + 顶部胶带 | 更精致的阴影层次（4层）+ 胶带增加高光条纹 + 微旋转(-0.3deg) |
+| 类型标签 | 方形标签 | 胶囊圆角标签 + SVG 图标 |
+| 正文字号 | 26px | 28px + 行高1.8优化 |
+| 图片展示 | 固定120px方形容器 | 响应式_square_布局 + hover放大动效 + 独立大图预览 |
+| 底部信息 | 简单文字 | 头像组件 + 认证徽章（超管/管理员/已认证）+ 时间 |
+| 点赞按钮 | 方形 | 胶囊按钮 + 心形SVG动画 + 弹性缩放反馈 |
+| 评论输入 | 分离式输入框 | 融合式输入行 + focus时边框高亮 |
+| 评论项 | 白底卡片 | 毛玻璃卡片 + 悬停上浮 + 交错入场动画 |
+| 菜单 | 简单下拉 | 圆角菜单 + 弹性入场动画 |
+| Toast | 简单圆角矩形 | 胶囊 + 阴影 + 弹性入场 |
+| 举报弹窗 | 基础弹窗 | 20px大圆角 + 阴影层次 + 弹性动画 |
+| 响应式 | 基础适配 | 600px断点 + 导航按钮隐藏文字 + 评论输入优化 |
+| 动效 | 线性过渡 | 全局 cubic-bezier spring + 减少动画偏好兼容 |
+
+**新增 CSS 变量**：完整的 `--note-*`、`--accent-*`、`--text-*`、`--surface` 设计 token 系统
+
+**新增组件**：
+- `.pin-dot` / `.pin-line` — 评论区顶部装饰分隔
+- `.comment-count-badge` — 评论数量胶囊徽章
+- `.comment-disabled-notice` — 评论禁用提示卡片
+- `.image-overlay` — 全屏图片预览（替代内联样式）
+- `.self-only-banner` — 仅自己可见横幅（CSS class + 动画）
+
+**移除**：所有内联 `style=""` 样式 → 全部迁移到 CSS class；废弃 SVG emoji 替换为组件化 SVG icon
+**保留**：所有业务逻辑（API 调用、举报、删除、点赞、评论、敏感词/霸凌检测）、`pages/post.html` SPA 片段不变
