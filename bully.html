@@ -749,6 +749,15 @@
 
   <div class="msg" id="msgBox"></div>
 
+  <!-- ===== 霸凌状态卡片（登录用户可见） ===== -->
+  <div id="bullyStatusCard" style="display:none;margin-bottom:24px;background:#f0f7ff;border:2px solid #bfdbfe;border-radius:14px;padding:16px 18px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span style="font-size:15px;font-weight:700;color:#1e3a5f;">我的霸凌保护状态</span>
+    </div>
+    <div id="bullyStatusContent" style="font-size:13px;line-height:1.8;color:#333;"></div>
+  </div>
+
   <!-- ===== 角色选择 ===== -->
   <div id="roleSelect">
     <p style="text-align:center;font-size:15px;color:#6a4a3a;margin-bottom:20px;font-weight:600;">请选择您的身份</p>
@@ -1918,6 +1927,57 @@
     };
     submitBullyingReport(body);
   }
+
+  // ===== 霸凌状态加载 =====
+  async function loadBullyStatus() {
+    var token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      var res = await fetch('/api/user/bullying-status', { headers: { 'x-user-token': token } });
+      var json = await res.json();
+      if (!json.ok || !json.data) return;
+      var card = document.getElementById('bullyStatusCard');
+      var content = document.getElementById('bullyStatusContent');
+      if (!card || !content) return;
+      var d = json.data;
+      var html = '';
+      // 霸凌保护状态
+      if (d.underProtection) {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;margin-bottom:12px;">';
+        html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+        html += '<span style="font-weight:600;color:#065f46;">✅ 您正在霸凌保护状态中，相关内容将自动被过滤拦截</span></div>';
+      } else {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fef9c3;border:1px solid #fde047;border-radius:10px;margin-bottom:12px;">';
+        html += '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+        html += '<span style="font-weight:600;color:#713f12;">⏳ 霸凌保护未激活 — 提交霸凌举报并经核实确认后可自动激活</span></div>';
+      }
+      // 举报记录
+      var reports = d.reports || [];
+      if (reports.length > 0) {
+        html += '<div style="font-size:13px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">📋 我的霸凌举报记录</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+        var statusMap = { pending:'待审核', processing:'处理中', resolved:'已处理' };
+        reports.slice(0, 10).forEach(function(r) {
+          var st = statusMap[r.status] || r.status;
+          var color = r.status === 'resolved' ? '#059669' : (r.status === 'processing' ? '#d97706' : '#6b7280');
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#fff;border-radius:8px;font-size:12px;">';
+          html += '<span style="color:#555;">' + (r.bullyType || '霸凌举报') + '</span>';
+          html += '<span style="font-family:monospace;font-size:11px;color:#bbb;">' + r.id + '</span>';
+          html += '<span style="color:' + color + ';font-weight:600;">' + st + '</span></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div style="font-size:13px;color:#888;padding:4px 0;">暂无霸凌举报记录</div>';
+      }
+      content.innerHTML = html;
+      card.style.display = 'block';
+    } catch (e) {
+      // 静默失败
+    }
+  }
+
+  // 页面加载时加载状态
+  loadBullyStatus();
 </script>
 
 </body>

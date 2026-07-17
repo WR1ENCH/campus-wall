@@ -168,6 +168,90 @@ function deleteSyncedDiscComment(postId) {
   } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
 }
 
+// 根据举报类型和目标ID自动删除违规内容
+function deleteReportedContent(type, targetId, deletedBy) {
+  if (!targetId) return false;
+  const now = new Date().toISOString();
+  try {
+    if (type === 'post' || type === 'featured') {
+      const posts = readPosts();
+      const post = posts.find(p => p.id === targetId);
+      if (post && !post.deleted) {
+        post.deleted = true; post.deletedAt = now; post.deletedBy = deletedBy;
+        saveDeletedItem('post', post, deletedBy);
+        writePosts(posts);
+        return true;
+      }
+    }
+    if (type === 'comment') {
+      const posts = readPosts();
+      for (const post of posts) {
+        if (Array.isArray(post.comments)) {
+          const c = post.comments.find(c => c.id === targetId);
+          if (c && !c.deleted) {
+            c.deleted = true; c.deletedAt = now; c.deletedBy = deletedBy;
+            saveDeletedItem('comment', c, deletedBy, { postId: post.id });
+            writePosts(posts);
+            return true;
+          }
+        }
+      }
+    }
+    if (type === 'discussion') {
+      const discussions = readDiscussions();
+      const d = discussions.find(x => x.id === targetId);
+      if (d && !d.deleted) {
+        d.deleted = true; d.deletedAt = now;
+        saveDeletedItem('discussion', d, deletedBy);
+        writeDiscussions(discussions);
+        return true;
+      }
+    }
+    if (type === 'discussion_comment') {
+      const comments = readDiscussionComments();
+      const c = comments.find(x => x.id === targetId);
+      if (c && !c.deleted) {
+        c.deleted = true; c.deletedAt = now;
+        saveDeletedItem('disc_comment', c, deletedBy);
+        writeDiscussionComments(comments);
+        return true;
+      }
+    }
+    if (type === 'qa_question') {
+      const questions = readQAQuestions();
+      const q = questions.find(x => x.id === targetId);
+      if (q && !q.deleted) {
+        q.deleted = true; q.deletedAt = now;
+        saveDeletedItem('qa_question', q, deletedBy);
+        writeQAQuestions(questions);
+        return true;
+      }
+    }
+    if (type === 'qa_answer') {
+      const answers = readQAAnswers();
+      const a = answers.find(x => x.id === targetId);
+      if (a && !a.deleted) {
+        a.deleted = true; a.deletedAt = now;
+        saveDeletedItem('qa_answer', a, deletedBy);
+        writeQAAnswers(answers);
+        return true;
+      }
+    }
+    if (type === 'whisper') {
+      const whispers = readWhispers();
+      const w = whispers.find(x => x.id === targetId);
+      if (w && !w.deleted) {
+        w.deleted = true;
+        writeWhispers(whispers);
+        return true;
+      }
+    }
+  } catch (e) {
+    console.error('[deleteReportedContent] 删除失败:', type, targetId, e.message);
+  }
+  return false;
+}
+
 function changeCredit(userId, amount, reason) {
   const users = readUsers();
   const idx = users.findIndex(u => u.id === userId);
@@ -461,7 +545,6 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
       if (targetBid) {
         targetBid.reviewStatus = 'violated';
         targetBid.violatedAt = now;
-        // 查找下一个审核通过的出价作为替换（处罚由处罚系统统一管理）
         const approvedBids = targetAuction.bids
           .filter(b => b.reviewStatus === 'approved' && b.id !== bidId)
           .sort((a, b) => b.amount - a.amount);
@@ -472,6 +555,10 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
         }
         writePickupAuctions(auctions);
       }
+    } else {
+      // 非拍卖类型：自动删除被举报的内容本体
+      const deletedContent = deleteReportedContent(report.type, report.targetId, req.admin.name || req.admin.id);
+      if (deletedContent) auctionMsg += '，已自动删除违规内容';
     }
     writeReports(reports);
     // 通知举报人：已确认违规，处罚已下发
@@ -1704,6 +1791,20 @@ app.post('/api/admin/bullying/:id/process', requireAdmin, (req, res) => {
   reports[idx].handledAt = new Date().toISOString();
   reports[idx].handleNote = result === 'bullying' ? '确认霸凌，已处理' : '确认非霸凌';
   writeBullying(reports);
+
+  // 确认霸凌时自动启用举报用户的霸凌保护
+  if (result === 'bullying' && reports[idx].userId) {
+    try {
+      const allUsers = readUsers();
+      const u = allUsers.find(x => x.id === reports[idx].userId);
+      if (u) {
+        u.bullyingProtection = 1;
+        writeUsers(allUsers);
+      }
+    } catch (e) {
+      console.error('[bullying] 设置霸凌保护失败:', e.message);
+    }
+  }
 
   // 发送通知
   if (reports[idx].userId) {

@@ -311,7 +311,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 | 表 | 关键字段 | 用途 |
 |----|----------|------|
-| `users` | id(PK), username(UNIQUE), password, nickname, avatar, uid, regIp, createdAt, status('active'/'banned'), postCount, bindAdminId, bindAdminRole, credit, checkedInDate, checkinStreak, banUntil, zhixueStatus, certData(加密), zhixueReviewedBy, zhixueCertType, zhixueUsername/Password, zhixueManual*, certRealName, certClassName, noticePublisher, **credibility_score**(INTEGER DEFAULT 90), **credibility_exchanged_total**(TEXT), **credibility_last_refresh**(TEXT) | 用户账号 + 认证 + 积分 + 信用分 |
+| `users` | id(PK), username(UNIQUE), password, nickname, avatar, uid, regIp, createdAt, status('active'/'banned'), postCount, bindAdminId, bindAdminRole, credit, checkedInDate, checkinStreak, banUntil, zhixueStatus, certData(加密), zhixueReviewedBy, zhixueCertType, zhixueUsername/Password, zhixueManual*, certRealName, certClassName, noticePublisher, **credibility_score**(INTEGER DEFAULT 90), **credibility_exchanged_total**(TEXT), **credibility_last_refresh**(TEXT), **bullyingProtection**(INTEGER DEFAULT 0) | 用户账号 + 认证 + 积分 + 信用分 + 霸凌保护 |
 | `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy, **visibility**(TEXT DEFAULT 'public'), **allowComments**(INTEGER DEFAULT 1) | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
@@ -637,6 +637,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/stats` | 无 | 公开统计（帖子数等） |
 | GET | `/api/stream` | 无 | SSE 实时事件流 |
 | POST | `/api/user/heartbeat` | 用户(可选) | 在线心跳（见 3.5） |
+| GET | `/api/user/bullying-status` | 用户 | 当前用户霸凌举报状态（reports 列表 + underProtection） |
 | POST | `/api/bullying-report` | 用户 | 霸凌举报提交（system.js，支持 reporterRole/self-witness、emergency mode、involvedUsers、contentIds、reportId BULL-唯一ID） |
 | GET | `/api/maintenance/info` | 无 | 维护页轮询状态 |
 | POST | `/api/maintenance/verify` | 无 | 测试密钥 + 滑块验证后签发 bypass token |
@@ -1144,6 +1145,30 @@ server.js
 
 **API 增强**：用户搜索 `/api/users/search` 返回结果增加 `zhixueStatus` 和 `certRealName` 字段，供前端展示认证状态。
 - 影响文件：`routes/user.js`
+
+### 会话 10 — 2026-07-16 · 举报自动删内容 + 显示唯一ID + 霸凌保护状态
+
+#### Task 1：举报确认违规后自动删除内容
+
+- `routes/admin.js`：`POST /api/admin/reports/:id/handle` 中 `handledResult='violation'` 时，根据 `report.type` 自动删除对应内容（post/comment/discussion/discussion_comment/qa_question/qa_answer/whisper），写入 `deleted_items` 归档。新增 `deleteReportedContent()` 函数统一处理。
+
+#### Task 2：任何内容旁边显示唯一ID
+
+- `index.html` 六处渲染函数增加 ID 显示：
+  - `renderDiscussionTopics()`：话题卡片底部显示 `DISC-xxx`
+  - `renderDiscussionComments()`：评论头部显示 `DICM-xxx`
+  - `renderQACard()`：问题列表显示 `QAQU-xxx`
+  - `renderQADetail()`：问题详情显示 `QAQU-xxx`
+  - `renderQAAnswer()`：回答显示 `QAAN-xxx`
+  - `renderPickupTodayContent()`：拍卖内容显示 `AURQ-xxx`
+  - `loadPickupScroll()`：滚动栏显示拍卖 `bidId`
+
+#### Task 3：霸凌报告状态卡片 + 霸凌保护
+
+- `db.js`：`users` 表列迁移新增 `bullyingProtection` 列
+- `routes/admin.js`：`POST /api/admin/bullying/:id/process` 中 `result='bullying'` 时自动设置举报用户 `bullyingProtection=1`
+- `routes/system.js`：新增 `GET /api/user/bullying-status`，返回当前用户的霸凌举报列表 + `underProtection` 状态
+- `bully.html`：登录用户可见霸凌状态卡片（保护状态 + 举报记录列表）
 
 ### 会话 7 — 2026-07-14 · 修复智学登录认证 + 搜索匹配认证姓名
 
