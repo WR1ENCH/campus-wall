@@ -100,6 +100,18 @@ app.get('/api/posts', (req, res) => {
     if (p.visibility === 'self_only') {
       return p.userId && currentUserId && p.userId === currentUserId;
     }
+    if (p.visibility === 'whitelist') {
+      if (p.userId && currentUserId && p.userId === currentUserId) return true;
+      if (!currentUserId) return false;
+      const vt = Array.isArray(p.visibleTo) ? p.visibleTo : [];
+      return vt.includes(currentUserId);
+    }
+    if (p.visibility === 'blacklist') {
+      if (p.userId && currentUserId && p.userId === currentUserId) return true;
+      if (!currentUserId) return true;
+      const ivt = Array.isArray(p.invisibleTo) ? p.invisibleTo : [];
+      return !ivt.includes(currentUserId);
+    }
     return true;
   });
   const users = readUsers();
@@ -126,6 +138,8 @@ app.get('/api/posts', (req, res) => {
         }
         return {
           ...p,
+          likes: Number(p.likes) || 0,
+          likedBy: Array.isArray(p.likedBy) ? p.likedBy : [],
           authorAdminRole: adminRole,
           authorBindAdminId: adminId,
           authorZhixueStatus: zhixueStatus,
@@ -133,7 +147,7 @@ app.get('/api/posts', (req, res) => {
         };
       }
     }
-    return p;
+    return { ...p, likes: Number(p.likes) || 0, likedBy: Array.isArray(p.likedBy) ? p.likedBy : [] };
   });
   res.json({ ok: true, data: postsWithAdmin });
 });
@@ -153,6 +167,44 @@ app.get('/api/posts/:id', (req, res) => {
     }
     if (!isOwner) {
       return res.json({ ok: false, msg: '此内容仅自己可见', code: 'SELF_ONLY' });
+    }
+  }
+  // 白名单：非作者且不在 visibleTo 中不可查看
+  if (post.visibility === 'whitelist') {
+    const token = req.headers['x-user-token'];
+    let currentUserId = null;
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) {
+        currentUserId = session.id;
+        if (post.userId && session.id === post.userId) isOwner = true;
+      }
+    }
+    if (!isOwner) {
+      const vt = Array.isArray(post.visibleTo) ? post.visibleTo : [];
+      if (!currentUserId || !vt.includes(currentUserId)) {
+        return res.json({ ok: false, msg: '此内容仅指定用户可见', code: 'WHITELIST_BLOCKED' });
+      }
+    }
+  }
+  // 黑名单：在 invisibleTo 中的用户不可查看（作者例外）
+  if (post.visibility === 'blacklist') {
+    const token = req.headers['x-user-token'];
+    let currentUserId = null;
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) {
+        currentUserId = session.id;
+        if (post.userId && session.id === post.userId) isOwner = true;
+      }
+    }
+    if (!isOwner && currentUserId) {
+      const ivt = Array.isArray(post.invisibleTo) ? post.invisibleTo : [];
+      if (ivt.includes(currentUserId)) {
+        return res.json({ ok: false, msg: '此内容对你不可见', code: 'BLACKLIST_BLOCKED' });
+      }
     }
   }
   // 过滤已删除的评论
@@ -192,7 +244,7 @@ app.post('/api/posts', (req, res) => {
     realAvatar = (user && user.avatar) || '🙈';
   }
 
-  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments } = req.body;
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo } = req.body;
 
   // 如果勾选了匿名发布，覆盖为匿名显示
   let anonymousFlag = false;
@@ -282,7 +334,10 @@ if (!content || !content.trim()) {
   }
 
   // 敏感词继续发送：帖子在审核通过前仅自己可见
-  const finalVisibility = (hasSensitive && visibility !== 'self_only') ? 'self_only' : (visibility === 'self_only' ? 'self_only' : 'public');
+  const finalVisibility = (hasSensitive && visibility !== 'self_only') ? 'self_only'
+    : (visibility === 'self_only' ? 'self_only'
+      : (visibility === 'whitelist' ? 'whitelist'
+        : (visibility === 'blacklist' ? 'blacklist' : 'public')));
   const finalAllowComments = allowComments !== false;
 
   const newPost = {
@@ -303,7 +358,9 @@ if (!content || !content.trim()) {
     images: validImages.length > 0 ? validImages : undefined,
     isAnonymous: anonymousFlag || undefined,
     visibility: finalVisibility,
-    allowComments: finalAllowComments
+    allowComments: finalAllowComments,
+    visibleTo: finalVisibility === 'whitelist' ? (Array.isArray(visibleTo) ? visibleTo : []) : undefined,
+    invisibleTo: finalVisibility === 'blacklist' ? (Array.isArray(invisibleTo) ? invisibleTo : []) : undefined
   };
 
   posts.unshift(newPost);

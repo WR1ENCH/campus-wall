@@ -2413,10 +2413,22 @@ backdrop-filter: blur(4px);
       <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg> 更多选项
     </button>
     <div id="postMoreOptions" style="display:none;margin-top:6px;padding:10px 12px;background:rgba(255,255,255,0.3);border-radius:6px;border:1px dashed rgba(90,74,0,0.2);">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:#7a5a2a;">
-        <input type="checkbox" id="selfOnlyPost" style="width:14px;height:14px;cursor:pointer;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:#7a5a2a;">
+        <input type="checkbox" id="selfOnlyPost" style="width:14px;height:14px;cursor:pointer;" onchange="onVisibilityOptionChange()">
         <label for="selfOnlyPost" style="margin:0;cursor:pointer;">
           <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:#7a5a2a;">
+        <input type="checkbox" id="whitelistPost" style="width:14px;height:14px;cursor:pointer;" onchange="onVisibilityOptionChange()">
+        <label for="whitelistPost" style="margin:0;cursor:pointer;">
+          <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:#7a5a2a;">
+        <input type="checkbox" id="blacklistPost" style="width:14px;height:14px;cursor:pointer;" onchange="onVisibilityOptionChange()">
+        <label for="blacklistPost" style="margin:0;cursor:pointer;">
+          <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见
         </label>
       </div>
       <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#7a5a2a;">
@@ -2424,6 +2436,13 @@ backdrop-filter: blur(4px);
         <label for="allowComments" style="margin:0;cursor:pointer;">
           <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 允许他人评论
         </label>
+      </div>
+      <div id="visibilityUserArea" style="display:none;margin-top:8px;">
+        <div style="position:relative;">
+          <input type="text" id="visibilityUserSearch" placeholder="搜索用户..." autocomplete="off" style="width:100%;padding:6px 10px;border:1px solid rgba(90,74,0,0.2);border-radius:6px;font-size:12px;font-family:inherit;box-sizing:border-box;" oninput="visibilityUserSearch(this.value)">
+          <div id="visibilitySearchResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0d8cc;border-radius:6px;max-height:160px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.1);font-size:12px;"></div>
+        </div>
+        <div id="visibilitySelectedUsers" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;min-height:20px;"></div>
       </div>
     </div>
   </div>
@@ -3706,7 +3725,7 @@ backdrop-filter: blur(4px);
  }
 
  // ===== 特殊字符检测 =====
-  const SPECIAL_CHAR_REG = /[~!@$%^&*()+=\[\]{}|\\;:'",./<>?`]/;
+  const SPECIAL_CHAR_REG = /[~!@$%^&*+=\[\]{}|\\'",\/<>?`]/;
  function hasSpecialChars(val) {
  return SPECIAL_CHAR_REG.test(val);
  }
@@ -5043,7 +5062,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  return t ? { 'x-user-token': t } : {};
  }
 
-  async function createPost(type, content, sensitiveForce = false, isAnonymous = false, visibility = 'public', allowComments = true) {
+  async function createPost(type, content, sensitiveForce = false, isAnonymous = false, visibility = 'public', allowComments = true, visibleTo = [], invisibleTo = []) {
  if (!currentUser) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请先登录才能发帖'); return null; }
  const avatar = currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  const author = currentUser.nickname;
@@ -5053,7 +5072,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  const res = await fetch(API + '/api/posts', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json', ...(token ? { 'x-user-token': token } : {}) },
-  body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous, visibility, allowComments })
+  body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous, visibility, allowComments, visibleTo, invisibleTo })
  });
  const json = await res.json();
  if (json.ok) {
@@ -5061,7 +5080,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  }
  if (json.needCaptcha) {
  // 发帖频率过高 → 弹出验证码弹窗
-  pendingPostData = { type, content, sensitiveForce, images: postImages.slice(), isAnonymous, visibility, allowComments };
+   pendingPostData = { type, content, sensitiveForce, images: postImages.slice(), isAnonymous, visibility, allowComments, visibleTo, invisibleTo };
  showPostCaptchaModal();
  return null;
  }
@@ -5093,7 +5112,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
   },
   async () => {
  // 继续发送：重新提交（带敏感词强制标记）
- const result = await createPost(type, content, true, isAnonymous);
+  const result = await createPost(type, content, true, isAnonymous, visibility, allowComments, visibleTo, invisibleTo);
  resolve(result);
  }
  );
@@ -5158,24 +5177,26 @@ async function showPostCaptchaModal() {
  hidePostCaptchaModal();
  return;
  }
-  const { type, content, sensitiveForce, images, isAnonymous, visibility, allowComments } = pendingPostData;
- try {
- const res = await fetch(API + '/api/posts', {
- method: 'POST',
- headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({
- type, content,
- avatar: currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
- author: currentUser.nickname,
- userId: currentUser.id,
-  sensitiveForce,
-  images: images || [],
-  captchaId: _sliderCaptchaToken,
-  captchaText: '1',
-  isAnonymous,
-  visibility: visibility || 'public',
-  allowComments: allowComments !== false
- })
+   const { type, content, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo } = pendingPostData;
+  try {
+  const res = await fetch(API + '/api/posts', {
+  method: 'POST',
+  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+  body: JSON.stringify({
+  type, content,
+  avatar: currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  author: currentUser.nickname,
+  userId: currentUser.id,
+   sensitiveForce,
+   images: images || [],
+   captchaId: _sliderCaptchaToken,
+   captchaText: '1',
+   isAnonymous,
+   visibility: visibility || 'public',
+   allowComments: allowComments !== false,
+   visibleTo: visibleTo || [],
+   invisibleTo: invisibleTo || []
+  })
  });
  const json = await res.json();
  if (json.ok) {
@@ -5315,7 +5336,7 @@ async function showPostCaptchaModal() {
  data-id="${post.id}"
  onclick="openNoteDetail('${post.id}')">
  ${pinHtml}
-   <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : ''}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
+   <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
   <div class="note-content">${renderPostContent(post)}</div>
  <div class="note-footer" onclick="event.stopPropagation()">
  <div class="note-author">
@@ -5330,7 +5351,8 @@ async function showPostCaptchaModal() {
  <div style="display:flex;gap:4px;align-items:center;">
  <button class="note-action ${post.liked ? 'liked' : ''}"
  onclick="handleLike('${post.id}')" title="点赞">
- ${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${post.likes}
+  ${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${Number(post.likes) || 0}
+
  </button>
  <button class="note-action report-action" title="举报"
  onclick="event.stopPropagation(); openReportModalFromCard('${post.id}')">
@@ -5353,7 +5375,7 @@ async function showPostCaptchaModal() {
  <div style="font-size:11px;padding-top:8px;margin-top:10px;border-top:1px dashed rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
  <span style="display:flex;align-items:center;gap:3px;">${post.avatar && post.avatar.startsWith('data:') ? '<img src="' + escHtml(post.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : (post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')} ${post.author}${post.authorAdminRole === 'super' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}</span>
  <span style="display:flex;gap:4px;align-items:center;">
- <span>${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${post.likes}</span>
+  <span>${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${Number(post.likes) || 0}</span>
  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
  <span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
  </span>
@@ -5402,10 +5424,10 @@ async function showPostCaptchaModal() {
  if (result) {
  // 更新本地数据
  const post = posts.find(p => p.id === id);
- if (post) {
- post.liked = result.liked;
- post.likes = result.likes;
- renderNotes(currentFilter);
+  if (post) {
+  post.liked = result.liked;
+  post.likes = Number(result.likes) || 0;
+  renderNotes(currentFilter);
  if (post.liked) showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已点赞！');
  }
  }
@@ -5457,7 +5479,123 @@ async function showPostCaptchaModal() {
  }
  }
 
- function openModal() {
+  // ===== 可见性选项（仅指定用户可见/不可见）=====
+  var _visibilityTargetUsers = [];
+  var _visibilitySearchTimer = null;
+
+  function onVisibilityOptionChange() {
+    var selfOnly = document.getElementById('selfOnlyPost');
+    var whitelist = document.getElementById('whitelistPost');
+    var blacklist = document.getElementById('blacklistPost');
+    if (selfOnly.checked) { whitelist.checked = false; blacklist.checked = false; }
+    else if (whitelist.checked) { selfOnly.checked = false; blacklist.checked = false; }
+    else if (blacklist.checked) { selfOnly.checked = false; whitelist.checked = false; }
+    var showSearch = whitelist.checked || blacklist.checked;
+    var area = document.getElementById('visibilityUserArea');
+    if (area) {
+      area.style.display = showSearch ? 'block' : 'none';
+    }
+    if (!showSearch) {
+      _visibilityTargetUsers = [];
+      renderVisibilitySelectedUsers();
+    }
+    if (showSearch) {
+      setTimeout(function() { var inp = document.getElementById('visibilityUserSearch'); if (inp) inp.focus(); }, 100);
+    }
+  }
+
+  function visibilityUserSearch(q) {
+    var resultsEl = document.getElementById('visibilitySearchResults');
+    if (!resultsEl) return;
+    if (!q || q.trim().length < 2) {
+      resultsEl.style.display = 'none';
+      return;
+    }
+    if (_visibilitySearchTimer) clearTimeout(_visibilitySearchTimer);
+    _visibilitySearchTimer = setTimeout(function() {
+      fetch(API + '/api/users/search?q=' + encodeURIComponent(q.trim()))
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+          if (!j.ok) return;
+          var html = '';
+          var sections = { accounts: '匹配账号', nicknames: '匹配昵称', uids: '匹配UID', names: '匹配姓名' };
+          var hasAny = false;
+          Object.keys(sections).forEach(function(key) {
+            var items = j[key];
+            if (items && items.length) {
+              hasAny = true;
+              html += '<div style="padding:4px 8px;font-size:11px;color:#999;background:#f8f6f3;">' + sections[key] + '</div>';
+              items.forEach(function(user) {
+                var isSelected = _visibilityTargetUsers.some(function(u) { return u.id === user.id; });
+                html += '<div style="padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:6px;border-bottom:1px solid #f0ede8;' + (isSelected ? 'opacity:0.4;' : '') + '" onclick="addVisibilityUser(\'' + user.id + '\',\'' + escHtml(String(user.nickname)) + '\',\'' + escHtml(String((user.avatar || ''))) + '\')">';
+                if (user.avatar && typeof user.avatar === 'string' && user.avatar.startsWith('data:')) {
+                  html += '<img src="' + escHtml(user.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">';
+                } else {
+                  html += '<span style="font-size:14px;">' + (user.avatar && typeof user.avatar === 'string' && user.avatar.length <= 4 ? escHtml(user.avatar) : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
+                }
+                html += '<span>' + escHtml(user.nickname) + '</span>';
+                html += '<span style="color:#999;font-size:11px;">@' + escHtml(user.username) + '</span>';
+                if (user.zhixueStatus === 'approved') {
+                  html += '<span style="color:#4caf50;font-size:11px;">✅ 已认证</span>';
+                }
+                html += '</div>';
+              });
+            }
+          });
+          if (!hasAny) html = '<div style="padding:8px;color:#999;font-size:12px;text-align:center;">未找到用户</div>';
+          resultsEl.innerHTML = html;
+          resultsEl.style.display = 'block';
+        });
+    }, 300);
+  }
+
+  function addVisibilityUser(id, nickname, avatar) {
+    if (_visibilityTargetUsers.some(function(u) { return u.id === id; })) return;
+    _visibilityTargetUsers.push({ id: id, nickname: nickname, avatar: avatar });
+    renderVisibilitySelectedUsers();
+    var inp = document.getElementById('visibilityUserSearch');
+    if (inp) inp.value = '';
+    var results = document.getElementById('visibilitySearchResults');
+    if (results) results.style.display = 'none';
+  }
+
+  function removeVisibilityUser(id) {
+    _visibilityTargetUsers = _visibilityTargetUsers.filter(function(u) { return u.id !== id; });
+    renderVisibilitySelectedUsers();
+  }
+
+  function renderVisibilitySelectedUsers() {
+    var container = document.getElementById('visibilitySelectedUsers');
+    if (!container) return;
+    if (_visibilityTargetUsers.length === 0) {
+      container.innerHTML = '<span style="color:#999;font-size:11px;">尚未选择用户</span>';
+      return;
+    }
+    container.innerHTML = _visibilityTargetUsers.map(function(u) {
+      var avatarHtml = (u.avatar && typeof u.avatar === 'string' && u.avatar.startsWith('data:'))
+        ? '<img src="' + escHtml(u.avatar) + '" style="width:16px;height:16px;border-radius:50%;object-fit:cover;">'
+        : '<span style="font-size:12px;">' + (u.avatar && typeof u.avatar === 'string' && u.avatar.length <= 4 ? escHtml(u.avatar) : '👤') + '</span>';
+      return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px 2px 4px;background:rgba(90,74,0,0.08);border-radius:12px;font-size:11px;color:#5a4a00;">'
+        + avatarHtml
+        + '<span>' + escHtml(u.nickname) + '</span>'
+        + '<span style="cursor:pointer;color:#c00;margin-left:2px;" onclick="removeVisibilityUser(\'' + u.id + '\')">✕</span>'
+        + '</span>';
+    }).join('');
+  }
+
+  // 点击搜索下拉外部关闭
+  document.addEventListener('click', function(e) {
+    var area = document.getElementById('visibilityUserArea');
+    if (area && area.style.display !== 'none') {
+      var results = document.getElementById('visibilitySearchResults');
+      var input = document.getElementById('visibilityUserSearch');
+      if (results && !results.contains(e.target) && input && !input.contains(e.target)) {
+        results.style.display = 'none';
+      }
+    }
+  });
+
+  function openModal() {
  if (!currentUser) {
  showLoginModal(true);
  return;
@@ -5475,11 +5613,18 @@ async function showPostCaptchaModal() {
   document.getElementById('postMoreOptions').style.display = 'none';
   const selfOnlyChk = document.getElementById('selfOnlyPost');
   if (selfOnlyChk) selfOnlyChk.checked = false;
+  const whitelistChk = document.getElementById('whitelistPost');
+  if (whitelistChk) whitelistChk.checked = false;
+  const blacklistChk = document.getElementById('blacklistPost');
+  if (blacklistChk) blacklistChk.checked = false;
   const allowCommentsChk = document.getElementById('allowComments');
   if (allowCommentsChk) allowCommentsChk.checked = true;
+  document.getElementById('visibilityUserArea').style.display = 'none';
+  _visibilityTargetUsers = [];
+  renderVisibilitySelectedUsers();
   }
 
- // ===== 帖子详情弹窗（风格同登录窗口）=====
+  // ===== 帖子详情弹窗（风格同登录窗口）=====
  let currentDetailId = null;
 
   async function openNoteDetail(id) {
@@ -5493,6 +5638,12 @@ async function showPostCaptchaModal() {
       post = json.data;
     } else if (json.code === 'SELF_ONLY') {
       showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容仅自己可见');
+      return;
+    } else if (json.code === 'WHITELIST_BLOCKED') {
+      showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容仅指定用户可见');
+      return;
+    } else if (json.code === 'BLACKLIST_BLOCKED') {
+      showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容对你不可见');
       return;
     }
   } catch {}
@@ -5664,10 +5815,10 @@ async function showPostCaptchaModal() {
  if (result) {
  const post = posts.find(p => p.id === currentDetailId);
  if (!post) return;
- post.liked = result.liked;
- post.likes = result.likes;
+  post.liked = result.liked;
+  post.likes = Number(result.likes) || 0;
 
- const likeBtn = document.getElementById('detailLikeBtn');
+  const likeBtn = document.getElementById('detailLikeBtn');
  likeBtn.innerHTML = post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 已赞' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 点赞';
  likeBtn.className = 'detail-like-btn' + (post.liked ? ' liked' : '');
 
@@ -6081,8 +6232,15 @@ async function showPostCaptchaModal() {
   document.getElementById('postMoreOptions').style.display = 'none';
   const selfOnlyChk = document.getElementById('selfOnlyPost');
   if (selfOnlyChk) selfOnlyChk.checked = false;
+  const whitelistChk = document.getElementById('whitelistPost');
+  if (whitelistChk) whitelistChk.checked = false;
+  const blacklistChk = document.getElementById('blacklistPost');
+  if (blacklistChk) blacklistChk.checked = false;
   const allowCommentsChk = document.getElementById('allowComments');
   if (allowCommentsChk) allowCommentsChk.checked = true;
+  document.getElementById('visibilityUserArea').style.display = 'none';
+  _visibilityTargetUsers = [];
+  renderVisibilitySelectedUsers();
   hideDiscussionSuggest();
   }
 
@@ -6234,11 +6392,26 @@ async function showPostCaptchaModal() {
   const anonChk = document.getElementById('anonymousPost');
   const isAnonymous = anonChk ? anonChk.checked : false;
   const selfOnlyChk = document.getElementById('selfOnlyPost');
-  const visibility = selfOnlyChk && selfOnlyChk.checked ? 'self_only' : 'public';
+  const whitelistChk = document.getElementById('whitelistPost');
+  const blacklistChk = document.getElementById('blacklistPost');
+  let visibility = 'public';
+  let visibleTo = [];
+  let invisibleTo = [];
+  if (selfOnlyChk && selfOnlyChk.checked) {
+    visibility = 'self_only';
+  } else if (whitelistChk && whitelistChk.checked) {
+    visibility = 'whitelist';
+    visibleTo = _visibilityTargetUsers.map(function(u) { return u.id; });
+    if (visibleTo.length === 0) { showToast('请选择至少一个用户'); return; }
+  } else if (blacklistChk && blacklistChk.checked) {
+    visibility = 'blacklist';
+    invisibleTo = _visibilityTargetUsers.map(function(u) { return u.id; });
+    if (invisibleTo.length === 0) { showToast('请选择至少一个用户'); return; }
+  }
   const allowCommentsChk = document.getElementById('allowComments');
   const allowComments = allowCommentsChk ? allowCommentsChk.checked : true;
 
-  const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments);
+  const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments, visibleTo, invisibleTo);
   if (newPost) {
   newPost.time = '刚刚';
   newPost.rotate = rand(-4, 4);
