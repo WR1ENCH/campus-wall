@@ -277,6 +277,30 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - Credit → 信用分兑换面板（含汇率展示、输入、兑换按钮）
 - 三张说明卡片：信用分说明 / 兑换说明 / 失信处罚说明
 
+### 3.11 发帖可见性 / 允许评论 / 敏感词拦截（本次提交新增）
+
+**帖子可见性（visibility）**：
+- `posts` 表新增 `visibility` 列（值：`'public'` 公开 / `'self_only'` 仅自己可见），默认 `'public'`。
+- 发帖（`POST /api/posts`）接收 `visibility` 参数：用户可选 `public`（所有人可见）或 `self_only`（仅作者自己可见）。
+- **讨论区同步的帖子始终为 `public`**（`visibility` 不可为 `self_only`）。
+- `GET /api/posts`：非作者看不到 `self_only` 帖子（按 `x-user-token` 过滤）。`GET /api/posts/:id`：非作者访问 `self_only` 帖子返回 `{ok:false, msg:'此内容仅自己可见', code:'SELF_ONLY'}`。
+- 帖子可见情况写入数据库后**不可修改**（除非敏感词举报无违规后由后台恢复为 public）。
+- 前端 `index.html` 发帖弹窗新增「更多选项」折叠区（含 `selfOnlyPost` 复选框，`allowComments` 默认勾选）。帖子卡片 `self_only` 显示「👁️ 仅自己可见」标识；`post.html` 顶部固定白色横幅提示「此内容仅自己可见」；`admin.html` 帖子管理表格「可见性」列显示状态。
+
+**是否允许评论（allowComments）**：
+- `posts` 表新增 `allowComments` 列（BOOLEAN，默认 `true`）。
+- 发帖时接收 `allowComments` 参数（默认 `true`）。`false` 表示该帖不允许评论。
+- `POST /api/posts/:id/comments`：若 `post.allowComments === false` 返回 `{ok:false, msg:'本帖不允许评论', code:'COMMENTS_DISABLED'}`。
+- 前端：帖子详情弹窗（`index.html`）和帖子详情页（`post.html`）在 `allowComments === false` 时显示「本帖不允许评论」并禁用输入框/按钮；`admin.html` 帖子详情显示「允许评论」状态。
+
+**敏感词拦截新机制（sensitiveForce）**：
+- 发帖检测命中敏感词且 `sensitiveForce=true` 时，帖子 `visibility` 强制设为 `'self_only'`（审核通过前仅自己可见）。
+- 敏感词警告弹窗（`showSensitiveWarning()`，index.html / post.html）文案新增提示：「如果你继续发送，帖子在审核通过前仅你可见」。
+- 后台处理举报（`POST /api/admin/reports/:id/handle`）的 `no_violation` 分支：若 `report.type` 以 `'sensitive_'` 开头且目标帖子为 `self_only`，则恢复为 `public`（用 `db.readPosts()` / `db.writePosts()`）。
+
+**DB 变更**（`db.js` migrate 自动迁移）：
+- `posts` 表新增列：`visibility`（TEXT DEFAULT 'public'）、`allowComments`（INTEGER DEFAULT 1）
+
 ## 4. 数据模型（db.js — SQLite 表）
 
 数据库文件：`data/campus.db`，WAL 模式。所有表在 `migrate()` 中 `CREATE TABLE IF NOT EXISTS` 自动建表（**无需手动迁移**）。代码统一通过 `readXxx()` / `writeXxx()` 接口访问（底层用 `dropAndInsert` 全表替换或 `insertRow` 单行插入）。
@@ -288,7 +312,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 表 | 关键字段 | 用途 |
 |----|----------|------|
 | `users` | id(PK), username(UNIQUE), password, nickname, avatar, uid, regIp, createdAt, status('active'/'banned'), postCount, bindAdminId, bindAdminRole, credit, checkedInDate, checkinStreak, banUntil, zhixueStatus, certData(加密), zhixueReviewedBy, zhixueCertType, zhixueUsername/Password, zhixueManual*, certRealName, certClassName, noticePublisher, **credibility_score**(INTEGER DEFAULT 90), **credibility_exchanged_total**(TEXT), **credibility_last_refresh**(TEXT), **bullyingProtection**(INTEGER DEFAULT 0) | 用户账号 + 认证 + 积分 + 信用分 + 霸凌保护 |
-| `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy | 帖子 |
+| `posts` | id(PK), content, author, avatar, userId, time, type('text'/板块), deleted, pinned, images(JSON), isAnonymous, likes, likedBy, comments(JSON), commentsCount, discussionId, rotate, zIndex, deletedAt, deletedBy, **visibility**(TEXT DEFAULT 'public'), **allowComments**(INTEGER DEFAULT 1) | 帖子 |
 | `admins` | id(PK), password, name, role('admin'/'super'), createdAt | 管理员 |
 | `login_logs` | id, type, account, success, ip, ua, time | 登录日志（最多保留 500 条） |
 | `reports` | id(PK), type, targetId, postId, reason, reportedBy, reporterName, reportedUserId, createdAt, status('pending'/'resolved'/'ignored'), handledBy, handledAt, action, **reportId**(`REPO-` 唯一ID，用户可见), **evidenceContent**(证据快照 JSON), **handledResult**('violation'/'no_violation'), **punishmentId**(关联处罚), **reporters**(JSON, 合并举报人数组 [{id,name,reportedAt}]), **mergedCount**(合并次数) | 统一举报（见 §3.9；`reportId`/`evidenceContent`/`handledResult`/`punishmentId` 由 db.js 列迁移自动补齐）。同内容举报自动合并到 `reporters` 数组 |
@@ -389,14 +413,14 @@ admin → auth → user → posts → discussions → qa → votes → notices
 |------|------|------|------|
 | GET | `/api/posts` | 无 | 帖子列表（支持板块/搜索/排序） |
 | GET | `/api/posts/:id` | 无 | 帖子详情 |
-| POST | `/api/posts` | 用户 | 发帖（频率限制 + 敏感词检测） |
+| POST | `/api/posts` | 用户 | 发帖（频率限制 + 敏感词检测；支持 `visibility`/`allowComments` 参数，`sensitiveForce` 时强制 `self_only`） |
 | PUT | `/api/posts/:id` | 用户/管理员 | 编辑帖子 |
 | DELETE | `/api/posts/:id` | 管理员 | 删除帖子 |
 | DELETE | `/api/user/posts/:id` | 用户 | 删除自己的帖子 |
 | POST | `/api/posts/batch-delete` | 管理员 | 批量删除 |
 | POST | `/api/posts/:id/like` | 用户 | 点赞/取消 |
 | GET | `/api/posts/:id/comments` | 无 | 评论列表 |
-| POST | `/api/posts/:id/comments` | 用户 | 发评论 |
+| POST | `/api/posts/:id/comments` | 用户 | 发评论（`allowComments=false` 时返回 `COMMENTS_DISABLED`） |
 | DELETE | `/api/posts/:id/comments/:commentId` | 用户/管理员 | 删评论 |
 | POST | `/api/posts/:id/report` | 用户 | 举报帖子 |
 | POST | `/api/comments/:id/report` | 用户 | 举报评论 |

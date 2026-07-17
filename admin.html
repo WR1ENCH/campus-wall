@@ -284,8 +284,8 @@
     .table-row input[type="checkbox"] { cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent); }
 
     /* 帖子表头 */
-    .posts-header { grid-template-columns: 36px 80px 1fr 100px 70px 80px 80px 90px; }
-    .posts-row { grid-template-columns: 36px 80px 1fr 100px 70px 80px 80px 90px; }
+    .posts-header { grid-template-columns: 36px 80px 1fr 100px 90px 70px 80px 80px 90px; }
+    .posts-row { grid-template-columns: 36px 80px 1fr 100px 90px 70px 80px 80px 90px; }
 
     /* 管理员表头 */
     .admins-header { grid-template-columns: 60px 140px 1fr 100px 100px 80px 120px; }
@@ -941,6 +941,7 @@
           <div>板块</div>
           <div>内容</div>
           <div>作者</div>
+          <div>可见性</div>
           <div>点赞</div>
           <div>发布时间</div>
           <div>ID</div>
@@ -4167,6 +4168,7 @@
           <div><span class="type-badge badge-${post.type}">${typeEmoji(post.type)} ${post.type}</span></div>
           <div class="post-content-cell" title="${escHtml(post.content||'')}">${escHtml(post.content||'')}</div>
           <div class="post-author-cell">${(function(){ var a=post.author||'匿名'; var u=post.userId&&allUsers.find(function(x){return x.id===post.userId}); if(post.isAnonymous&&u){a=u.nickname||u.username||a; return '🥷 匿名(🔍 '+escHtml(a)+')'} if(u&&a==='匿名'){a=u.nickname||u.username||a} return escHtml(a) })()}</div>
+          <div class="post-visibility-cell">${post.visibility === 'self_only' ? '👁️ 仅自己可见' : '🌐 公开'}</div>
           <div class="post-likes-cell">❤️ ${post.likes||0}</div>
           <div class="post-time-cell">${timeStr}</div>
           <div class="post-time-cell" style="font-family:monospace;font-size:11px;">${shortId}</div>
@@ -4280,10 +4282,18 @@
     currentDetailId = id;
     const timeStr = post.time ? new Date(post.time).toLocaleString('zh-CN') : '未知';
     document.getElementById('detailBody').innerHTML = `
-      <div class="detail-row">
-        <div class="detail-label">板块 / 类型</div>
-        <div class="detail-value"><span class="type-badge badge-${post.type}">${typeEmoji(post.type)} ${post.type}</span></div>
-      </div>
+        <div class="detail-row">
+          <div class="detail-label">板块 / 类型</div>
+          <div class="detail-value"><span class="type-badge badge-${post.type}">${typeEmoji(post.type)} ${post.type}</span></div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">可见性</div>
+          <div class="detail-value">${post.visibility === 'self_only' ? '👁️ 仅自己可见' : '🌐 公开'}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">允许评论</div>
+          <div class="detail-value">${post.allowComments === false ? '❌ 不允许' : '✅ 允许'}</div>
+        </div>
       <div class="detail-row">
         <div class="detail-label">内容</div>
         <div class="detail-content">${escHtml(post.content||'')}</div>

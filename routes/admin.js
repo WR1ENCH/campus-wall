@@ -508,6 +508,17 @@ app.post('/api/admin/reports/:id/handle', requireAdmin, (req, res) => {
   if (handledResult === 'no_violation') {
     report.status = 'resolved';
     report.handledResult = 'no_violation';
+    // 敏感词自动举报：无违规则将帖子恢复为所有人可见
+    if (report.type && report.type.startsWith('sensitive_') && report.targetId) {
+      try {
+        const _posts = db.readPosts();
+        const _post = _posts.find(p => p.id === report.targetId);
+        if (_post && _post.visibility === 'self_only') {
+          _post.visibility = 'public';
+          db.writePosts(_posts);
+        }
+      } catch (e) { console.warn('[admin] 恢复帖子可见性失败:', e.message); }
+    }
     writeReports(reports);
     if (report.reportedBy) {
       penalty.emitUserNotice(report.reportedBy, '📋 举报已处理',

@@ -2393,11 +2393,31 @@
  <button class="modal-tag t-lost" data-tag="失物招领" onclick="selectTag(this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 失物招领</button>
  <button class="modal-tag t-event" data-tag="活动" onclick="selectTag(this)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 活动</button>
  </div>
- <div class="modal-anonymous" style="display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;color:#7a5a2a;cursor:pointer;">
- <input type="checkbox" id="anonymousPost" style="width:14px;height:14px;cursor:pointer;">
- <label for="anonymousPost" style="margin:0;cursor:pointer;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 匿名发布（不显示昵称和头像）</label>
- </div>
- <div class="modal-actions">
+  <div class="modal-anonymous" style="display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;color:#7a5a2a;cursor:pointer;">
+  <input type="checkbox" id="anonymousPost" style="width:14px;height:14px;cursor:pointer;">
+  <label for="anonymousPost" style="margin:0;cursor:pointer;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 匿名发布（不显示昵称和头像）</label>
+  </div>
+  <!-- 更多选项 -->
+  <div style="margin-top:8px;">
+    <button onclick="togglePostOptions()" style="background:none;border:none;color:#7a5a2a;font-size:12px;cursor:pointer;font-family:inherit;padding:4px 0;display:flex;align-items:center;gap:4px;" type="button">
+      <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg> 更多选项
+    </button>
+    <div id="postMoreOptions" style="display:none;margin-top:6px;padding:10px 12px;background:rgba(255,255,255,0.3);border-radius:6px;border:1px dashed rgba(90,74,0,0.2);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:#7a5a2a;">
+        <input type="checkbox" id="selfOnlyPost" style="width:14px;height:14px;cursor:pointer;">
+        <label for="selfOnlyPost" style="margin:0;cursor:pointer;">
+          <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#7a5a2a;">
+        <input type="checkbox" id="allowComments" checked style="width:14px;height:14px;cursor:pointer;">
+        <label for="allowComments" style="margin:0;cursor:pointer;">
+          <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 允许他人评论
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-actions">
  <button class="modal-cancel" onclick="closeModal()">算了</button>
  <button class="modal-submit" onclick="submitNote()">贴上去 <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg></button>
  </div>
@@ -2492,9 +2512,9 @@
  <button class="detail-report-btn" id="detailReportBtn" onclick="openReportModal()">
  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报
  </button>
- <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
- <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 查看评论
- </button>
+  <button class="detail-link-btn" id="detailLinkBtn" onclick="openDetailInNewWindow()">
+  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 查看详情
+  </button>
  </div>
  <div class="detail-comment-box" id="detailCommentBox" style="margin-top:12px;padding-top:12px;border-top:1.5px dashed rgba(0,0,0,0.1);">
  <div style="display:flex;gap:8px;">
@@ -4765,7 +4785,7 @@ function openNotifModal() {
  return t ? { 'x-user-token': t } : {};
  }
 
- async function createPost(type, content, sensitiveForce = false, isAnonymous = false) {
+  async function createPost(type, content, sensitiveForce = false, isAnonymous = false, visibility = 'public', allowComments = true) {
  if (!currentUser) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请先登录才能发帖'); return null; }
  const avatar = currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  const author = currentUser.nickname;
@@ -4775,7 +4795,7 @@ function openNotifModal() {
  const res = await fetch(API + '/api/posts', {
  method: 'POST',
  headers: { 'Content-Type': 'application/json', ...(token ? { 'x-user-token': token } : {}) },
- body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous })
+  body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous, visibility, allowComments })
  });
  const json = await res.json();
  if (json.ok) {
@@ -4783,7 +4803,7 @@ function openNotifModal() {
  }
  if (json.needCaptcha) {
  // 发帖频率过高 → 弹出验证码弹窗
- pendingPostData = { type, content, sensitiveForce, images: postImages.slice(), isAnonymous };
+  pendingPostData = { type, content, sensitiveForce, images: postImages.slice(), isAnonymous, visibility, allowComments };
  showPostCaptchaModal();
  return null;
  }
@@ -4878,7 +4898,7 @@ async function showPostCaptchaModal() {
  hidePostCaptchaModal();
  return;
  }
- const { type, content, sensitiveForce, images, isAnonymous } = pendingPostData;
+  const { type, content, sensitiveForce, images, isAnonymous, visibility, allowComments } = pendingPostData;
  try {
  const res = await fetch(API + '/api/posts', {
  method: 'POST',
@@ -4888,11 +4908,13 @@ async function showPostCaptchaModal() {
  avatar: currentUser.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
  author: currentUser.nickname,
  userId: currentUser.id,
- sensitiveForce,
- images: images || [],
- captchaId: _sliderCaptchaToken,
- captchaText: '1',
- isAnonymous
+  sensitiveForce,
+  images: images || [],
+  captchaId: _sliderCaptchaToken,
+  captchaText: '1',
+  isAnonymous,
+  visibility: visibility || 'public',
+  allowComments: allowComments !== false
  })
  });
  const json = await res.json();
@@ -5033,7 +5055,7 @@ async function showPostCaptchaModal() {
  data-id="${post.id}"
  onclick="openNoteDetail('${post.id}')">
  ${pinHtml}
-  <div class="note-type">${cfg.emoji} ${post.type}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
+   <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : ''}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
   <div class="note-content">${renderPostContent(post)}</div>
  <div class="note-footer" onclick="event.stopPropagation()">
  <div class="note-author">
@@ -5158,7 +5180,7 @@ async function showPostCaptchaModal() {
  const json = await res.json();
  if (json.ok) {
  input.value = '';
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论已发布！点击"查看评论"查看');
+ showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论已发布！');
  // 更新本地评论计数
  const post = posts.find(p => p.id === postId);
  if (post) {
@@ -5186,10 +5208,16 @@ async function showPostCaptchaModal() {
  inp.focus();
  // 更新字数
  document.getElementById('noteCount').textContent = '0';
- // 重置匿名复选框
- const anonChk = document.getElementById('anonymousPost');
- if (anonChk) anonChk.checked = false;
- }
+  // 重置匿名复选框
+  const anonChk = document.getElementById('anonymousPost');
+  if (anonChk) anonChk.checked = false;
+  // 重置更多选项
+  document.getElementById('postMoreOptions').style.display = 'none';
+  const selfOnlyChk = document.getElementById('selfOnlyPost');
+  if (selfOnlyChk) selfOnlyChk.checked = false;
+  const allowCommentsChk = document.getElementById('allowComments');
+  if (allowCommentsChk) allowCommentsChk.checked = true;
+  }
 
  // ===== 帖子详情弹窗（风格同登录窗口）=====
  let currentDetailId = null;
@@ -5288,9 +5316,26 @@ async function showPostCaptchaModal() {
  // 设置帖子ID（显示在左下角）
  document.getElementById('detailPostIdValue').textContent = post.id;
 
- currentDetailId = id;
- document.getElementById('detailCommentInput').value = '';
- document.getElementById('noteDetailOverlay').classList.add('show');
+  // 评论框状态：是否允许评论
+  const commentInput = document.getElementById('detailCommentInput');
+  const commentSubmitBtn = document.getElementById('detailCommentSubmitBtn');
+  if (post.allowComments === false) {
+    commentInput.placeholder = '本帖不允许评论';
+    commentInput.disabled = true;
+    commentSubmitBtn.disabled = true;
+    commentSubmitBtn.style.opacity = '0.5';
+    commentSubmitBtn.style.cursor = 'not-allowed';
+  } else {
+    commentInput.placeholder = '写下你的评论...';
+    commentInput.disabled = false;
+    commentSubmitBtn.disabled = false;
+    commentSubmitBtn.style.opacity = '';
+    commentSubmitBtn.style.cursor = '';
+  }
+
+  currentDetailId = id;
+  document.getElementById('detailCommentInput').value = '';
+  document.getElementById('noteDetailOverlay').classList.add('show');
  }
 
  function closeNoteDetail(e) {
@@ -5753,17 +5798,27 @@ async function showPostCaptchaModal() {
  closeReportModal();
  }
  });
- function closeModal(e) {
- if (e && e.target !== e.currentTarget) return;
- document.getElementById('modalOverlay').classList.remove('show');
- _selectedDiscussionId = null;
- // 清除输入，下次打开时重新预填 #
- document.getElementById('noteInput').value = '';
- document.getElementById('noteCount').textContent = '0';
- const anonChk = document.getElementById('anonymousPost');
- if (anonChk) anonChk.checked = false;
- hideDiscussionSuggest();
- }
+  function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('modalOverlay').classList.remove('show');
+  _selectedDiscussionId = null;
+  // 清除输入，下次打开时重新预填 #
+  document.getElementById('noteInput').value = '';
+  document.getElementById('noteCount').textContent = '0';
+  const anonChk = document.getElementById('anonymousPost');
+  if (anonChk) anonChk.checked = false;
+  document.getElementById('postMoreOptions').style.display = 'none';
+  const selfOnlyChk = document.getElementById('selfOnlyPost');
+  if (selfOnlyChk) selfOnlyChk.checked = false;
+  const allowCommentsChk = document.getElementById('allowComments');
+  if (allowCommentsChk) allowCommentsChk.checked = true;
+  hideDiscussionSuggest();
+  }
+
+  function togglePostOptions() {
+    const el = document.getElementById('postMoreOptions');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
 
   // 发帖字数实时统计 & #话题自动补全
   var _suggestTimer = null;
@@ -5905,10 +5960,14 @@ async function showPostCaptchaModal() {
  if (content.length > 50) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容超过 50 字限制，请精简后发送'); return; }
  if (hasSpecialChars(content)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容包含特殊字符，请移除后重试'); return; }
 
- const anonChk = document.getElementById('anonymousPost');
- const isAnonymous = anonChk ? anonChk.checked : false;
+  const anonChk = document.getElementById('anonymousPost');
+  const isAnonymous = anonChk ? anonChk.checked : false;
+  const selfOnlyChk = document.getElementById('selfOnlyPost');
+  const visibility = selfOnlyChk && selfOnlyChk.checked ? 'self_only' : 'public';
+  const allowCommentsChk = document.getElementById('allowComments');
+  const allowComments = allowCommentsChk ? allowCommentsChk.checked : true;
 
- const newPost = await createPost(currentTag, content, false, isAnonymous);
+  const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments);
  if (newPost) {
  newPost.time = '刚刚';
  newPost.rotate = rand(-4, 4);
@@ -5969,12 +6028,13 @@ async function showPostCaptchaModal() {
   overlay.innerHTML = `
   <div class="dialog-anim" style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
   <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
- <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
- 安全检测系统发现你编辑的内容包含违禁内容<br>
- 如果继续发送，本帖会被标记并等待审核<br>
- 守护校园墙环境是所有用户的责任<br>
- 对于确有违规行为将被处罚
- </p>
+  <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
+  安全检测系统发现你编辑的内容包含违禁内容<br>
+  如果继续发送，本帖会被标记并等待审核<br>
+  如果你继续发送，帖子在审核通过前<b>仅你可见</b><br>
+  守护校园墙环境是所有用户的责任<br>
+  对于确有违规行为将被处罚
+  </p>
  <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
  <button id="btnWarnEdit" style="padding:12px 28px;background:#d32f2f;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(211,47,47,0.35);">返回编辑</button>
  <button id="btnWarnContinue" style="padding:12px 28px;background:#e0e0e0;color:#666;border:none;border-radius:10px;font-size:15px;cursor:pointer;">继续发送</button>
