@@ -281,6 +281,10 @@ if (!content || !content.trim()) {
     });
   }
 
+  // 敏感词继续发送：帖子在审核通过前仅自己可见
+  const finalVisibility = (hasSensitive && visibility !== 'self_only') ? 'self_only' : (visibility === 'self_only' ? 'self_only' : 'public');
+  const finalAllowComments = allowComments !== false;
+
   const newPost = {
     id: uniqueId.generateId('POST'),
     type,
@@ -297,7 +301,9 @@ if (!content || !content.trim()) {
     rotate: (Math.random() - 0.5) * 8,
     zIndex: Math.floor(Math.random() * 5) + 1,
     images: validImages.length > 0 ? validImages : undefined,
-    isAnonymous: anonymousFlag || undefined
+    isAnonymous: anonymousFlag || undefined,
+    visibility: finalVisibility,
+    allowComments: finalAllowComments
   };
 
   posts.unshift(newPost);
@@ -326,18 +332,9 @@ if (!content || !content.trim()) {
       }
       finalSyncDiscussionId = _disc.id;
       newPost.discussionId = _disc.id;
-      // 写回 posts 以保存 discussionId
       writePosts(posts);
     }
   }
-
-  // 敏感词继续发送：帖子在审核通过前仅自己可见
-  if (hasSensitive && visibility !== 'self_only') {
-    newPost.visibility = 'self_only';
-  } else {
-    newPost.visibility = visibility === 'self_only' ? 'self_only' : 'public';
-  }
-  newPost.allowComments = allowComments !== false;
 
   // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
@@ -535,7 +532,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!post) {
     return res.json({ ok: false, msg: '帖子不存在' });
   }
-  if (post.allowComments === false) {
+  if (!post.allowComments) {
     return res.json({ ok: false, msg: '本帖不允许评论', code: 'COMMENTS_DISABLED' });
   }
   if (!Array.isArray(post.comments)) post.comments = [];

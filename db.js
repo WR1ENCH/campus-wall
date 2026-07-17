@@ -145,8 +145,13 @@ function migrate() {
     "zIndex" INTEGER DEFAULT 0,
     "liked" TEXT,
     "deletedAt" TEXT,
-    "deletedBy" TEXT
+    "deletedBy" TEXT,
+    "visibility" TEXT DEFAULT 'public',
+    "allowComments" INTEGER DEFAULT 1
   )`);
+  // 兼容旧表：后续新增字段通过 ALTER TABLE 追加（忽略重复列错误）
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "visibility" TEXT DEFAULT 'public'`); } catch(e) {}
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "allowComments" INTEGER DEFAULT 1`); } catch(e) {}
   db.exec(`CREATE TABLE IF NOT EXISTS "login_logs" (
     "id" TEXT PRIMARY KEY,
     "type" TEXT,
@@ -501,11 +506,16 @@ function migrate() {
 
 // ---- helpers ----
 function tryParse(v) {
+  if (typeof v === 'number') {
+    if (v === 1) return true;
+    if (v === 0) return false;
+    return v;
+  }
   if (typeof v !== 'string') return v;
-  if (v === 'true') return true;
-  if (v === 'false') return false;
-  if (v === '1') return true;
-  if (v === '0') return false;
+  if (v === 'true' || v === '1') return true;
+  if (v === 'false' || v === '0') return false;
+  if (v === '0.0') return false;
+  if (v === '1.0') return true;
   // 长数字串（>15 位）是 ID/UID，不做数值转换避免科学记数法
   if (v.length > 15 && /^\d+$/.test(v)) return v;
   // 解析数字字符串
@@ -535,7 +545,7 @@ function all(table) {
 
 function toSqlValue(v) {
   if (v === null || v === undefined) return null;
-  if (typeof v === 'boolean') return v ? 1 : 0;
+  if (typeof v === 'boolean') return v ? '1' : '0';
   if (typeof v === 'object') return JSON.stringify(v);
   return v;
 }

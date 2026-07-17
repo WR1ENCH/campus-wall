@@ -1341,3 +1341,20 @@ server.js
 #### Todo（不提交）
 
 `todo.md` 已写入测试清单（不提交到 git）。
+
+### 会话 13 — 2026-07-17 — 修复 visibility 和 allowComments 未持久化
+
+#### 根因分析
+
+`routes/posts.js` 创建帖子的 `POST /api/posts` 中，`visibility` 和 `allowComments` 属性在线 284-301 创建 `newPost` 对象时**未包含**，而是在 **首次 `writePosts(posts)`（line 304）之后**的 line 334-340 才赋值到内存对象。由于此后没有第二次 `writePosts(posts)`，这两个字段**从未写入数据库**。
+
+#### 影响
+
+- `visibility` 始终为 `undefined`（数据库无此列值 → `NULL`），导致 **`GET /api/posts` 列表不过滤 `self_only` 帖子**、**`GET /api/posts/:id` 不拦截非作者查看**
+- `allowComments` 始终为 `undefined`，导致 **`POST /api/posts/:id/comments` 的 `allowComments===false` 检查永不触发**、前端始终显示评论输入框
+
+#### 修复
+
+| 文件 | 改动 |
+|------|------|
+| `routes/posts.js` | 将 visibility/allowComments 计算移到 `newPost` 创建之前，把 `finalVisibility` 和 `finalAllowComments` 直接纳入 `newPost` 对象，在第一个 `writePosts(posts)` 时即持久化。移除后续重复赋值。
