@@ -6423,9 +6423,9 @@ async function showPostCaptchaModal() {
  '<div style="flex:1;">' +
  '<div class="content-time">' + escHtml(item.slotLabel) + '</div>' +
  '<div class="content-text">' + escHtml(item.content) + '</div>' +
- '<div class="content-user"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escHtml(item.username) + ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> ' + item.amount + ' Credits</div>' +
- '</div>' +
-  (reported ?
+  '<div class="content-user"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escHtml(item.username) + ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> ' + item.amount + ' Credits <span style="font-size:10px;color:#bbb;font-family:monospace;margin-left:4px;">' + item.bidId + '</span></div>' +
+  '</div>' +
+   (reported ?
   '<button class="pickup-content-report-btn reported" disabled>已举报</button>' :
   '<button class="pickup-content-report-btn" onclick="openAuctionReportModal(\'' + item.bidId + '\',\'' + escJsStr(escHtml(item.content)) + '\',\'' + escJsStr(escHtml(item.slotLabel)) + '\',\'' + escJsStr(escHtml(item.username)) + '\')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> 举报</button>') +
  '</div>';
@@ -6445,10 +6445,10 @@ async function showPostCaptchaModal() {
  if (!json.data) {
  // 当前时段无中标内容 → 显示欢迎语
  text = icon + ' 欢迎来到校园墙 <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
- } else {
- const user = json.data.anonymous ? '匿名用户' : json.data.username;
- text = icon + ' ' + user + '：' + json.data.content;
- }
+  } else {
+  const user = json.data.anonymous ? '匿名用户' : json.data.username;
+  text = icon + ' [' + json.data.bidId + '] ' + user + '：' + json.data.content;
+  }
    // 动态计算副本数，确保总宽度 > 2×轨道宽度，实现无缝循环滚动
   const track = scrollDiv.closest('.pickup-track');
   const tempSpan = document.createElement('span');
@@ -6996,11 +6996,11 @@ async function showPostCaptchaModal() {
  '<span style="font-size:22px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>' +
  '<div style="flex:1;min-width:0;">' +
  '<div style="font-weight:600;font-size:14px;color:#333;word-break:break-word;">' + escHtml(q.title) + '</div>' +
- '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + '</div>' +
- '</div>' +
- '</div>' +
- '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
-  badge + bountyHtml + deadline +
+  '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + ' <span style="font-size:10px;color:#bbb;font-family:monospace;">' + q.id + '</span></div>' +
+  '</div>' +
+  '</div>' +
+  '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+   badge + bountyHtml + deadline +
   (currentUser ? '<button class="qa-report-btn" onclick="event.stopPropagation();reportQAQuestion(\'' + q.id + '\')" title="举报问题"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>' : '') +
   '<span style="color:#888;font-size:11px;margin-left:auto;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + (q.answerCount || 0) + ' 条回答</span>' +
   '</div>' +
@@ -7030,9 +7030,9 @@ async function showPostCaptchaModal() {
  html += '<span style="font-size:28px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
  html += '<div style="flex:1;">';
  html += '<div style="font-size:16px;font-weight:700;color:#333;word-break:break-word;">' + escHtml(q.title) + '</div>';
- html += '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + '</div>';
- html += '</div></div>';
- if (q.content) html += '<div style="font-size:14px;color:#555;word-break:break-word;white-space:pre-wrap;margin-bottom:10px;">' + escHtml(q.content) + '</div>';
+  html += '<div style="font-size:12px;color:#999;margin-top:2px;">' + escHtml(q.author) + ' · ' + formatQATime(q.createdAt) + ' <span style="font-size:10px;color:#bbb;font-family:monospace;">' + q.id + '</span></div>';
+  html += '</div></div>';
+  if (q.content) html += '<div style="font-size:14px;color:#555;word-break:break-word;white-space:pre-wrap;margin-bottom:10px;">' + escHtml(q.content) + '</div>';
  if (q.images && q.images.length) {
  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' + q.images.map(img => '<img src="' + img + '" style="height:80px;border-radius:8px;cursor:pointer;object-fit:cover;" onclick="showQAImgPreview(\'' + img + '\')">').join('') + '</div>';
  }
@@ -7089,7 +7089,7 @@ async function showPostCaptchaModal() {
  html += '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">';
  html += '<span style="font-size:20px;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
  html += '<div style="flex:1;">';
- html += '<div style="font-size:12px;color:#555;font-weight:600;">' + escHtml(a.author) + ' · <span style="color:#aaa;font-weight:400;">' + formatQATime(a.createdAt) + '</span></div>';
+  html += '<div style="font-size:12px;color:#555;font-weight:600;">' + escHtml(a.author) + ' · <span style="color:#aaa;font-weight:400;">' + formatQATime(a.createdAt) + '</span> <span style="font-size:10px;color:#bbb;font-family:monospace;">' + a.id + '</span></div>';
  html += '<div style="font-size:14px;color:#333;word-break:break-word;white-space:pre-wrap;margin-top:4px;">' + escHtml(a.content) + '</div>';
  if (a.images && a.images.length) {
  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' + a.images.map(img => '<img src="' + img + '" style="height:70px;border-radius:8px;cursor:pointer;object-fit:cover;" onclick="showQAImgPreview(\'' + img + '\')">').join('') + '</div>';
@@ -7616,7 +7616,7 @@ function escJsStr(s) {
     const badge = d.official ? '<span class="official-badge" title="官方认证"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b6f5e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>已认证</span>' : '';
     return `<div class="discussion-topic" onclick="showDiscussion('${d.id}')">
     <h4>${escHtml(d.title)}</h4>
-    <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}${badge}${reportBtn}</div>
+    <div class="discussion-topic-meta"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${d.commentCount || 0} 条讨论 · 截止：${expires}${badge}${reportBtn} <span style="font-size:11px;color:#bbb;font-family:monospace;margin-left:4px;">${d.id}</span></div>
     </div>`;
    }).join('');
   }
@@ -7687,14 +7687,15 @@ function escJsStr(s) {
  const isOwner = currentUser && c.userId === currentUser.id;
  const deleteBtn = isOwner ? `<button class="delete-btn" onclick="deleteDiscussionComment('${c.id}')">删除</button>` : '';
  const replyBtn = currentUser ? `<button class="reply-btn" onclick="setReplyTo('${c.id}')">回复</button>` : '';
- const reportBtn = currentUser ? `<button class="report-btn" onclick="reportDiscussionComment('${c.id}')">举报</button>` : '';
- let html = `<div class="discussion-comment">
- <div class="discussion-comment-header">
- <span class="discussion-comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>
- <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
- <span class="discussion-comment-time">${timeStr}</span>
- </div>
- <div class="discussion-comment-content">${escHtml(c.content)}</div>
+  const reportBtn = currentUser ? `<button class="report-btn" onclick="reportDiscussionComment('${c.id}')">举报</button>` : '';
+  let html = `<div class="discussion-comment">
+  <div class="discussion-comment-header">
+  <span class="discussion-comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>
+  <span class="discussion-comment-author">${escHtml(c.author || '匿名')}</span>
+  <span class="discussion-comment-time">${timeStr}</span>
+  <span style="font-size:10px;color:#bbb;font-family:monospace;margin-left:auto;">${c.id}</span>
+  </div>
+  <div class="discussion-comment-content">${escHtml(c.content)}</div>
  <div class="discussion-comment-actions">
  ${replyBtn}${deleteBtn}${reportBtn}
  </div>

@@ -422,7 +422,7 @@ function migrate() {
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous'] },
     { name: 'votes', columns: ['allowCustom'] },
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
-    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName'] },
+    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
     { name: 'discussions', columns: ['official'] },
