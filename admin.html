@@ -4292,7 +4292,7 @@
         </div>
         <div class="detail-row">
           <div class="detail-label">允许评论</div>
-          <div class="detail-value">${post.allowComments === false ? '❌ 不允许' : '✅ 允许'}</div>
+          <div class="detail-value">${!post.allowComments ? '❌ 不允许' : '✅ 允许'}</div>
         </div>
       <div class="detail-row">
         <div class="detail-label">内容</div>
