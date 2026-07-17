@@ -636,6 +636,12 @@
       .use-cases { grid-template-columns: 1fr; }
       .footer__inner { flex-direction: column; text-align: center; }
       .footer__links { flex-wrap: wrap; justify-content: center; }
+      .hero__lens { opacity: 0.7; }
+    }
+
+    /* Disable expensive effects for users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .hero__lens { display: none; }
     }
   </style>
 </head>
@@ -853,11 +859,14 @@
       var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
       if (!gl) { container.style.display = 'none'; return; }
 
+      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      var renderScale = isMobile ? 0.5 : 1;
+
       function resize() {
         var rect = container.getBoundingClientRect();
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+        var dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+        canvas.width = Math.floor(rect.width * dpr * renderScale);
+        canvas.height = Math.floor(rect.height * dpr * renderScale);
         gl.viewport(0, 0, canvas.width, canvas.height);
       }
       resize();
@@ -871,9 +880,9 @@
         }
       `;
 
-      // Fragment shader — ENHANCED lens refraction with strong light/shadow
+      // Fragment shader — OPTIMIZED for mobile: fewer noise calls, mediump precision
       var fsSource = `
-        precision highp float;
+        precision mediump float;
         uniform float uTime;
         uniform vec2 uResolution;
 
@@ -911,69 +920,41 @@
           vec2 uvCenter = uv - 0.5;
           float t = uTime * 0.12;
 
-          // ===== STRONGER DISTORTION =====
+          // Reduced noise layers: 3 → 2 for mobile
           float n1 = snoise(uvCenter * 1.8 + t * 0.8) * 0.6;
           float n2 = snoise(uvCenter * 2.5 - t * 0.5 + 10.0) * 0.4;
-          float n3 = snoise(uvCenter * 1.2 + t * 0.3 + 20.0) * 0.5;
-          float distortion = n1 + n2 + n3;
+          float distortion = n1 + n2;
 
-          // ===== CHROMATIC ABERRATION — stronger =====
-          float caStrength = 0.015 + abs(distortion) * 0.025;
-          vec2 caOffset = vec2(distortion * caStrength, distortion * caStrength * 0.6);
+          // Simplified chromatic: single noise for color blend
+          float blend = snoise(uvCenter * 2.2 + t) * 0.5 + 0.5;
 
-          // ===== RGB CHANNELS WITH SEPARATE NOISE =====
-          float rVal = snoise(uvCenter * 2.2 + t + caOffset * 1.5) * 0.5 + 0.5;
-          float gVal = snoise(uvCenter * 2.2 + t * 1.1 - caOffset * 0.8) * 0.5 + 0.5;
-          float bVal = snoise(uvCenter * 2.2 + t * 0.9 + caOffset * 1.0) * 0.5 + 0.5;
-
-          // ===== BRIGHTER COLORS =====
+          // Color palette
           vec3 mintGreen = vec3(0.514, 0.910, 0.584);
           vec3 amberGold = vec3(1.0, 0.702, 0.251);
           vec3 coralOrange = vec3(1.0, 0.518, 0.412);
 
-          // ===== WIDER COLOR BLEND =====
-          float blend = rVal * 0.4 + gVal * 0.35 + bVal * 0.25;
           vec3 color;
-          if (blend < 0.25) {
-            color = mix(mintGreen, amberGold, blend * 4.0);
-          } else if (blend < 0.5) {
-            color = mix(amberGold, coralOrange, (blend - 0.25) * 4.0);
-          } else if (blend < 0.75) {
-            color = mix(coralOrange, mintGreen, (blend - 0.5) * 4.0);
+          if (blend < 0.33) {
+            color = mix(mintGreen, amberGold, blend * 3.0);
+          } else if (blend < 0.66) {
+            color = mix(amberGold, coralOrange, (blend - 0.33) * 3.0);
           } else {
-            color = mix(mintGreen, amberGold, (blend - 0.75) * 4.0);
+            color = mix(coralOrange, mintGreen, (blend - 0.66) * 3.0);
           }
 
-          // ===== MUCH STRONGER ALPHA — 3x brighter =====
+          // Alpha: base + single caustic + fresnel
           float alpha = smoothstep(0.2, 0.8, blend) * 0.35;
 
-          // ===== STRONG CAUSTIC PATTERNS =====
-          float caustic1 = snoise(uvCenter * 4.0 + t * 1.2) * 0.5 + 0.5;
-          caustic1 = pow(caustic1, 2.0);
-          alpha += caustic1 * 0.15;
+          float caustic = snoise(uvCenter * 4.0 + t * 1.2) * 0.5 + 0.5;
+          caustic = caustic * caustic;
+          alpha += caustic * 0.15;
 
-          float caustic2 = snoise(uvCenter * 6.0 - t * 0.8 + 5.0) * 0.5 + 0.5;
-          caustic2 = pow(caustic2, 1.5);
-          alpha += caustic2 * 0.1;
-
-          // ===== INTENSE EDGE GLOW =====
           float dist = length(uvCenter);
-          float fresnel = pow(1.0 - dist * 1.0, 3.0);
+          float fresnel = pow(1.0 - dist, 3.0);
           alpha += fresnel * 0.12;
 
-          // ===== BRIGHT CENTER SPOTLIGHT =====
           float spot = exp(-dist * 3.0);
           alpha += spot * 0.08;
-
-          // ===== ADDITIONAL BLOOM LAYER =====
-          float bloom = snoise(uvCenter * 1.0 + t * 0.4) * 0.5 + 0.5;
-          bloom = pow(bloom, 1.5);
-          alpha += bloom * 0.06;
-
-          // ===== ANIMATED LIGHT BEAMS =====
-          float beam = sin(uvCenter.x * 8.0 + t * 2.0 + distortion * 3.0) * 0.5 + 0.5;
-          beam *= sin(uvCenter.y * 6.0 - t * 1.5 + distortion * 2.0) * 0.5 + 0.5;
-          alpha += beam * 0.04;
 
           // Soft edge fade
           alpha *= smoothstep(0.0, 0.15, uv.x) * smoothstep(1.0, 0.85, uv.x);
@@ -1025,15 +1006,46 @@
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
       var startTime = Date.now();
+      var lastFrameTime = 0;
+      var frameInterval = isMobile ? 1000 / 30 : 1000 / 60; // 30fps on mobile, 60fps desktop
+      var isVisible = true;
 
-      function render() {
+      // Pause rendering when tab/hero is not visible
+      document.addEventListener('visibilitychange', function() {
+        isVisible = !document.hidden;
+        if (isVisible) {
+          lastFrameTime = 0; // reset to avoid time jump
+          requestAnimationFrame(render);
+        }
+      });
+
+      // Intersection Observer to pause when hero scrolls out of view
+      var heroEl = document.getElementById('hero');
+      if ('IntersectionObserver' in window) {
+        var visibilityObserver = new IntersectionObserver(function(entries) {
+          isVisible = entries[0].isIntersecting;
+          if (isVisible) {
+            lastFrameTime = 0;
+            requestAnimationFrame(render);
+          }
+        }, { threshold: 0 });
+        visibilityObserver.observe(heroEl);
+      }
+
+      function render(ts) {
+        if (!isVisible) return;
+        requestAnimationFrame(render);
+
+        // Frame rate limiting
+        if (ts - lastFrameTime < frameInterval) return;
+        lastFrameTime = ts;
+
         var time = (Date.now() - startTime) * 0.001;
         gl.uniform1f(uTime, time);
         gl.uniform2f(uRes, canvas.width, canvas.height);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        requestAnimationFrame(render);
       }
-      render();
+      requestAnimationFrame(render);
     })();
   </script>
 

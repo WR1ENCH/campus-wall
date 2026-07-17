@@ -1,272 +1,402 @@
-# 📌 校园墙 (Campus Wall)
+# Campus Wall - 校园匿名留言板系统
 
-<p align="center"><i>powered by wr1Ench</i><br>
-  <b><i>自由主义万岁</i></b></p>
+一个现代化的中学校园匿名留言板系统，支持发帖、评论、点赞、讨论区、QA悬赏问答、投票、校园通知、失物/捡漏拍卖、霸凌举报、反馈、实名认证、积分体系等功能。
 
-一个简洁优雅的校园匿名留言板系统，支持发帖、点赞、评论、举报、讨论区、QA问答、霸凌举报，以及完整的内容管理后台。
+## 🚀 核心功能详解
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-green) ![Express](https://img.shields.io/badge/Express-4.x-blue) ![License](https://img.shields.io/badge/License-GPL%20V3-yellow)
+### 1. 用户系统
 
----
+**功能特点**:
+- 用户注册与登录（支持普通注册和智学网认证）
+- 个人资料管理（昵称、头像、简介等）
+- 智学网实名认证
+- 信任浏览器功能（自动登录）
+- 每日签到（获得积分奖励）
+- 用户搜索和资料查看
 
-## 📋 目录
+**使用方法**:
+- 注册：首页点击"注册"按钮，填写用户名、密码、昵称
+- 登录：首页输入账号密码登录
+- 智学认证：登录后进入个人页面，点击"智学认证"
+- 签到：每日首次访问首页可进行签到
 
-- [1. 前台主页面](#1-前台主页面)
-- [2. 发帖功能](#2-发帖功能)
-- [3. 帖子详情与评论](#3-帖子详情与评论)
-- [4. 用户注册与登录](#4-用户注册与登录)
-- [5. 用户主页与资料编辑](#5-用户主页与资料编辑)
-- [6. 同学认证](#6-同学认证)
-- [7. 讨论区](#7-讨论区)
-- [8. QA 问答悬赏](#8-qa-问答悬赏)
-- [9. 举报系统](#9-举报系统)
-- [10. 霸凌举报](#10-霸凌举报)
-- [11. 管理后台](#11-管理后台)
-- [12. 安全防护](#12-安全防护)
-- [技术栈与部署](#技术栈与部署)
+**相关API**:
+- `POST /api/user/register` - 用户注册
+- `POST /api/user/login` - 用户登录
+- `POST /api/user/zhixue-login` - 智学网登录
+- `GET /api/user/me` - 获取当前用户信息
+- `PATCH /api/user/me` - 修改个人资料
+- `POST /api/user/checkin` - 每日签到
 
----
+### 2. 帖子系统
 
-## 1. 前台主页面
+**功能特点**:
+- 匿名发帖（可选）
+- 帖子点赞和取消点赞
+- 评论功能（支持嵌套评论）
+- 帖子举报系统
+- 敏感词自动检测
+- 热度计算和排序
+- 帖子置顶功能
 
-拟物化砖墙风格设计，便利贴式帖子卡片。支持按板块筛选（日常、表白、树洞、失物招领、活动）、关键词搜索、时间排序。帖子卡片展示内容预览、点赞数、评论数、发布时间。点击卡片可以查看详情
-![alt text](image-2.png)
+**使用方法**:
+- 发帖：首页点击"发帖"按钮，填写标题和内容
+- 点赞：点击帖子下方的点赞按钮
+- 评论：在帖子详情页点击"评论"按钮
+- 举报：在帖子或评论下方点击"举报"按钮
 
----
+**相关API**:
+- `POST /api/posts` - 创建帖子
+- `GET /api/posts` - 获取帖子列表
+- `GET /api/posts/:id` - 获取帖子详情
+- `POST /api/posts/:id/like` - 点赞/取消点赞
+- `POST /api/posts/:id/comments` - 添加评论
+- `POST /api/posts/:id/report` - 举报帖子
 
-## 2. 发帖功能
+### 3. 讨论区
 
-支持五大板块发布：日常、表白、树洞、失物招领、活动。发布时接入敏感词检测与 PoW 五秒盾校验，含敏感词时弹窗警告，用户确认后仍可继续发送。发帖频率限制：5分钟内最多3帖，超出需完成验证码。
+**功能特点**:
+- 创建讨论话题
+- 参与讨论
+- 讨论区举报
+- 话题置顶和删除
+- 讨论频率限制（1分钟最多5次）
 
----
+**使用方法**:
+- 创建话题：讨论区页面点击"创建话题"按钮
+- 参与讨论：在话题详情页添加评论
+- 举报：在讨论或评论下方点击"举报"按钮
 
-## 3. 帖子详情与评论
+**相关API**:
+- `POST /api/discussions` - 创建讨论话题
+- `GET /api/discussions` - 获取讨论列表
+- `GET /api/discussions/:id/comments` - 获取讨论评论
+- `POST /api/discussions/:id/comments` - 添加讨论评论
+- `POST /api/discussions/:id/report` - 举报讨论
 
-点击便利贴卡片弹出帖子详情弹窗，展示完整内容、点赞数、评论列表。支持对帖子点赞、发布评论、对评论点赞、举报评论。评论同样经过敏感词检测与 PoW 校验。
-![alt text](image-15.png)
-![alt text](image-16.png)
+### 4. QA悬赏问答
 
----
+**功能特点**:
+- 提问悬赏积分
+- 回答问题
+- 采纳最佳答案
+- 答案点赞
+- 悬赏发放
 
-## 4. 用户注册与登录
+**使用方法**:
+- 提问：你问我答页面点击"提问"按钮，设置悬赏积分
+- 回答：在问题详情页点击"回答"按钮
+- 采纳：问题发布者点击"采纳"按钮选择最佳答案
+- 发放悬赏：采纳答案后点击"发放悬赏"
 
-支持两种登录方式：
-- **普通登录**：用户名 + 密码
-- **智学登录**：已认证智学网账号 + 校园墙密码，支持忘记密码重置
+**相关API**:
+- `POST /api/qa/questions` - 提问
+- `GET /api/qa/questions` - 获取问题列表
+- `POST /api/qa/questions/:id/answers` - 回答问题
+- `POST /api/qa/questions/:id/accept/:aid` - 采纳答案
+- `GET /api/qa/questions/:id/reward` - 发放悬赏
 
-注册时需完成图形验证码（svg-captcha），密码使用 PBKDF2 100,000 次迭代哈希存储。
-![alt text](image-3.png)![alt text](image-4.png)![alt text](image-5.png)
+### 5. 投票系统
 
----
+**功能特点**:
+- 创建投票
+- 多选投票支持
+- 投票结束时间设置
+- 投票结果查看
+- IP去重防刷票
 
-## 5. 用户主页与资料编辑
+**使用方法**:
+- 创建投票：投票页面点击"创建投票"按钮
+- 参与投票：在投票详情页选择选项并提交
+- 结束投票：投票创建者或管理员可结束投票
 
-每个用户拥有独立主页，展示头像、昵称、加入时间、发帖统计及历史帖子。登录用户查看自己主页时可编辑资料：修改昵称、上传头像（JPG/PNG，500KB 以内，base64 存储）。
-![alt text](image-10.png)
+**相关API**:
+- `POST /api/votes` - 创建投票
+- `GET /api/votes` - 获取投票列表
+- `POST /api/votes/:id/vote` - 投票
+- `POST /api/votes/:id/end` - 结束投票
 
----
+### 6. 校园通知
 
-## 6. 同学认证
+**功能特点**:
+- 发布校园通知
+- 通知置顶和删除
+- 通知同步到墙
+- 通知发布申请（需审核）
+- 多级通知（T1/T2等）
 
-用户可通过两种方式完成同学认证：
-- **智学网认证**：输入智学网账号 + 证明材料，管理员后台审核
-- **手动认证**：填写真实姓名（必填）+ 班级（选填）+ 上传证明材料
+**使用方法**:
+- 发布通知：通知页面点击"发布通知"按钮
+- 置顶通知：管理员可在后台置顶
+- 申请发布权限：普通用户可申请通知发布权限
 
-认证信息密文存储，审核状态分为待审核 / 已认证 / 已拒绝。已认证用户可使用智学登录和忘记密码功能。
-![alt text](image-9.png)
+**相关API**:
+- `POST /api/notices` - 发布通知
+- `GET /api/notices` - 获取通知列表
+- `POST /api/notices/:id/pin` - 置顶通知
+- `POST /api/notice-account/apply` - 申请通知发布权限
 
----
+### 7. 失物/捡漏拍卖
 
-## 7. 讨论区
+**功能特点**:
+- 发布失物招领信息
+- 发布捡漏拍卖信息
+- 出价竞拍
+- 拍卖内容审核
+- 拍卖举报处理
 
-支持创建讨论话题（最多 3 个活跃话题），可设置截止时间。话题下支持嵌套评论回复，评论可删除自己的内容和收到的回复。讨论内容同样经过敏感词检测。
-![alt text](image-11.png)
+**使用方法**:
+- 发布信息：失物/捡漏页面点击"发布"按钮
+- 出价：在拍卖详情页点击"出价"按钮
+- 审核通过：管理员审核拍卖内容
 
----
+**相关API**:
+- `POST /api/pickup/bid` - 出价
+- `GET /api/pickup/auctions` - 获取拍卖列表
+- `POST /api/pickup/report-content/:bidId` - 举报拍卖内容
+- `POST /api/admin/pickup/review/:bidId` - 审核拍卖
 
-## 8. QA 问答悬赏
+### 8. 霸凌举报
 
-用户可发布悬赏提问，设置 Credits 额度。问题无截止时间限制，支持多人回答。提问者可在「我的提问」中查看所有提问，为满意的回答分配悬赏 Credits，也可不发放。无悬赏问题不触发任何 Credits 相关功能。提问和回答均经过敏感词检测与 PoW 校验。
-![alt text](image-12.png)
-![alt text](image-13.png)
+**功能特点**:
+- 霸凌事件举报
+- 目击者举报支持
+- 紧急模式（当事人举报）
+- 涉事用户列表
+- 相关内容关联
+- 霸凌处理结果
 
----
+**使用方法**:
+- 举报：霸凌举报页面填写举报信息
+- 添加涉事用户：搜索并添加涉事用户
+- 提交举报：填写完整信息后提交
 
-## 9. 举报系统
+**相关API**:
+- `POST /api/bullying-report` - 提交霸凌举报
+- `GET /api/admin/bullying` - 获取霸凌举报列表
+- `POST /api/admin/bullying/:id/process` - 处理霸凌举报
 
-支持举报帖子、评论、讨论评论。举报时需选择举报原因，可选上传截图（最多 3 张，每张 ≤ 2MB）。举报记录在后台统一处理，管理员可删除违规内容或警告用户。
-![alt text](image-14.png)
-![alt text](image-19.png)
+### 9. 反馈系统
 
----
+**功能特点**:
+- 用户反馈提交
+- 反馈状态跟踪
+- 反馈处理通知
 
-## 10. 霸凌举报
+**使用方法**:
+- 提交反馈：反馈页面填写反馈内容
+- 查看状态：在个人页面查看反馈处理状态
 
-独立的网络霸凌举报系统，专门处理平台内霸凌行为。支持草稿自动保存与离开确认，防止意外丢失填写内容。后台统一审核处理。
-反霸凌机制自动介入，保护用户免受霸凌攻击。
-![alt text](image-17.png)
-![alt text](image-18.png)
+**相关API**:
+- `POST /api/feedback` - 提交反馈
 
----
+### 10. 处罚机制
 
-## 11. 管理后台
+**功能特点**:
+- 两级处罚系统（T0全面限制/T1部分限制）
+- 处罚自动过期
+- 处罚叠加规则
+- 申诉处理
+- 处罚证据快照
 
-功能完整的后台管理系统，包括：
+**使用方法**:
+- 处罚通知：被处罚用户会收到通知
+- 查看详情：在安全中心查看处罚信息
+- 提交申诉：在处罚详情页提交申诉
 
-| 模块 | 功能 |
-|------|------|
-| 📊 数据看板 | 帖子总数、今日/本周发帖、累计点赞、近7天趋势图、板块分布图 |
-| 👥 用户管理 | 用户列表、封禁/解封、密码重置、用户详情（含认证信息、历史发帖、举报记录） |
-| 🚩 举报处理 | 举报列表查看、帖子/评论删除、用户警告 |
-| 🎓 认证审核 | 智学网认证和手动认证的审核（通过/拒绝） |
-| 💬 讨论管理 | 讨论话题管理、评论查看与删除 |
-| 🚫 敏感词管理 | 手动添加/删除违禁词，自动过滤并记录举报 |
-| 😢 霸凌处理 | 霸凌举报列表查看与处理 |
-| 🔐 管理员设置 | 首次初始化管理员、修改密码（需验证旧密码） |
-| 🗑️ 批量操作 | 批量选择、批量删除帖子 |
-![alt text](image-22.png)
----
-## 12. 人机防御
-利用PoW盾以及工作量证明技术，防止自动化攻击和恶意注册。
+**相关API**:
+- `GET /api/user/punishments` - 获取用户处罚
+- `POST /api/user/punishments/:id/appeal` - 提交申诉
+- `GET /api/admin/punishments` - 获取处罚列表
 
-基于 Web Crypto API，difficulty 16-20，全员必经验证方可操作
-![alt text](image-6.png)
----
+### 11. 信用分系统
 
-## 13. 安全防护
+**功能特点**:
+- 用户行为评分体系
+- 信用分 thresholds 控制功能权限
+- Credit兑换信用分
+- 信用分日志记录
+- 季度重置机制
 
-多层级安全防护体系：
+**使用方法**:
+- 查看信用分：在安全中心查看信用分信息
+- 兑换信用分：使用积分兑换信用分
+- 查看日志：查看信用分变动记录
 
-| 层级 | 措施 | 说明 |
-|------|------|------|
-| 密码安全 | PBKDF2 哈希 | 100,000 次迭代 + 随机盐，防暴力破解 |
-| 会话安全 | Token 认证 | 24 小时自动过期 |
-| 内容安全 | XSS 防护 | 内容自动转义，防脚本注入 |
-| 字符过滤 | 特殊符号禁用 | 全局过滤冒号、分号等特殊字符（排除 images 字段） |
-| 敏感词 | 实时检测 | 发帖/评论/QA/讨论全覆盖，触发弹窗警告并自动生成举报 |
-| 人机验证 | 图形验证码 | 注册、智学登录、高频发帖自动触发 |
-| 频率限制 | 发帖限速 | 5 分钟内最多 3 帖，超出需验证码 |
-| PoW 盾 | 工作量证明 | 基于 Web Crypto API，difficulty 16-20，全员必经验证方可操作 |
+**相关API**:
+- `GET /api/user/credibility-info` - 获取信用分信息
+- `POST /api/user/exchange-credibility` - 兑换信用分
+- `GET /api/user/credibility-logs` - 获取信用分日志
 
----
-## 14. Credit
-便于用户获取服务，同时支持服务器运行，目前正在灰度测试中
-![alt text](image-23.png)
+### 12. 积分体系
 
----
+**功能特点**:
+- 积分获取（签到、发帖、评论等）
+- 积分消耗（兑换商品、服务）
+- 积分卡密生成和兑换
+- 积分日志记录
+- 积分总览和管理
+
+**使用方法**:
+- 获得积分：签到、发帖、评论等
+- 兑换积分：使用卡密兑换积分
+- 查看积分：在个人页面查看积分余额
+
+**相关API**:
+- `POST /api/user/redeem-credit` - 兑换积分
+- `GET /api/user/credit-logs` - 获取积分日志
+- `GET /api/admin/credit/overview` - 获取积分总览
+
+### 13. 实时推送
+
+**功能特点**:
+- SSE实时事件推送
+- 帖子更新通知
+- 通知更新通知
+- 心跳保活机制
+
+**使用方法**:
+- 实时更新：前端自动接收SSE事件更新内容
+
+**相关API**:
+- `GET /api/stream` - 建立SSE连接
+
+### 14. 微信小程序
+
+**功能特点**:
+- 移动端访问
+- 共享后端API
+- 原生小程序体验
+
+**使用方法**:
+- 打开微信小程序
+- 访问校园墙功能
+
+### 15. 安全中心
+
+**功能特点**:
+- 我的举报列表
+- 我的处罚列表
+- 信用分概览
+- 信用分兑换
+- 处罚申诉
+
+**使用方法**:
+- 访问：首页侧边栏点击"安全中心"
+- 查看举报：在"我的举报"标签页查看
+- 查看处罚：在"我的处罚"标签页查看
+- 兑换信用分：在信用分区域点击兑换
+
+### 16. 维护模式
+
+**功能特点**:
+- 系统维护开关
+- 测试密钥生成
+- 维护 bypass 机制
+- 自动定时维护
+
+**使用方法**:
+- 开启维护：管理员在后台开启维护模式
+- 测试密钥：生成测试密钥供内部测试
+
+**相关API**:
+- `POST /api/admin/maintenance/toggle` - 切换维护模式
+- `POST /api/maintenance/verify` - 验证测试密钥
 
 ## 🛠️ 技术栈
 
-| 分类 | 技术 |
-|------|------|
-| 后端 | Node.js + Express |
-| 前端 | 原生 HTML / CSS / JavaScript |
-| 数据 | JSON 文件存储 |
-| 安全 | PBKDF2 密码哈希、Token 认证、PoW 工作量证明 |
-| 验证码 | svg-captcha |
-| 图标 | Emoji（原生，无外部依赖） |
-| 字体 | Google Noto Sans SC |
+- **运行时**: Node.js ≥ 18
+- **后端**: Express ^4.22
+- **数据库**: better-sqlite3 ^11
+- **验证码**: slider-captcha ^1.0
+- **前端**: 原生 HTML/CSS/JS（无构建步骤）
+- **加密**: Node 内置 crypto
+- **小程序**: 微信原生小程序
 
----
-
-## 🚀 快速开始
+## 📦 安装与运行
 
 ### 环境要求
-- Node.js ≥ 18.x
-- npm ≥ 9.x
+- Node.js ≥ 18
 
-### 安装部署
+### 安装步骤
 
+1. 克隆项目
 ```bash
-# 1. 克隆项目
-git clone https://github.com/WR1ENCH/campus_wall.git
-cd campus_wall
+git clone https://github.com/WR1ENCH/campus-wall.git
+cd campus-wall
+```
 
-# 2. 安装依赖
+2. 安装依赖
+```bash
 npm install
+```
 
-# 3. 启动服务
+3. 配置环境变量
+```bash
+cp .env.example .env
+```
+编辑 `.env` 文件，设置必要的密钥：
+- `TOKEN_SECRET` - Token签名密钥（建议设置）
+- `CERT_ENC_SECRET` - 实名信息加密密钥（建议设置）
+- `SENSITIVE_KEY` - 敏感词库解密密钥（如果使用腾讯词库）
+
+4. 启动服务
+```bash
 npm start
 ```
 
-服务启动后访问：
-- 前台留言板：http://localhost:3000/
-- 管理后台：http://localhost:3000/admin.html
-
-### 首次使用
-
-首次打开管理后台时，系统会引导你创建最高管理员账号。
-
-> ⚠️ 请妥善保管账号密码，忘记后需手动修改 `data/admins.json`
-
----
+### 访问
+- 前台: http://localhost:3000/
+- 后台: http://localhost:3000/admin.html（首次访问需创建超级管理员）
 
 ## 📁 项目结构
 
 ```
 campus-wall/
-├── index.html              # 前台留言板（含讨论区、QA问答）
-├── admin.html              # 管理后台
-├── user.html               # 用户主页
-├── post.html               # 帖子详情页
-├── report.html             # 举报页面（含 PoW 盾）
-├── bully.html              # 霸凌举报页面
-├── server.js               # Node.js 后端
-├── sensitiveWords.js        # 敏感词库
-├── package.json            # 项目配置
-├── .gitignore              # Git 忽略规则
-├── LICENSE                 # GPL v3 开源协议
-└── README.md               # 项目说明
+├── server.js                 # 入口文件
+├── db.js                     # 数据库操作
+├── maintenance.js            # 维护模式
+├── zhixue.js                 # 智学网认证
+├── sensitiveWords.js         # 敏感词库
+├── crypto_words.js           # 加密词库
+├── bullyingNames.js          # 霸凌名称库
+├── spa.js                    # 前端SPA路由
+├── *.html                    # 前端页面
+├── pages/                    # SPA页面片段
+├── assets/                   # 静态资源
+├── lib/                      # 后端公共模块
+│   ├── crypto.js             # 加密相关
+│   ├── middleware.js         # 中间件
+│   ├── state.js              # 内存状态
+│   ├── sse.js                # SSE推送
+│   └── ...
+├── routes/                   # 后端API模块
+│   ├── admin.js              # 后台管理
+│   ├── auth.js               # 认证
+│   ├── user.js               # 用户
+│   ├── posts.js              # 帖子
+│   └── ...
+├── campus-wall-miniprogram/   # 微信小程序
+└── data/                     # 数据库文件
 ```
 
-运行后自动生成的数据文件：
+## 🤝 贡献指南
 
-```
-data/
-├── posts.json                # 帖子数据
-├── users.json                # 用户数据（含认证信息）
-├── admins.json               # 管理员数据
-├── reports.json              # 举报记录
-├── discussions.json           # 讨论话题
-├── discussion_comments.json   # 讨论评论
-├── qa_questions.json          # QA 提问
-├── qa_answers.json            # QA 回答
-├── sensitive_words.json       # 手动管理的违禁词
-├── bully_reports.json         # 霸凌举报记录
-```
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 📞 联系方式
+
+- GitHub: https://github.com/WR1ENCH/campus-wall
+- Gitee: https://gitee.com/wr1Ench/campus-wall
 
 ---
 
-## 🔧 二次开发
-
-### 添加新板块
-编辑 `index.html`，在板块选择器中添加新选项，并在 `server.js` 的发帖逻辑中扩展类型验证。
-
-### 调整 PoW 难度
-在 `server.js` 中搜索 `difficulty`，修改难度值（默认 16-20，越高越难）。
-
-### 调整发帖频率限制
-在 `server.js` 中搜索 `postRateLimit`，修改 `WINDOW_MS` 和 `MAX_POSTS`。
-
-### 敏感词管理
-在管理后台直接添加/删除违禁词，数据保存在 `data/sensitive_words.json`。
-
-### 部署到生产环境
-```bash
-npm install -g pm2
-pm2 start server.js --name campus-wall
-pm2 logs campus-wall
-```
-
----
-
-## 📄 开源协议
-
-GPL v3 License — 可自由使用、修改、分发，但必须开源并保留 LICENSE 文件。
-
----
-
-## 🙏 致谢
-
-- 图标使用系统 Emoji，无需额外依赖
-- 字体使用 Google Noto Sans SC
+*注意：这是一个校园社区项目，请遵守相关法律法规，维护良好的网络环境。*
