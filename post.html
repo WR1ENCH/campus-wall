@@ -4,358 +4,976 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>帖子详情 · 校园墙</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&family=Long+Cang&display=swap" rel="stylesheet">
   <style>
     :root {
-      --note-yellow: #fff9b1;
-      --note-pink: #ffc9de;
-      --note-green: #b5f5c5;
-      --note-blue: #bde0fe;
-      --note-orange: #ffd6a5;
-      --note-purple: #d5b8ff;
-      --accent: #e07459;
-      --accent-hover: #c85e42;
+      --note-yellow: #FFF8DC;
+      --note-pink: #FFE4E8;
+      --note-green: #E0F5E9;
+      --note-blue: #D6EAF8;
+      --note-orange: #FFE8D6;
+      --note-purple: #EDE4FF;
+      --accent: #D4614E;
+      --accent-hover: #B84A38;
+      --accent-soft: #FDF0ED;
+      --text-primary: #2C2416;
+      --text-secondary: #6B5D4F;
+      --text-muted: #9E8E7E;
+      --surface: #F5F0E8;
+      --card-radius: 2px;
+      --tape-color: rgba(255, 235, 150, 0.75);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Noto Sans SC', sans-serif;
+      font-family: 'Noto Sans SC', -apple-system, sans-serif;
       min-height: 100vh;
-      background-color: #c4a882;
+      background-color: #D4B896;
       background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%),
         repeating-linear-gradient(
           90deg,
           transparent,
-          transparent 49px,
-          rgba(0,0,0,0.06) 49px,
-          rgba(0,0,0,0.06) 50px
+          transparent 63px,
+          rgba(0,0,0,0.04) 63px,
+          rgba(0,0,0,0.04) 64px
         ),
         repeating-linear-gradient(
           0deg,
           transparent,
-          transparent 23px,
-          rgba(0,0,0,0.06) 23px,
-          rgba(0,0,0,0.06) 24px
+          transparent 31px,
+          rgba(0,0,0,0.04) 31px,
+          rgba(0,0,0,0.04) 32px
         );
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ===== 顶部导航 ===== */
     .topbar {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(139, 90, 43, 0.92);
-      backdrop-filter: blur(10px);
-      padding: 12px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(60, 40, 25, 0.88);
+      backdrop-filter: blur(16px) saturate(1.2);
+      -webkit-backdrop-filter: blur(16px) saturate(1.2);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-    .topbar-left { display: flex; align-items: center; gap: 10px; }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
     .topbar-logo {
-      width: 38px; height: 38px;
-      background: var(--note-yellow);
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--note-yellow), #FFF3C4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+
+    .topbar-left:hover .topbar-logo { transform: scale(1.08) rotate(-5deg); }
+
     .topbar-title {
-      color: rgba(255,255,255,0.95);
+      color: rgba(255,255,255,0.92);
       font-size: 18px;
       font-weight: 700;
       font-family: 'ZCOOL KuaiLe', cursive;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
     }
 
-    /* ===== 主内容 ===== */
+    .topbar-nav {
+      display: flex;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .nav-btn:active { transform: translateY(0) scale(0.97); }
+
+    /* ===== 主布局 ===== */
     .main {
-      max-width: 520px;
-      margin: 40px auto;
+      max-width: 540px;
+      margin: 48px auto;
       padding: 0 20px;
     }
 
     /* ===== 便利贴卡片 ===== */
     .note-card {
       position: relative;
-      padding: 32px 28px 26px;
-      border-radius: 2px;
+      padding: 40px 32px 28px;
+      border-radius: var(--card-radius);
       box-shadow:
-        0 0 0 2px rgba(0,0,0,0.06),
-        6px 10px 40px rgba(0,0,0,0.45),
-        0 0 80px rgba(0,0,0,0.15);
-      animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(-20px) scale(0.93) rotate(-1deg); }
-      to   { opacity: 1; transform: translateY(0)     scale(1)    rotate(0deg); }
+        0 1px 3px rgba(0,0,0,0.08),
+        0 6px 24px rgba(0,0,0,0.12),
+        0 16px 48px rgba(0,0,0,0.1),
+        0 0 0 1px rgba(0,0,0,0.04);
+      animation: cardDrop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: box-shadow 0.3s ease;
     }
 
-    /* 胶带装饰 */
+    .note-card:hover {
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.08),
+        0 8px 32px rgba(0,0,0,0.14),
+        0 20px 56px rgba(0,0,0,0.12),
+        0 0 0 1px rgba(0,0,0,0.04);
+    }
+
+    @keyframes cardDrop {
+      from {
+        opacity: 0;
+        transform: translateY(-24px) rotate(-1.5deg) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) rotate(0) scale(1);
+      }
+    }
+
+    /* 胶带装饰 - 更精致 */
     .note-card::before {
       content: '';
-      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-      width: 60px; height: 22px;
-      background: rgba(255,230,100,0.7);
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-0.5deg);
+      width: 80px;
+      height: 24px;
+      background: var(--tape-color);
       border-radius: 2px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+      box-shadow:
+        0 1px 3px rgba(0,0,0,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+      opacity: 0.85;
     }
 
+    .note-card::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: calc(50% + 2px);
+      width: 76px;
+      height: 2px;
+      background: rgba(255,255,255,0.25);
+      transform: translateX(-50%) rotate(-0.5deg);
+      border-radius: 1px;
+      opacity: 0.5;
+    }
+
+    /* 帖子类型标签 */
     .note-type {
-      font-size: 13px; font-weight: 700;
-      padding: 3px 10px; border-radius: 2px;
-      margin-bottom: 16px;
-      display: inline-block;
-      background: rgba(0,0,0,0.1);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.07);
+      letter-spacing: 0.3px;
     }
 
+    /* 正文内容 */
     .note-content {
       font-family: 'Ma Shan Zheng', cursive;
-      font-size: 26px;
-      line-height: 1.7;
+      font-size: 28px;
+      line-height: 1.8;
       word-break: break-word;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       white-space: pre-wrap;
+      position: relative;
+      z-index: 1;
     }
 
+    /* 图片展示 */
+    .post-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0 20px;
+    }
+
+    .post-images img {
+      width: calc(50% - 5px);
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid rgba(0,0,0,0.06);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .post-images img:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .post-images img:only-child {
+      width: 100%;
+      aspect-ratio: 16/10;
+    }
+
+    /* 底部信息栏 */
     .note-footer {
-      display: flex; align-items: center; justify-content: space-between;
-      border-top: 1px dashed rgba(0,0,0,0.15);
-      padding-top: 16px;
-      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .note-author { display: flex; align-items: center; gap: 6px; opacity: 0.75; }
 
-    .note-actions { display: flex; align-items: center; gap: 10px; }
+    .note-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .note-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      font-size: 18px;
+      background: rgba(0,0,0,0.05);
+    }
+
+    .note-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .note-author-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .verify-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.06);
+      color: var(--text-secondary);
+      letter-spacing: 0.3px;
+    }
+
+    .note-time {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* 操作按钮组 */
+    .note-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .like-btn {
-      background: rgba(0,0,0,0.08); border: none;
-      padding: 6px 16px; border-radius: 3px;
-      font-family: inherit; font-size: 14px; cursor: pointer;
-      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0,0,0,0.06);
+      border: none;
+      padding: 7px 16px;
+      border-radius: 100px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .like-btn:hover { background: rgba(0,0,0,0.15); }
-    .like-btn.liked { background: rgba(255,0,0,0.12); }
 
-    /* ===== 三点菜单 ===== */
+    .like-btn:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    .like-btn.liked {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .like-btn.liked svg { animation: heartPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    .like-btn:active { transform: scale(0.95); }
+
+    /* 三点菜单按钮 */
     .menu-btn {
-      background: rgba(0,0,0,0.08); border: none;
-      width: 34px; height: 34px; border-radius: 3px;
-      font-size: 18px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
+      background: rgba(0,0,0,0.06);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
       position: relative;
     }
-    .menu-btn:hover { background: rgba(0,0,0,0.15); }
+
+    .menu-btn:hover {
+      background: rgba(0,0,0,0.1);
+      color: var(--text-primary);
+      transform: scale(1.05);
+    }
 
     .menu-dropdown {
       display: none;
       position: absolute;
-      top: 110%; right: 0;
+      top: calc(100% + 8px);
+      right: 0;
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      min-width: 140px;
+      border-radius: 12px;
+      box-shadow:
+        0 4px 16px rgba(0,0,0,0.12),
+        0 12px 40px rgba(0,0,0,0.1),
+        0 0 0 1px rgba(0,0,0,0.06);
+      min-width: 160px;
       overflow: hidden;
       z-index: 200;
+      animation: menuIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     }
+
     .menu-dropdown.show { display: block; }
 
+    @keyframes menuIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .menu-item {
-      padding: 12px 16px;
+      padding: 12px 18px;
       font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      display: flex; align-items: center; gap: 8px;
-      transition: background 0.1s;
-    }
-    .menu-item:hover { background: #f5f5f5; }
-    .menu-item.danger { color: #ef4444; }
-    .menu-item.danger:hover { background: #fef2f2; }
-
-    .menu-divider { height: 1px; background: #eee; margin: 4px 0; }
-
-    /* ===== 举报弹窗 ===== */
-    .report-overlay {
-      display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,0.5);
-      align-items: center; justify-content: center;
-      backdrop-filter: blur(3px);
-    }
-    .report-overlay.show { display: flex; }
-    .report-box {
-      background: white;
-      border-radius: 16px;
-      padding: 28px 24px;
-      width: 90%; max-width: 380px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      animation: reportIn 0.25s ease;
-    }
-    @keyframes reportIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-    .report-title {
-      font-size: 17px; font-weight: 700; margin-bottom: 18px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .report-reason {
-      display: flex; align-items: center; gap: 10px;
-      padding: 11px 14px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .report-reason:hover { border-color: var(--accent); background: #fff7f5; }
-    .report-reason.selected { border-color: var(--accent); background: #fff7f5; }
-    .report-reason input { accent-color: var(--accent); width: 16px; height: 16px; }
-    .report-textarea {
-      width: 100%; padding: 12px;
-      border: 2px solid #e5e7eb; border-radius: 10px;
-      font-family: inherit; font-size: 14px;
-      resize: none; outline: none;
-      transition: border-color 0.2s;
-    }
-    .report-textarea:focus { border-color: var(--accent); }
-    .report-actions {
-      display: flex; gap: 10px; margin-top: 16px;
-    }
-    .btn-cancel {
-      flex: 1; padding: 11px;
-      background: #f3f4f6; border: none; border-radius: 10px;
-      font-size: 15px; cursor: pointer;
-    }
-    .btn-primary {
-      flex: 1; padding: 11px;
-      background: var(--accent); color: white; border: none; border-radius: 10px;
-      font-size: 15px; cursor: pointer;
-    }
-    .btn-primary:hover { background: var(--accent-hover); }
-
-    /* ===== Toast ===== */
-    .toast {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.8); color: white;
-      padding: 12px 24px; border-radius: 30px;
-      font-size: 14px; z-index: 500;
-      animation: toastIn 0.25s ease;
-      white-space: nowrap;
-    }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+      color: var(--text-primary);
     }
 
-    /* ===== 加载中 ===== */
-    .loading-wrap {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 60vh; gap: 16px;
-      color: rgba(255,255,255,0.7);
+    .menu-item:hover { background: #F8F6F2; }
+    .menu-item.danger { color: #DC2626; }
+    .menu-item.danger:hover { background: #FEF2F2; }
+
+    .menu-divider { height: 1px; background: rgba(0,0,0,0.06); }
+
+    /* ===== 分隔装饰 ===== */
+    .divider-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 32px 0 24px;
+      gap: 16px;
     }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid rgba(255,255,255,0.2);
-      border-top-color: rgba(255,255,255,0.7);
+
+    .pin-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+    }
+
+    .pin-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .not-found {
-      text-align: center; padding: 80px 20px;
-      color: rgba(255,255,255,0.8);
-    }
-    .not-found .icon { font-size: 60px; margin-bottom: 16px; }
-    .not-found p { font-size: 16px; }
-    .back-link {
-      display: inline-block; margin-top: 20px;
-      color: var(--note-yellow);
-      font-size: 14px;
+      background: rgba(0,0,0,0.12);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.3);
     }
 
     /* ===== 评论区域 ===== */
     .comment-section {
-      margin-top: 28px;
+      margin-top: 8px;
     }
-    .comment-title {
-      font-size: 15px; font-weight: 700;
-      margin-bottom: 14px; opacity: 0.8;
+
+    .comment-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+
+    .comment-count-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 9px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* 评论输入行 */
     .comment-input-row {
-      display: flex; gap: 10px; align-items: flex-start;
-      margin-bottom: 18px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      background: rgba(255,255,255,0.9);
+      padding: 6px 6px 6px 16px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s ease;
     }
+
+    .comment-input-row:focus-within {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 2px var(--accent);
+    }
+
     .comment-input {
       flex: 1;
-      padding: 10px 14px;
-      border: 2px solid rgba(0,0,0,0.12);
-      border-radius: 10px;
-      font-family: inherit; font-size: 14px;
-      outline: none; resize: none;
-      transition: border-color 0.2s;
-      background: rgba(255,255,255,0.85);
+      padding: 10px 0;
+      border: none;
+      font-family: inherit;
+      font-size: 15px;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--text-primary);
+      line-height: 1.5;
     }
-    .comment-input:focus { border-color: var(--accent); }
+
+    .comment-input::placeholder { color: var(--text-muted); }
+
     .comment-submit-btn {
-      padding: 10px 18px;
-      background: var(--accent); color: white;
-      border: none; border-radius: 10px;
-      font-size: 14px; cursor: pointer;
-      transition: background 0.15s;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
       white-space: nowrap;
     }
-    .comment-submit-btn:hover { background: var(--accent-hover); }
-    .comment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .comment-list { display: flex; flex-direction: column; gap: 12px; }
+    .comment-submit-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .comment-submit-btn:active { transform: translateY(0); }
+    .comment-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* 评论禁用提示 */
+    .comment-disabled-notice {
+      text-align: center;
+      padding: 18px;
+      color: var(--text-muted);
+      font-size: 14px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    /* 评论列表 */
+    .comment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .comment-item {
-      display: flex; gap: 10px; align-items: flex-start;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.55);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+      animation: commentIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
-    .comment-avatar { font-size: 22px; flex-shrink: 0; }
+
+    .comment-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      transform: translateY(-1px);
+    }
+
+    @keyframes commentIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .comment-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(0,0,0,0.04);
+    }
+
+    .comment-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
     .comment-body { flex: 1; min-width: 0; }
+
     .comment-author {
-      font-size: 12px; font-weight: 700; opacity: 0.7;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .comment-author-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.06);
+      color: var(--text-muted);
+    }
+
     .comment-text {
-      font-size: 14px; line-height: 1.5;
+      font-size: 14.5px;
+      line-height: 1.6;
       word-break: break-word;
-      background: rgba(255,255,255,0.7);
+      color: var(--text-primary);
+      background: rgba(0,0,0,0.03);
       padding: 8px 12px;
       border-radius: 8px;
     }
-    .comment-time { font-size: 11px; opacity: 0.5; margin-top: 5px; }
-    .comment-empty { text-align: center; padding: 24px; opacity: 0.5; font-size: 14px; }
-    .comment-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
-    .comment-like-btn {
-      font-size: 12px; cursor: pointer; opacity: 0.6;
-      transition: opacity 0.15s;
+
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 8px;
+      font-size: 12.5px;
+      color: var(--text-muted);
     }
-    .comment-like-btn:hover { opacity: 1; }
-    .comment-like-btn.liked { color: #e11d48; opacity: 1; }
-    .comment-del-btn {
-      font-size: 12px; cursor: pointer; opacity: 0.5;
-      color: #ef4444; transition: opacity 0.15s;
+
+    .comment-meta-btn {
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 12.5px;
+      font-family: inherit;
+      color: var(--text-muted);
+      padding: 0;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 3px;
     }
-    .comment-del-btn:hover { opacity: 1; }
-    .comment-report-btn {
-      font-size: 12px; cursor: pointer; opacity: 0.5;
-      color: #b45309; transition: opacity 0.15s;
+
+    .comment-meta-btn:hover { color: var(--text-primary); }
+    .comment-meta-btn.liked { color: var(--accent); }
+    .comment-meta-btn.danger { color: #DC2626; opacity: 0.7; }
+    .comment-meta-btn.danger:hover { opacity: 1; }
+    .comment-meta-btn.report { color: #B45309; opacity: 0.7; }
+    .comment-meta-btn.report:hover { opacity: 1; }
+
+    .comment-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
     }
-    .comment-report-btn:hover { opacity: 1; }
+
+    .comment-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    /* ===== 举报弹窗 ===== */
+    .report-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.45);
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .report-overlay.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .report-box {
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      width: 92%;
+      max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06);
+      animation: modalIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .report-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+
+    .report-reason {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 2px solid #E8E4DE;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .report-reason:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .report-reason.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .report-reason input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    .report-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #E8E4DE;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-top: 6px;
+    }
+
+    .report-textarea:focus { border-color: var(--accent); }
+    .report-textarea::placeholder { color: var(--text-muted); }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      background: #F3F2EF;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .btn-cancel:hover { background: #E8E6E1; }
+
+    .btn-primary {
+      flex: 1;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 22, 15, 0.9);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 500;
+      animation: toastIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* ===== 加载状态 ===== */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 50vh;
+      gap: 16px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 未找到页面 ===== */
+    .not-found {
+      text-align: center;
+      padding: 80px 20px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .not-found .icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .not-found p {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--note-yellow);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      transition: all 0.2s;
+    }
+
+    .back-link:hover {
+      background: rgba(255,255,255,0.18);
+      transform: translateY(-1px);
+    }
+
+    /* ===== 自适应旋转 (轻微随机倾角) ===== */
+    .note-card {
+      transform: rotate(-0.3deg);
+    }
+
+    .note-card:nth-child(even) {
+      transform: rotate(0.4deg);
+    }
+
+    /* ===== 仅自己可见横幅 ===== */
+    .self-only-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background: white;
+      padding: 14px 24px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-primary);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      animation: bannerIn 0.3s ease;
+    }
+
+    @keyframes bannerIn {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* ===== 大图预览 ===== */
+    .image-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      cursor: pointer;
+      animation: fadeIn 0.2s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .image-overlay img {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 12px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    }
+
+    /* ===== 响应式适配 ===== */
+    @media (max-width: 600px) {
+      .topbar { padding: 12px 16px; }
+      .topbar-title { font-size: 16px; }
+      .nav-btn { padding: 7px 12px; font-size: 13px; }
+      .nav-btn span { display: none; }
+
+      .main { margin: 32px auto; padding: 0 16px; }
+
+      .note-card { padding: 32px 22px 22px; }
+      .note-content { font-size: 24px; line-height: 1.75; }
+
+      .post-images img { width: calc(50% - 5px); }
+
+      .note-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .note-actions { width: 100%; justify-content: flex-end; }
+
+      .comment-item { padding: 12px 14px; }
+      .comment-input-row { padding: 5px 5px 5px 14px; }
+      .comment-submit-btn { padding: 9px 16px; font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <!-- 顶部导航 -->
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-logo"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg></div>
+    <div class="topbar-left" onclick="location.href='index.html'">
+      <div class="topbar-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5a3a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>
+      </div>
       <div class="topbar-title">校园墙</div>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-btn" onclick="location.href='index.html'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>首页</span>
+      </button>
     </div>
   </div>
 
@@ -370,16 +988,28 @@
   <!-- 帖子卡片容器 -->
   <div class="main" id="postCardContainer" style="display:none;"></div>
 
+  <!-- 分隔装饰 -->
+  <div class="divider-pin" id="dividerPin" style="display:none;">
+    <div class="pin-line"></div>
+    <div class="pin-dot"></div>
+    <div class="pin-line"></div>
+  </div>
+
   <!-- 评论区域 -->
   <div class="main" id="commentSection" style="display:none;">
     <div class="comment-section">
-      <div class="comment-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论</div>
-      <div class="comment-input-row" id="commentInputRow">
-        <textarea class="comment-input" id="commentInput" placeholder="写下你的评论…" rows="2"></textarea>
-        <button class="comment-submit-btn" id="commentSubmitBtn" onclick="submitComment()">发布</button>
+      <div class="comment-section-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        评论
+        <span class="comment-count-badge" id="commentCountBadge">0</span>
       </div>
-      <div id="commentDisabledNotice" style="display:none;text-align:center;padding:16px;color:#9ca3af;font-size:14px;background:rgba(255,255,255,0.5);border-radius:10px;margin-bottom:16px;">
-        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 本帖不允许评论
+      <div class="comment-input-row" id="commentInputRow">
+        <textarea class="comment-input" id="commentInput" placeholder="写下你的评论…" rows="1"></textarea>
+        <button class="comment-submit-btn" id="commentSubmitBtn" onclick="submitComment()">发送</button>
+      </div>
+      <div id="commentDisabledNotice" style="display:none;" class="comment-disabled-notice">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        本帖不允许评论
       </div>
       <div class="comment-list" id="commentList"></div>
     </div>
@@ -388,7 +1018,10 @@
   <!-- 举报弹窗 -->
   <div class="report-overlay" id="reportOverlay">
     <div class="report-box">
-      <div class="report-title"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报帖子</div>
+      <div class="report-title" id="reportTitle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        举报帖子
+      </div>
       <div id="reportReasons"></div>
       <textarea class="report-textarea" id="reportText" placeholder="补充说明（选填）…" rows="3"></textarea>
       <div class="report-actions">
@@ -402,25 +1035,22 @@
   <div class="toast" id="toastEl" style="display:none;"></div>
 
 <script>
-  // ===== 从 URL 获取帖子 ID =====
   const params = new URLSearchParams(location.search);
   const POST_ID = params.get('id');
   const USER_TOKEN = localStorage.getItem('campus_user_token');
   let postData = null;
   let menuOpen = false;
 
-  // ===== 工具函数 =====
   function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // 图片大图预览（点击帖子图片弹出）
   function showPostImage(idx) {
     const src = postData && Array.isArray(postData.images) ? postData.images[idx] : null;
     if (!src) return;
     const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
-    div.innerHTML = '<img src="' + src + '" style="max-width:90vw;max-height:90vh;border-radius:12px;">';
+    div.className = 'image-overlay';
+    div.innerHTML = '<img src="' + src + '" alt="图片预览">';
     div.onclick = () => div.remove();
     document.body.appendChild(div);
   }
@@ -429,65 +1059,52 @@
     const el = document.getElementById('toastEl');
     el.textContent = msg;
     el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, duration);
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.style.display = 'none'; }, duration);
   }
 
-  // 敏感词警告弹屏
   function showSensitiveWarning(onEdit, onContinue) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);animation:fadeIn 0.2s ease;';
     overlay.innerHTML = `
-      <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:reportIn 0.25s ease;">
-        <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
-        <p style="margin:16px 0;color:#d32f2f;font-size:15px;line-height:1.8;">
+      <div style="background:white;border-radius:20px;padding:32px 28px;max-width:420px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.2);animation:modalIn 0.3s cubic-bezier(0.22,1,0.36,1);">
+        <h3 style="margin:0 0 12px;font-size:18px;color:#B91C1C;display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
+        <p style="margin:16px 0;color:#7F1D1D;font-size:14.5px;line-height:1.8;">
           安全检测系统发现你编辑的内容包含违禁内容<br>
-          如果继续发送，本帖会被标记并等待审核<br>
-          如果你继续发送，帖子在审核通过前<b>仅你可见</b><br>
-          守护校园墙环境是所有用户的责任<br>
+          如果继续发送，帖子在审核通过前<b>仅你可见</b><br>
           对于确有违规行为将被处罚
         </p>
         <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
-          <button id="btnWarnEdit" style="padding:12px 28px;background:#d32f2f;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(211,47,47,0.35);">返回编辑</button>
-          <button id="btnWarnContinue" style="padding:12px 28px;background:#e0e0e0;color:#666;border:none;border-radius:10px;font-size:15px;cursor:pointer;">继续发送</button>
+          <button id="btnWarnEdit" style="padding:12px 28px;background:#B91C1C;color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">返回编辑</button>
+          <button id="btnWarnContinue" style="padding:12px 28px;background:#F3F2EF;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;">继续发送</button>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
-    overlay.querySelector('#btnWarnEdit').onclick = () => {
-      overlay.remove();
-      if (typeof onEdit === 'function') onEdit();
-    };
-    overlay.querySelector('#btnWarnContinue').onclick = () => {
-      overlay.remove();
-      if (typeof onContinue === 'function') onContinue();
-    };
+    overlay.querySelector('#btnWarnEdit').onclick = () => { overlay.remove(); if (typeof onEdit === 'function') onEdit(); };
+    overlay.querySelector('#btnWarnContinue').onclick = () => { overlay.remove(); if (typeof onContinue === 'function') onContinue(); };
   }
 
-  // 反霸凌警告弹屏（仅返回编辑，不可强制发送）
   function showBullyingWarning(onEdit) {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);animation:fadeIn 0.2s ease;';
     overlay.innerHTML = `
-      <div style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:reportIn 0.25s ease;">
-        <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 反欺凌机制已触发</h3>
-        <p style="margin:16px 0;color:#b71c1c;font-size:15px;line-height:1.8;">
+      <div style="background:white;border-radius:20px;padding:32px 28px;max-width:420px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.2);animation:modalIn 0.3s cubic-bezier(0.22,1,0.36,1);">
+        <h3 style="margin:0 0 12px;font-size:18px;color:#B91C1C;display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 反欺凌机制已触发</h3>
+        <p style="margin:16px 0;color:#7F1D1D;font-size:14.5px;line-height:1.8;">
           你已触发反欺凌机制，本贴中似乎存在被霸凌者信息。<br>
           校园墙对于一切霸凌行为零容忍！<br>
           请你删除相关内容，再发送本贴！
         </p>
         <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
-          <button id="btnBullyingEdit" style="padding:12px 36px;background:#c62828;color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(198,40,40,0.35);">返回编辑</button>
+          <button id="btnBullyingEdit" style="padding:12px 36px;background:#B91C1C;color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">返回编辑</button>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
-    overlay.querySelector('#btnBullyingEdit').onclick = () => {
-      overlay.remove();
-      if (typeof onEdit === 'function') onEdit();
-    };
+    overlay.querySelector('#btnBullyingEdit').onclick = () => { overlay.remove(); if (typeof onEdit === 'function') onEdit(); };
   }
 
-  // ===== 加载帖子数据 =====
   function updateCommentSection(post) {
     const inputRow = document.getElementById('commentInputRow');
     const disabledNotice = document.getElementById('commentDisabledNotice');
@@ -501,10 +1118,7 @@
   }
 
   async function loadPost() {
-    if (!POST_ID) {
-      showNotFound();
-      return;
-    }
+    if (!POST_ID) { showNotFound(); return; }
     try {
       const res = await fetch('/api/posts/' + POST_ID);
       const json = await res.json();
@@ -513,6 +1127,7 @@
         renderPost(postData);
         document.getElementById('mainContent').style.display = 'none';
         document.getElementById('postCardContainer').style.display = 'block';
+        document.getElementById('dividerPin').style.display = 'flex';
         document.getElementById('commentSection').style.display = 'block';
         updateCommentSection(postData);
         loadComments();
@@ -526,65 +1141,85 @@
 
   function showNotFound() {
     document.getElementById('mainContent').innerHTML =
-      '<div class="not-found"><div class="icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>帖子不存在或已被删除</p><a class="back-link" href="index.html">← 返回校园墙</a></div>';
+      '<div class="not-found"><div class="icon"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><p>帖子不存在或已被删除</p><a class="back-link" href="index.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> 返回校园墙</a></div>';
   }
 
-  // ===== 渲染帖子 =====
   function renderPost(post) {
     const colorMap = {
-      'note-yellow': { bg: '#fff9b1', text: '#5a4a00' },
-      'note-pink':   { bg: '#ffc9de', text: '#5a1a3a' },
-      'note-green':  { bg: '#b5f5c5', text: '#1a4a1a' },
-      'note-blue':   { bg: '#bde0fe', text: '#1a2a5a' },
-      'note-orange': { bg: '#ffd6a5', text: '#5a2a00' },
-      'note-purple': { bg: '#d5b8ff', text: '#3a1a5a' },
+      'note-yellow': { bg: 'var(--note-yellow)', text: '#5a4a00' },
+      'note-pink':   { bg: 'var(--note-pink)', text: '#5a1a3a' },
+      'note-green':  { bg: 'var(--note-green)', text: '#1a4a1a' },
+      'note-blue':   { bg: 'var(--note-blue)', text: '#1a2a5a' },
+      'note-orange': { bg: 'var(--note-orange)', text: '#5a2a00' },
+      'note-purple': { bg: 'var(--note-purple)', text: '#3a1a5a' },
     };
     const typeConfig = {
-      '日常':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', color: 'note-yellow' },
-      '表白':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', color: 'note-pink'   },
-      '树洞':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg>', color: 'note-green'  },
-      '失物招领': { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', color: 'note-orange' },
-      '活动':    { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', color: 'note-blue'   },
+      '日常':    { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', color: 'note-yellow' },
+      '表白':    { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', color: 'note-pink' },
+      '树洞':    { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg>', color: 'note-green' },
+      '失物招领': { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', color: 'note-orange' },
+      '活动':    { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', color: 'note-blue' },
     };
-    const cfg = typeConfig[post.type] || { emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>', color: 'note-yellow' };
+    const cfg = typeConfig[post.type] || { emoji: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg>', color: 'note-yellow' };
     const colors = colorMap[cfg.color] || colorMap['note-yellow'];
-    // 从 localStorage 读取完整的用户对象
+
     const savedUser = localStorage.getItem('campus_user');
     const userId = savedUser ? JSON.parse(savedUser).id : null;
     const isOwner = userId && post.userId && userId === post.userId;
 
-    // 格式化时间
     function formatTime(iso) {
       const d = new Date(iso);
       return d.toLocaleString('zh-CN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
     }
 
-    // 仅自己可见横幅
     let selfOnlyBanner = '';
     if (post.visibility === 'self_only') {
-      selfOnlyBanner = '<div style="position:fixed;top:0;left:0;right:0;z-index:999;background:#fff;padding:14px 20px;text-align:center;font-weight:700;font-size:15px;color:#333;box-shadow:0 2px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;gap:8px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 此内容仅自己可见</div>';
+      selfOnlyBanner = '<div class="self-only-banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 此内容仅自己可见</div>';
     }
+
+    const avatarHtml = post.avatar
+      ? (post.avatar.startsWith('data:')
+        ? '<img src="' + escHtml(post.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
+        : (post.avatar.length <= 4
+          ? '<span style="font-size:16px">' + escHtml(post.avatar) + '</span>'
+          : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+
+    let badges = '';
+    if (post.authorAdminRole === 'super') badges = '<span class="verify-badge">超管</span>';
+    else if (post.authorAdminRole === 'admin') badges = '<span class="verify-badge">管理员</span>';
+    if (post.authorZhixueStatus === 'approved') {
+      badges += '<span class="verify-badge">' + (post.authorZhixueCertType === 'manual' ? '已实名' : '已认证') + '</span>';
+    }
+
+    const imagesHtml = (post.images && post.images.length)
+      ? '<div class="post-images">' + post.images.map((img, i) =>
+          '<img src="' + img + '" alt="图片" onclick="showPostImage(' + i + ')" onerror="this.style.display=\'none\'">'
+        ).join('') + '</div>'
+      : '';
 
     const html = selfOnlyBanner + `
       <div class="note-card ${cfg.color}" style="background:${colors.bg};color:${colors.text};">
         <div class="note-type">${cfg.emoji} ${escHtml(post.type)}</div>
         <div class="note-content">${escHtml(post.content)}</div>
-        ${(post.images && post.images.length) ? `<div class="post-images" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">${post.images.map((img, i) => `<img src="${img}" data-idx="${i}" onclick="showPostImage(${i})" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display='none'">`).join('')}</div>` : ''}
+        ${imagesHtml}
         <div class="note-footer">
-          <div class="note-author">
-            ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${escHtml(post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>`}
-            <span>${escHtml(post.author || '匿名')}${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}${post.authorZhixueStatus === 'approved' ? (post.authorZhixueCertType === 'manual' ? ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>已认证' : ' <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>已认证') : ''}</span>
-            <span style="opacity:0.5">· ${formatTime(post.time)}</span>
+          <div class="note-meta">
+            <div class="note-avatar">${avatarHtml}</div>
+            <span class="note-author-name">${escHtml(post.author || '匿名')}</span>
+            ${badges}
+            <span class="note-time">· ${formatTime(post.time)}</span>
           </div>
           <div class="note-actions">
             <button class="like-btn${post.liked ? ' liked' : ''}" id="likeBtn" onclick="doLike()">
-              ${post.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${post.likes || 0}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="${post.liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span>${post.likes || 0}</span>
             </button>
             <div style="position:relative;">
-              <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">⋯</button>
+              <button class="menu-btn" id="menuBtn" onclick="toggleMenu(event)">⋯</button>
               <div class="menu-dropdown" id="menuDropdown">
-                ${isOwner ? `<div class="menu-item danger" onclick="doDelete()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除帖子</div>` : ''}
-                <div class="${isOwner ? '' : ''}menu-item" onclick="openReport()" style="${isOwner ? '' : 'color:#ef4444;'}"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${isOwner ? '举报' : '举报帖子'}</div>
+                ${isOwner ? '<div class="menu-item danger" onclick="doDelete()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除帖子</div>' : ''}
+                <div class="menu-item" onclick="openReport()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ${isOwner ? '举报' : '举报帖子'}</div>
               </div>
             </div>
           </div>
@@ -594,50 +1229,109 @@
     document.getElementById('postCardContainer').innerHTML = html;
   }
 
-  // ===== 点赞 =====
+  async function doLike() {
+    try {
+      const res = await fetch('/api/posts/' + POST_ID + '/like', { method: 'POST' });
+      const json = await res.json();
+      if (json.ok) {
+        postData.liked = json.data.liked;
+        postData.likes = json.data.likes;
+        const btn = document.getElementById('likeBtn');
+        btn.className = 'like-btn' + (postData.liked ? ' liked' : '');
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + (postData.liked ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>' + postData.likes + '</span>';
+      }
+    } catch { toast('网络错误'); }
+  }
 
-  // ===== 评论 =====
+  function toggleMenu(e) {
+    if (e) e.stopPropagation();
+    menuOpen = !menuOpen;
+    document.getElementById('menuDropdown').classList.toggle('show', menuOpen);
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-dropdown')) {
+      menuOpen = false;
+      const dd = document.getElementById('menuDropdown');
+      if (dd) dd.classList.remove('show');
+    }
+  });
+
+  async function doDelete() {
+    if (!confirm('确定要删除这条帖子吗？删除后无法恢复。')) return;
+    try {
+      const res = await fetch('/api/user/posts/' + POST_ID, {
+        method: 'DELETE',
+        headers: { 'x-user-token': USER_TOKEN || '' }
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast('帖子已删除');
+        setTimeout(() => { location.href = 'index.html'; }, 1500);
+      } else {
+        toast(json.msg || '删除失败');
+      }
+    } catch { toast('网络错误'); }
+  }
+
   async function loadComments() {
     try {
       const res = await fetch('/api/posts/' + POST_ID + '/comments');
       const json = await res.json();
       if (json.ok) {
         renderComments(json.data || []);
+        const badge = document.getElementById('commentCountBadge');
+        if (badge) badge.textContent = (json.data || []).length;
       }
-    } catch {
-      // silently fail
-    }
+    } catch { /* silently fail */ }
   }
 
   function renderComments(comments) {
     const list = document.getElementById('commentList');
     if (!comments || comments.length === 0) {
-      list.innerHTML = '<div class="comment-empty">暂无评论，来抢沙发吧~</div>';
+      list.innerHTML = '<div class="comment-empty"><div class="comment-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>暂无评论，来抢沙发吧~</div>';
       return;
     }
-    // 从 localStorage 读取完整的用户对象
     const savedUser = localStorage.getItem('campus_user');
     const currentUserId = savedUser ? JSON.parse(savedUser).id : null;
     const isPostAuthor = currentUserId && postData && postData.userId && currentUserId === postData.userId;
 
-    list.innerHTML = comments.map(c => {
+    list.innerHTML = comments.map((c, i) => {
       const d = new Date(c.time);
       const t = d.toLocaleString('zh-CN', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
       const isCommentAuthor = currentUserId && c.userId && currentUserId === c.userId;
       const canDelete = isCommentAuthor || isPostAuthor;
+
+      const cAvatar = c.avatar
+        ? (c.avatar.startsWith('data:')
+          ? '<img src="' + escHtml(c.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
+          : (c.avatar.length <= 4
+            ? '<span style="font-size:16px">' + escHtml(c.avatar) + '</span>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+
       return `
-        <div class="comment-item" id="comment-${c.id}">
-          <span class="comment-avatar">${c.avatar && c.avatar.startsWith('data:') ? `<img src="${escHtml(c.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">` : (c.avatar && c.avatar.length <= 4 ? c.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')}</span>
+        <div class="comment-item" id="comment-${c.id}" style="animation-delay:${i * 0.04}s">
+          <div class="comment-avatar">${cAvatar}</div>
           <div class="comment-body">
-            <div class="comment-author">${escHtml(c.author || '匿名')}</div>
+            <div class="comment-author">
+              ${escHtml(c.author || '匿名')}
+              ${c.authorAdminRole === 'super' ? '<span class="comment-author-badge">超管</span>' : ''}
+              ${c.authorAdminRole === 'admin' ? '<span class="comment-author-badge">管理员</span>' : ''}
+              ${c.authorZhixueStatus === 'approved' ? '<span class="comment-author-badge">已认证</span>' : ''}
+            </div>
             <div class="comment-text">${escHtml(c.content)}</div>
             <div class="comment-meta">
-              <span class="comment-time">${t}</span>
-              <span class="comment-like-btn ${c.liked ? 'liked' : ''}" onclick="toggleCommentLike('${c.id}')">
-                ${c.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${c.likes || 0}
-              </span>
-              <span class="comment-report-btn" onclick="openCommentReport('${c.id}')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报</span>
-              ${canDelete ? `<span class="comment-del-btn" onclick="deleteComment('${c.id}')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</span>` : ''}
+              <span>${t}</span>
+              <button class="comment-meta-btn ${c.liked ? 'liked' : ''}" onclick="toggleCommentLike('${c.id}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="${c.liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${c.likes || 0}
+              </button>
+              <button class="comment-meta-btn report" onclick="openCommentReport('${c.id}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                举报
+              </button>
+              ${canDelete ? '<button class="comment-meta-btn danger" onclick="deleteComment(\'' + c.id + '\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>' : ''}
             </div>
           </div>
         </div>
@@ -652,16 +1346,16 @@
     const btn = document.getElementById('commentSubmitBtn');
     const content = input.value.trim();
     if (!content) { toast('请输入评论内容'); return; }
-    if (SPECIAL_CHAR_REG.test(content)) { toast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 评论包含特殊字符，请移除后重试'); return; }
-    if (content.length > 400) { toast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 评论超过 400 字限制，请精简后发送'); return; }
+    if (SPECIAL_CHAR_REG.test(content)) { toast('评论包含特殊字符，请移除后重试'); return; }
+    if (content.length > 400) { toast('评论超过 400 字限制，请精简后发送'); return; }
 
-    let author = '匿名', avatar = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', userId = null;
+    let author = '匿名', avatar = '', userId = null;
     const savedUser = localStorage.getItem('campus_user');
     if (savedUser) {
       try {
         const u = JSON.parse(savedUser);
         author = u.nickname || '匿名';
-        avatar = u.avatar || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+        avatar = u.avatar || '';
         userId = u.id;
       } catch {}
     }
@@ -679,39 +1373,30 @@
         await loadComments();
         toast('评论发布成功');
       } else if (json.bullying) {
-        // 触发反霸凌机制 → 仅允许返回编辑
         showBullyingWarning(() => {
           document.getElementById('commentInput').value = content;
           document.getElementById('commentInput').focus();
         });
       } else if (json.warning) {
-        // 有敏感词 → 弹窗让用户选择
         showSensitiveWarning(
           () => {
             document.getElementById('commentInput').value = content;
             document.getElementById('commentInput').focus();
           },
-          async () => {
-            await submitComment(true);
-          }
+          async () => { await submitComment(true); }
         );
       } else {
         toast(json.msg || '评论失败');
       }
-    } catch {
-      toast('网络错误');
-    } finally {
-      btn.disabled = false;
-    }
+    } catch { toast('网络错误'); }
+    finally { btn.disabled = false; }
   }
 
   async function toggleCommentLike(commentId) {
     try {
       const res = await fetch('/api/posts/' + POST_ID + '/comments/' + commentId + '/like', { method: 'POST' });
       const json = await res.json();
-      if (json.ok) {
-        await loadComments();
-      }
+      if (json.ok) await loadComments();
     } catch { toast('网络错误'); }
   }
 
@@ -732,96 +1417,48 @@
     } catch { toast('网络错误'); }
   }
 
-  async function doLike() {
-    try {
-      const res = await fetch('/api/posts/' + POST_ID + '/like', { method: 'POST' });
-      const json = await res.json();
-      if (json.ok) {
-        postData.liked = json.data.liked;
-        postData.likes = json.data.likes;
-        const btn = document.getElementById('likeBtn');
-        btn.innerHTML = `${postData.liked ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'} ${postData.likes}`;
-        btn.className = 'like-btn' + (postData.liked ? ' liked' : '');
-      }
-    } catch {
-      toast('网络错误');
-    }
-  }
-
-  // ===== 三点菜单 =====
-  function toggleMenu() {
-    menuOpen = !menuOpen;
-    document.getElementById('menuDropdown').classList.toggle('show', menuOpen);
-  }
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-dropdown')) {
-      menuOpen = false;
-      const dd = document.getElementById('menuDropdown');
-      if (dd) dd.classList.remove('show');
-    }
-  });
-
-  // ===== 删除 =====
-  async function doDelete() {
-    if (!confirm('确定要删除这条帖子吗？删除后无法恢复。')) return;
-    try {
-      const res = await fetch('/api/user/posts/' + POST_ID, {
-        method: 'DELETE',
-        headers: { 'x-user-token': USER_TOKEN || '' }
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast('帖子已删除');
-        setTimeout(() => { location.href = 'index.html'; }, 1500);
-      } else {
-        toast(json.msg || '删除失败');
-      }
-    } catch {
-      toast('网络错误');
-    }
-  }
-
-  // ===== 举报 =====
   const REPORT_REASONS = ['垃圾信息', '人身攻击', '违规内容', '虚假信息', '其他'];
   let _selectedReason = '垃圾信息';
-  let _reportTarget = { type: 'post', id: null }; // { type: 'post', id: postId } | { type: 'comment', id: commentId }
+  let _reportTarget = { type: 'post', id: null };
 
   function openReport() {
     menuOpen = false;
     document.getElementById('menuDropdown').classList.remove('show');
     _reportTarget = { type: 'post', id: POST_ID };
-    document.querySelector('.report-title').textContent = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报帖子';
-    const reasonsHtml = REPORT_REASONS.map(r =>
-      `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
-        <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
-      </div>`
-    ).join('');
-    document.getElementById('reportReasons').innerHTML = reasonsHtml;
+    document.getElementById('reportTitle').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报帖子';
+    renderReportReasons();
     document.getElementById('reportText').value = '';
     document.getElementById('reportOverlay').classList.add('show');
   }
 
   function openCommentReport(commentId) {
     _reportTarget = { type: 'comment', id: commentId };
-    document.querySelector('.report-title').textContent = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报评论';
-    const reasonsHtml = REPORT_REASONS.map(r =>
-      `<div class="report-reason ${r === _selectedReason ? 'selected' : ''}" onclick="selectReason('${r}')">
-        <input type="radio" name="reason" ${r === _selectedReason ? 'checked' : ''}> ${r}
-      </div>`
-    ).join('');
-    document.getElementById('reportReasons').innerHTML = reasonsHtml;
+    document.getElementById('reportTitle').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报评论';
+    renderReportReasons();
     document.getElementById('reportText').value = '';
     document.getElementById('reportOverlay').classList.add('show');
   }
+
+  function renderReportReasons() {
+    const html = REPORT_REASONS.map(r =>
+      '<div class="report-reason ' + (r === _selectedReason ? 'selected' : '') + '" onclick="selectReason(\'' + r + '\')">' +
+        '<input type="radio" name="reason" ' + (r === _selectedReason ? 'checked' : '') + '> ' + r +
+      '</div>'
+    ).join('');
+    document.getElementById('reportReasons').innerHTML = html;
+  }
+
   function selectReason(r) {
     _selectedReason = r;
     document.querySelectorAll('.report-reason').forEach(el => {
       el.classList.toggle('selected', el.textContent.trim().includes(r));
     });
   }
+
   function closeReport() {
     document.getElementById('reportOverlay').classList.remove('show');
   }
+
   async function submitReport() {
     const text = document.getElementById('reportText').value.trim();
     const reason = _selectedReason + (text ? ': ' + text : '');
@@ -847,12 +1484,9 @@
       } else {
         toast(json.msg || '举报失败');
       }
-    } catch {
-      toast('网络错误');
-    }
+    } catch { toast('网络错误'); }
   }
 
-  // ===== 启动 =====
   loadPost();
 </script>
 
