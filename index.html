@@ -2363,6 +2363,17 @@
   </div>
   </div>
 
+  <!-- 同学验证提示横幅 -->
+  <div id="studentVerifyBanner" class="page-banner verify-banner" style="display:none;">
+    <span class="banner-text">当前未通过 <span class="banner-link" onclick="openCertModal()">同学验证</span> 功能可能受限</span>
+    <button class="banner-close" onclick="closeVerifyBanner()" aria-label="关闭">&times;</button>
+  </div>
+  <!-- 处罚状态提示横幅 -->
+  <div id="punishBanner" class="page-banner punish-banner" style="display:none;">
+    <span class="banner-text"><strong>账号违规处罚中 部分功能可能受限</strong></span>
+    <button class="banner-close" onclick="closePunishBanner()" aria-label="关闭">&times;</button>
+  </div>
+
   <div id="main-content">
   <!-- 可拖拽墙 -->
   <div class="wall" id="wallOuter">
@@ -2796,11 +2807,98 @@
  <p style="font-size:12px;color:var(--text-sub);margin-bottom:18px;">确认后信息将与账号永久绑定，并获得 300 Credits 奖励</p>
  <button onclick="doConfirmZhixue()" style="padding:10px 24px;border:none;border-radius:10px;background:#22c55e;color:#fff;font-size:14px;font-weight:600;cursor:pointer;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 确认为本人信息</button>
  <button onclick="doDenyZhixue()" style="display:block;margin:10px auto 0;padding:8px 16px;border:none;background:none;color:var(--danger);font-size:13px;cursor:pointer;text-decoration:underline;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 不是本人信息，重新填写</button>
- </div>
- </div>
- </div>
+  </div>
+  </div>
+  </div>
 
- <!-- ===== 校园墙拍卖弹窗 ===== -->
+  <!-- ===== 同学认证弹窗（与 user.html 一致） ===== -->
+  <div class="modal-overlay" id="bindZhixueModal" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+  <div class="modal-header">
+  <span class="modal-title">同学认证</span>
+  <button class="modal-close" onclick="closeBindZhixueModal()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  </div>
+  <div style="padding:0 4px 4px;font-size:13px;color:var(--text-secondary);line-height:1.6;text-align:center;">我们正致力于维护校园墙真实性，为维护本墙环境，建议您完成同学认证</div>
+  <div class="modal-body">
+  <div id="bindZhixueStatus" class="form-status"></div>
+  <div class="cert-tabs">
+  <button id="tabZhixue" class="cert-tab active" onclick="switchCertTab('zhixue')">智学认证</button>
+  <button id="tabManual" class="cert-tab" onclick="switchCertTab('manual')">手动认证</button>
+  </div>
+  <div id="certPanelZhixue" class="cert-panel active">
+  <div class="cert-notice info">
+  为了维护您的隐私与合法权益，您有权利查看<a onclick="showZhixueFlowPopup()">「智学验证」</a>的运行流程
+  <br>您填写的智学网账号还可用于登录校园墙与找回校园墙的密码
+  </div>
+  <div class="form-group">
+  <label class="form-label">智学网账号</label>
+  <input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">
+  </div>
+  <div class="form-group">
+  <label class="form-label">智学网密码</label>
+  <input type="password" id="zhixueInputPassword" class="form-input" placeholder="输入智学网密码">
+  </div>
+  </div>
+  <div id="certPanelManual" class="cert-panel">
+  <div class="cert-notice warning">手动认证无法使用智学网账号进行密码重置与快捷登录</div>
+  <div class="form-group">
+  <label class="form-label">姓名</label>
+  <input type="text" id="manualName" class="form-input" placeholder="填写你的真实姓名">
+  </div>
+  <div class="form-group">
+  <label class="form-label">邮箱</label>
+  <input type="email" id="manualEmail" class="form-input" placeholder="填写你的邮箱地址">
+  <div class="form-hint">填写的电子邮件用于向您质询您提交的证明文件，请确保它是可用的</div>
+  </div>
+  <div class="form-group">
+  <label class="form-label">说明</label>
+  <textarea id="manualNote" class="form-input" rows="3" placeholder="请填写认证说明（如：学校、班级、姓名等）"></textarea>
+  </div>
+  <div class="form-group">
+  <label class="form-label">证明图片附件</label>
+  <div id="manualImagesPreview" class="manual-images-preview"></div>
+  <label class="manual-image-add" style="cursor:pointer;text-align:center;">
+  点击选择图片（最多3张，每张不超过10MB）
+  <input type="file" id="manualImageInput" accept="image/*" multiple style="display:none;" onchange="handleManualImages(event)">
+  </label>
+  <div id="manualImageError" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>
+  </div>
+  <div class="form-hint" style="padding:10px;background:var(--accent-light);border-radius:var(--radius-sm);margin-top:4px;text-align:center;">提交的信息仅用于一次性审核，校园墙承诺保护你的信息安全</div>
+  </div>
+  <div class="modal-actions">
+  <button class="btn btn-outline" onclick="closeBindZhixueModal()">取消</button>
+  <button class="btn btn-primary" style="background:var(--success);" onclick="doBindZhixue()">提交审核</button>
+  </div>
+  </div>
+  </div>
+  </div>
+
+  <!-- ===== 智学验证流程说明弹窗 ===== -->
+  <div class="modal-overlay" id="zhixueFlowOverlay" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+  <div class="modal-header">智学验证运行流程</div>
+  <div class="modal-body">
+  <div class="flow-steps" style="padding:8px 0;">
+  <div class="flow-step" style="padding:8px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:8px;font-size:13px;">用户端填写账号信息</div>
+  <div style="text-align:center;color:#999;font-size:16px;">&darr;</div>
+  <div class="flow-step" style="padding:8px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:8px;margin-top:8px;font-size:13px;">信息上传至服务器排队等待自动审核</div>
+  <div style="text-align:center;color:#999;font-size:16px;">&darr;</div>
+  <div class="flow-step" style="padding:8px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:8px;margin-top:8px;font-size:13px;">服务器调用相关API自动登录</div>
+  <div style="text-align:center;color:#999;font-size:16px;">&darr;</div>
+  <div class="flow-step" style="padding:8px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:8px;margin-top:8px;font-size:13px;">调用Playwright获取相关信息</div>
+  <div style="text-align:center;color:#999;font-size:16px;">&darr;</div>
+  <div class="flow-step" style="padding:8px 12px;background:#f0fdf4;border-radius:8px;margin-top:8px;font-size:13px;">完成审核</div>
+  </div>
+  </div>
+  <div class="modal-actions">
+  <button class="btn btn-primary" onclick="document.getElementById('zhixueFlowOverlay').style.display='none'">我知道了</button>
+  </div>
+  </div>
+  </div>
+
+  <!-- ===== 校园墙拍卖弹窗 ===== -->
  <div class="modal-overlay" id="pickupOverlay" onclick="closePickupOverlay(event)" style="display:none;">
  <div onclick="event.stopPropagation()" class="pickup-modal" style="animation:qaIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
  <div class="pickup-modal-header">
@@ -3822,10 +3920,10 @@
  updateSideNavAuth();
  updateUserBar();
  checkAnnouncement();
- if (currentUser.zhixueStatus !== 'approved') checkCertResult();
-  await checkNotifBadge();
-  checkPunishment();
-  return true;
+  if (currentUser.zhixueStatus !== 'approved') { checkCertResult(); showVerifyBanner(); }
+   await checkNotifBadge();
+   checkPunishment();
+   return true;
  } else {
  // 令牌失效，清除
  localStorage.removeItem('campus_trust_token');
@@ -4228,10 +4326,11 @@
  localStorage.setItem('campus_wall_visited', '1');
  showLoginModal();
  }
-  // 已登录但未完成同学认证 → 弹出认证引导
-  if (currentUser && currentUser.zhixueStatus !== 'approved') {
-  checkCertResult();
-  }
+   // 已登录但未完成同学认证 → 弹出认证引导
+   if (currentUser && currentUser.zhixueStatus !== 'approved') {
+   checkCertResult();
+   showVerifyBanner();
+   }
   // 已登录 → 检查是否有进行中处罚
   if (currentUser) {
   checkPunishment();
@@ -4664,9 +4763,11 @@ function openNotifModal() {
  document.getElementById('certRejectedOverlay').style.display = 'none';
  }
 
- function hideCertApproved() {
- document.getElementById('certApprovedOverlay').style.display = 'none';
- }
+  function hideCertApproved() {
+  document.getElementById('certApprovedOverlay').style.display = 'none';
+  var vb = document.getElementById('studentVerifyBanner');
+  if (vb) vb.style.display = 'none';
+  }
 
  async function doConfirmZhixue() {
  try {
@@ -4675,10 +4776,12 @@ function openNotifModal() {
  headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
  });
  const json = await resp.json();
- if (json.ok) {
- document.getElementById('certConfirmOverlay').style.display = 'none';
- currentUser.zhixueStatus = 'approved';
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + json.msg, 'success');
+  if (json.ok) {
+  document.getElementById('certConfirmOverlay').style.display = 'none';
+  currentUser.zhixueStatus = 'approved';
+  var vb = document.getElementById('studentVerifyBanner');
+  if (vb) vb.style.display = 'none';
+  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' + json.msg, 'success');
  } else {
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (json.msg || '操作失败'), 'error');
  }
@@ -4710,10 +4813,149 @@ function openNotifModal() {
  }
  }
 
- const typeConfig = {
- '日常': { color: 'note-yellow', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', pin: 'pin' },
- '表白': { color: 'note-pink', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', pin: 'tape' },
- '树洞': { color: 'note-green', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg>', pin: 'pin' },
+  // ===== 同学验证弹窗（from user.html） =====
+  var _manualImages = [];
+  function openCertModal() {
+  var modal = document.getElementById('bindZhixueModal');
+  if (modal) {
+  modal.style.display = 'flex';
+  requestAnimationFrame(function() { modal.classList.add('show'); });
+  }
+  }
+  function closeBindZhixueModal() {
+  var modal = document.getElementById('bindZhixueModal');
+  if (modal) {
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+  }
+  }
+  function switchCertTab(tab) {
+  var isZhixue = tab === 'zhixue';
+  document.getElementById('certPanelZhixue').className = 'cert-panel' + (isZhixue ? ' active' : '');
+  document.getElementById('certPanelManual').className = 'cert-panel' + (isZhixue ? '' : ' active');
+  document.getElementById('tabZhixue').className = 'cert-tab' + (isZhixue ? ' active' : '');
+  document.getElementById('tabManual').className = 'cert-tab' + (isZhixue ? '' : ' active');
+  }
+  function handleManualImages(event) {
+  var errEl = document.getElementById('manualImageError');
+  var preview = document.getElementById('manualImagesPreview');
+  errEl.style.display = 'none';
+  var files = Array.from(event.target.files);
+  if (_manualImages.length + files.length > 3) {
+  errEl.textContent = '最多上传3张图片';
+  errEl.style.display = '';
+  event.target.value = '';
+  return;
+  }
+  files.forEach(function(file) {
+  if (!file.type.startsWith('image/')) {
+  errEl.textContent = '只允许上传图片文件（' + file.name + '）';
+  errEl.style.display = '';
+  return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+  errEl.textContent = '图片大小不能超过 10MB（' + file.name + '）';
+  errEl.style.display = '';
+  return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+  _manualImages.push(e.target.result);
+  var idx = _manualImages.length - 1;
+  var img = document.createElement('div');
+  img.className = 'manual-image-item';
+  img.innerHTML = '<img src="' + e.target.result + '"><button class="manual-image-remove" onclick="removeManualImage(' + idx + ')">\u2715</button>';
+  preview.appendChild(img);
+  };
+  reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+  }
+  function removeManualImage(idx) {
+  _manualImages.splice(idx, 1);
+  var preview = document.getElementById('manualImagesPreview');
+  preview.innerHTML = '';
+  _manualImages.forEach(function(src, i) {
+  var img = document.createElement('div');
+  img.className = 'manual-image-item';
+  img.innerHTML = '<img src="' + src + '"><button class="manual-image-remove" onclick="removeManualImage(' + i + ')">\u2715</button>';
+  preview.appendChild(img);
+  });
+  }
+  function showZhixueFlowPopup() {
+  document.getElementById('zhixueFlowOverlay').style.display = 'flex';
+  }
+  async function doBindZhixue() {
+  var statusEl = document.getElementById('bindZhixueStatus');
+  var isZhixueTab = document.getElementById('certPanelZhixue').classList.contains('active');
+  function showErr(msg) { statusEl.textContent = msg; statusEl.className = 'form-status show error'; }
+  var body;
+  if (isZhixueTab) {
+  var username = document.getElementById('zhixueInputUsername').value.trim();
+  var password = document.getElementById('zhixueInputPassword').value;
+  if (!username) { showErr('请填写智学网账号'); return; }
+  if (!password) { showErr('请填写智学网密码'); return; }
+  body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
+  } else {
+  var name = document.getElementById('manualName').value.trim();
+  var email = document.getElementById('manualEmail').value.trim();
+  var note = document.getElementById('manualNote').value.trim();
+  if (!name) { showErr('请填写姓名'); return; }
+  if (!email) { showErr('请填写邮箱'); return; }
+  if (!note) { showErr('请填写认证说明'); return; }
+  if (_manualImages.length === 0) { showErr('请至少上传一张证明图片'); return; }
+  body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: _manualImages.slice() };
+  }
+  statusEl.textContent = '正在提交...';
+  statusEl.className = 'form-status show success';
+  try {
+  var token = localStorage.getItem('campus_user_token');
+  var resp = await fetch('/api/user/bind-zhixue', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+  body: JSON.stringify(body)
+  });
+  var data = await resp.json();
+  if (data.ok) {
+  statusEl.textContent = data.msg;
+  statusEl.className = 'form-status show success';
+  setTimeout(function() {
+  closeBindZhixueModal();
+  }, 1500);
+  } else {
+  throw new Error(data.msg || '提交失败');
+  }
+  } catch (e) {
+  statusEl.textContent = e.message;
+  statusEl.className = 'form-status show error';
+  }
+  }
+
+  // ===== 横幅逻辑 =====
+  function showVerifyBanner() {
+  if (!currentUser) return;
+  if (currentUser.zhixueStatus === 'approved') return;
+  var ackKey = 'verify_banner_dismiss_' + currentUser.id;
+  if (localStorage.getItem(ackKey)) return;
+  var banner = document.getElementById('studentVerifyBanner');
+  if (banner) banner.style.display = 'flex';
+  }
+  function closeVerifyBanner() {
+  var banner = document.getElementById('studentVerifyBanner');
+  if (banner) banner.style.display = 'none';
+  if (currentUser && currentUser.id) {
+  localStorage.setItem('verify_banner_dismiss_' + currentUser.id, '1');
+  }
+  }
+  function closePunishBanner() {
+  var banner = document.getElementById('punishBanner');
+  if (banner) banner.style.display = 'none';
+  }
+
+  const typeConfig = {
+  '日常': { color: 'note-yellow', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', pin: 'pin' },
+  '表白': { color: 'note-pink', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', pin: 'tape' },
+  '树洞': { color: 'note-green', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg>', pin: 'pin' },
  '失物招领': { color: 'note-orange', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', pin: 'tape' },
  '活动': { color: 'note-blue', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>', pin: 'pin' },
  };
@@ -8460,6 +8702,55 @@ function escJsStr(s) {
 #punishPopup.open{visibility:visible;opacity:1;}
 #punishPopup .punish-box{background:#fff;border-radius:16px;padding:32px 28px 24px;max-width:380px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);transform:scale(0.92) translateY(24px);opacity:0;transition:transform .25s ease-out,opacity .22s ease-out;}
 #punishPopup.open .punish-box{transform:scale(1) translateY(0);opacity:1;}
+.page-banner{display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:13px;gap:8px;position:relative;animation:bannerSlideDown .3s ease-out;}
+.page-banner .banner-text{flex:1;text-align:center;}
+.page-banner .banner-link{color:#22c55e;font-weight:700;cursor:pointer;text-decoration:underline;}
+.page-banner .banner-link:hover{color:#16a34a;}
+.page-banner .banner-close{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;color:inherit;padding:4px 8px;border-radius:6px;transition:background .15s;line-height:1;}
+.page-banner .banner-close:hover{background:rgba(0,0,0,0.08);}
+.verify-banner{background:#fff;border-bottom:1px solid #e5e7eb;color:#374151;}
+.punish-banner{background:#fef2f2;border-bottom:1px solid #fecaca;color:#1f2937;}
+@keyframes bannerSlideDown{from{opacity:0;transform:translateY(-100%);}to{opacity:1;transform:translateY(0);}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.modal-title{font-size:17px;font-weight:600;}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:transparent;color:var(--text-muted,#9ca3af);cursor:pointer;transition:all .15s;}
+.modal-close:hover{background:#f3f4f6;color:var(--text-primary,#111827);}
+.modal-close svg{width:16px;height:16px;}
+.modal-body{display:flex;flex-direction:column;gap:18px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:13px;font-weight:500;color:var(--text-secondary,#6b7280);}
+.form-input{padding:10px 14px;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;font-family:var(--font-body,'Noto Sans SC',sans-serif);font-size:14px;color:var(--text-primary,#111827);outline:none;transition:border-color .15s;background:var(--surface,#fff);}
+.form-input:focus{border-color:#3d6ce8;}
+.form-input::placeholder{color:var(--text-muted,#9ca3af);}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
+.form-hint{font-size:12px;color:var(--text-muted,#9ca3af);line-height:1.4;}
+.form-status{text-align:center;padding:10px 14px;border-radius:4px;font-size:13px;font-weight:500;display:none;}
+.form-status.show{display:block;}
+.form-status.success{background:#f0fdf4;color:#22c55e;}
+.form-status.error{background:#fef2f2;color:#ef4444;}
+.modal-actions{display:flex;gap:10px;margin-top:4px;}
+.modal-actions .btn{flex:1;justify-content:center;padding:10px 18px;}
+.btn-primary{background:#3d6ce8;color:#fff;}
+.btn-primary:hover{background:#3458c4;}
+.btn-outline{background:transparent;border:1px solid var(--border-color,#e5e7eb);color:var(--text-secondary,#6b7280);}
+.btn-outline:hover{background:#f3f4f6;}
+.cert-tabs{display:flex;gap:0;border:1px solid var(--border-color,#e5e7eb);border-radius:8px;overflow:hidden;margin-bottom:18px;}
+.cert-tab{flex:1;padding:9px 0;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;font-family:var(--font-body,'Noto Sans SC',sans-serif);}
+.cert-tab.active{background:#22c55e;color:#fff;}
+.cert-tab:not(.active){background:#f9fafb;color:var(--text-secondary,#6b7280);}
+.cert-tab:not(.active):hover{background:#f3f4f6;}
+.cert-panel{display:none;}
+.cert-panel.active{display:block;}
+.cert-notice{font-size:12px;padding:12px 14px;border-radius:4px;margin-bottom:14px;line-height:1.6;text-align:center;}
+.cert-notice.info{background:#f0fdf4;color:#22c55e;}
+.cert-notice.warning{background:#fffbeb;color:#b45309;border:1px solid rgba(149,100,0,0.15);}
+.cert-notice a{color:inherit;text-decoration:underline;cursor:pointer;font-weight:600;}
+.manual-images-preview{display:flex;flex-wrap:wrap;gap:8px;}
+.manual-image-item{position:relative;width:72px;height:72px;}
+.manual-image-item img{width:100%;height:100%;object-fit:cover;border-radius:4px;border:1px solid var(--border-color,#e5e7eb);}
+.manual-image-remove{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.manual-image-add{display:flex;align-items:center;justify-content:center;padding:14px;border:1px dashed var(--border-color,#e5e7eb);border-radius:4px;cursor:pointer;font-size:13px;color:var(--text-secondary,#6b7280);transition:all .15s;}
+.manual-image-add:hover{border-color:#3d6ce8;color:#3d6ce8;}
 .dialog-anim{animation:dialogIn .3s ease-out;}
 @keyframes dialogIn{from{opacity:0;transform:scale(0.92) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .whisper-modal{background:#fff;border-radius:16px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;animation:whisperIn .3s cubic-bezier(0.16,1,0.3,1);}
@@ -8504,7 +8795,7 @@ function escJsStr(s) {
 .whisper-incoming-modal{animation:fadeSlideIn 0.25s ease-out;}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
-<script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);}}catch(e){}}</script>
+<script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);var pb=document.getElementById('punishBanner');if(pb)pb.style.display='flex';}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 <script src="spa.js"></script>
 <script>

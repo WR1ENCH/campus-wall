@@ -1062,6 +1062,43 @@ server.js
 | 确认弹窗异常 | `bully.html` | confirmPostId try/finally + 反斜杠转义 |
 | 紧急模式清空 | `bully.html` | applyVictimNameField 不清空紧急模式输入框 |
 | 霸凌详情健壮 | `routes/admin.js` + `admin.html` | 兼容字符串 JSON + 前端降级显示 |
+### 会话 11 — 2026-07-17 — index.html 同学验证横幅 + 处罚状态横幅
+
+#### Task 1：同学验证提示横幅
+
+在 `index.html` 顶部（`<div id="main-content">` 之前）新增白色横幅，检测用户同学验证状态：
+
+- **触发条件**：`currentUser.zhixueStatus !== 'approved'` 时显示
+- **横幅内容**：白色背景，居中文字「当前未通过 **同学验证** 功能可能受限」，「同学验证」绿色粗体可点击
+- **点击交互**：点击「同学验证」打开与 `user.html` 一致的认证弹窗（`#bindZhixueModal`，含智学认证/手动认证双 Tab + 图片上传）
+- **关闭行为**：右侧叉号关闭，通过 `localStorage` 记录 `verify_banner_dismiss_{userId}`，同用户永久不再显示
+- **认证成功后**：`doConfirmZhixue()` / `hideCertApproved()` 自动隐藏横幅
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 新增横幅 HTML | `index.html` | 2365-2380 | `#studentVerifyBanner` + `#punishBanner` |
+| 新增认证弹窗 HTML | `index.html` | 2803-2890 | `#bindZhixueModal` + `#zhixueFlowOverlay`，与 user.html 模态一致 |
+| 新增横幅 CSS | `index.html` | 8761-8780 | `.page-banner` / `.verify-banner` / `.punish-banner` / 动画 |
+| 新增弹窗 CSS | `index.html` | 8780-8830 | `.cert-tabs` / `.form-group` / `.modal-header` 等（从 user.html 移植） |
+| 新增 JS `openCertModal()` / `closeBindZhixueModal()` / `switchCertTab()` / `doBindZhixue()` | `index.html` | 4811-4960 | 认证弹窗交互函数（从 user.html 移植） |
+| 新增 JS `showVerifyBanner()` / `closeVerifyBanner()` | `index.html` | 4962-4978 | 横幅控制（含 localStorage 持久化关闭） |
+| 修改 `tryAutoLogin()` | `index.html` | 3923-3924 | 自动登录后调用 `showVerifyBanner()` |
+| 修改 `checkLogin()` | `index.html` | 4330-4332 | 页面加载后调用 `showVerifyBanner()` |
+| 修改 `doConfirmZhixue()` | `index.html` | 4777-4779 | 确认认证成功后隐藏横幅 |
+| 修改 `hideCertApproved()` | `index.html` | 4765-4770 | 手动认证通过弹窗关闭时隐藏横幅 |
+
+#### Task 2：处罚状态提示横幅
+
+- **触发条件**：`checkPunishment()` 检测到 `activePunishment` 时显示
+- **横幅内容**：红底黑字：「**账号违规处罚中 部分功能可能受限**」，全部粗体
+- **关闭行为**：右侧叉号关闭，会话级（不持久化）
+- **与现有弹窗关系**：原有的 `punishPopup` 弹窗仍然保留，横幅作为持续可见的顶部提示
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 修改 `checkPunishment()` | `index.html` | 8797 | 在弹出 `punishPopup` 的同时显示 `#punishBanner` |
+| 新增 `closePunishBanner()` | `index.html` | 4978-4981 | 关闭处罚横幅 |
+
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
