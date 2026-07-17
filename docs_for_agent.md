@@ -1042,6 +1042,43 @@ server.js
 | 确认弹窗异常 | `bully.html` | confirmPostId try/finally + 反斜杠转义 |
 | 紧急模式清空 | `bully.html` | applyVictimNameField 不清空紧急模式输入框 |
 | 霸凌详情健壮 | `routes/admin.js` + `admin.html` | 兼容字符串 JSON + 前端降级显示 |
+### 会话 11 — 2026-07-17 — index.html 同学验证横幅 + 处罚状态横幅
+
+#### Task 1：同学验证提示横幅
+
+在 `index.html` 顶部（`<div id="main-content">` 之前）新增白色横幅，检测用户同学验证状态：
+
+- **触发条件**：`currentUser.zhixueStatus !== 'approved'` 时显示
+- **横幅内容**：白色背景，居中文字「当前未通过 **同学验证** 功能可能受限」，「同学验证」绿色粗体可点击
+- **点击交互**：点击「同学验证」打开与 `user.html` 一致的认证弹窗（`#bindZhixueModal`，含智学认证/手动认证双 Tab + 图片上传）
+- **关闭行为**：右侧叉号关闭，通过 `localStorage` 记录 `verify_banner_dismiss_{userId}`，同用户永久不再显示
+- **认证成功后**：`doConfirmZhixue()` / `hideCertApproved()` 自动隐藏横幅
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 新增横幅 HTML | `index.html` | 2365-2380 | `#studentVerifyBanner` + `#punishBanner` |
+| 新增认证弹窗 HTML | `index.html` | 2803-2890 | `#bindZhixueModal` + `#zhixueFlowOverlay`，与 user.html 模态一致 |
+| 新增横幅 CSS | `index.html` | 8761-8780 | `.page-banner` / `.verify-banner` / `.punish-banner` / 动画 |
+| 新增弹窗 CSS | `index.html` | 8780-8830 | `.cert-tabs` / `.form-group` / `.modal-header` 等（从 user.html 移植） |
+| 新增 JS `openCertModal()` / `closeBindZhixueModal()` / `switchCertTab()` / `doBindZhixue()` | `index.html` | 4811-4960 | 认证弹窗交互函数（从 user.html 移植） |
+| 新增 JS `showVerifyBanner()` / `closeVerifyBanner()` | `index.html` | 4962-4978 | 横幅控制（含 localStorage 持久化关闭） |
+| 修改 `tryAutoLogin()` | `index.html` | 3923-3924 | 自动登录后调用 `showVerifyBanner()` |
+| 修改 `checkLogin()` | `index.html` | 4330-4332 | 页面加载后调用 `showVerifyBanner()` |
+| 修改 `doConfirmZhixue()` | `index.html` | 4777-4779 | 确认认证成功后隐藏横幅 |
+| 修改 `hideCertApproved()` | `index.html` | 4765-4770 | 手动认证通过弹窗关闭时隐藏横幅 |
+
+#### Task 2：处罚状态提示横幅
+
+- **触发条件**：`checkPunishment()` 检测到 `activePunishment` 时显示
+- **横幅内容**：红底黑字：「**账号违规处罚中 部分功能可能受限**」，全部粗体
+- **关闭行为**：右侧叉号关闭，会话级（不持久化）
+- **与现有弹窗关系**：原有的 `punishPopup` 弹窗仍然保留，横幅作为持续可见的顶部提示
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 修改 `checkPunishment()` | `index.html` | 8797 | 在弹出 `punishPopup` 的同时显示 `#punishBanner` |
+| 新增 `closePunishBanner()` | `index.html` | 4978-4981 | 关闭处罚横幅 |
+
 ## 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
@@ -1187,3 +1224,41 @@ server.js
 - `routes/user.js:262`：`zhixueUsername` 在 DB 中以 Number 存储，登录时用 `String()` 统一转字符串再比较，修复类型不匹配导致用户找不到
 - `routes/user.js:273-282`：当 `zhixuePassword` 为 null（旧版代码审核清空导致）时，将用户输入的密码加密存储并放行登录，实现自动恢复
 - `lib/middleware.js:123,139-145`：将 `password` / `zhixuePassword` / `oldPwd` / `newPwd` 等密码字段加入 `inputSanitize` 白名单，防止特殊字符被静默清除
+
+### 会话 8 — 2026-07-17 · post.html 帖子详情页重设计
+
+**设计目标**：推翻原有 post.html 设计，保留便利贴卡片核心视觉，大幅提升现代感、精致度与交互体验。
+
+**设计定位**：Reading this as: 校园社区帖子详情页 for 中学生用户, with a warm/playful/refined language, leaning toward native CSS + 便利贴隐喻 + spring 动效。
+
+** Dial 设定**：`DESIGN_VARIANCE: 7 / MOTION_INTENSITY: 6 / VISUAL_DENSITY: 4`
+
+| 模块 | 原设计 | 新设计 |
+|------|--------|--------|
+| 背景 | 纯棕色 + 网格线 | 增加 radial-gradient 光晕 + 更细腻的网格，模拟真实木板质感 |
+| 顶部导航 | 粗糙半透明棕色 | 深色毛玻璃导航 + z-index 品牌 logo + 圆角返回按钮 |
+| 便利贴卡片 | 矩形圆角2px + 顶部胶带 | 更精致的阴影层次（4层）+ 胶带增加高光条纹 + 微旋转(-0.3deg) |
+| 类型标签 | 方形标签 | 胶囊圆角标签 + SVG 图标 |
+| 正文字号 | 26px | 28px + 行高1.8优化 |
+| 图片展示 | 固定120px方形容器 | 响应式_square_布局 + hover放大动效 + 独立大图预览 |
+| 底部信息 | 简单文字 | 头像组件 + 认证徽章（超管/管理员/已认证）+ 时间 |
+| 点赞按钮 | 方形 | 胶囊按钮 + 心形SVG动画 + 弹性缩放反馈 |
+| 评论输入 | 分离式输入框 | 融合式输入行 + focus时边框高亮 |
+| 评论项 | 白底卡片 | 毛玻璃卡片 + 悬停上浮 + 交错入场动画 |
+| 菜单 | 简单下拉 | 圆角菜单 + 弹性入场动画 |
+| Toast | 简单圆角矩形 | 胶囊 + 阴影 + 弹性入场 |
+| 举报弹窗 | 基础弹窗 | 20px大圆角 + 阴影层次 + 弹性动画 |
+| 响应式 | 基础适配 | 600px断点 + 导航按钮隐藏文字 + 评论输入优化 |
+| 动效 | 线性过渡 | 全局 cubic-bezier spring + 减少动画偏好兼容 |
+
+**新增 CSS 变量**：完整的 `--note-*`、`--accent-*`、`--text-*`、`--surface` 设计 token 系统
+
+**新增组件**：
+- `.pin-dot` / `.pin-line` — 评论区顶部装饰分隔
+- `.comment-count-badge` — 评论数量胶囊徽章
+- `.comment-disabled-notice` — 评论禁用提示卡片
+- `.image-overlay` — 全屏图片预览（替代内联样式）
+- `.self-only-banner` — 仅自己可见横幅（CSS class + 动画）
+
+**移除**：所有内联 `style=""` 样式 → 全部迁移到 CSS class；废弃 SVG emoji 替换为组件化 SVG icon
+**保留**：所有业务逻辑（API 调用、举报、删除、点赞、评论、敏感词/霸凌检测）、`pages/post.html` SPA 片段不变
