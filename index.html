@@ -172,18 +172,18 @@
  }
 
  /* ===== 顶部栏 ===== */
- .top-bar {
- position: fixed;
- top: 0; left: 0; right: 0;
- z-index: var(--z-sticky);
- background: rgba(139,111,94,0.92);
- backdrop-filter: blur(16px);
- padding: 12px 24px;
- display: flex; align-items: center; justify-content: flex-start;
- border-bottom: 1px solid rgba(0,0,0,0.12);
- box-shadow: 0 2px 16px rgba(0,0,0,0.12);
- transition: padding var(--ease-linear);
- }
+.top-bar {
+position: fixed;
+top: 0; left: 0; right: 0;
+z-index: var(--z-sticky);
+background: rgba(139,111,94,0.92);
+backdrop-filter: blur(16px);
+padding: 12px 24px;
+display: flex; align-items: center; justify-content: flex-start;
+border-bottom: 1px solid rgba(0,0,0,0.12);
+box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+transition: top 0.3s ease, padding var(--ease-linear);
+}
 
  .top-left-group {
  display: flex; align-items: center; gap: var(--space-5);
@@ -1144,12 +1144,12 @@
  }
 
  /* ===== 发帖弹窗 ===== */
- .modal-overlay {
- display: none; position: fixed; inset: 0;
- background: rgba(0,0,0,0.5); z-index: 200;
- align-items: center; justify-content: center;
- backdrop-filter: blur(4px);
- }
+.modal-overlay {
+display: none; position: fixed; inset: 0;
+background: rgba(0,0,0,0.5); z-index: 10000;
+align-items: center; justify-content: center;
+backdrop-filter: blur(4px);
+}
  .modal-overlay.show { display: flex; }
 
     /* 滑块验证码弹窗动画 */
@@ -2363,6 +2363,9 @@
   </div>
   </div>
 
+  <div id="main-content">
+  <!-- 可拖拽墙 -->
+  <div class="wall" id="wallOuter">
   <!-- 同学验证提示横幅 -->
   <div id="studentVerifyBanner" class="page-banner verify-banner" style="display:none;">
     <span class="banner-text">当前未通过 <span class="banner-link" onclick="openCertModal()">同学验证</span> 功能可能受限</span>
@@ -2373,11 +2376,7 @@
     <span class="banner-text"><strong>账号违规处罚中 部分功能可能受限</strong></span>
     <button class="banner-close" onclick="closePunishBanner()" aria-label="关闭">&times;</button>
   </div>
-
-  <div id="main-content">
-  <!-- 可拖拽墙 -->
-  <div class="wall" id="wallOuter">
- <div class="notes-area">
+  <div class="notes-area">
  <div class="notes-grid" id="notesGrid"></div>
  </div>
  </div>
@@ -4932,6 +4931,19 @@ function openNotifModal() {
   }
 
   // ===== 横幅逻辑 =====
+  function adjustTopBar() {
+    var actionBar = document.getElementById('actionBar');
+    if (!actionBar) return;
+    var verifyBanner = document.getElementById('studentVerifyBanner');
+    var punishBanner = document.getElementById('punishBanner');
+    var verifyVisible = verifyBanner && verifyBanner.style.display !== 'none';
+    var punishVisible = punishBanner && punishBanner.style.display !== 'none';
+    if (verifyVisible || punishVisible) {
+      actionBar.style.top = '46px';
+    } else {
+      actionBar.style.top = '8px';
+    }
+  }
   function showVerifyBanner() {
   if (!currentUser) return;
   if (currentUser.zhixueStatus === 'approved') return;
@@ -4939,6 +4951,7 @@ function openNotifModal() {
   if (localStorage.getItem(ackKey)) return;
   var banner = document.getElementById('studentVerifyBanner');
   if (banner) banner.style.display = 'flex';
+  adjustTopBar();
   }
   function closeVerifyBanner() {
   var banner = document.getElementById('studentVerifyBanner');
@@ -4946,10 +4959,12 @@ function openNotifModal() {
   if (currentUser && currentUser.id) {
   localStorage.setItem('verify_banner_dismiss_' + currentUser.id, '1');
   }
+  adjustTopBar();
   }
   function closePunishBanner() {
   var banner = document.getElementById('punishBanner');
   if (banner) banner.style.display = 'none';
+  adjustTopBar();
   }
 
   const typeConfig = {
@@ -5464,19 +5479,30 @@ async function showPostCaptchaModal() {
  // ===== 帖子详情弹窗（风格同登录窗口）=====
  let currentDetailId = null;
 
- function openNoteDetail(id) {
- const post = posts.find(p => p.id === id);
- if (!post) return;
+  async function openNoteDetail(id) {
+  let post = posts.find(p => p.id === id);
+  if (!post) return;
 
- const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', pin: 'tape' };
- const box = document.getElementById('noteDetailBox');
+  try {
+    const res = await fetch(API + '/api/posts/' + id, { headers: authHeaders() });
+    const json = await res.json();
+    if (json.ok) {
+      post = json.data;
+    } else if (json.code === 'SELF_ONLY') {
+      showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容仅自己可见');
+      return;
+    }
+  } catch {}
 
- // 用帖子本身的颜色作为弹窗背景
- box.className = 'note-detail-box ' + cfg.color;
- box.style.color = cfg.color === 'note-yellow' ? '#5a4a00' : '#3a2a00';
+  const cfg = typeConfig[post.type] || { color: 'note-yellow', emoji: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', pin: 'tape' };
+  const box = document.getElementById('noteDetailBox');
 
- document.getElementById('detailType').innerHTML = cfg.emoji + ' ' + post.type;
- document.getElementById('detailContent').textContent = post.content;
+  // 用帖子本身的颜色作为弹窗背景
+  box.className = 'note-detail-box ' + cfg.color;
+  box.style.color = cfg.color === 'note-yellow' ? '#5a4a00' : '#3a2a00';
+
+  document.getElementById('detailType').innerHTML = cfg.emoji + ' ' + post.type;
+  document.getElementById('detailContent').textContent = post.content;
  // 帖子附图
  const detailImagesEl = document.getElementById('detailImages');
  if (detailImagesEl) {
@@ -8702,7 +8728,7 @@ function escJsStr(s) {
 #punishPopup.open{visibility:visible;opacity:1;}
 #punishPopup .punish-box{background:#fff;border-radius:16px;padding:32px 28px 24px;max-width:380px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2);transform:scale(0.92) translateY(24px);opacity:0;transition:transform .25s ease-out,opacity .22s ease-out;}
 #punishPopup.open .punish-box{transform:scale(1) translateY(0);opacity:1;}
-.page-banner{display:flex;align-items:center;justify-content:center;padding:10px 16px;font-size:13px;gap:8px;position:relative;animation:bannerSlideDown .3s ease-out;}
+.page-banner{display:flex;align-items:center;justify-content:center;padding:6px 16px;font-size:13px;gap:8px;position:fixed;top:0;left:0;right:0;z-index:9999;animation:bannerSlideDown .3s ease-out;}
 .page-banner .banner-text{flex:1;text-align:center;}
 .page-banner .banner-link{color:#22c55e;font-weight:700;cursor:pointer;text-decoration:underline;}
 .page-banner .banner-link:hover{color:#16a34a;}
@@ -8711,6 +8737,9 @@ function escJsStr(s) {
 .verify-banner{background:#fff;border-bottom:1px solid #e5e7eb;color:#374151;}
 .punish-banner{background:#fef2f2;border-bottom:1px solid #fecaca;color:#1f2937;}
 @keyframes bannerSlideDown{from{opacity:0;transform:translateY(-100%);}to{opacity:1;transform:translateY(0);}}
+.modal-overlay.show .modal{animation:modalIn .25s ease-out;}
+@keyframes modalIn{from{opacity:0;transform:scale(.92) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal{background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.18);max-height:85vh;overflow-y:auto;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
 .modal-title{font-size:17px;font-weight:600;}
 .modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:transparent;color:var(--text-muted,#9ca3af);cursor:pointer;transition:all .15s;}
@@ -8795,7 +8824,7 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
 .whisper-incoming-modal{animation:fadeSlideIn 0.25s ease-out;}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
-<script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);var pb=document.getElementById('punishBanner');if(pb)pb.style.display='flex';}}catch(e){}}</script>
+<script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);var pb=document.getElementById('punishBanner');if(pb)pb.style.display='flex';adjustTopBar();}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 <script src="spa.js"></script>
 <script>
