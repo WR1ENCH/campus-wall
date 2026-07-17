@@ -744,10 +744,30 @@ admin → auth → user → posts → discussions → qa → votes → notices
 9. **敏感词库**：`sensitiveWords.js` 加载 `tencent_sensitive_words.enc`（需 `SENSITIVE_KEY` 解密），另含自定义 `sensitive_custom.json`。改词库走后台接口或文件，不要硬编码。
 10. **滑块验证码**：`POST /api/slider-captcha/grant` 返回 `captchaId`，存于 `captchaStore`（5 分钟 TTL），后续接口需带 `captchaId` + `captchaText`。
 11. **桌面端强制移动端 UI（3.1 第 6 项）**：前台页面在桌面浏览器会被 `server.js` 的 iframe 设备框包裹（内切 `?mf=1` 真实页）。**后台 `admin.html` 不受影响**，仍走桌面布局。要新增需强制移动端的前台页，必须在 `server.js` 的 `FRAME_PAGES` 中登记，否则桌面端会显示桌面布局。改 CSS 断点（`max-width:768px` / `min-width:769px`）时需同步此逻辑。
+12. **横幅 z-index 问题**：`index.html` 中的 `.page-banner`（同学验证横幅、处罚横幅）位于固定顶栏（`z-index: 200`）下方，需设置 `margin-top: 56px` 避免被顶栏遮挡。
 
 ---
 
-## 10. 如何新增一个后端功能（标准流程）
+## 10. 最近修复记录（2026-07-17）
+
+### 修复1：横幅被顶栏挡住
+- **问题**：`index.html` 中的同学验证横幅和处罚横幅被固定顶栏遮挡
+- **修复**：在 `.page-banner` CSS 中增加 `margin-top: 56px`
+
+### 修复2：仅自己可见和允许评论选项形同虚设
+- **问题**：发帖时"仅自己可见"和"允许他人评论"两个选项无论开关，帖子都能被查看和评论
+- **根因**：SPA 中的 `openNoteDetail` 函数从本地缓存读取帖子数据，未向服务器验证可见性；`post.html` 的 `loadPost` 未发送用户 token
+- **修复**：
+  - `index.html`：`openNoteDetail` 改为异步函数，从服务器获取帖子详情，若返回 `SELF_ONLY` 则提示并返回
+  - `post.html`：`loadPost` 发送 `x-user-token` 头，后端可正确识别作者身份；新增 `showSelfOnly()` 函数处理仅自己可见的情况
+
+### 修复3：帖子仅自己可见状态横幅文案更新
+- **问题**：`post.html` 中仅自己可见横幅文案与需求不符
+- **修复**：将横幅文案从"此内容仅自己可见"更新为"这是一条**仅你可见**的帖子"（"仅你可见"加粗）
+
+---
+
+## 11. 如何新增一个后端功能（标准流程）
 
 以「新增一个 `/api/xxx` 模块」为例：
 
@@ -762,7 +782,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ---
 
-## 11. 运行 / 部署 / 维护
+## 12. 运行 / 部署 / 维护
 
 ### 本地开发
 ```bash
@@ -789,7 +809,7 @@ pm2 logs campus-wall
 
 ---
 
-## 12. 模块依赖速查（调用关系）
+## 13. 模块依赖速查（调用关系）
 
 ```
 server.js
