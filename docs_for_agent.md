@@ -1162,6 +1162,14 @@ server.js
 
 > 本节记录本项目的非正式改动，便于后续 Agent 快速对齐。
 
+### 2026-07-17 · 敏感词/霸凌弹窗 z-index 修复 + 返回编辑流程修复
+
+**问题**：敏感词检测和霸凌检测弹窗在弹出时被发帖窗口挡住（z-index: 999 vs modal z-index: 10000），且点击「返回编辑」后再次发送总是报错。
+
+**修复**：
+- `index.html`、`post.html`、`notice.html` 三处 `showSensitiveWarning` / `showBullyingWarning` 的 `z-index: 999` → `10001`
+- `index.html` 新增 `_returnToEdit` 标记，避免「返回编辑」后误报「发帖失败」
+
 ### 2026-07-14 · 密语接收弹窗层级修复 + 积分入口与积分页重做
 
 **Bug 修复：`#whisperIncomingOverlay` 被通知弹窗覆盖**
@@ -1302,3 +1310,34 @@ server.js
 
 **移除**：所有内联 `style=""` 样式 → 全部迁移到 CSS class；废弃 SVG emoji 替换为组件化 SVG icon
 **保留**：所有业务逻辑（API 调用、举报、删除、点赞、评论、敏感词/霸凌检测）、`pages/post.html` SPA 片段不变
+
+### 会话 12 — 2026-07-17 — 敏感词/霸凌弹窗 z-index 修复 + 返回编辑流程修复
+
+#### Bug 1：警告弹窗被发帖弹窗遮挡
+
+- **根因**：`showSensitiveWarning()` / `showBullyingWarning()` 创建的覆盖层 `z-index: 999`（三处文件：index.html、post.html、notice.html），而发帖弹窗 `.modal-overlay` 的 `z-index: 10000`，导致警告弹窗永远在发帖框后面。
+- **修复**：三个文件中所有警告弹窗的 `z-index` 从 `999` 改为 `10001`。
+
+| 文件 | 行 | 说明 |
+|------|-----|------|
+| `index.html` | 6295, 6326 | `showSensitiveWarning` / `showBullyingWarning` z-index 修正 |
+| `post.html` | 1068, 1090 | 同上 |
+| `notice.html` | 2040, 2055 | 同上 |
+
+#### Bug 2：返回编辑再发送失败
+
+- **根因**：由于 Bug 1 弹窗被遮挡，用户无法正常操作弹窗按钮。同时，用户点击「返回编辑」后 `createPost()` 返回 `null`，`submitNote()` 误显示「发帖失败，请检查服务器」。
+- **修复**：
+  - 新增 `_returnToEdit` 标记，在「返回编辑」回调中设置为 `true`
+  - `submitNote()` 检测此标记，跳过「发帖失败」误报
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 新增 `_returnToEdit` 全局变量 | `index.html` | 5017 | 标记用户从警告弹窗返回编辑 |
+| 霸凌返回编辑设标记 | `index.html` | 5076 | `_returnToEdit = true` |
+| 敏感词返回编辑设标记 | `index.html` | 5090 | `_returnToEdit = true` |
+| submitNote 跳过误报 | `index.html` | 6251-6253 | `else if (_returnToEdit)` 分支 |
+
+#### Todo（不提交）
+
+`todo.md` 已写入测试清单（不提交到 git）。
