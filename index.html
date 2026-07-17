@@ -5019,11 +5019,11 @@ function openNotifModal() {
  // ===== API 调用 =====
  async function fetchPosts() {
  try {
- const res = await fetch(API + '/api/posts');
- const json = await res.json();
- if (json.ok) {
- // 过滤掉被隐藏的帖子（举报数>20）
- posts = json.data.filter(p => !p.hidden);
+  const res = await fetch(API + '/api/posts', { headers: authHeaders() });
+  const json = await res.json();
+  if (json.ok) {
+  // 过滤掉被隐藏的帖子（举报数>20）
+  posts = json.data.filter(p => !p.hidden);
  // 为每个帖子补充前端随机属性（不在后端存，每次刷新不同）
  posts.forEach(p => {
  if (p.rotate === undefined) p.rotate = rand(-4, 4);
@@ -5587,7 +5587,7 @@ async function showPostCaptchaModal() {
   // 评论框状态：是否允许评论
   const commentInput = document.getElementById('detailCommentInput');
   const commentSubmitBtn = document.getElementById('detailCommentSubmitBtn');
-  if (post.allowComments === false) {
+  if (!post.allowComments) {
     commentInput.placeholder = '本帖不允许评论';
     commentInput.disabled = true;
     commentSubmitBtn.disabled = true;

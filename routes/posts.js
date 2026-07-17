@@ -532,7 +532,7 @@ app.post('/api/posts/:id/comments', (req, res) => {
   if (!post) {
     return res.json({ ok: false, msg: '帖子不存在' });
   }
-  if (post.allowComments === false) {
+  if (!post.allowComments) {
     return res.json({ ok: false, msg: '本帖不允许评论', code: 'COMMENTS_DISABLED' });
   }
   if (!Array.isArray(post.comments)) post.comments = [];

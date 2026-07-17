@@ -1108,7 +1108,7 @@
   function updateCommentSection(post) {
     const inputRow = document.getElementById('commentInputRow');
     const disabledNotice = document.getElementById('commentDisabledNotice');
-    if (post.allowComments === false) {
+    if (!post.allowComments) {
       if (inputRow) inputRow.style.display = 'none';
       if (disabledNotice) disabledNotice.style.display = 'block';
     } else {
