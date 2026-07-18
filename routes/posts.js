@@ -276,7 +276,8 @@ app.post('/api/posts', (req, res) => {
   if (anonymousFlag && realUserId) {
     const today = new Date().toISOString().slice(0, 10);
     const allPosts = readPosts();
-    const todayAnonPosts = allPosts.filter(p => p.userId === realUserId && p.isAnonymous && p.time && p.time.startsWith(today));
+    const uid = String(realUserId);
+    const todayAnonPosts = allPosts.filter(p => String(p.userId) === uid && p.isAnonymous && p.time && String(p.time).startsWith(today));
     if (todayAnonPosts.length >= 2) {
       if (!payWithCredit) {
         return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（2/2），每次需消耗 50 credit', cost: 50 });

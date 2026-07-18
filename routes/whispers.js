@@ -37,10 +37,11 @@ module.exports = function(app) {
     monday.setHours(0, 0, 0, 0);
     const weekStart = monday.toISOString();
     const allWhispers = db.readWhispers();
-    const weekWhispers = allWhispers.filter(w => w.senderId === session.id && !w.deleted && w.createdAt >= weekStart);
+    const sid = String(session.id);
+    const weekWhispers = allWhispers.filter(w => String(w.senderId) === sid && !w.deleted && w.createdAt >= weekStart);
     if (weekWhispers.length >= 2) {
       const users = db.readUsers();
-      const sender = users.find(u => u.id === session.id);
+      const sender = users.find(u => String(u.id) === sid);
       if (!sender || (sender.credit || 0) < 200) {
         return res.json({ ok: false, msg: '本周悄悄话次数已用完，credit 不足 200，无法发送', code: 'INSUFFICIENT_CREDIT' });
       }
