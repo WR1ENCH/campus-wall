@@ -28,6 +28,36 @@ module.exports = function(app) {
       return res.json({ ok: false, msg: '当前账号功能受限，无法发送悄悄话', code: 'FEATURE_BLOCKED' });
     }
 
+    // 悄悄话每周配额检测（每周最多2次免费，超出自动扣200credit）
+    const _now = new Date();
+    const dayOfWeek = _now.getDay();
+    const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+    const monday = new Date(_now);
+    monday.setDate(_now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const weekStart = monday.toISOString();
+    const allWhispers = db.readWhispers();
+    const sid = String(session.id);
+    const weekWhispers = allWhispers.filter(w => String(w.senderId) === sid && !w.deleted && w.createdAt >= weekStart);
+    if (weekWhispers.length >= 2) {
+      const users = db.readUsers();
+      const sender = users.find(u => String(u.id) === sid);
+      if (!sender || (sender.credit || 0) < 200) {
+        return res.json({ ok: false, msg: '本周悄悄话次数已用完，credit 不足 200，无法发送', code: 'INSUFFICIENT_CREDIT' });
+      }
+      sender.credit = (sender.credit || 0) - 200;
+      db.writeUsers(users);
+      const logs = db.readCreditLogs();
+      logs.push({
+        id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        userId: session.id,
+        amount: -200,
+        reason: '悄悄话超额消耗（自然周限制）',
+        createdAt: new Date().toISOString()
+      });
+      db.writeCreditLogs(logs);
+    }
+
     const sensitiveWords = checkSensitive(content);
     if (sensitiveWords.length > 0) {
       return res.json({ ok: false, msg: '内容包含敏感词，请修改后重试', code: 'SENSITIVE_WORDS', warningMsg: '内容包含敏感词，请修改后重试' });

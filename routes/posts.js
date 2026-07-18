@@ -18,6 +18,8 @@ function readUsers() { return db.readUsers(); }
 function writeUsers(users) { db.writeUsers(users); }
 function readReports() { return db.readReports(); }
 function writeReports(reports) { db.writeReports(reports); }
+function readCreditLogs() { return db.readCreditLogs(); }
+function writeCreditLogs(logs) { db.writeCreditLogs(logs); }
 function readAdmins() { return db.readAdmins(); }
 function readDiscussions() { return db.readDiscussions(); }
 function writeDiscussions(discussions) { db.writeDiscussions(discussions); broadcastSSE('discussionUpdate', { t: Date.now() }); }
@@ -244,7 +246,7 @@ app.post('/api/posts', (req, res) => {
     realAvatar = (user && user.avatar) || '🙈';
   }
 
-  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo } = req.body;
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit } = req.body;
 
   // 如果勾选了匿名发布，覆盖为匿名显示
   let anonymousFlag = false;
@@ -267,6 +269,35 @@ app.post('/api/posts', (req, res) => {
     const feature = anonymousFlag ? 'anonymous_post' : 'post';
     if (isFeatureBlocked(realUserId, feature)) {
       return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+    }
+  }
+
+  // 匿名发帖配额检测（每天最多2次免费，超出需50credit）
+  if (anonymousFlag && realUserId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const allPosts = readPosts();
+    const uid = String(realUserId);
+    const todayAnonPosts = allPosts.filter(p => String(p.userId) === uid && p.isAnonymous && p.time && String(p.time).startsWith(today));
+    if (todayAnonPosts.length >= 2) {
+      if (!payWithCredit) {
+        return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（2/2），每次需消耗 50 credit', cost: 50 });
+      }
+      const users = readUsers();
+      const user = users.find(u => u.id === realUserId);
+      if (!user || (user.credit || 0) < 50) {
+        return res.json({ ok: false, msg: 'credit 不足，无法匿名发帖', code: 'INSUFFICIENT_CREDIT' });
+      }
+      user.credit = (user.credit || 0) - 50;
+      writeUsers(users);
+      const logs = readCreditLogs();
+      logs.push({
+        id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        userId: realUserId,
+        amount: -50,
+        reason: '匿名发帖超额消耗（自然日限制）',
+        createdAt: new Date().toISOString()
+      });
+      writeCreditLogs(logs);
     }
   }
 

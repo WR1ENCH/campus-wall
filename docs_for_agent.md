@@ -1482,3 +1482,54 @@ server.js
 
 #### 测试
 `todo.md`（不提交到 git）已写入完整测试清单（A 视觉/B 功能/C 安全/D 响应式/E 层级/F 性能/G 回归 7 大类共 70+ 项）。
+
+---
+
+### 会话 15 — 2026-07-18 — 匿名发帖/悄悄话配额 + 发帖窗口信息图标+气泡 + 更多选项动画
+
+#### Task 1：匿名发帖每天限量2次，超出需50credit
+
+**后端**（`routes/posts.js`）：
+- `POST /api/posts` 新增匿名发帖配额检测（自然日，0:00 重置）
+- 从 `posts` 表统计当日已发匿名帖数（`userId + isAnonymous + time`）
+- count >= 2 时：
+  - 若请求无 `payWithCredit` 参数 → 返回 `{ok:false, code:'ANON_QUOTA_EXCEEDED', cost:50}`
+  - 若请求有 `payWithCredit=true` → 检查 credit >= 50 → 扣除 → 写 `credit_logs` → 放行
+  - credit 不足 → 返回 `{ok:false, code:'INSUFFICIENT_CREDIT'}`
+- 新增 `readCreditLogs()` / `writeCreditLogs()` 本地包装函数
+
+**前端**（`index.html`）：
+- `createPost()` 新增 `payWithCredit` 参数，body 中发送
+- 收到 `ANON_QUOTA_EXCEEDED` 弹窗确认框：2个按钮「返回编辑」「消耗 50 credit 发布」
+- 敏感词「继续发送」路径已适配传递 `payWithCredit`
+
+#### Task 2：悄悄话每周限量2次，超出需200credit
+
+**后端**（`routes/whispers.js`）：
+- `POST /api/whispers` 新增每周配额检测（自然周，周一 0:00 重置）
+- 从 `whispers` 表统计 `senderId + createdAt >= 本周一` 的条数
+- count >= 2 时：自动检查 credit >= 200 → 自动扣除 → 写 `credit_logs` → 放行
+- credit 不足 → 返回 `{ok:false, code:'INSUFFICIENT_CREDIT'}`
+
+#### Task 3：Info 图标 + 气泡提示
+
+**前端**（`index.html`）：
+- 移除 `附图（最多 4 张，每张 ≤ 2MB）` 文字，替换为 SVG info 图标 + 气泡 `.info-tooltip#imageInfoTip`
+- 移除 `匿名发布（不显示昵称和头像）` 文字，替换为 SVG info 图标 + 气泡 `.info-tooltip#anonInfoTip`
+- 新增 CSS：`.info-icon` / `.info-tooltip` / `.info-tooltip.open`（opacity + scale 过渡，含三角箭头）
+- 新增 JS：`toggleTooltip(e, id)` 切换气泡；全局 click 关闭气泡
+
+#### Task 4：更多选项展开收起动画
+
+**前端**（`index.html`）：
+- `.post-more-options` 改为 `max-height + opacity` 过渡动画
+- `togglePostOptions()` 改用 `.open` class 切换（移除 `display: none/block`）
+- `openModal()` / `closeModal()` 同步更新
+
+#### 变更文件
+
+| 文件 | 改动 |
+|------|------|
+| `routes/posts.js` | 匿名发帖配额 + 扣费 + 新增 readCreditLogs/writeCreditLogs 包装 |
+| `routes/whispers.js` | 每周悄悄话配额 + 自动扣费 |
+| `index.html` | 信息图标+气泡 HTML/CSS/JS，更多选项动画，匿名配额弹窗 |
