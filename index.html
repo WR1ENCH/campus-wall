@@ -768,7 +768,7 @@ transition: top 0.3s ease, padding var(--ease-linear);
  inset 0 0 40px rgba(255,255,255,0.1);
  cursor: default;
  transition: box-shadow 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
- animation: noteAppear 0.45s var(--ease-spring) both;
+ animation: noteAppear 0.45s var(--ease-spring) both, colorPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
  display: flex;
  flex-direction: column;
  overflow: hidden;
@@ -800,6 +800,12 @@ transition: top 0.3s ease, padding var(--ease-linear);
  @keyframes noteAppear {
  from { opacity: 0; transform: scale(0.7) rotate(0deg); }
  to { opacity: 1; }
+ }
+ @keyframes colorPop {
+ 0% { transform: scale(1); }
+ 30% { transform: scale(1.08); }
+ 60% { transform: scale(0.97); }
+ 100% { transform: scale(1); }
  }
 
  /* 便利贴颜色 */
@@ -1396,35 +1402,32 @@ backdrop-filter: blur(4px);
  }
  .post-tags {
  display: flex;
- gap: 8px;
+ gap: 10px;
  margin: 0 0 14px;
  flex-wrap: wrap;
+ align-items: center;
  }
  .post-tag {
- padding: 6px 14px;
- border: none;
- border-radius: 20px;
- font-size: 13px;
- font-weight: 600;
+ width: 28px; height: 28px;
+ border: 2px solid transparent;
+ border-radius: 50%;
  cursor: pointer;
- font-family: inherit;
- transition: all 0.2s;
- opacity: 0.6;
- display: inline-flex;
- align-items: center;
- gap: 4px;
+ padding: 0;
+ transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+ opacity: 0.5;
  }
- .post-tag:hover { opacity: 0.85; }
+ .post-tag:hover { opacity: 0.8; transform: scale(1.15); }
  .post-tag.active {
  opacity: 1;
- box-shadow: 0 2px 6px rgba(0,0,0,0.12);
- transform: scale(1.04);
+ border-color: rgba(0,0,0,0.3);
+ box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+ transform: scale(1.2);
  }
- .post-tag.t-daily { background: #fef3c7; color: #92400e; }
- .post-tag.t-love { background: #fce7f3; color: #9d174d; }
- .post-tag.t-tree { background: #d1fae5; color: #065f46; }
- .post-tag.t-lost { background: #ffedd5; color: #9a3412; }
- .post-tag.t-event { background: #dbeafe; color: #1e40af; }
+ .post-tag.t-daily { background: #fbbf24; }
+ .post-tag.t-love { background: #f472b6; }
+ .post-tag.t-tree { background: #34d399; }
+ .post-tag.t-lost { background: #fb923c; }
+ .post-tag.t-event { background: #60a5fa; }
  .post-image-section { margin-bottom: 12px; }
   .post-image-label {
   font-size: 12px;
@@ -2737,11 +2740,11 @@ backdrop-filter: blur(4px);
  <div id="discussionSuggest" style="display:none;position:fixed;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:10002;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:200px;"></div>
  <!-- 类型标签 -->
  <div class="post-tags">
- <button class="post-tag t-daily active" data-tag="日常" type="button" onclick="selectTag(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 日常</button>
- <button class="post-tag t-love" data-tag="表白" type="button" onclick="selectTag(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 表白</button>
- <button class="post-tag t-tree" data-tag="树洞" type="button" onclick="selectTag(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M17 7l-5-5-5 5"/><path d="M12 22c4.97 0 9-2.69 9-6s-4.03-6-9-6-9 2.69-9 6 4.03 6 9 6z"/></svg> 树洞</button>
- <button class="post-tag t-lost" data-tag="失物招领" type="button" onclick="selectTag(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 失物招领</button>
- <button class="post-tag t-event" data-tag="活动" type="button" onclick="selectTag(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 活动</button>
+ <button class="post-tag t-daily active" data-tag="日常" type="button" onclick="selectTag(this)" title="日常"></button>
+<button class="post-tag t-love" data-tag="表白" type="button" onclick="selectTag(this)" title="表白"></button>
+<button class="post-tag t-tree" data-tag="树洞" type="button" onclick="selectTag(this)" title="树洞"></button>
+<button class="post-tag t-lost" data-tag="失物招领" type="button" onclick="selectTag(this)" title="失物招领"></button>
+<button class="post-tag t-event" data-tag="活动" type="button" onclick="selectTag(this)" title="活动"></button>
  </div>
  <!-- 图片上传 -->
  <div class="post-image-section">
@@ -7198,14 +7201,16 @@ async function showPostCaptchaModal() {
  });
 
  // ===== 启动：从后端加载数据 =====
-  (async function init() {
-  checkLogin();
-  sendHeartbeat();
-  refreshStats();
-  await fetchPosts();
-  renderNotes();
-  setTimeout(checkIncomingWhispers, 3000);
-  })();
+ (async function init() {
+ checkLogin();
+ sendHeartbeat();
+ refreshStats();
+ await fetchPosts();
+ renderNotes();
+ setTimeout(checkIncomingWhispers, 3000);
+ // 记录页面访问（无需等待）
+ fetch(API + '/api/page-visit', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()) }).catch(() => {});
+ })();
 
 	// ===== SSE 实时同步 =====
 	(function initSSE() {

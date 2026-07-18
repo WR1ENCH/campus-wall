@@ -219,6 +219,37 @@ module.exports = function(app, opts) {
     }
   });
 
+  // 记录页面访问（无论是否登录）
+  app.post('/api/page-visit', (req, res) => {
+    const ip = getClientIP(req);
+    const ua = req.headers['user-agent'] || '-';
+    let account = '游客';
+    const token = req.headers['x-user-token'];
+    if (token) {
+      try {
+        const session = verifyUserToken(token);
+        if (session && session.id) {
+          const users = readUsers();
+          const user = users.find(u => u.id === session.id);
+          if (user) account = user.nickname || user.username || '游客';
+        }
+      } catch (e) {}
+    }
+    const logs = db.readLogs();
+    logs.unshift({
+      id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      type: 'page_visit',
+      account,
+      success: 1,
+      ip: ip || '-',
+      ua: ua || '-',
+      time: new Date().toISOString()
+    });
+    if (logs.length > 500) logs.splice(500);
+    db.writeLogs(logs);
+    res.json({ ok: true });
+  });
+
   // 获取当前用户的霸凌举报状态和保护状态
   app.get('/api/user/bullying-status', (req, res) => {
     const token = req.headers['x-user-token'];

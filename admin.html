@@ -304,6 +304,7 @@
     .badge-danger { background: #fee2e2; color: #991b1b; }
     .badge-success { background: #dcfce7; color: #166534; }
     .badge-normal { background: #f1f5f9; color: #475569; }
+    .badge-visit { background: #ede9fe; color: #5b21b6; }
     .badge-日常   { background: var(--yellow); color: #92400e; }
     .badge-表白   { background: var(--pink);   color: #9d174d; }
     .badge-树洞   { background: var(--green);  color: #065f46; }
@@ -4919,14 +4920,22 @@
         body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-sub);font-size:14px;">暂无登录记录</div>';
         return;
       }
-      body.innerHTML = logs.map(log => `
+      body.innerHTML = logs.map(log => {
+        let typeLabel = '用户';
+        let typeClass = 'badge-normal';
+        if (log.type === 'admin') { typeLabel = '管理员'; typeClass = 'badge-admin'; }
+        else if (log.type === 'page_visit') { typeLabel = '访问'; typeClass = 'badge-visit'; }
+        let statusLabel = log.success ? '✅ 成功' : '❌ 失败';
+        let statusClass = log.success ? 'badge-success' : 'badge-danger';
+        if (log.type === 'page_visit') { statusLabel = '浏览'; statusClass = 'badge-visit'; }
+        return `
         <div class="table-row" style="display:grid;grid-template-columns:80px 100px 80px 1fr 160px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
           <div>
-            <span class="type-badge ${log.type === 'admin' ? 'badge-admin' : 'badge-normal'}">${log.type === 'admin' ? '管理员' : '用户'}</span>
+            <span class="type-badge ${typeClass}">${typeLabel}</span>
           </div>
           <div style="font-weight:bold;">${escHtml(log.account || '未登录用户')}</div>
           <div>
-            <span class="type-badge ${log.success ? 'badge-success' : 'badge-danger'}">${log.success ? '✅ 成功' : '❌ 失败'}</span>
+            <span class="type-badge ${statusClass}">${statusLabel}</span>
           </div>
           <div style="color:var(--text-sub);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(log.ua)}">
             <div>IP：${escHtml(log.ip || '-')}</div>
@@ -4934,7 +4943,7 @@
           </div>
           <div style="color:var(--text-sub);font-size:12px;">${formatTime(log.time)}</div>
         </div>
-      `).join('');
+      `}).join('');
     } catch (e) {
       body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-sub);font-size:14px;">网络错误</div>`;
     }
