@@ -1556,3 +1556,45 @@ server.js
 #### Task 3：测试清单
 
 `todo.md` 已写入（不提交 git）。
+
+### 会话 17 — 2026-07-19 — 智学认证前端唯一性校验 + user.html 认证展示改造 + 滑块验证码
+
+#### Task 1：智学认证前端校验
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 新增端点 | `routes/user.js` | `POST /api/user/check-zhixue-unique`：接收 `{zhixueUsername}`，查 `users` 表中 `zhixueUsername` 匹配且 `zhixueStatus==='approved'` 的用户，返回 `{available: bool}` |
+| 前端实时校验 | `user.html` | `checkZhixueUnique()` 函数：智学账号输入框 blur 和 input 时 500ms 防抖调后端，不可用时显示红色提示「此智学网账号已被绑定」 |
+
+#### Task 2：user.html 认证展示区域改造
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| HTML 变更 | `user.html` | 删除原有 `#bindZhixueBtn`（btn-cert 同学认证按钮）和 `#zhixueInfo`（旧 cert-info 区域） |
+| 新增认证展示区 | `user.html` | 在 profile 与 posts 之间新增 `.cert-section`：包含同学认证（绿色圆形SVG勋章）和超管认证（橙色圆形SVG勋章）两行，显示状态标签 + 操作按钮 |
+| 申请认证按钮 | `user.html` | `.profile-actions` 中新增 `#applyCertBtn`，点击打开 `#certChoiceModal` 选择弹窗 |
+| 选择弹窗 | `user.html` | `#certChoiceModal`：两个选项「同学认证」→ 打开原智学/手动认证弹窗；「超管认证」→ 打开管理员验证弹窗 |
+| 超管认证弹窗 | `user.html` | `#adminAuthModal`：输入管理员ID + 密码 + 滑块验证，调 `POST /api/user/bind-admin` 即时绑定 |
+| 状态渲染 | `user.html` | `renderCertSection()` 函数：调 `/api/user/me/zhixue-info` 和 `/api/user/me` 获取认证状态，动态渲染两行认证信息 |
+| 修改入口 | `user.html` | schoolCertActions：status 为 pending/rejected 时显示「修改」按钮，打开预填编辑弹窗 |
+| SVG 勋章 | `user.html` | 同学认证：绿色渐变圆底 + 书本/毕业帽 SVG；超管认证：橙色渐变圆底 + 盾牌/星 SVG |
+
+#### Task 3：滑块验证码集成
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| CSS 引入 | `user.html` | 添加 `<link href="slider-captcha/slidercaptcha.min.css">` |
+| JS 引入 | `user.html` | 底部添加 `<script src="slider-captcha/longbow.slidercaptcha.min.js">` |
+| 滑块弹窗 | `user.html` | `#sliderCaptchaOverlay`：复用 index.html 同款滑块弹窗 |
+| 同学认证滑块 | `user.html` | `initCertCaptcha()`：在认证弹窗中初始化「人机验证」按钮，调用 `showSliderCaptcha()` |
+| 超管认证滑块 | `user.html` | `openAdminCert()`：在管理员弹窗中初始化「人机验证」按钮 |
+| 滑块核心函数 | `user.html` | `showSliderCaptcha(purpose, callback)`：打开滑块弹窗，成功后 `POST /api/slider-captcha/grant` 获取 token，触发回调 |
+| 后端滑块校验 | `routes/user.js` | `POST /api/user/bind-zhixue` 新增 `captchaId`/`captchaText` 校验（Bot-Testing 模式跳过） |
+| 前端提交携带 | `user.html` | `doBindZhixue()` 提交 body 中附加 `captchaId: _certCaptchaToken, captchaText: '1'` |
+
+#### API 变更
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/user/check-zhixue-unique` | 新增，智学账号唯一性实时校验 |
+| POST | `/api/user/bind-zhixue` | 改造，新增 captchaId/captchaText 必填参数 |
