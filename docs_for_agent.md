@@ -699,6 +699,41 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ---
 
+### 6.7 发帖弹窗（index.html — 2026-07-17 重设计为 Bottom Sheet）
+
+`index.html` 中的发帖弹窗（`#modalOverlay`）从居中的黄色便利贴改为**从下往上滑入的白色 Bottom Sheet**，更符合移动端交互习惯。
+
+**关键变更**：
+- `#modalOverlay` 增加 `align-items: flex-end` 让弹窗贴底
+- 容器从 `.modal-note` 改为 `.post-sheet`（白色 + 顶部圆角 20px + `max-height: 75vh`）
+- 入场动画：`.post-sheet` 上的 `@keyframes sheetUp`（`translateY(100%) → 0`，0.4s spring）
+- 便利贴卡片（`.post-note-card`）**仅包裹 textarea**，宽度 92% 居中，带胶带装饰和微旋转
+- 类型标签、附图上传、匿名/更多选项全部移到便利贴**外部**的白色区域
+- 底部固定操作栏 `.post-sheet-footer`（白底 + 1px 顶部分隔线）
+
+**关键 CSS 类**（详见会话 14 changelog）：`.post-sheet` / `.post-sheet-handle` / `.post-sheet-header` / `.post-sheet-body` / `.post-sheet-footer` / `.post-note-card` / `.post-tags` / `.post-tag` / `.post-image-section` / `.post-image-list` / `.post-image-item` / `.post-image-add` / `.post-image-remove` / `.post-option-row` / `.post-more-toggle` / `.post-more-options` / `.post-btn-cancel` / `.post-btn-submit`
+
+**JS 改动**（仅 2 个函数）：
+- `selectTag(btn)`：选择器 `.modal-tags`/`.modal-tag` → `.post-tags`/`.post-tag`
+- `renderPostImages()`：移除内联样式，改为 `.post-image-item`/`.post-image-add`/`.post-image-remove`
+
+**z-index 层级**（保持兼容）：
+- 发帖弹窗 `#modalOverlay`：10000
+- 敏感词/霸凌警告弹窗：10001（在发帖弹窗之上）
+- #话题下拉：10002
+- 滑块验证码弹窗：99999
+
+**无障碍**：
+- 关闭按钮含 `aria-label="关闭"`
+- 图片按钮含 `aria-label="添加图片"`/`aria-label="删除图片"`
+- `prefers-reduced-motion: reduce` 时禁用入场动画
+- `.comment-section` — 评论输入 + 评论列表
+- `.report-overlay` — 举报弹窗（圆角 20px + 模糊背景）
+
+**SVG 图标策略**：所有图标均为内联 SVG（stroke-based，统一 `stroke-width: 2`），无 emoji、无图标字体依赖（除 Google Fonts 外）。
+
+---
+
 ### 6.5 安全中心前端（safety.html / pages/safety.html）
 - `safety.html`：独立可访问的「🛡️ 安全中心」页，双 tab（我的举报 / 我的处罚）；处罚卡片可展开看原因/限制功能/时长/证据快照，并支持在线申诉（弹窗提交 `POST /api/user/punishments/:id/appeal`）。
 - `pages/safety.html`：对应 SPA 片段，供 `index.html` 主壳内导航注入。
@@ -1358,3 +1393,70 @@ server.js
 | 文件 | 改动 |
 |------|------|
 | `routes/posts.js` | 将 visibility/allowComments 计算移到 `newPost` 创建之前，把 `finalVisibility` 和 `finalAllowComments` 直接纳入 `newPost` 对象，在第一个 `writePosts(posts)` 时即持久化。移除后续重复赋值。
+
+### 会话 14 — 2026-07-17 — 发帖窗口重设计为 Bottom Sheet
+
+#### 背景
+原发帖弹窗为暖黄色便利贴（`.modal-note`），居中弹出。需求为：
+- 改成白色扁平设计
+- 从下往上滑入（Bottom Sheet），高度约占屏幕 2/3
+- 便利贴卡片仅在文字输入框区域保留
+- 类型标签、图片上传、选项等放在便利贴外部的白色区域
+- 所有图标使用 SVG，无 emoji
+- 保留所有原有功能
+- 敏感词/霸凌弹窗始终在发帖弹窗之上
+
+#### 设计
+
+| 模块 | 原设计 | 新设计 |
+|------|--------|--------|
+| 触发方式 | 居中弹出（`.modal-overlay` 居中） | 底部对齐（`#modalOverlay { align-items: flex-end }`） |
+| 容器 | `.modal-note`（黄色便利贴，圆角 4px） | `.post-sheet`（白色面板，圆角 20px 顶部，宽度 100% max 480px） |
+| 入场动画 | `noteAppear`（缩放+上移） | `@keyframes sheetUp`（`translateY(100%) → 0`，spring easing 0.4s） |
+| 高度 | `min-height: 340px` | `max-height: 75vh` |
+| 便利贴范围 | 整个弹窗 | 仅 textarea 区域（`.post-note-card`，`max-width: 92%`，居中） |
+| 类型标签 | 便利贴内 | `.post-tags`（便利贴外） |
+| 图片上传 | 便利贴内 | `.post-image-section`（便利贴外） |
+| 匿名/更多选项 | 便利贴内 | `.post-option-row` + `.post-more-options`（便利贴外） |
+| 底部操作 | `.modal-actions` 便利贴内 | `.post-sheet-footer` 固定底部（白底） |
+| z-index | 10000 | 10000（不变，警告弹窗 10001 仍在上方） |
+| 减弱动画 | 未处理 | `@media (prefers-reduced-motion: reduce)` 禁用动画 |
+
+#### 关键 CSS 类
+
+| 类名 | 作用 |
+|------|------|
+| `.post-sheet` | Bottom Sheet 白色容器 |
+| `.post-sheet-handle` | 顶部 40×4px 灰色把手 |
+| `.post-sheet-header` | 标题 + 关闭按钮区 |
+| `.post-sheet-body` | 内容滚动区（`overflow-y: auto`，`flex: 1`） |
+| `.post-sheet-footer` | 底部固定操作栏 |
+| `.post-note-card` | 便利贴卡片（仅包裹 textarea） |
+| `.post-tags` / `.post-tag` | 类型标签（5 种配色：日常/表白/树洞/失物招领/活动） |
+| `.post-image-section` / `.post-image-list` / `.post-image-item` / `.post-image-add` / `.post-image-remove` | 图片上传组件 |
+| `.post-option-row` | 复选框行（匿名/仅自己可见/允许评论） |
+| `.post-more-toggle` / `.post-more-options` | 更多选项折叠区 |
+| `.post-btn-cancel` / `.post-btn-submit` | 底部按钮 |
+
+#### JS 函数调整
+
+| 函数 | 改动 |
+|------|------|
+| `selectTag(btn)` | 选择器 `.modal-tags`/`.modal-tag` → `.post-tags`/`.post-tag` |
+| `renderPostImages()` | 移除内联样式，改为 `.post-image-item`/`.post-image-add`/`.post-image-remove` |
+| `submitNote()` / `createPost()` / `addPostImage()` / `removePostImage()` / `togglePostOptions()` / `openModal()` / `closeModal()` | **未改动**（元素 ID 全部保留） |
+
+#### 改动文件
+
+| 文件 | 改动 |
+|------|------|
+| `index.html` | 新增 `.post-sheet` 等 16 个 CSS 类（约 280 行），修改 `#modalOverlay` 改为底部对齐，替换 `#modalOverlay` 内部 HTML 为新结构，更新 `selectTag()` 和 `renderPostImages()` 函数 |
+
+#### 后端 / 数据库
+未变动。
+
+#### 图谱
+本次仅修改前端 CSS/HTML 与少量 JS 选择器，未触动后端路由或数据层；图谱（`graphify-out/`）无需重建。
+
+#### 测试
+`todo.md`（不提交到 git）已写入完整测试清单（A 视觉/B 功能/C 安全/D 响应式/E 层级/F 性能/G 回归 7 大类共 70+ 项）。
