@@ -1533,3 +1533,67 @@ server.js
 | `routes/posts.js` | 匿名发帖配额 + 扣费 + 新增 readCreditLogs/writeCreditLogs 包装 |
 | `routes/whispers.js` | 每周悄悄话配额 + 自动扣费 |
 | `index.html` | 信息图标+气泡 HTML/CSS/JS，更多选项动画，匿名配额弹窗 |
+
+### 会话 13 — 2026-07-18 — QA 系统优化（4 项任务）
+
+#### Task 1：你问我答窗口动画优化
+
+**前端**（`index.html`）：
+- 新增 CSS 动画：`qaPageIn`（tab 切换上移淡入）、`qaCardIn`（卡片入场）、`qaOverlayOut` + `qaOut`（关闭动画）
+- `.qa-page-enter` 类绑定了 `qaPageIn` keyframe（之前 JS 引用但缺少 CSS 定义）
+- `.qa-question-card` 添加 hover 上浮 + 阴影过渡
+- `.qa-answer-card` 添加 hover 背景色过渡
+- `.qa-pinned-badge` 金色渐加入场动画
+- `.qa-pinned-card` 金色边框 + 浅黄背景
+- `closeQAModal()` 改为带关闭动画（0.25s 后 display:none）
+- 筛选按钮 `.qa-filter-btn` 和 Tab `.qa-tab` 添加过渡动画
+
+#### Task 2：修复采纳/发放悬赏 404 错误
+
+**后端**（`routes/qa.js`）：
+- 新增 `POST /api/qa/questions/:id/accept/:aid` 路由：采纳回答并发放全部剩余悬赏
+  - 校验提问者身份 → 查找回答 → 发放剩余悬赏给回答者 → 更新问题状态为 `accepted`
+  - 返回 `{ok:true, data:{acceptedAnswerId, rewarded}}`
+- 新增 `POST /api/qa/questions/:id/reward` 路由：手动发放悬赏给多个回答
+  - 校验提问者身份 → 校验总额 ≤ 剩余悬赏 → 逐一 changeCredit → 累加 distributedCredits
+  - 返回 `{ok:true, data:{distributed}}`
+- 排序优化：`GET /api/qa/questions` 置顶问题优先展示
+
+#### Task 3：用户创建问题限额
+
+**后端**（`routes/qa.js`）：
+- 新增 `GET /api/qa/quota` 接口：返回本周提问次数、免费额度、剩余次数、超额费、置顶费
+- `POST /api/qa/questions` 新增限额检测逻辑：
+  - 按自然周（周一 00:00～周日 23:59）统计 `userId` 的提问数
+  - 前 3 题免费，超出部分每题 +100 Credits
+  - 总费用 = bounty + 超额费(extraFee) + 置顶费(pinFee)
+  - 余额不足时拒绝并提示
+
+**前端**（`index.html`）：
+- `submitQAQuestion()` 提交前不再预检余额（后端统一校验）
+- 发布成功后不手动减积分（后端已处理），调用 `loadQAQuota()` 刷新额度信息
+- Tab 切换到「提问」时调用 `loadQAQuota()` 显示额度
+
+#### Task 4：置顶问题选项
+
+**后端**（`routes/qa.js` + `db.js`）：
+- `POST /api/qa/questions` 接收 `pinned` 布尔参数
+  - 勾选时额外扣除 149 Credits（一次性费用，不可取消）
+  - 写入 `pinned=1` 到问题记录
+- `db.js` `tableMigrations` 新增 `{ name: 'qa_questions', columns: ['pinned'] }`
+- 问题列表排序置顶优先
+
+**前端**（`index.html`）：
+- 提问表单新增「置顶问题」复选框 + 信息图标 ℹ️（气泡提示「置顶问题能够快速得到答案」）
+- 勾选时显示费用提示「置顶需额外支付 149 Credits（一次性费用，不可取消）」
+- `updateQACostHint()` 联动费用提示显隐
+- `renderQACard()` / `renderQADetail()` 显示金色置顶徽章
+- 清单/详情中置顶卡片有金色边框和浅黄背景
+
+#### 变更文件
+
+| 文件 | 改动 |
+|------|------|
+| `routes/qa.js` | 新增 accept/reward/quota 路由，限额+置顶扣费逻辑，置顶优先排序 |
+| `db.js` | `tableMigrations` 新增 `qa_questions.pinned` 列 |
+| `index.html` | QA 窗口动画 CSS，置顶选项 HTML/JS，额度显示 |

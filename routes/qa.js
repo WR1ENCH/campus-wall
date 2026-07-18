@@ -85,7 +85,10 @@ app.get('/api/qa/questions', (req, res) => {
   const { status, page = 1, limit = 10 } = req.query;
   let list = questions;
   if (status) list = list.filter(q => q.status === status);
-  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  list.sort((a, b) => {
+    if ((b.pinned || 0) !== (a.pinned || 0)) return (b.pinned || 0) - (a.pinned || 0);
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
   const total = list.length;
   const paged = list.slice((page - 1) * limit, page * limit);
   const result = paged.map(q => ({
@@ -93,6 +96,27 @@ app.get('/api/qa/questions', (req, res) => {
     answerCount: answers.filter(a => a.questionId === q.id && !a.deleted).length
   }));
   res.json({ ok: true, data: result, total, page: Number(page), limit: Number(limit) });
+});
+
+app.get('/api/qa/quota', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '未登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+  const questions = readQAQuestions();
+  const thisWeekCount = questions.filter(q =>
+    q.userId === session.id && !q.deleted &&
+    new Date(q.createdAt).getTime() >= monday.getTime()
+  ).length;
+  const FREE_QUOTA = 3;
+  const EXTRA_COST = 100;
+  res.json({ ok: true, data: { thisWeekCount, freeQuota: FREE_QUOTA, remaining: Math.max(0, FREE_QUOTA - thisWeekCount), extraCost: EXTRA_COST, pinCost: 149 } });
 });
 
 app.post('/api/qa/questions', (req, res) => {
@@ -105,7 +129,7 @@ app.post('/api/qa/questions', (req, res) => {
   if (isFeatureBlocked(session.id, 'qa')) {
     return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
   }
-  const { title, content, bounty = 0, images = [], sensitiveForce = false } = req.body;
+  const { title, content, bounty = 0, images = [], sensitiveForce = false, pinned = false } = req.body;
   if (!title || title.trim().length < 2) return res.json({ ok: false, msg: '标题至少2个字' });
   if (title.trim().length > 100) return res.json({ ok: false, msg: '标题最多100个字' });
   if ((content || '').length > 2000) return res.json({ ok: false, msg: '内容最多2000个字' });
@@ -129,24 +153,46 @@ app.post('/api/qa/questions', (req, res) => {
   const users = readUsers();
   const user = users.find(u => u.id === session.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
-  if ((user.credit || 0) < b) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });
 
-  // 扣除悬赏 credits
-  if (b > 0) {
-    user.credit = (user.credit || 0) - b;
+  // 计算本周免费问题额度（自然周：周一00:00～周日23:59）
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=周日, 1=周一, ..., 6=周六
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+  const weekStartMs = monday.getTime();
+  const questions = readQAQuestions();
+  const thisWeekCount = questions.filter(q =>
+    q.userId === session.id && !q.deleted &&
+    new Date(q.createdAt).getTime() >= weekStartMs
+  ).length;
+  const FREE_QUOTA = 3;
+  const EXTRA_COST = 100;
+  const PIN_COST = 149;
+  const isPinned = pinned === true;
+  const extraFee = thisWeekCount >= FREE_QUOTA ? EXTRA_COST : 0;
+  const pinFee = isPinned ? PIN_COST : 0;
+  const totalCost = b + extraFee + pinFee;
+  if ((user.credit || 0) < totalCost) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });
+
+  // 扣除费用（悬赏 + 超额费 + 置顶费）
+  if (totalCost > 0) {
+    user.credit = (user.credit || 0) - totalCost;
     writeUsers(users);
     const logs = readCreditLogs();
-    logs.push({
-      id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      userId: session.id,
-      amount: -b,
-      reason: '发布问题悬赏：' + title.slice(0, 20),
-      createdAt: new Date().toISOString()
-    });
+    if (b > 0) {
+      logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: session.id, amount: -b, reason: '发布问题悬赏：' + title.slice(0, 20), createdAt: new Date().toISOString() });
+    }
+    if (extraFee > 0) {
+      logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: session.id, amount: -extraFee, reason: '本周超额提问费（第' + (thisWeekCount + 1) + '题）', createdAt: new Date().toISOString() });
+    }
+    if (pinFee > 0) {
+      logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: session.id, amount: -pinFee, reason: '置顶问题：' + title.slice(0, 20), createdAt: new Date().toISOString() });
+    }
     writeCreditLogs(logs);
   }
 
-  const questions = readQAQuestions();
   const q = {
     id: uniqueId.generateId('QAQU'),
     userId: session.id,
@@ -160,6 +206,7 @@ app.post('/api/qa/questions', (req, res) => {
     status: 'open', // open | accepted | expired | closed
     acceptedAnswerId: null,
     distributedCredits: 0,  // 已发放的悬赏总额
+    pinned: isPinned ? 1 : 0,
     createdAt: new Date().toISOString(),
     deleted: false
   };
@@ -286,6 +333,66 @@ app.delete('/api/qa/answers/:id', (req, res) => {
   a.deleted = true;
   writeQAAnswers(answers);
   res.json({ ok: true });
+});
+
+// 采纳回答并发放全部剩余悬赏
+app.post('/api/qa/questions/:id/accept/:aid', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id && !x.deleted);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '无权操作' });
+  if (q.status !== 'open') return res.json({ ok: false, msg: '该问题已关闭' });
+
+  const answers = readQAAnswers();
+  const a = answers.find(x => x.id === req.params.aid && x.questionId === q.id && !x.deleted);
+  if (!a) return res.json({ ok: false, msg: '回答不存在' });
+  if (a.userId === session.id) return res.json({ ok: false, msg: '不能采纳自己的回答' });
+
+  const remaining = Math.max(0, (q.bounty || 0) - (q.distributedCredits || 0));
+  if (remaining > 0) {
+    changeCredit(a.userId, remaining, '问题「' + q.title.slice(0, 10) + '...」悬赏');
+    a.reward = (a.reward || 0) + remaining;
+    q.distributedCredits = (q.distributedCredits || 0) + remaining;
+  }
+  a.accepted = true;
+  q.acceptedAnswerId = a.id;
+  q.status = 'accepted';
+  writeQAAnswers(answers);
+  writeQAQuestions(questions);
+  res.json({ ok: true, data: { acceptedAnswerId: a.id, rewarded: remaining } });
+});
+
+// 手动发放悬赏（自定义金额分配给多个回答）
+app.post('/api/qa/questions/:id/reward', (req, res) => {
+  const _qaToken = req.headers['x-user-token']; if (!_qaToken) return res.json({ ok: false, msg: '未登录' }); const session = verifyUserToken(_qaToken); if (!session) return res.json({ ok: false, msg: '登录已过期' });
+  const { rewards } = req.body; // [{ answerId, amount }]
+  if (!Array.isArray(rewards) || rewards.length === 0) return res.json({ ok: false, msg: '请指定发放金额' });
+
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id && !x.deleted);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  if (q.userId !== session.id) return res.json({ ok: false, msg: '无权操作' });
+
+  const remaining = Math.max(0, (q.bounty || 0) - (q.distributedCredits || 0));
+  const total = rewards.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  if (total > remaining) return res.json({ ok: false, msg: '发放总额超出剩余悬赏' });
+
+  const answers = readQAAnswers();
+  let distributed = 0;
+  for (const r of rewards) {
+    const a = answers.find(x => x.id === r.answerId && x.questionId === q.id && !x.deleted);
+    if (!a) continue;
+    const amt = Number(r.amount) || 0;
+    if (amt <= 0) continue;
+    changeCredit(a.userId, amt, '问题「' + q.title.slice(0, 10) + '...」悬赏');
+    a.reward = (a.reward || 0) + amt;
+    distributed += amt;
+  }
+  q.distributedCredits = (q.distributedCredits || 0) + distributed;
+  writeQAAnswers(answers);
+  writeQAQuestions(questions);
+  res.json({ ok: true, data: { distributed } });
 });
 
 // 我的提问（admin.html/index.html loadMyQuestions 调用，aeed436 路由拆分时遗漏）

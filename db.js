@@ -437,7 +437,8 @@ function migrate() {
     { name: 'discussions', columns: ['official'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
     { name: 'punishments', columns: ['credibilityDeducted'] },
-    { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
+     { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
+     { name: 'qa_questions', columns: ['pinned'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
