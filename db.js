@@ -147,11 +147,15 @@ function migrate() {
     "deletedAt" TEXT,
     "deletedBy" TEXT,
     "visibility" TEXT DEFAULT 'public',
-    "allowComments" INTEGER DEFAULT 1
+    "allowComments" INTEGER DEFAULT 1,
+    "visibleTo" TEXT DEFAULT '[]',
+    "invisibleTo" TEXT DEFAULT '[]'
   )`);
   // 兼容旧表：后续新增字段通过 ALTER TABLE 追加（忽略重复列错误）
   try { db.exec(`ALTER TABLE "posts" ADD COLUMN "visibility" TEXT DEFAULT 'public'`); } catch(e) {}
   try { db.exec(`ALTER TABLE "posts" ADD COLUMN "allowComments" INTEGER DEFAULT 1`); } catch(e) {}
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "visibleTo" TEXT DEFAULT '[]'`); } catch(e) {}
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "invisibleTo" TEXT DEFAULT '[]'`); } catch(e) {}
   db.exec(`CREATE TABLE IF NOT EXISTS "login_logs" (
     "id" TEXT PRIMARY KEY,
     "type" TEXT,
@@ -424,7 +428,7 @@ function migrate() {
 
   // 已有表的列迁移
   const tableMigrations = [
-    { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous', 'visibility', 'allowComments'] },
+    { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous', 'visibility', 'allowComments', 'visibleTo', 'invisibleTo'] },
     { name: 'votes', columns: ['allowCustom'] },
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection'] },

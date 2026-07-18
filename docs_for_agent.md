@@ -280,10 +280,13 @@ admin → auth → user → posts → discussions → qa → votes → notices
 ### 3.11 发帖可见性 / 允许评论 / 敏感词拦截（本次提交新增）
 
 **帖子可见性（visibility）**：
-- `posts` 表新增 `visibility` 列（值：`'public'` 公开 / `'self_only'` 仅自己可见），默认 `'public'`。
-- 发帖（`POST /api/posts`）接收 `visibility` 参数：用户可选 `public`（所有人可见）或 `self_only`（仅作者自己可见）。
+- `posts` 表新增 `visibility` 列（值：`'public'` 公开 / `'self_only'` 仅自己可见 / `'whitelist'` 仅指定用户可见 / `'blacklist'` 仅指定用户不可见），默认 `'public'`。
+- `posts` 表新增 `visibleTo` 列（TEXT JSON 数组，白名单用户ID列表）和 `invisibleTo` 列（TEXT JSON 数组，黑名单用户ID列表）。
+- 发帖（`POST /api/posts`）接收 `visibility` 参数及 `visibleTo`/`invisibleTo` 数组参数。
+- 三个可见性选项互斥，但发帖者始终可见。
 - **讨论区同步的帖子始终为 `public`**（`visibility` 不可为 `self_only`）。
-- `GET /api/posts`：非作者看不到 `self_only` 帖子（按 `x-user-token` 过滤）。`GET /api/posts/:id`：非作者访问 `self_only` 帖子返回 `{ok:false, msg:'此内容仅自己可见', code:'SELF_ONLY'}`。
+- `GET /api/posts`：非作者看不到 `self_only` 帖子；非作者且不在 `visibleTo` 中看不到 `whitelist` 帖子；在 `invisibleTo` 中的用户看不到 `blacklist` 帖子（均按 `x-user-token` 过滤）。
+- `GET /api/posts/:id`：非作者访问 `self_only` 帖子返回 `SELF_ONLY`；非作者且不在 `visibleTo` 中访问 `whitelist` 帖子返回 `WHITELIST_BLOCKED`；在 `invisibleTo` 中的用户访问 `blacklist` 帖子返回 `BLACKLIST_BLOCKED`。
 - 帖子可见情况写入数据库后**不可修改**（除非敏感词举报无违规后由后台恢复为 public）。
 - 前端 `index.html` 发帖弹窗新增「更多选项」折叠区（含 `selfOnlyPost` 复选框，`allowComments` 默认勾选）。帖子卡片 `self_only` 显示「👁️ 仅自己可见」标识；`post.html` 顶部固定白色横幅提示「此内容仅自己可见」；`admin.html` 帖子管理表格「可见性」列显示状态。
 
@@ -1376,6 +1379,25 @@ server.js
 #### Todo（不提交）
 
 `todo.md` 已写入测试清单（不提交到 git）。
+
+### 会话 14 — 2026-07-17 — 新增 whitelist/blacklist 可见性选项
+
+#### 后端
+| 文件 | 改动 |
+|------|------|
+| `db.js` | posts 表新增 `visibleTo`(TEXT DEFAULT '[]') 和 `invisibleTo`(TEXT DEFAULT '[]') 列迁移 |
+| `routes/posts.js` | POST 创建帖子支持 `visibleTo`/`invisibleTo` 参数；GET 列表添加 `whitelist`/`blacklist` 过滤；GET 详情添加 `WHITELIST_BLOCKED`/`BLACKLIST_BLOCKED` 拦截 |
+
+#### 前端
+| 文件 | 改动 |
+|------|------|
+| `index.html` | 发帖「更多选项」新增「仅指定用户可见」「仅指定用户不可见」复选框 + 用户搜索多选组件（复用 `/api/users/search`）；互斥逻辑；卡片/详情弹窗显示新可见性标识 |
+| `post.html` | 渲染函数新增 `whitelist`/`blacklist` 横幅提示；loadPost 新增 `WHITELIST_BLOCKED`/`BLACKLIST_BLOCKED` 错误处理 |
+
+#### 文档
+| 文件 | 改动 |
+|------|------|
+| `docs_for_agent.md` | §3.11 更新 visibility 取值和新增列说明 |
 
 ### 会话 13 — 2026-07-17 — 修复 visibility 和 allowComments 未持久化
 
