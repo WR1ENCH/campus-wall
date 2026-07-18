@@ -1533,3 +1533,26 @@ server.js
 | `routes/posts.js` | 匿名发帖配额 + 扣费 + 新增 readCreditLogs/writeCreditLogs 包装 |
 | `routes/whispers.js` | 每周悄悄话配额 + 自动扣费 |
 | `index.html` | 信息图标+气泡 HTML/CSS/JS，更多选项动画，匿名配额弹窗 |
+
+### 会话 16 — 2026-07-18 — 发帖类型改为彩色圆点 + 全量访问记录
+
+#### Task 1：发帖类型选择改为彩色圆点
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 类型按钮 HTML | `index.html` | `.post-tag` 按钮移除 SVG 图标和文字，改为纯色圆形按钮，保留 `data-tag` 和 `onclick`，添加 `title` 属性 |
+| `.post-tag` CSS | `index.html` | 改为 `width:28px;height:28px;border-radius:50%;padding:0`，移除文字相关样式，用更饱和的颜色（黄 `#fbbf24` / 粉 `#f472b6` / 绿 `#34d399` / 橙 `#fb923c` / 蓝 `#60a5fa`） |
+| `.post-tag.active` | `index.html` | active 态：`scale(1.2)` + 半透明黑边框 + 阴影 |
+| 卡片弹动动画 | `index.html` | 新增 `@keyframes colorPop`：0%→scale(1), 30%→scale(1.08), 60%→scale(0.97), 100%→scale(1)；`.sticky-note` 添加 `colorPop` 动画 |
+
+#### Task 2：全量访问记录
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 新增端点 | `routes/system.js` | `POST /api/page-visit`：接收 `x-user-token`（可选），记录 IP/UA/用户信息到 `login_logs`，`type:'page_visit'`，未登录用户 account='游客' |
+| 前端调用 | `index.html` | `init()` 启动时调用 `POST /api/page-visit`，携带 `authHeaders()` |
+| admin 显示 | `admin.html` | `loadLoginLogs()` 中 `type==='page_visit'` 显示紫色「访问」徽章和「浏览」状态；新增 `.badge-visit` CSS 类 |
+
+#### Task 3：测试清单
+
+`todo.md` 已写入（不提交 git）。

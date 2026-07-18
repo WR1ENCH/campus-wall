@@ -27,17 +27,22 @@
       "routes_admin_readbullying",
       "routes_admin_readcreditcards",
       "routes_admin_readdeleteditems",
+      "routes_admin_readdiscussions",
       "routes_admin_readfeedbacks",
       "routes_admin_readmaintenance",
       "routes_admin_readpasskey",
       "routes_admin_readpickupauctions",
       "routes_admin_readpickupreports",
+      "routes_admin_readposts",
+      "routes_admin_readqaanswers",
+      "routes_admin_readqaquestions",
       "routes_admin_readreports",
       "routes_admin_readsc",
       "routes_admin_readtrusttokens",
       "routes_admin_readvoteiprecords",
       "routes_admin_readvoterecords",
       "routes_admin_readvotes",
+      "routes_admin_readwhispers",
       "routes_admin_requireadmin_requiresuper",
       "routes_admin_sensitive_custom_file",
       "routes_admin_updatevoteoptions",
@@ -47,116 +52,24 @@
       "routes_admin_writebullying",
       "routes_admin_writecreditcards",
       "routes_admin_writedeleteditems",
+      "routes_admin_writediscussions",
       "routes_admin_writefeedbacks",
       "routes_admin_writemaintenance",
       "routes_admin_writepasskey",
       "routes_admin_writepickupauctions",
       "routes_admin_writepickupreports",
+      "routes_admin_writeposts",
+      "routes_admin_writeqaanswers",
+      "routes_admin_writeqaquestions",
       "routes_admin_writereports",
       "routes_admin_writesc",
       "routes_admin_writetrusttokens",
       "routes_admin_writevoteiprecords",
       "routes_admin_writevoterecords",
-      "routes_admin_writevotes"
+      "routes_admin_writevotes",
+      "routes_admin_writewhispers"
     ],
     "1": [
-      "routes_system",
-      "routes_system_broadcastsse",
-      "routes_system_check_checkbullyingnames_addname_addbullyingname",
-      "routes_system_check_checksensitive",
-      "routes_system_crypto",
-      "routes_system_db",
-      "routes_system_generateid_logidassignment",
-      "routes_system_getclientip",
-      "routes_system_getpostcount",
-      "routes_system_hotness",
-      "routes_system_maintenance",
-      "routes_system_onlineusers",
-      "routes_system_readbullying",
-      "routes_system_readfeedbacks",
-      "routes_system_readnotices",
-      "routes_system_readposts",
-      "routes_system_readusers",
-      "routes_system_verifyusertoken_signtoken_verifysignedtoken",
-      "routes_system_writebullying",
-      "routes_system_writefeedbacks",
-      "routes_system_writenotices",
-      "routes_system_writeposts",
-      "routes_system_writeusers",
-      "routes_whispers",
-      "routes_whispers_check_checkbullyingnames",
-      "routes_whispers_check_checksensitive",
-      "routes_whispers_credibility",
-      "routes_whispers_db",
-      "routes_whispers_generateid_logidassignment",
-      "routes_whispers_isfeatureblocked_emitusernotice",
-      "routes_whispers_verifyusertoken",
-      "sensitivewords",
-      "sensitivewords_all_words",
-      "sensitivewords_check",
-      "sensitivewords_core_words",
-      "sensitivewords_custom_file",
-      "sensitivewords_customwords",
-      "sensitivewords_data_dir",
-      "sensitivewords_fs",
-      "sensitivewords_getstats",
-      "sensitivewords_loadcustomwords",
-      "sensitivewords_loadwhitelist",
-      "sensitivewords_path",
-      "sensitivewords_reload",
-      "sensitivewords_savewhitelist",
-      "sensitivewords_sen_words",
-      "sensitivewords_short_words",
-      "sensitivewords_whitelist",
-      "sensitivewords_whitelist_file"
-    ],
-    "2": [
-      "lib_credibility",
-      "lib_credibility_addzhixuebonus",
-      "lib_credibility_checkandrefresh",
-      "lib_credibility_db",
-      "lib_credibility_deductcredibility",
-      "lib_credibility_exchangecredits",
-      "lib_credibility_generateid",
-      "lib_credibility_getexchangerate",
-      "lib_credibility_getscore",
-      "lib_credibility_initusercredibility",
-      "lib_credibility_isfeatureblocked",
-      "lib_credibility_refresh_months",
-      "lib_credibility_restorecredibility",
-      "lib_credibility_thresholds",
-      "lib_crypto_verifyusertoken",
-      "lib_idmigration",
-      "lib_idmigration_ensureuniqueids",
-      "lib_idmigration_generateid_generateuid_isvalididformat_logidassignment",
-      "lib_idmigration_needsmigration",
-      "lib_uniqueid",
-      "lib_uniqueid_crypto",
-      "lib_uniqueid_fs",
-      "lib_uniqueid_generateid",
-      "lib_uniqueid_generateuid",
-      "lib_uniqueid_isvalididformat",
-      "lib_uniqueid_logidassignment",
-      "lib_uniqueid_path",
-      "lib_uniqueid_prefix_re",
-      "lib_uniqueid_valid_prefixes",
-      "routes_reports",
-      "routes_reports_broadcastssenotice",
-      "routes_reports_createreport",
-      "routes_reports_db",
-      "routes_reports_enrichreport",
-      "routes_reports_generateid_logidassignment",
-      "routes_reports_getreportbyanyid",
-      "routes_reports_penalty",
-      "routes_reports_readnotices",
-      "routes_reports_readreports",
-      "routes_reports_readusers",
-      "routes_reports_type_labels",
-      "routes_reports_verifyusertoken",
-      "routes_reports_writenotices",
-      "routes_reports_writereports"
-    ],
-    "3": [
       "docs_superpowers_specs_2026_07_14_safety_center_redesign",
       "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_1_\u4efb\u52a1\u539f\u6587",
       "docs_superpowers_specs_2026_07_14_safety_center_redesign_1_2_\u5173\u952e\u7ea6\u675f_\u6765\u81ea_docs_for_agent_md_3_9_\u4e0e_6_5",
@@ -194,45 +107,7 @@
       "docs_superpowers_specs_2026_07_14_safety_center_redesign_9_\u5b9e\u65bd\u987a\u5e8f_\u589e\u91cf\u4ea4\u4ed8",
       "docs_superpowers_specs_2026_07_14_safety_center_redesign_safety_center_\u91cd\u65b0\u8bbe\u8ba1"
     ],
-    "4": [
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_1_1_\u76ee\u6807",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_1_2_\u76ee\u6807\u53d7\u4f17",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_1_3_\u6838\u5fc3\u8bc9\u6c42",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_1_4_\u8bbe\u8ba1\u8bed\u8a00",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_1_\u9879\u76ee\u6982\u8ff0",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_1_\u989c\u8272",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_2_\u5b57\u4f53",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_3_\u6392\u7248_scale",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_4_\u95f4\u8ddd\u4e0e\u5f62\u72b6",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_5_\u52a8\u6548",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_2_\u8bbe\u8ba1\u7cfb\u7edf_tokens",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_1_section_1_hero_\u5168\u5c4f\u5f69\u8679\u6e10\u53d8",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_2_section_2_\u54c1\u724c\u5ba3\u8a00_\u767d\u8272\u80cc\u666f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_3_section_3_\u529f\u80fd\u5168\u666f_\u767d\u8272\u80cc\u666f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_4_section_4_\u6570\u5b57\u8bc1\u636e_\u6697\u8272\u5168\u5bbd\u6761\u5e26",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_5_section_5_\u6280\u672f\u67b6\u6784_\u767d\u8272\u80cc\u666f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_6_section_6_\u9002\u7528\u573a\u666f_\u6697\u8272\u80cc\u666f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_7_section_7_cta_footer_\u767d\u8272\u80cc\u666f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_3_\u9875\u9762\u7ed3\u6784",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_4_1_\u6eda\u52a8\u884c\u4e3a",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_4_2_hover_\u72b6\u6001",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_4_3_reduced_motion",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_4_\u4ea4\u4e92\u4e0e\u52a8\u6548",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_5_1_\u65ad\u70b9",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_5_2_\u79fb\u52a8\u7aef\u9002\u914d",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_5_\u54cd\u5e94\u5f0f\u8bbe\u8ba1",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_6_\u6587\u4ef6\u7ed3\u6784",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_7_1_\u6027\u80fd\u76ee\u6807",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_7_2_\u53ef\u8bbf\u95ee\u6027_wcag_2_1_aa",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_7_\u6027\u80fd\u4e0e\u53ef\u8bbf\u95ee\u6027",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_8_1_\u9075\u5faa\u73b0\u6709\u6a21\u5f0f",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_8_2_monopo_saigon_\u89c4\u5219\u68c0\u67e5",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_8_\u5b9e\u73b0\u6ce8\u610f\u4e8b\u9879",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_9_\u7248\u672c\u5386\u53f2",
-      "docs_superpowers_specs_2026_07_15_campus_wall_landing_page_design_campus_wall_\u4ecb\u7ecd\u9875\u8bbe\u8ba1\u6587\u6863"
-    ],
-    "5": [
+    "2": [
       "routes_user",
       "routes_user_addloginlog",
       "routes_user_broadcastsse",
@@ -269,43 +144,7 @@
       "routes_user_writetrusttokens",
       "routes_user_writeusers"
     ],
-    "6": [
-      "bullyingnames",
-      "bullyingnames_addname",
-      "bullyingnames_check",
-      "bullyingnames_data_dir",
-      "bullyingnames_ensuredir",
-      "bullyingnames_fs",
-      "bullyingnames_getall",
-      "bullyingnames_loadnames",
-      "bullyingnames_names_file",
-      "bullyingnames_path",
-      "bullyingnames_protected_names",
-      "bullyingnames_reload",
-      "bullyingnames_removename",
-      "bullyingnames_savenames",
-      "routes_qa",
-      "routes_qa_broadcastsse",
-      "routes_qa_changecredit",
-      "routes_qa_check_checkbullyingnames",
-      "routes_qa_check_checksensitive",
-      "routes_qa_credibility",
-      "routes_qa_db",
-      "routes_qa_getclientip",
-      "routes_qa_isfeatureblocked",
-      "routes_qa_readcreditlogs",
-      "routes_qa_readqaanswers",
-      "routes_qa_readqaquestions",
-      "routes_qa_readusers",
-      "routes_qa_settleexpiredquestions",
-      "routes_qa_uniqueid",
-      "routes_qa_verifyusertoken_verifysignedtoken",
-      "routes_qa_writecreditlogs",
-      "routes_qa_writeqaanswers",
-      "routes_qa_writeqaquestions",
-      "routes_qa_writeusers"
-    ],
-    "7": [
+    "3": [
       "acorn",
       "better_sqlite3",
       "compression",
@@ -338,40 +177,40 @@
       "playwright",
       "slider_captcha"
     ],
-    "8": [
-      "routes_posts",
-      "routes_posts_broadcastsse",
-      "routes_posts_captchastore_postratelimit",
-      "routes_posts_check_checkbullyingnames",
-      "routes_posts_check_checksensitive",
-      "routes_posts_credibility",
-      "routes_posts_db",
-      "routes_posts_deletesynceddisccomment",
-      "routes_posts_getclientip",
-      "routes_posts_incuserpostcount",
-      "routes_posts_isfeatureblocked",
-      "routes_posts_maintenance",
-      "routes_posts_readadmins",
-      "routes_posts_readcreditlogs",
-      "routes_posts_readdiscussioncomments",
-      "routes_posts_readdiscussions",
-      "routes_posts_readnotices",
-      "routes_posts_readposts",
-      "routes_posts_readreports",
-      "routes_posts_readusers",
-      "routes_posts_requireadmin",
-      "routes_posts_savedeleteditem",
-      "routes_posts_uniqueid",
-      "routes_posts_verifyusertoken_verifysignedtoken",
-      "routes_posts_writecreditlogs",
-      "routes_posts_writediscussioncomments",
-      "routes_posts_writediscussions",
-      "routes_posts_writenotices",
-      "routes_posts_writeposts",
-      "routes_posts_writereports",
-      "routes_posts_writeusers"
+    "4": [
+      "home_wr1ench_campus_wall_dev_x_readme_10_\u9738\u51cc\u4e3e\u62a5",
+      "home_wr1ench_campus_wall_dev_x_readme_11_\u7ba1\u7406\u540e\u53f0",
+      "home_wr1ench_campus_wall_dev_x_readme_12_\u4eba\u673a\u9632\u5fa1",
+      "home_wr1ench_campus_wall_dev_x_readme_13_\u5b89\u5168\u9632\u62a4",
+      "home_wr1ench_campus_wall_dev_x_readme_14_credit",
+      "home_wr1ench_campus_wall_dev_x_readme_1_\u524d\u53f0\u4e3b\u9875\u9762",
+      "home_wr1ench_campus_wall_dev_x_readme_2_\u53d1\u5e16\u529f\u80fd",
+      "home_wr1ench_campus_wall_dev_x_readme_3_\u5e16\u5b50\u8be6\u60c5\u4e0e\u8bc4\u8bba",
+      "home_wr1ench_campus_wall_dev_x_readme_4_\u7528\u6237\u6ce8\u518c\u4e0e\u767b\u5f55",
+      "home_wr1ench_campus_wall_dev_x_readme_5_\u7528\u6237\u4e3b\u9875\u4e0e\u8d44\u6599\u7f16\u8f91",
+      "home_wr1ench_campus_wall_dev_x_readme_6_\u540c\u5b66\u8ba4\u8bc1",
+      "home_wr1ench_campus_wall_dev_x_readme_7_\u8ba8\u8bba\u533a",
+      "home_wr1ench_campus_wall_dev_x_readme_8_qa_\u95ee\u7b54\u60ac\u8d4f",
+      "home_wr1ench_campus_wall_dev_x_readme_9_\u4e3e\u62a5\u7cfb\u7edf",
+      "home_wr1ench_campus_wall_dev_x_readme_md",
+      "home_wr1ench_campus_wall_dev_x_readme_\u4e8c\u6b21\u5f00\u53d1",
+      "home_wr1ench_campus_wall_dev_x_readme_\u5b89\u88c5\u90e8\u7f72",
+      "home_wr1ench_campus_wall_dev_x_readme_\u5f00\u6e90\u534f\u8bae",
+      "home_wr1ench_campus_wall_dev_x_readme_\u5feb\u901f\u5f00\u59cb",
+      "home_wr1ench_campus_wall_dev_x_readme_\u6280\u672f\u6808",
+      "home_wr1ench_campus_wall_dev_x_readme_\u654f\u611f\u8bcd\u7ba1\u7406",
+      "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "home_wr1ench_campus_wall_dev_x_readme_\u6dfb\u52a0\u65b0\u677f\u5757",
+      "home_wr1ench_campus_wall_dev_x_readme_\u73af\u5883\u8981\u6c42",
+      "home_wr1ench_campus_wall_dev_x_readme_\u76ee\u5f55",
+      "home_wr1ench_campus_wall_dev_x_readme_\u81f4\u8c22",
+      "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574_pow_\u96be\u5ea6",
+      "home_wr1ench_campus_wall_dev_x_readme_\u8c03\u6574\u53d1\u5e16\u9891\u7387\u9650\u5236",
+      "home_wr1ench_campus_wall_dev_x_readme_\u90e8\u7f72\u5230\u751f\u4ea7\u73af\u5883",
+      "home_wr1ench_campus_wall_dev_x_readme_\u9879\u76ee\u7ed3\u6784",
+      "home_wr1ench_campus_wall_dev_x_readme_\u9996\u6b21\u4f7f\u7528"
     ],
-    "9": [
+    "5": [
       "db",
       "db_cache",
       "db_database",
@@ -402,7 +241,38 @@
       "db_readvotes",
       "db_readwhispers"
     ],
-    "10": [
+    "6": [
+      "routes_posts",
+      "routes_posts_broadcastsse",
+      "routes_posts_captchastore_postratelimit",
+      "routes_posts_check_checkbullyingnames",
+      "routes_posts_check_checksensitive",
+      "routes_posts_credibility",
+      "routes_posts_db",
+      "routes_posts_deletesynceddisccomment",
+      "routes_posts_getclientip",
+      "routes_posts_incuserpostcount",
+      "routes_posts_isfeatureblocked",
+      "routes_posts_maintenance",
+      "routes_posts_readadmins",
+      "routes_posts_readdiscussioncomments",
+      "routes_posts_readdiscussions",
+      "routes_posts_readnotices",
+      "routes_posts_readposts",
+      "routes_posts_readreports",
+      "routes_posts_readusers",
+      "routes_posts_requireadmin",
+      "routes_posts_savedeleteditem",
+      "routes_posts_uniqueid",
+      "routes_posts_verifyusertoken_verifysignedtoken",
+      "routes_posts_writediscussioncomments",
+      "routes_posts_writediscussions",
+      "routes_posts_writenotices",
+      "routes_posts_writeposts",
+      "routes_posts_writereports",
+      "routes_posts_writeusers"
+    ],
+    "7": [
       "db_adddeleteditem",
       "db_dropandinsert",
       "db_writeadmins",
@@ -432,65 +302,7 @@
       "db_writevotes",
       "db_writewhispers"
     ],
-    "11": [
-      "readme",
-      "readme_10_\u5904\u7f5a\u673a\u5236",
-      "readme_11_\u4fe1\u7528\u5206\u7cfb\u7edf",
-      "readme_12_\u79ef\u5206\u4f53\u7cfb",
-      "readme_13_\u5b9e\u65f6\u63a8\u9001",
-      "readme_14_\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-      "readme_15_\u5b89\u5168\u4e2d\u5fc3",
-      "readme_16_\u7ef4\u62a4\u6a21\u5f0f",
-      "readme_1_\u7528\u6237\u7cfb\u7edf",
-      "readme_2_\u5e16\u5b50\u7cfb\u7edf",
-      "readme_3_\u8ba8\u8bba\u533a",
-      "readme_4_qa\u60ac\u8d4f\u95ee\u7b54",
-      "readme_5_\u6295\u7968\u7cfb\u7edf",
-      "readme_6_\u6821\u56ed\u901a\u77e5",
-      "readme_7_\u5931\u7269_\u6361\u6f0f\u62cd\u5356",
-      "readme_8_\u9738\u51cc\u4e3e\u62a5",
-      "readme_9_\u53cd\u9988\u7cfb\u7edf",
-      "readme_campus_wall_\u6821\u56ed\u533f\u540d\u7559\u8a00\u677f\u7cfb\u7edf",
-      "readme_\u5b89\u88c5\u4e0e\u8fd0\u884c",
-      "readme_\u5b89\u88c5\u6b65\u9aa4",
-      "readme_\u6280\u672f\u6808",
-      "readme_\u6838\u5fc3\u529f\u80fd\u8be6\u89e3",
-      "readme_\u73af\u5883\u8981\u6c42",
-      "readme_\u8054\u7cfb\u65b9\u5f0f",
-      "readme_\u8bb8\u53ef\u8bc1",
-      "readme_\u8bbf\u95ee",
-      "readme_\u8d21\u732e\u6307\u5357",
-      "readme_\u9879\u76ee\u7ed3\u6784"
-    ],
-    "12": [
-      "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
-      "docs_for_agent_admin_html_\u4fee\u590d",
-      "docs_for_agent_bug_1_\u53d1\u5e16_\u8bdd\u9898_\u81ea\u52a8\u540c\u6b65\u5230\u8ba8\u8bba\u533a_\u84dd\u8272\u53ef\u70b9\u51fb\u94fe\u63a5",
-      "docs_for_agent_bug_1_\u8bdd\u9898\u5e16\u5b50\u65e0\u6cd5\u53d1\u9001_\u88ab\u7279\u6b8a\u5b57\u7b26\u68c0\u6d4b\u62e6\u622a",
-      "docs_for_agent_bug_2_\u6d89\u4e8b\u7528\u6237\u641c\u7d22\u6dfb\u52a0\u540e\u4e0b\u62c9\u680f\u91cd\u65b0\u5f39\u51fa",
-      "docs_for_agent_bug_2_\u6d89\u4e8b\u7528\u6237\u641c\u7d22\u7ed3\u679c\u5728\u6dfb\u52a0\u540e\u91cd\u65b0\u5f39\u51fa",
-      "docs_for_agent_bug_3_\u5185\u5bb9id\u786e\u8ba4\u5f39\u7a97\u70b9\u51fb\u6dfb\u52a0\u540e\u5361\u5728_\u6dfb\u52a0\u4e2d",
-      "docs_for_agent_bug_3_\u5185\u5bb9id\u786e\u8ba4\u5f39\u7a97\u91cd\u8bfb\u8f93\u5165\u6846\u8fc7\u671f\u503c",
-      "docs_for_agent_bug_4_\u7d27\u6025\u6a21\u5f0f\u63d0\u4ea4\u65f6\u4e0d\u5f39\u51fa\u540c\u5b66\u9a8c\u8bc1\u7a97\u53e3",
-      "docs_for_agent_bug_4_\u7d27\u6025\u6a21\u5f0f\u8349\u7a3f\u6062\u590d\u540e\u65e0\u6cd5\u63d0\u4ea4\u8ba4\u8bc1",
-      "docs_for_agent_bug_5_\u9738\u51cc\u5904\u7406\u7a97\u53e3\u6d89\u4e8b\u7528\u6237_\u5185\u5bb9\u59cb\u7ec8\u663e\u793a_0",
-      "docs_for_agent_index_html_\u4fee\u590d",
-      "docs_for_agent_safety_html_\u4fee\u590d",
-      "docs_for_agent_uid_\u79d1\u5b66\u8bb0\u6570\u6cd5\u4fee\u590d",
-      "docs_for_agent_\u4e3e\u62a5\u5217\u8868_reporterinfo_\u5c55\u793a",
-      "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
-      "docs_for_agent_\u4f1a\u8bdd_2_2026_07_13",
-      "docs_for_agent_\u4f1a\u8bdd_2_5_2026_07_15_\u9738\u51cc\u4e3e\u62a5\u7ea2esign",
-      "docs_for_agent_\u4f1a\u8bdd_4_2026_07_14",
-      "docs_for_agent_\u4f1a\u8bdd_8_2026_07_15_5_\u9879_bug_\u4fee\u590d",
-      "docs_for_agent_\u4f1a\u8bdd_9_2026_07_15_5_\u9879_bug_\u4fee\u590d_\u8865\u5168",
-      "docs_for_agent_\u524d\u7aef\u53d8\u66f4",
-      "docs_for_agent_\u540e\u7aef\u53d8\u66f4",
-      "docs_for_agent_\u6084\u6084\u8bdd\u529f\u80fd",
-      "docs_for_agent_\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
-      "docs_for_agent_\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898"
-    ],
-    "13": [
+    "8": [
       "routes_pickup",
       "routes_pickup_broadcastsse",
       "routes_pickup_changecredit",
@@ -514,11 +326,12 @@
       "routes_pickup_tomorrowstr",
       "routes_pickup_uniqueid",
       "routes_pickup_verifyusertoken_verifysignedtoken",
+      "routes_pickup_writenotices",
       "routes_pickup_writepickupauctions",
       "routes_pickup_writepickupreports",
       "routes_pickup_writeusers"
     ],
-    "14": [
+    "9": [
       "db_addidinput",
       "db_all",
       "db_allsql",
@@ -531,7 +344,6 @@
       "db_getunreadcount",
       "db_getusers",
       "db_marknotificationread",
-      "db_migrate",
       "db_queryrows",
       "db_readannouncement",
       "db_readmaintenance",
@@ -545,33 +357,7 @@
       "db_writesc",
       "db_writetrusttokens"
     ],
-    "15": [
-      "db_readadmins",
-      "db_readdiscussions",
-      "db_readlogs",
-      "lib_helpers",
-      "lib_helpers_getclientip",
-      "lib_helpers_hasspecialchars",
-      "lib_helpers_parselocaldatetime",
-      "lib_middleware",
-      "lib_middleware_getclientip",
-      "lib_middleware_inputsanitize",
-      "lib_middleware_loginfailures_login_window_ms_login_max_fails",
-      "lib_middleware_ratelimitlogin",
-      "lib_middleware_recordloginfail",
-      "lib_middleware_requiresuper",
-      "lib_middleware_sanitizestring",
-      "lib_middleware_verifysignedtoken",
-      "routes_auth",
-      "routes_auth_addloginlog",
-      "routes_auth_broadcastsse",
-      "routes_auth_getclientip",
-      "routes_auth_hasadmins",
-      "routes_auth_hashpassword_verifypassword_maketoken_verifysignedtoken",
-      "routes_auth_readadmins_writeadmins_readlogs_writelogs",
-      "routes_auth_requireadmin_requiresuper_ratelimitlogin_recordloginfail"
-    ],
-    "16": [
+    "10": [
       "routes_discussions",
       "routes_discussions_broadcastsse",
       "routes_discussions_check_checkbullyingnames",
@@ -597,7 +383,7 @@
       "routes_discussions_writereports",
       "routes_discussions_writeusers"
     ],
-    "17": [
+    "11": [
       "routes_votes",
       "routes_votes_broadcastsse",
       "routes_votes_check_checkbullyingnames",
@@ -620,9 +406,127 @@
       "routes_votes_writenotices",
       "routes_votes_writeusers",
       "routes_votes_writevoteiprecords",
-      "routes_votes_writevoterecords"
+      "routes_votes_writevoterecords",
+      "routes_votes_writevotes"
     ],
-    "18": [
+    "12": [
+      "lib_sse",
+      "lib_sse_sseclients",
+      "server",
+      "server_app",
+      "server_compression",
+      "server_cookieparser",
+      "server_cors",
+      "server_db",
+      "server_ensureuniqueids",
+      "server_envpath",
+      "server_express",
+      "server_frame_pages",
+      "server_fs",
+      "server_inputsanitize_createcheckmaintenance",
+      "server_maintenance",
+      "server_page_map",
+      "server_path",
+      "server_sseclients",
+      "server_verifysignedtoken",
+      "zhixue",
+      "zhixue_loginzhixue",
+      "zhixue_path",
+      "zhixue_spawn"
+    ],
+    "13": [
+      "routes_system",
+      "routes_system_broadcastsse",
+      "routes_system_check_checkbullyingnames_addname_addbullyingname",
+      "routes_system_check_checksensitive",
+      "routes_system_crypto",
+      "routes_system_db",
+      "routes_system_generateid_logidassignment",
+      "routes_system_getclientip",
+      "routes_system_getpostcount",
+      "routes_system_hotness",
+      "routes_system_maintenance",
+      "routes_system_onlineusers",
+      "routes_system_readbullying",
+      "routes_system_readfeedbacks",
+      "routes_system_readnotices",
+      "routes_system_readposts",
+      "routes_system_readusers",
+      "routes_system_verifyusertoken_signtoken_verifysignedtoken",
+      "routes_system_writebullying",
+      "routes_system_writefeedbacks",
+      "routes_system_writenotices",
+      "routes_system_writeposts",
+      "routes_system_writeusers"
+    ],
+    "14": [
+      "lib_crypto",
+      "lib_crypto_cert_enc_key",
+      "lib_crypto_crypto",
+      "lib_crypto_decryptcert",
+      "lib_crypto_encryptcert",
+      "lib_crypto_getdisplayzhixuestatus",
+      "lib_crypto_hashpassword",
+      "lib_crypto_maketoken",
+      "lib_crypto_makeusertoken",
+      "lib_crypto_signtoken",
+      "lib_crypto_verifypassword",
+      "routes_student_council",
+      "routes_student_council_broadcastsse",
+      "routes_student_council_captchastore",
+      "routes_student_council_db",
+      "routes_student_council_maintenance",
+      "routes_student_council_readsc",
+      "routes_student_council_readusers",
+      "routes_student_council_signtoken_verifysignedtoken_hashpassword_verifypassword",
+      "routes_student_council_writesc",
+      "routes_student_council_writeusers"
+    ],
+    "15": [
+      "lib_crypto_verifysignedtoken",
+      "lib_crypto_verifyusertoken",
+      "lib_middleware",
+      "lib_middleware_createcheckmaintenance",
+      "lib_middleware_getclientip",
+      "lib_middleware_inputsanitize",
+      "lib_middleware_loginfailures_login_window_ms_login_max_fails",
+      "lib_middleware_recordloginfail",
+      "lib_middleware_requireadmin",
+      "lib_middleware_requiresuper",
+      "lib_middleware_sanitizestring",
+      "lib_middleware_verifysignedtoken",
+      "lib_state_captchastore",
+      "routes_discussions_requireadmin",
+      "routes_maintenance",
+      "routes_maintenance_captchastore",
+      "routes_maintenance_db",
+      "routes_maintenance_maintenance",
+      "routes_maintenance_requireadmin",
+      "routes_maintenance_signtoken_verifysignedtoken"
+    ],
+    "16": [
+      "routes_qa",
+      "routes_qa_broadcastsse",
+      "routes_qa_changecredit",
+      "routes_qa_check_checkbullyingnames",
+      "routes_qa_check_checksensitive",
+      "routes_qa_credibility",
+      "routes_qa_db",
+      "routes_qa_getclientip",
+      "routes_qa_isfeatureblocked",
+      "routes_qa_readcreditlogs",
+      "routes_qa_readqaanswers",
+      "routes_qa_readqaquestions",
+      "routes_qa_readusers",
+      "routes_qa_settleexpiredquestions",
+      "routes_qa_uniqueid",
+      "routes_qa_verifyusertoken_verifysignedtoken",
+      "routes_qa_writecreditlogs",
+      "routes_qa_writeqaanswers",
+      "routes_qa_writeqaquestions",
+      "routes_qa_writeusers"
+    ],
+    "17": [
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_app_json",
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_app_pages",
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_app_sitemaplocation",
@@ -643,28 +547,7 @@
       "ref_pages_login_login",
       "ref_pages_notice_notice"
     ],
-    "19": [
-      "lib_sse",
-      "lib_sse_sseclients",
-      "server",
-      "server_app",
-      "server_compression",
-      "server_cookieparser",
-      "server_cors",
-      "server_db",
-      "server_ensureuniqueids",
-      "server_envpath",
-      "server_express",
-      "server_frame_pages",
-      "server_fs",
-      "server_inputsanitize_createcheckmaintenance",
-      "server_maintenance",
-      "server_page_map",
-      "server_path",
-      "server_sseclients",
-      "server_verifysignedtoken"
-    ],
-    "20": [
+    "18": [
       "docs_for_agent_5_10_\u7edf\u4e00\u4e3e\u62a5_\u5904\u7f5a_\u7533\u8bc9_\u9738\u51cc_reports_penalty_system_admin",
       "docs_for_agent_5_11_\u540e\u53f0\u7ba1\u7406_\u7528\u6237_\u5185\u5bb9\u7ba1\u7406_admin_js",
       "docs_for_agent_5_12_\u540e\u53f0\u7ba1\u7406_\u5b89\u5168_\u654f\u611f\u8bcd_admin_js",
@@ -683,7 +566,7 @@
       "docs_for_agent_5_9_\u5931\u7269_\u6361\u6f0f\u62cd\u5356_pickup_js",
       "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4"
     ],
-    "21": [
+    "19": [
       "lib_penalty",
       "lib_penalty_broadcastsse",
       "lib_penalty_db",
@@ -701,6 +584,42 @@
       "lib_penalty_notifyreportreceived",
       "lib_penalty_parseimages",
       "lib_penalty_parsemeasures"
+    ],
+    "20": [
+      "db_migrate",
+      "lib_credibility",
+      "lib_credibility_addzhixuebonus",
+      "lib_credibility_checkandrefresh",
+      "lib_credibility_db",
+      "lib_credibility_deductcredibility",
+      "lib_credibility_exchangecredits",
+      "lib_credibility_generateid",
+      "lib_credibility_getexchangerate",
+      "lib_credibility_getscore",
+      "lib_credibility_initusercredibility",
+      "lib_credibility_isfeatureblocked",
+      "lib_credibility_refresh_months",
+      "lib_credibility_restorecredibility",
+      "lib_credibility_thresholds",
+      "lib_uniqueid_generateid"
+    ],
+    "21": [
+      "db_readadmins",
+      "db_readdiscussions",
+      "db_readlogs",
+      "lib_helpers",
+      "lib_helpers_getclientip",
+      "lib_helpers_hasspecialchars",
+      "lib_helpers_parselocaldatetime",
+      "lib_middleware_ratelimitlogin",
+      "routes_auth",
+      "routes_auth_addloginlog",
+      "routes_auth_broadcastsse",
+      "routes_auth_getclientip",
+      "routes_auth_hasadmins",
+      "routes_auth_hashpassword_verifypassword_maketoken_verifysignedtoken",
+      "routes_auth_readadmins_writeadmins_readlogs_writelogs",
+      "routes_auth_requireadmin_requiresuper_ratelimitlogin_recordloginfail"
     ],
     "22": [
       "docs_superpowers_specs_2026_07_14_whisper_feature_design",
@@ -721,24 +640,6 @@
       "docs_superpowers_specs_2026_07_14_whisper_feature_design_\u901a\u77e5\u6d41"
     ],
     "23": [
-      "routes_admin_adddeleteditem",
-      "routes_admin_deletereportedcontent",
-      "routes_admin_deletesynceddisccomment",
-      "routes_admin_readdiscussioncomments",
-      "routes_admin_readdiscussions",
-      "routes_admin_readposts",
-      "routes_admin_readqaanswers",
-      "routes_admin_readqaquestions",
-      "routes_admin_readwhispers",
-      "routes_admin_savedeleteditem",
-      "routes_admin_writediscussioncomments",
-      "routes_admin_writediscussions",
-      "routes_admin_writeposts",
-      "routes_admin_writeqaanswers",
-      "routes_admin_writeqaquestions",
-      "routes_admin_writewhispers"
-    ],
-    "24": [
       "routes_penalty",
       "routes_penalty_calcexpiresat",
       "routes_penalty_credibility",
@@ -756,7 +657,75 @@
       "routes_penalty_writepunishments",
       "routes_penalty_writeusers"
     ],
+    "24": [
+      "sensitivewords",
+      "sensitivewords_all_words",
+      "sensitivewords_core_words",
+      "sensitivewords_custom_file",
+      "sensitivewords_customwords",
+      "sensitivewords_data_dir",
+      "sensitivewords_fs",
+      "sensitivewords_getstats",
+      "sensitivewords_loadcustomwords",
+      "sensitivewords_loadwhitelist",
+      "sensitivewords_path",
+      "sensitivewords_reload",
+      "sensitivewords_savewhitelist",
+      "sensitivewords_sen_words",
+      "sensitivewords_whitelist",
+      "sensitivewords_whitelist_file"
+    ],
     "25": [
+      "lib_hotness",
+      "lib_hotness_cache",
+      "lib_hotness_computehotness",
+      "lib_hotness_db",
+      "lib_hotness_getcachedhotness",
+      "lib_hotness_onlineusers",
+      "lib_hotness_recompute",
+      "lib_state",
+      "lib_state_captchagrantlimit",
+      "lib_state_cardcreatelimits",
+      "lib_state_loginfailures",
+      "lib_state_onlineusers",
+      "lib_state_postratelimit",
+      "lib_state_qrcodestore",
+      "lib_state_redeemratelimit"
+    ],
+    "26": [
+      "routes_reports",
+      "routes_reports_broadcastssenotice",
+      "routes_reports_createreport",
+      "routes_reports_db",
+      "routes_reports_enrichreport",
+      "routes_reports_generateid_logidassignment",
+      "routes_reports_getreportbyanyid",
+      "routes_reports_penalty",
+      "routes_reports_readnotices",
+      "routes_reports_readreports",
+      "routes_reports_readusers",
+      "routes_reports_type_labels",
+      "routes_reports_verifyusertoken",
+      "routes_reports_writenotices",
+      "routes_reports_writereports"
+    ],
+    "27": [
+      "bullyingnames",
+      "bullyingnames_addname",
+      "bullyingnames_check",
+      "bullyingnames_data_dir",
+      "bullyingnames_ensuredir",
+      "bullyingnames_fs",
+      "bullyingnames_getall",
+      "bullyingnames_loadnames",
+      "bullyingnames_names_file",
+      "bullyingnames_path",
+      "bullyingnames_protected_names",
+      "bullyingnames_reload",
+      "bullyingnames_removename",
+      "bullyingnames_savenames"
+    ],
+    "28": [
       "maintenance",
       "maintenance_createtestkey",
       "maintenance_crypto",
@@ -772,7 +741,7 @@
       "maintenance_verifytestkey",
       "maintenance_write"
     ],
-    "26": [
+    "29": [
       "routes_notices",
       "routes_notices_broadcastsse",
       "routes_notices_check_checkbullyingnames",
@@ -788,7 +757,37 @@
       "routes_notices_writeannouncement",
       "routes_notices_writeusers"
     ],
-    "27": [
+    "30": [
+      "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
+      "docs_for_agent_admin_html_\u4fee\u590d",
+      "docs_for_agent_index_html_\u4fee\u590d",
+      "docs_for_agent_safety_html_\u4fee\u590d",
+      "docs_for_agent_uid_\u79d1\u5b66\u8bb0\u6570\u6cd5\u4fee\u590d",
+      "docs_for_agent_\u4e3e\u62a5\u5217\u8868_reporterinfo_\u5c55\u793a",
+      "docs_for_agent_\u4f1a\u8bdd_1_2026_07_12",
+      "docs_for_agent_\u4f1a\u8bdd_2_2026_07_13",
+      "docs_for_agent_\u4f1a\u8bdd_3_2026_07_13",
+      "docs_for_agent_\u4f1a\u8bdd_4_2026_07_14",
+      "docs_for_agent_\u6084\u6084\u8bdd\u529f\u80fd",
+      "docs_for_agent_\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
+      "docs_for_agent_\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898"
+    ],
+    "31": [
+      "lib_idmigration",
+      "lib_idmigration_ensureuniqueids",
+      "lib_idmigration_generateid_generateuid_isvalididformat_logidassignment",
+      "lib_idmigration_needsmigration",
+      "lib_uniqueid",
+      "lib_uniqueid_crypto",
+      "lib_uniqueid_fs",
+      "lib_uniqueid_generateuid",
+      "lib_uniqueid_isvalididformat",
+      "lib_uniqueid_logidassignment",
+      "lib_uniqueid_path",
+      "lib_uniqueid_prefix_re",
+      "lib_uniqueid_valid_prefixes"
+    ],
+    "32": [
       "campus_wall_miniprogram_pages_notice_notice",
       "campus_wall_miniprogram_pages_notice_notice_closedetail",
       "campus_wall_miniprogram_pages_notice_notice_fetchannouncement",
@@ -802,7 +801,7 @@
       "campus_wall_miniprogram_pages_notice_notice_opendetail",
       "campus_wall_miniprogram_pages_notice_notice_switchtab"
     ],
-    "28": [
+    "33": [
       "docs_for_agent",
       "docs_for_agent_0_\u4e00\u53e5\u8bdd\u5b9a\u4f4d",
       "docs_for_agent_10_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u540e\u7aef\u529f\u80fd_\u6807\u51c6\u6d41\u7a0b",
@@ -816,9 +815,7 @@
       "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "docs_for_agent_\u4ed3\u5e93\u5730\u5740"
     ],
-    "29": [
-      "docs_for_agent_3_10_\u4fe1\u7528\u5206\u7cfb\u7edf_lib_credibility_js_\u672c\u6b21\u65b0\u589e",
-      "docs_for_agent_3_11_\u53d1\u5e16\u53ef\u89c1\u6027_\u5141\u8bb8\u8bc4\u8bba_\u654f\u611f\u8bcd\u62e6\u622a_\u672c\u6b21\u63d0\u4ea4\u65b0\u589e",
+    "34": [
       "docs_for_agent_3_1_\u8bf7\u6c42\u751f\u547d\u5468\u671f_server_js",
       "docs_for_agent_3_2_\u8ba4\u8bc1\u4e0e_token_lib_crypto_js",
       "docs_for_agent_3_3_\u8f93\u5165\u8fc7\u6ee4_inputsanitize_lib_middleware_js",
@@ -830,83 +827,7 @@
       "docs_for_agent_3_9_\u5904\u7f5a\u673a\u5236_\u5b89\u5168\u4e2d\u5fc3_\u7edf\u4e00\u4e3e\u62a5\u7cfb\u7edf_\u672c\u6b21\u63d0\u4ea4\u65b0\u589e",
       "docs_for_agent_3_\u540e\u7aef\u67b6\u6784"
     ],
-    "30": [
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_campus_wall_\u4ecb\u7ecd\u9875\u5b9e\u73b0\u8ba1\u5212",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_global_constraints",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_1_\u521b\u5efa\u5b8c\u6574\u4ecb\u7ecd\u9875_intro_html",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_2_\u5b8c\u5584\u529f\u80fd\u5168\u666f\u533a\u57df",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_3_\u6dfb\u52a0\u6570\u5b57\u8bc1\u636e\u548c\u6280\u672f\u67b6\u6784\u533a\u57df",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_4_\u6dfb\u52a0\u9002\u7528\u573a\u666f\u533a\u57df",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_5_\u6dfb\u52a0_cta_\u548c_footer_\u533a\u57df",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_6_\u521b\u5efa_spa_\u7247\u6bb5\u548c\u8def\u7531\u6620\u5c04",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_task_7_\u6700\u7ec8\u6d4b\u8bd5\u548c\u4f18\u5316",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_\u6587\u4ef6\u7ed3\u6784\u6620\u5c04",
-      "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_\u81ea\u6211\u5ba1\u67e5"
-    ],
-    "31": [
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_1_\u9738\u51cc\u62a5\u544a\u673a\u5236\u66f4\u6539",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_2_\u6570\u636e\u552f\u4e00\u5316",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_3_\u6d89\u4e8b\u7528\u6237\u641c\u7d22",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_4_\u76f8\u5173\u5185\u5bb9_id",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_5_\u7ba1\u7406\u540e\u53f0\u5904\u7406",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_6_\u81ea\u52a8\u901a\u77e5",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u76ee\u51fb\u4e3e\u62a5_witness",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u76ee\u6807",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u81ea\u6211\u4e3e\u62a5_self",
-      "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u9738\u51cc\u62a5\u544a\u7cfb\u7edf\u91cd\u8bbe\u8ba1"
-    ],
-    "32": [
-      "lib_crypto",
-      "lib_crypto_cert_enc_key",
-      "lib_crypto_crypto",
-      "lib_crypto_decryptcert",
-      "lib_crypto_encryptcert",
-      "lib_crypto_getdisplayzhixuestatus",
-      "lib_crypto_hashpassword",
-      "lib_crypto_maketoken",
-      "lib_crypto_makeusertoken",
-      "lib_crypto_signtoken",
-      "lib_crypto_verifypassword"
-    ],
-    "33": [
-      "lib_crypto_verifysignedtoken",
-      "lib_middleware_createcheckmaintenance",
-      "lib_middleware_requireadmin",
-      "routes_discussions_requireadmin",
-      "routes_maintenance",
-      "routes_maintenance_captchastore",
-      "routes_maintenance_db",
-      "routes_maintenance_maintenance",
-      "routes_maintenance_requireadmin",
-      "routes_maintenance_signtoken_verifysignedtoken"
-    ],
-    "34": [
-      "lib_sse_broadcastsse",
-      "routes_discussions_writediscussions",
-      "routes_discussions_writenotices",
-      "routes_discussions_writeposts",
-      "routes_notices_writenotices",
-      "routes_notices_writevotes",
-      "routes_pickup_writenotices",
-      "routes_user_writenotices",
-      "routes_user_writeposts",
-      "routes_votes_writevotes"
-    ],
     "35": [
-      "routes_student_council",
-      "routes_student_council_broadcastsse",
-      "routes_student_council_captchastore",
-      "routes_student_council_db",
-      "routes_student_council_maintenance",
-      "routes_student_council_readsc",
-      "routes_student_council_readusers",
-      "routes_student_council_signtoken_verifysignedtoken_hashpassword_verifypassword",
-      "routes_student_council_writesc",
-      "routes_student_council_writeusers"
-    ],
-    "36": [
       "db_deleterow",
       "db_invalidatecache",
       "db_softdeletepost",
@@ -916,6 +837,17 @@
       "db_updatepunishment",
       "db_updaterow",
       "db_updateuser"
+    ],
+    "36": [
+      "routes_whispers",
+      "routes_whispers_check_checkbullyingnames",
+      "routes_whispers_check_checksensitive",
+      "routes_whispers_credibility",
+      "routes_whispers_db",
+      "routes_whispers_generateid_logidassignment",
+      "routes_whispers_isfeatureblocked_emitusernotice",
+      "routes_whispers_verifyusertoken",
+      "sensitivewords_check"
     ],
     "37": [
       "db_addusernotification",
@@ -928,36 +860,16 @@
       "db_insertuser"
     ],
     "38": [
-      "lib_hotness",
-      "lib_hotness_cache",
-      "lib_hotness_computehotness",
-      "lib_hotness_db",
-      "lib_hotness_getcachedhotness",
-      "lib_hotness_onlineusers",
-      "lib_hotness_recompute",
-      "lib_state_onlineusers"
+      "lib_sse_broadcastsse",
+      "routes_discussions_writediscussions",
+      "routes_discussions_writenotices",
+      "routes_discussions_writeposts",
+      "routes_notices_writenotices",
+      "routes_notices_writevotes",
+      "routes_user_writenotices",
+      "routes_user_writeposts"
     ],
     "39": [
-      "lib_state",
-      "lib_state_captchagrantlimit",
-      "lib_state_captchastore",
-      "lib_state_cardcreatelimits",
-      "lib_state_loginfailures",
-      "lib_state_postratelimit",
-      "lib_state_qrcodestore",
-      "lib_state_redeemratelimit"
-    ],
-    "40": [
-      "task",
-      "task_1_\u53d1\u5e16\u65f6\u65b0\u589e\u9009\u9879_\u6240\u6709\u4eba\u53ef\u89c1_\u4ec5\u81ea\u5df1\u53ef\u89c1",
-      "task_2_\u53d1\u5e16\u654f\u611f\u8bcd\u81ea\u52a8\u62e6\u622a\u65b0\u673a\u5236",
-      "task_3_\u5e16\u5b50\u5361\u7247\u7684_\u67e5\u770b\u8bc4\u8bba_\u6309\u94ae_\u6539\u4e3a_\u67e5\u770b\u8be6\u60c5_\u6309\u94ae_\u529f\u80fd\u4e0d\u53d8",
-      "task_4_\u53d1\u5e16\u65f6\u589e\u52a0\u9009\u9879_\u662f\u5426\u5141\u8bb8\u4ed6\u4eba\u8bc4\u8bba",
-      "task_\u4efb\u52a1",
-      "task_\u51c6\u5907\u5de5\u4f5c",
-      "task_\u8981\u6c42"
-    ],
-    "41": [
       "campus_wall_miniprogram_pages_login_login",
       "campus_wall_miniprogram_pages_login_login_handlescanresult",
       "campus_wall_miniprogram_pages_login_login_onload",
@@ -966,7 +878,7 @@
       "campus_wall_miniprogram_pages_login_login_scanqrcode",
       "campus_wall_miniprogram_pages_login_login_submitmanualtoken"
     ],
-    "42": [
+    "40": [
       "docs_for_agent_14_1_\u53cc\u91cd\u5b58\u50a8\u6a21\u578b_\u6838\u5fc3\u8ba4\u77e5",
       "docs_for_agent_14_2_\u4e09\u6761\u8bfb\u53d6_\u4e0b\u53d1\u901a\u9053_\u6ce8\u610f\u8bed\u4e49\u5dee\u5f02",
       "docs_for_agent_14_3_\u81ea\u52a8\u89e6\u53d1\u70b9\u5b8c\u6574\u6e05\u5355",
@@ -975,7 +887,7 @@
       "docs_for_agent_14_6_\u5c0f\u7ed3_\u7ed9_ai_agent_\u7684\u901f\u8bb0",
       "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5"
     ],
-    "43": [
+    "41": [
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_md",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
@@ -984,7 +896,7 @@
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf"
     ],
-    "44": [
+    "42": [
       "spa",
       "spa_sparouter",
       "spa_sparouter_constructor",
@@ -993,7 +905,7 @@
       "spa_sparouter_navigate",
       "spa_sparouter_prefetch"
     ],
-    "45": [
+    "43": [
       "campus_wall_miniprogram_pages_index_index",
       "campus_wall_miniprogram_pages_index_index_checklogin",
       "campus_wall_miniprogram_pages_index_index_login",
@@ -1001,7 +913,7 @@
       "campus_wall_miniprogram_pages_index_index_onload",
       "campus_wall_miniprogram_pages_index_index_onshow"
     ],
-    "46": [
+    "44": [
       "crypto_words",
       "crypto_words_crypto",
       "crypto_words_decryptfile",
@@ -1009,7 +921,7 @@
       "crypto_words_fs",
       "crypto_words_path"
     ],
-    "47": [
+    "45": [
       "docs_for_agent_6_1_\u9875\u9762\u6a21\u578b",
       "docs_for_agent_6_2_spa_\u8def\u7531_spa_js_class_sparouter",
       "docs_for_agent_6_3_\u524d\u7aef\u8c03\u7528\u540e\u7aef\u7684\u7ea6\u5b9a",
@@ -1017,7 +929,7 @@
       "docs_for_agent_6_5_\u5b89\u5168\u4e2d\u5fc3\u524d\u7aef_safety_html_pages_safety_html",
       "docs_for_agent_6_\u524d\u7aef\u67b6\u6784_spa"
     ],
-    "48": [
+    "46": [
       "docs_superpowers_plans_2026_07_14_whisper_feature",
       "docs_superpowers_plans_2026_07_14_whisper_feature_task_1_\u540e\u7aef\u57fa\u7840_uniqueid_db_penalty_\u6269\u5c55",
       "docs_superpowers_plans_2026_07_14_whisper_feature_task_2_\u540e\u7aef\u8def\u7531_routes_whispers_js",
@@ -1025,7 +937,7 @@
       "docs_superpowers_plans_2026_07_14_whisper_feature_task_4_\u66f4\u65b0\u6587\u6863",
       "docs_superpowers_plans_2026_07_14_whisper_feature_\u6084\u6084\u8bdd\u529f\u80fd_\u5b9e\u73b0\u8ba1\u5212"
     ],
-    "49": [
+    "47": [
       "lib_cache",
       "lib_cache_cache",
       "lib_cache_get",
@@ -1033,138 +945,145 @@
       "lib_cache_invalidateall",
       "lib_cache_set"
     ],
-    "50": [
+    "48": [
       "docs_for_agent_11_\u8fd0\u884c_\u90e8\u7f72_\u7ef4\u62a4",
       "docs_for_agent_\u6570\u636e\u5907\u4efd",
       "docs_for_agent_\u672c\u5730\u5f00\u53d1",
       "docs_for_agent_\u751f\u4ea7\u90e8\u7f72_pm2",
       "docs_for_agent_\u7d22\u5f15\u7ef4\u62a4"
     ],
-    "51": [
+    "49": [
       "docs_for_agent_2026_07_14_\u5bc6\u8bed\u63a5\u6536\u5f39\u7a97\u5c42\u7ea7\u4fee\u590d_\u79ef\u5206\u5165\u53e3\u4e0e\u79ef\u5206\u9875\u91cd\u505a",
       "docs_for_agent_9_\u53d8\u66f4\u8bb0\u5f55_changelog",
       "docs_for_agent_\u4f1a\u8bdd_5_2026_07_14_credit_\u9875\u9762\u91cd\u8bbe\u8ba1_\u9996\u9875_credit_\u6309\u94ae",
       "docs_for_agent_\u4f1a\u8bdd_6_2026_07_14_\u6084\u6084\u8bdd\u91cd\u8bbe\u8ba1_\u4eba\u673a\u9a8c\u8bc1\u4f18\u5316_\u767b\u5f55\u5237\u65b0",
       "docs_for_agent_\u4f1a\u8bdd_7_2026_07_14_\u4fee\u590d\u667a\u5b66\u767b\u5f55\u8ba4\u8bc1_\u641c\u7d22\u5339\u914d\u8ba4\u8bc1\u59d3\u540d"
     ],
-    "52": [
+    "50": [
       "docs_for_agent_\u4f7f\u7528\u65b9\u5f0f",
       "docs_for_agent_\u5173\u952e\u67a2\u7ebd\u8282\u70b9",
       "docs_for_agent_\u56fe\u8c31\u53c2\u8003",
       "docs_for_agent_\u56fe\u8c31\u6587\u4ef6\u8bf4\u660e",
       "docs_for_agent_\u5efa\u8bae\u63a2\u7d22"
     ],
-    "53": [
+    "51": [
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_create_icons_create_icon",
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_create_icons_draw_bell",
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_create_icons_draw_user",
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_create_icons_py",
       "imagedraw"
     ],
-    "54": [
+    "52": [
+      "routes_admin_adddeleteditem",
+      "routes_admin_deletesynceddisccomment",
+      "routes_admin_readdiscussioncomments",
+      "routes_admin_savedeleteditem",
+      "routes_admin_writediscussioncomments"
+    ],
+    "53": [
       "routes_admin_changecredit",
       "routes_admin_readcreditlogs",
       "routes_admin_readusers",
       "routes_admin_writecreditlogs",
       "routes_admin_writeusers"
     ],
-    "55": [
-      "zhixue",
-      "zhixue_loginzhixue",
-      "zhixue_path",
-      "zhixue_spawn"
+    "54": [
+      "task",
+      "task_1_\u66f4\u65b0\u641c\u7d22\u673a\u5236",
+      "task_2_\u4fee\u590dbug",
+      "task_\u4efb\u52a1",
+      "task_\u51c6\u5907\u5de5\u4f5c"
     ],
-    "56": [
+    "55": [
       "docs_for_agent_4_1_\u6838\u5fc3\u4e1a\u52a1\u8868",
       "docs_for_agent_4_2_\u6295\u7968_\u8bc4\u5206_\u5176\u5b83\u8868",
       "docs_for_agent_4_\u6570\u636e\u6a21\u578b_db_js_sqlite_\u8868"
     ],
-    "57": [
+    "56": [
       "routes_admin_addloginlog",
       "routes_admin_readlogs",
       "routes_admin_writelogs"
     ],
-    "58": [
+    "57": [
       "routes_admin_pushusernotice",
       "routes_admin_readnotices",
       "routes_admin_writenotices"
     ],
-    "59": [
+    "58": [
       "campus_wall_miniprogram_app",
       "campus_wall_miniprogram_app_onlaunch"
     ],
-    "60": [
+    "59": [
       "routes_admin_hasadmins",
       "routes_admin_readadmins"
     ],
-    "61": [
+    "60": [
       "slider_captcha_longbow_slidercaptcha_min",
       "slider_captcha_longbow_slidercaptcha_min_u"
     ]
   },
   "cohesion": {
-    "0": 0.03508771929824561,
-    "1": 0.04421768707482993,
-    "2": 0.07610993657505286,
-    "3": 0.05555555555555555,
-    "4": 0.05555555555555555,
-    "5": 0.06050420168067227,
-    "6": 0.0873440285204991,
-    "7": 0.06451612903225806,
-    "8": 0.07526881720430108,
-    "9": 0.06896551724137931,
-    "10": 0.07142857142857142,
-    "11": 0.07142857142857142,
-    "12": 0.08,
-    "13": 0.08923076923076922,
-    "14": 0.09666666666666666,
-    "15": 0.11956521739130435,
-    "16": 0.08333333333333333,
-    "17": 0.09486166007905138,
-    "18": 0.10526315789473684,
-    "19": 0.1111111111111111,
-    "20": 0.11764705882352941,
-    "21": 0.16911764705882354,
+    "0": 0.029850746268656716,
+    "1": 0.05555555555555555,
+    "2": 0.06050420168067227,
+    "3": 0.06451612903225806,
+    "4": 0.06451612903225806,
+    "5": 0.06896551724137931,
+    "6": 0.0812807881773399,
+    "7": 0.07142857142857142,
+    "8": 0.08547008547008547,
+    "9": 0.10144927536231885,
+    "10": 0.08333333333333333,
+    "11": 0.09057971014492754,
+    "12": 0.09090909090909091,
+    "13": 0.08695652173913043,
+    "14": 0.12380952380952381,
+    "15": 0.12631578947368421,
+    "16": 0.14210526315789473,
+    "17": 0.10526315789473684,
+    "18": 0.11764705882352941,
+    "19": 0.16911764705882354,
+    "20": 0.2,
+    "21": 0.15833333333333333,
     "22": 0.125,
-    "23": 0.14166666666666666,
-    "24": 0.13333333333333333,
-    "25": 0.27472527472527475,
-    "26": 0.14285714285714285,
-    "27": 0.3181818181818182,
-    "28": 0.16666666666666666,
-    "29": 0.16666666666666666,
-    "30": 0.16666666666666666,
-    "31": 0.18181818181818182,
-    "32": 0.23636363636363636,
-    "33": 0.2222222222222222,
+    "23": 0.13333333333333333,
+    "24": 0.14166666666666666,
+    "25": 0.1619047619047619,
+    "26": 0.18095238095238095,
+    "27": 0.21978021978021978,
+    "28": 0.27472527472527475,
+    "29": 0.14285714285714285,
+    "30": 0.15384615384615385,
+    "31": 0.24358974358974358,
+    "32": 0.3181818181818182,
+    "33": 0.16666666666666666,
     "34": 0.2,
-    "35": 0.2,
-    "36": 0.25,
+    "35": 0.25,
+    "36": 0.2222222222222222,
     "37": 0.25,
-    "38": 0.32142857142857145,
-    "39": 0.25,
-    "40": 0.25,
-    "41": 0.42857142857142855,
-    "42": 0.2857142857142857,
-    "43": 0.2857142857142857,
-    "44": 0.5238095238095238,
-    "45": 0.4666666666666667,
+    "38": 0.25,
+    "39": 0.42857142857142855,
+    "40": 0.2857142857142857,
+    "41": 0.2857142857142857,
+    "42": 0.5238095238095238,
+    "43": 0.4666666666666667,
+    "44": 0.3333333333333333,
+    "45": 0.3333333333333333,
     "46": 0.3333333333333333,
     "47": 0.3333333333333333,
-    "48": 0.3333333333333333,
-    "49": 0.3333333333333333,
+    "48": 0.4,
+    "49": 0.4,
     "50": 0.4,
-    "51": 0.4,
+    "51": 0.5,
     "52": 0.4,
-    "53": 0.5,
+    "53": 0.4,
     "54": 0.4,
-    "55": 0.5,
+    "55": 0.6666666666666666,
     "56": 0.6666666666666666,
     "57": 0.6666666666666666,
-    "58": 0.6666666666666666,
+    "58": 1.0,
     "59": 1.0,
-    "60": 1.0,
-    "61": 1.0
+    "60": 1.0
   },
   "gods": [
     {
@@ -1178,6 +1097,11 @@
       "degree": 29
     },
     {
+      "id": "home_wr1ench_campus_wall_dev_x_readme_\u6821\u56ed\u5899_campus_wall",
+      "label": "\ud83d\udccc \u6821\u56ed\u5899 (Campus Wall)",
+      "degree": 22
+    },
+    {
       "id": "lib_sse_broadcastsse",
       "label": "broadcastSSE()",
       "degree": 22
@@ -1188,14 +1112,9 @@
       "degree": 20
     },
     {
-      "id": "lib_crypto_verifysignedtoken",
-      "label": "verifySignedToken()",
-      "degree": 17
-    },
-    {
-      "id": "readme_\u6838\u5fc3\u529f\u80fd\u8be6\u89e3",
-      "label": "\ud83d\ude80 \u6838\u5fc3\u529f\u80fd\u8be6\u89e3",
-      "degree": 17
+      "id": "lib_uniqueid_generateid",
+      "label": "generateId()",
+      "degree": 18
     },
     {
       "id": "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4",
@@ -1203,22 +1122,44 @@
       "degree": 17
     },
     {
-      "id": "routes_admin_deletereportedcontent",
-      "label": "deleteReportedContent()",
-      "degree": 14
+      "id": "lib_crypto_verifysignedtoken",
+      "label": "verifySignedToken()",
+      "degree": 17
     },
     {
-      "id": "lib_uniqueid_generateid",
-      "label": "generateId()",
-      "degree": 13
+      "id": "lib_crypto_verifyusertoken",
+      "label": "verifyUserToken()",
+      "degree": 11
     },
     {
-      "id": "docs_for_agent_3_\u540e\u7aef\u67b6\u6784",
-      "label": "3. \u540e\u7aef\u67b6\u6784",
-      "degree": 12
+      "id": "db_insertrow",
+      "label": "insertRow()",
+      "degree": 11
     }
   ],
   "surprises": [
+    {
+      "source": "writeNotices()",
+      "target": "broadcastSSE()",
+      "source_files": [
+        "routes/pickup.js",
+        "lib/sse.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities; peripheral node `writeNotices()` unexpectedly reaches hub `broadcastSSE()`"
+    },
+    {
+      "source": "writeVotes()",
+      "target": "broadcastSSE()",
+      "source_files": [
+        "routes/votes.js",
+        "lib/sse.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities; peripheral node `writeVotes()` unexpectedly reaches hub `broadcastSSE()`"
+    },
     {
       "source": "requireAdmin()",
       "target": "verifySignedToken()",
@@ -1251,28 +1192,6 @@
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "connects across different repos/directories; peripheral node `writeDiscussions()` unexpectedly reaches hub `broadcastSSE()`"
-    },
-    {
-      "source": "writeNotices()",
-      "target": "broadcastSSE()",
-      "source_files": [
-        "routes/discussions.js",
-        "lib/sse.js"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; peripheral node `writeNotices()` unexpectedly reaches hub `broadcastSSE()`"
-    },
-    {
-      "source": "writePosts()",
-      "target": "broadcastSSE()",
-      "source_files": [
-        "routes/discussions.js",
-        "lib/sse.js"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; peripheral node `writePosts()` unexpectedly reaches hub `broadcastSSE()`"
     }
   ],
   "tokens": {
