@@ -235,7 +235,8 @@ module.exports = function(app, opts) {
         }
       } catch (e) {}
     }
-    const logs = db.readLogs();
+    const cutoff = Date.now() - 100 * 24 * 60 * 60 * 1000;
+    const logs = db.readLogs().filter(l => new Date(l.time).getTime() >= cutoff);
     logs.unshift({
       id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       type: 'page_visit',
@@ -245,7 +246,6 @@ module.exports = function(app, opts) {
       ua: ua || '-',
       time: new Date().toISOString()
     });
-    if (logs.length > 500) logs.splice(500);
     db.writeLogs(logs);
     res.json({ ok: true });
   });

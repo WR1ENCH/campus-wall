@@ -9,7 +9,8 @@ function hasAdmins() {
 }
 
 function addLoginLog(type, account, success, ip, ua) {
-  const logs = readLogs();
+  const cutoff = Date.now() - 100 * 24 * 60 * 60 * 1000;
+  const logs = readLogs().filter(l => new Date(l.time).getTime() >= cutoff);
   logs.unshift({
     id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
     type,
@@ -19,7 +20,6 @@ function addLoginLog(type, account, success, ip, ua) {
     ua: ua || '-',
     time: new Date().toISOString()
   });
-  if (logs.length > 500) logs.splice(500);
   writeLogs(logs);
 }
 
