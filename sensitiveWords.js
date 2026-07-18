@@ -62,14 +62,23 @@ function saveWhitelist(list) {
 // ===== 构建去重词集 =====
 let customWords = loadCustomWords();
 let whitelist = loadWhitelist();
-let ALL_WORDS = [...new Set([...CORE_WORDS, ...SEN_WORDS, ...customWords])];
+// 过滤单字干扰项（单 CJK 字、单 ASCII 字符），避免 substring 匹配误伤正常内容
+const SHORT_WORDS = new Set([...CORE_WORDS, ...SEN_WORDS, ...customWords].filter(w => {
+  if (w.length === 1 && /[\u4e00-\u9fff\u3000-\u303f\x21-\x7E]/.test(w)) return false;
+  return true;
+}));
+let ALL_WORDS = [...SHORT_WORDS];
 console.log("[sensitiveWords] 已加载内置词库 " + SEN_WORDS.length + " 个，自定义词库 " + customWords.length + " 个，总计 " + ALL_WORDS.length + " 个词");
 
 // ===== 重新加载词库（添加/删除自定义词后调用）=====
 function reload() {
   customWords = loadCustomWords();
   whitelist = loadWhitelist();
-  ALL_WORDS = [...new Set([...CORE_WORDS, ...SEN_WORDS, ...customWords])];
+  const merged = [...new Set([...CORE_WORDS, ...SEN_WORDS, ...customWords])];
+  ALL_WORDS = merged.filter(w => {
+    if (w.length === 1 && /[\u4e00-\u9fff\u3000-\u303f\x21-\x7E]/.test(w)) return false;
+    return true;
+  });
   console.log("[sensitiveWords] 已重新加载词库，总计 " + ALL_WORDS.length + " 个词，白名单 " + whitelist.length + " 个");
 }
 

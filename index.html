@@ -5777,6 +5777,13 @@ async function showPostCaptchaModal() {
   if (selfOnlyChk) selfOnlyChk.checked = false;
   const allowCommentsChk = document.getElementById('allowComments');
   if (allowCommentsChk) allowCommentsChk.checked = true;
+  // 重置标签选择：移除所有 active，激活第一个
+  const tagBtns = document.querySelectorAll('#modalOverlay .post-tag');
+  tagBtns.forEach(b => b.classList.remove('active'));
+  if (tagBtns[0]) {
+    tagBtns[0].classList.add('active');
+    currentTag = tagBtns[0].dataset.tag;
+  }
   }
 
  // ===== 帖子详情弹窗（风格同登录窗口）=====
