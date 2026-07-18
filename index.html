@@ -8413,8 +8413,8 @@ function escJsStr(s) {
  if (v > maxRemain) { inp.value = maxRemain; }
  total += parseInt(inp.value) || 0;
  });
- document.getElementById('qaRewardRemain').textContentMath.max(0, maxRemain - total);
- document.getElementById('qaRewardRemain').style.color = total > maxRemain ? '#e04' : '#2a6846';
+  document.getElementById('qaRewardRemain').textContent = Math.max(0, maxRemain - total);
+  document.getElementById('qaRewardRemain').style.color = total > maxRemain ? '#e04' : '#2a6846';
  }
 
  async function submitQAReward() {
