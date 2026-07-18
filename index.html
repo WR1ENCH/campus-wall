@@ -5816,12 +5816,12 @@ async function showPostCaptchaModal() {
       fetch(API + '/api/users/search?q=' + encodeURIComponent(q.trim()))
         .then(function(r) { return r.json(); })
         .then(function(j) {
-          if (!j.ok) return;
+          if (!j.ok || !j.data) return;
           var html = '';
           var sections = { accounts: '匹配账号', nicknames: '匹配昵称', uids: '匹配UID', names: '匹配姓名' };
           var hasAny = false;
           Object.keys(sections).forEach(function(key) {
-            var items = j[key];
+            var items = j.data[key];
             if (items && items.length) {
               hasAny = true;
               html += '<div style="padding:4px 8px;font-size:11px;color:#999;background:#f8f6f3;">' + sections[key] + '</div>';
