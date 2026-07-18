@@ -500,12 +500,14 @@ function migrate() {
   }
 
   // 修复 users 表中误存为科学记数法的 uid（如 1.23e+15 → 1230000000000000）
-  const uidFix = db.prepare(`SELECT rowid, uid FROM "users" WHERE uid LIKE '%e%'`).all();
-  for (const u of uidFix) {
-    const fixed = Number(u.uid).toFixed(0);
-    db.prepare(`UPDATE "users" SET uid = ? WHERE rowid = ?`).run(fixed, u.rowid);
-    console.log(`[db.js] ✅ 已修复 uid 格式 ${u.uid} -> ${fixed}`);
-  }
+  try {
+    const uidFix = db.prepare(`SELECT rowid, uid FROM "users" WHERE uid LIKE '%e%'`).all();
+    for (const u of uidFix) {
+      const fixed = Number(u.uid).toFixed(0);
+      db.prepare(`UPDATE "users" SET uid = ? WHERE rowid = ?`).run(fixed, u.rowid);
+      console.log(`[db.js] ✅ 已修复 uid 格式 ${u.uid} -> ${fixed}`);
+    }
+  } catch (e) { /* 旧表可能无 uid 列，忽略 */ }
 }
 
 // ---- helpers ----
@@ -594,7 +596,12 @@ function writeAdmins(data) { dropAndInsert('admins', data); }
 // ponytail: 历史数据 nickname 可能为数字（如 395），统一转字符串，
 // 避免前端 .charAt(0) / .substring 崩溃。升级路径：写入时校验。
 function readUsers() {
-  return all('users').map(u => ({ ...u, nickname: u.nickname == null ? '' : String(u.nickname) }));
+  return all('users').map(u => ({
+    ...u,
+    nickname: u.nickname == null ? '' : String(u.nickname),
+    username: u.username == null ? '' : String(u.username),
+    id: u.id == null ? '' : String(u.id)
+  }));
 }
 function writeUsers(data) { dropAndInsert('users', data); }
 

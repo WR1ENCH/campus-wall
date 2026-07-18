@@ -1268,7 +1268,7 @@ app.get('/api/admin/user/:id/detail', requireAdmin, requireSuper, (req, res) => 
     const credibilityLogs = db.readCredibilityLogs()
       .filter(l => l.userId === user.id)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const punishments = readPunishments().filter(p => p.userId === user.id).reverse();
+    const punishments = db.readPunishments().filter(p => p.userId === user.id).reverse();
     res.json({ ok: true, data: { ...safeUser, credibility_score: safeUser.credibility_score != null ? safeUser.credibility_score : 90, credibility_exchanged_total: safeUser.credibility_exchanged_total || 0, credibility_last_refresh: safeUser.credibility_last_refresh || null, credibilityLogs: credibilityLogs.slice(0, 50), postCount: userPosts.length, posts: userPosts, reports: userReports, punishments: punishments.slice(0, 20) } });
   } catch (e) {
     console.error('[admin] user detail error:', e);
