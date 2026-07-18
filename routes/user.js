@@ -317,6 +317,16 @@ module.exports = function(app) {
       }
     });
   });
+  app.post('/api/user/check-zhixue-unique', (req, res) => {
+    const { zhixueUsername } = req.body;
+    if (!zhixueUsername) return res.json({ ok: false, msg: '请提供智学网账号' });
+    const users = readUsers();
+    const existing = users.find(u =>
+      String(u.zhixueUsername) === String(zhixueUsername) &&
+      u.zhixueStatus === 'approved'
+    );
+    res.json({ ok: true, data: { available: !existing } });
+  });
   app.post('/api/user/trust-browser', (req, res) => {
     const auth = verifyUserToken(req.headers['x-user-token']);
     if (!auth) return res.json({ ok: false, msg: '未登录' });
@@ -797,7 +807,17 @@ module.exports = function(app) {
     if (users[userIndex].zhixueStatus === 'approved') {
       return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
     }
-  
+
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const { captchaId, captchaText } = req.body;
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
+    }
+
     const { type } = req.body;
   
     if (type === 'zhixue') {
