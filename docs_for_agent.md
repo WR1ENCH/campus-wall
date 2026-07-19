@@ -673,6 +673,10 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - 错误 `code` 常见：`NOT_LOGIN` / `INVALID_TOKEN` / `TOKEN_EXPIRED` / `FORBIDDEN` / `MAINTENANCE` / `RATE_LIMITED` / `ALREADY_INIT`。
 - 富文本渲染：引入 `marked.min.js`（CDN）做 Markdown；内容经 `inputSanitize` + 客户端转义防 XSS。
 - 滑块验证码：`slider-captcha/longbow.slidercaptcha.min.js`，先 `POST /api/slider-captcha/grant` 拿 `captchaId`，用户拖动完成后提交 `captchaId` + `captchaText`。**captcha token 仅在业务成功后才被消费（`captchaStore.delete`）**，登录/注册/智学登录若因输入错误失败，captcha 仍有效，用户修正后可重试无需再次验证。
+- **同学认证场景的滑块集成**：
+  - `user.html`：同学认证/超管认证弹窗均已有 `initCertCaptcha()` / `initAdminCaptcha()`（Session 17）。
+  - `index.html` `#bindZhixueModal`：`openCertModal()` 调用 `initCertCaptcha()` 创建人机验证按钮，复用 `_humanVerified` / `_sliderCaptchaToken` 机制；`doBindZhixue()` 校验 `_sliderCaptchaToken` 并添加 `captchaId`/`captchaText` 到请求体。
+  - `bully.html` `showCertPopup()`：**全量集成**滑块验证码（CSS + overlay HTML + longbow JS + `showSliderCaptcha()` + `initCertCaptcha()`），`submitCertAndReport()` 校验 `_sliderCaptchaToken` 并添加 `captchaId`/`captchaText`。
 
 ### 6.4 如何新增一个前端页面
 1. 在根目录新建 `xxx.html`（完整独立页，参考现有页面结构）。
