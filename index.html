@@ -19,13 +19,20 @@
  --brand-gold: #f5c518;
  --brand-gold-light: #e8c84a;
 
- /* Note Colors */
- --note-yellow: #fff9b1;
- --note-pink: #ffc9de;
- --note-green: #b5f5c5;
- --note-blue: #bde0fe;
- --note-orange: #ffd6a5;
- --note-purple: #d5b8ff;
+  /* Note Colors */
+  --note-yellow: #fff9b1;
+  --note-pink: #ffc9de;
+  --note-green: #b5f5c5;
+  --note-blue: #bde0fe;
+  --note-orange: #ffd6a5;
+  --note-purple: #d5b8ff;
+
+  /* Tag Colors (must match .post-tag.t-* background) */
+  --tag-daily: #fbbf24;
+  --tag-love: #f472b6;
+  --tag-tree: #34d399;
+  --tag-lost: #fb923c;
+  --tag-event: #60a5fa;
 
  /* Text colors per note */
  --text-yellow: #5a4a00;
@@ -1482,11 +1489,11 @@ backdrop-filter: blur(4px);
  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
  transform: scale(1.2);
  }
- .post-tag.t-daily { background: #fbbf24; }
- .post-tag.t-love { background: #f472b6; }
- .post-tag.t-tree { background: #34d399; }
- .post-tag.t-lost { background: #fb923c; }
- .post-tag.t-event { background: #60a5fa; }
+  .post-tag.t-daily { background: var(--tag-daily); }
+  .post-tag.t-love { background: var(--tag-love); }
+  .post-tag.t-tree { background: var(--tag-tree); }
+  .post-tag.t-lost { background: var(--tag-lost); }
+  .post-tag.t-event { background: var(--tag-event); }
  .post-image-section { margin-bottom: 12px; }
   .post-image-label {
   font-size: 12px;
@@ -5844,14 +5851,18 @@ async function showPostCaptchaModal() {
  renderNotes(currentFilter);
  }
 
-  var TAG_COLORS = { '日常': '#fbbf24', '表白': '#f472b6', '树洞': '#34d399', '失物招领': '#fb923c', '活动': '#60a5fa' };
+  function syncCardColor() {
+  var active = document.querySelector('.post-tag.active');
+  var card = document.querySelector('.post-note-card');
+  if (!card) return;
+  card.style.background = active ? getComputedStyle(active).backgroundColor : 'var(--note-yellow)';
+  }
 
   function selectTag(btn) {
   btn.closest('.post-tags').querySelectorAll('.post-tag').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentTag = btn.dataset.tag;
-  var card = document.querySelector('.post-note-card');
-  if (card) card.style.background = TAG_COLORS[currentTag] || 'var(--note-yellow)';
+  syncCardColor();
   }
 
  async function handleLike(id) {
@@ -6061,9 +6072,7 @@ async function showPostCaptchaModal() {
     tagBtns[0].classList.add('active');
     currentTag = tagBtns[0].dataset.tag;
   }
-  // 重置 note-card 背景色
-  var card = document.querySelector('.post-note-card');
-  if (card) card.style.background = 'var(--note-yellow)';
+  syncCardColor();
   document.getElementById('visibilityUserArea').style.display = 'none';
   _visibilityTargetUsers = [];
   renderVisibilitySelectedUsers();
@@ -6687,6 +6696,7 @@ async function showPostCaptchaModal() {
   _visibilityTargetUsers = [];
   renderVisibilitySelectedUsers();
   hideDiscussionSuggest();
+  syncCardColor();
   }
 
   function togglePostOptions() {
