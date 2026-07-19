@@ -476,6 +476,10 @@
       transform: scale(0.97);
     }
 
+    .btn-secondary.plan-toggle {
+      width: auto;
+    }
+
     /* ===== Collapsible ===== */
     .collapse-header {
       display: flex;
@@ -916,8 +920,6 @@
       var isLoggedIn = !!tok();
       var isPlus = subData && subData.isPlus;
       var token = tok();
-      var subscribedCount = 128;
-
       var statusHtml = '';
       if (!isLoggedIn) {
         statusHtml = '<span class="hero-status inactive">请登录后订阅</span>';
@@ -932,6 +934,7 @@
       var renewalHtml = '';
       var subscribeBtnLabel = '立即订阅';
       var subscribeBtnPlan = 'monthly';
+      var selectedPlan = 'monthly';
 
       if (isLoggedIn && isPlus) {
         var end = subData.endTime ? new Date(subData.endTime).toLocaleDateString('zh-CN') : '-';
@@ -977,7 +980,11 @@
           '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg> 选择方案</div>' +
           renderPricing(subscribeBtnPlan, price) +
           '<div style="margin-top:16px">' +
-            '<button class="btn-primary" onclick="openSubscribeModal()">' +
+            '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'weekly' ? ' active' : '') + '" data-plan="weekly" onclick="selectPlan(\'weekly\')" style="flex:1;' + (selectedPlan === 'weekly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">周卡 399 Credit</button>' +
+              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'monthly' ? ' active' : '') + '" data-plan="monthly" onclick="selectPlan(\'monthly\')" style="flex:1;' + (selectedPlan === 'monthly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">月卡 699 Credit</button>' +
+            '</div>' +
+            '<button class="btn-primary" onclick="openSubscribeModal(selectedPlan)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' +
               subscribeBtnLabel +
             '</button>' +
@@ -1012,13 +1019,30 @@
       hdr.classList.toggle('open');
     }
 
+    var selectedPlan = 'monthly';
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+      document.querySelectorAll('.plan-toggle').forEach(function(el){
+        if (el.dataset.plan === plan) {
+          el.style.borderColor = 'var(--gold)';
+          el.style.color = 'var(--gold-deep)';
+          el.style.background = 'var(--gold-light)';
+        } else {
+          el.style.borderColor = '';
+          el.style.color = '';
+          el.style.background = '';
+        }
+      });
+    }
+
     // ===== Subscribe / Renew =====
-    function openSubscribeModal() {
+    function openSubscribeModal(plan) {
+      plan = plan || 'monthly';
       var token = tok();
       if (!token) { window.location.href = 'index.html'; return; }
       var priceData = window._priceData || { weekly: 399, monthly: 699 };
-      var plan = 'monthly';
-      var price = priceData.monthly;
+      var price = priceData[plan];
 
       var overlay = document.getElementById('subModal');
       if (!overlay) {
@@ -1029,15 +1053,18 @@
           '<div class="modal-box">' +
             '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
             '<div class="modal-title" id="modalTitle">确认订阅</div>' +
-            '<div class="modal-desc" id="modalDesc">即将订阅 <span class="highlight">PLUS++ 月卡</span>，消耗 <span class="highlight" id="modalPrice">' + price + '</span> Credit</div>' +
+            '<div class="modal-desc" id="modalDesc">即将订阅 <span class="highlight">PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + '</span>，消耗 <span class="highlight" id="modalPrice">' + price + '</span> Credit</div>' +
             '<div class="modal-actions">' +
               '<button class="btn-secondary" onclick="closeModal(\'subModal\')">取消</button>' +
               '<button class="btn-primary" id="modalConfirm" onclick="doSubscribe()">确认支付</button>' +
             '</div>' +
           '</div>';
+        overlay.dataset.plan = plan;
         document.body.appendChild(overlay);
       } else {
         document.getElementById('modalPrice').textContent = price;
+        document.getElementById('modalDesc').querySelector('.highlight').textContent = 'PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡');
+        overlay.dataset.plan = plan;
       }
       setTimeout(function(){ overlay.classList.add('open'); }, 10);
     }
@@ -1050,6 +1077,8 @@
     function doSubscribe() {
       var token = tok();
       if (!token) return;
+      var overlay = document.getElementById('subModal');
+      var plan = overlay ? (overlay.dataset.plan || 'monthly') : 'monthly';
       var btn = document.getElementById('modalConfirm');
       btn.disabled = true;
       btn.textContent = '处理中…';
@@ -1057,7 +1086,7 @@
       fetch('/api/user/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-        body: JSON.stringify({ plan: 'monthly', payment: 'credit' })
+        body: JSON.stringify({ plan: plan, payment: 'credit' })
       })
       .then(function(r){ return r.json(); })
       .then(function(j){
@@ -1079,8 +1108,10 @@
     }
 
     function doRenew(plan, price) {
+      plan = plan || 'monthly';
       var token = tok();
       if (!token) return;
+      var priceData = window._priceData || { weekly: 399, monthly: 699 };
 
       var overlay = document.getElementById('renewModal');
       if (!overlay) {
@@ -1091,13 +1122,18 @@
           '<div class="modal-box">' +
             '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>' +
             '<div class="modal-title">续订 PLUS++</div>' +
-            '<div class="modal-desc">续订 <span class="highlight">PLUS++ 月卡</span>，消耗 <span class="highlight" id="renewPrice">' + price + '</span> Credit' + (price < window._priceData.monthly ? '<br><span style="color:var(--pos);font-size:12px;">🎉 续订优惠 85 折</span>' : '') + '</div>' +
+            '<div class="modal-desc">续订 <span class="highlight" id="renewPlanLabel">PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + '</span>，消耗 <span class="highlight" id="renewPrice">' + price + '</span> Credit' + (price < priceData[plan] ? '<br><span style="color:var(--pos);font-size:12px;">续订优惠 85 折</span>' : '') + '</div>' +
             '<div class="modal-actions">' +
               '<button class="btn-secondary" onclick="closeModal(\'renewModal\')">取消</button>' +
               '<button class="btn-primary" id="renewConfirm" onclick="doRenewConfirm()">确认续订</button>' +
             '</div>' +
           '</div>';
+        overlay.dataset.plan = plan;
         document.body.appendChild(overlay);
+      } else {
+        document.getElementById('renewPrice').textContent = price;
+        document.getElementById('renewPlanLabel').textContent = 'PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡');
+        overlay.dataset.plan = plan;
       }
       setTimeout(function(){ overlay.classList.add('open'); }, 10);
     }
@@ -1105,6 +1141,8 @@
     function doRenewConfirm() {
       var token = tok();
       if (!token) return;
+      var overlay = document.getElementById('renewModal');
+      var plan = overlay ? (overlay.dataset.plan || 'monthly') : 'monthly';
       var btn = document.getElementById('renewConfirm');
       btn.disabled = true;
       btn.textContent = '处理中…';
@@ -1112,7 +1150,7 @@
       fetch('/api/user/subscriptions/renew', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-        body: JSON.stringify({ plan: 'monthly' })
+        body: JSON.stringify({ plan: plan })
       })
       .then(function(r){ return r.json(); })
       .then(function(j){

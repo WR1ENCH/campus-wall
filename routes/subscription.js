@@ -1,5 +1,6 @@
 // ===== routes/subscription.js - PLUS++ 订阅系统 =====
 const { verifyUserToken } = require('../lib/crypto');
+const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const { redeemRateLimit } = require('../lib/state');
 const db = require('../db');
@@ -135,42 +136,51 @@ module.exports = function(app) {
       }
     }
 
-    const price = PRICES[plan];
+    try {
+      const result = db.getDb().transaction(() => {
+        const price = PRICES[plan];
+        const users = readUsers();
+        const userIndex = users.findIndex(u => u.id === session.id);
+        if (userIndex === -1) return { error: '用户不存在' };
+        if ((users[userIndex].credit || 0) < price) {
+          return { error: `Credit 不足，还需 ${price - (users[userIndex].credit || 0)} Credit`, data: { required: price, balance: users[userIndex].credit || 0 } };
+        }
 
-    const users = readUsers();
-    const userIndex = users.findIndex(u => u.id === session.id);
-    if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
-    if ((users[userIndex].credit || 0) < price) {
-      return res.json({ ok: false, msg: `Credit 不足，还需 ${price - (users[userIndex].credit || 0)} Credit`, data: { required: price, balance: users[userIndex].credit || 0 } });
+        users[userIndex].credit -= price;
+        writeUsers(users);
+
+        const creditLogs = db.readCreditLogs();
+        creditLogs.push({
+          id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          userId: session.id, amount: -price,
+          reason: 'PLUS++ 订阅购买（' + (plan === 'weekly' ? '周卡' : '月卡') + '）',
+          createdAt: new Date().toISOString()
+        });
+        db.writeCreditLogs(creditLogs);
+
+        const existing = getUserActiveSubscription(session.id);
+        let sub;
+        if (existing) {
+          const oldEndTime = new Date(existing.endTime);
+          const durationMs = plan === 'weekly' ? 7 * 24 * 3600 * 1000 : 30 * 24 * 3600 * 1000;
+          const newEndTime = new Date(Math.max(oldEndTime.getTime(), Date.now()) + durationMs);
+          db.updateSubscription(existing.id, { endTime: newEndTime.toISOString() });
+          sub = { ...existing, endTime: newEndTime.toISOString() };
+        } else {
+          sub = activateSubscription(session.id, plan, 'credit', null, null);
+        }
+        return { sub, price };
+      })();
+
+      if (result.error) return res.json({ ok: false, msg: result.error, data: result.data });
+
+      pushUserNotice(session.id, 'PLUS++ 订阅成功', `你已成功订阅 PLUS++ ${plan === 'weekly' ? '周卡' : '月卡'}，有效期至 ${new Date(result.sub.endTime).toLocaleDateString('zh-CN')}`, 'T1');
+      console.warn('[AUDIT] 用户 ' + session.id + ' 花费 ' + result.price + ' Credit 购买 PLUS++ ' + plan);
+      res.json({ ok: true, msg: '订阅成功！PLUS++ 权益已激活', data: result.sub });
+    } catch (e) {
+      console.error('[subscription] credit purchase tx failed:', e.message);
+      return res.json({ ok: false, msg: '操作失败，请稍后重试' });
     }
-
-    users[userIndex].credit -= price;
-    writeUsers(users);
-
-    const creditLogs = db.readCreditLogs();
-    creditLogs.push({
-      id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      userId: session.id, amount: -price,
-      reason: 'PLUS++ 订阅购买（' + (plan === 'weekly' ? '周卡' : '月卡') + '）',
-      createdAt: new Date().toISOString()
-    });
-    db.writeCreditLogs(creditLogs);
-
-    const existing = getUserActiveSubscription(session.id);
-    let sub;
-    if (existing) {
-      const oldEndTime = new Date(existing.endTime);
-      const durationMs = plan === 'weekly' ? 7 * 24 * 3600 * 1000 : 30 * 24 * 3600 * 1000;
-      const newEndTime = new Date(Math.max(oldEndTime.getTime(), Date.now()) + durationMs);
-      db.updateSubscription(existing.id, { endTime: newEndTime.toISOString() });
-      sub = { ...existing, endTime: newEndTime.toISOString() };
-    } else {
-      sub = activateSubscription(session.id, plan, 'credit', null, null);
-    }
-
-    pushUserNotice(session.id, 'PLUS++ 订阅成功', `你已成功订阅 PLUS++ ${plan === 'weekly' ? '周卡' : '月卡'}，有效期至 ${new Date(sub.endTime).toLocaleDateString('zh-CN')}`, 'T1');
-    console.warn('[AUDIT] 用户 ' + session.id + ' 花费 ' + price + ' Credit 购买 PLUS++ ' + plan);
-    res.json({ ok: true, msg: '订阅成功！PLUS++ 权益已激活', data: sub });
   });
 
   app.post('/api/user/subscriptions/renew', (req, res) => {
@@ -178,6 +188,16 @@ module.exports = function(app) {
     if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
     const session = verifyUserToken(token);
     if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+
+    const rlNow = Date.now();
+    const rlKey = 'renew_' + session.id;
+    let rl = redeemRateLimit.get(rlKey);
+    if (!rl || rlNow - rl.window > 60000) {
+      rl = { window: rlNow, count: 0 };
+      redeemRateLimit.set(rlKey, rl);
+    }
+    rl.count++;
+    if (rl.count > 5) return res.json({ ok: false, msg: '操作太频繁，请稍后再试' });
 
     const { plan } = req.body;
     if (!['weekly', 'monthly'].includes(plan)) return res.json({ ok: false, msg: '请选择周卡或月卡' });
@@ -187,50 +207,69 @@ module.exports = function(app) {
     const userSubs = subs.filter(s => s.userId === session.id && s.status === 'active');
     const latestSub = userSubs.length > 0 ? userSubs.reduce((a, b) => new Date(a.endTime) > new Date(b.endTime) ? a : b) : null;
 
+    if (!latestSub) return res.json({ ok: false, msg: '无有效订阅，请先购买订阅' });
+
     let discountRate = 1;
-    if (latestSub) {
-      const endTime = new Date(latestSub.endTime);
-      const diffMs = endTime.getTime() - now.getTime();
-      const absDiffMs = Math.abs(diffMs);
-      const fortyEightHrs = 48 * 3600 * 1000;
-      if (absDiffMs <= fortyEightHrs) {
-        discountRate = 0.85;
-      }
+    const endTime = new Date(latestSub.endTime);
+    const diffMs = endTime.getTime() - now.getTime();
+    const absDiffMs = Math.abs(diffMs);
+    const fortyEightHrs = 48 * 3600 * 1000;
+    if (absDiffMs <= fortyEightHrs) {
+      discountRate = 0.85;
     }
 
-    const price = Math.round(PRICES[plan] * discountRate);
+    try {
+      const result = db.getDb().transaction(() => {
+        const price = Math.round(PRICES[plan] * discountRate);
+        const users = readUsers();
+        const userIndex = users.findIndex(u => u.id === session.id);
+        if (userIndex === -1) return { error: '用户不存在' };
+        if ((users[userIndex].credit || 0) < price) {
+          return { error: `Credit 不足，还需 ${price - (users[userIndex].credit || 0)} Credit`, data: { required: price, balance: users[userIndex].credit || 0 } };
+        }
 
-    const users = readUsers();
-    const userIndex = users.findIndex(u => u.id === session.id);
-    if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
-    if ((users[userIndex].credit || 0) < price) {
-      return res.json({ ok: false, msg: `Credit 不足，还需 ${price - (users[userIndex].credit || 0)} Credit`, data: { required: price, balance: users[userIndex].credit || 0 } });
+        users[userIndex].credit -= price;
+        writeUsers(users);
+
+        const existing = getUserActiveSubscription(session.id);
+        const oldSubId = existing?.id;
+
+        const creditLogs = db.readCreditLogs();
+        creditLogs.push({
+          id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          userId: session.id, amount: -price,
+          reason: 'PLUS++ 续订（' + (plan === 'weekly' ? '周卡' : '月卡') + '）',
+          createdAt: new Date().toISOString()
+        });
+        db.writeCreditLogs(creditLogs);
+
+        const sub = activateSubscription(session.id, plan, 'credit', null, oldSubId);
+        if (existing) db.updateSubscription(existing.id, { status: 'expired' });
+        return { sub, price };
+      })();
+
+      if (result.error) return res.json({ ok: false, msg: result.error, data: result.data });
+
+      pushUserNotice(session.id, 'PLUS++ 续订成功', `你已成功续订 PLUS++ ${plan === 'weekly' ? '周卡' : '月卡'}，有效期至 ${new Date(result.sub.endTime).toLocaleDateString('zh-CN')}`, 'T1');
+      console.warn('[AUDIT] 用户 ' + session.id + ' 花费 ' + result.price + ' Credit 续订 PLUS++ ' + plan);
+      res.json({ ok: true, msg: '续订成功！', data: result.sub });
+    } catch (e) {
+      console.error('[subscription] renew tx failed:', e.message);
+      return res.json({ ok: false, msg: '操作失败，请稍后重试' });
     }
-
-    users[userIndex].credit -= price;
-    writeUsers(users);
-
-    const existing = getUserActiveSubscription(session.id);
-    const oldSubId = existing?.id;
-
-    const creditLogs = db.readCreditLogs();
-    creditLogs.push({
-      id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      userId: session.id, amount: -price,
-      reason: 'PLUS++ 续订（' + (plan === 'weekly' ? '周卡' : '月卡') + '）',
-      createdAt: new Date().toISOString()
-    });
-    db.writeCreditLogs(creditLogs);
-
-    const sub = activateSubscription(session.id, plan, 'credit', null, oldSubId);
-    if (existing) db.updateSubscription(existing.id, { status: 'expired' });
-
-    pushUserNotice(session.id, 'PLUS++ 续订成功', `你已成功续订 PLUS++ ${plan === 'weekly' ? '周卡' : '月卡'}，有效期至 ${new Date(sub.endTime).toLocaleDateString('zh-CN')}`, 'T1');
-    console.warn('[AUDIT] 用户 ' + session.id + ' 花费 ' + price + ' Credit 续订 PLUS++ ' + plan);
-    res.json({ ok: true, msg: '续订成功！', data: sub });
   });
 
   app.post('/api/user/subscriptions/check-expiry', (req, res) => {
+    const clNow = Date.now();
+    const clKey = 'checkexp_' + (req.headers['x-user-token'] || getClientIP(req));
+    let cl = redeemRateLimit.get(clKey);
+    if (!cl || clNow - cl.window > 60000) {
+      cl = { window: clNow, count: 0 };
+      redeemRateLimit.set(clKey, cl);
+    }
+    cl.count++;
+    if (cl.count > 3) return res.json({ ok: false, msg: '操作太频繁', code: 'RATE_LIMITED' });
+
     const subs = readSubscriptions();
     const now = new Date();
     const soon = new Date(now.getTime() + 24 * 3600 * 1000);
