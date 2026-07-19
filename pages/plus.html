@@ -1,0 +1,17 @@
+<!-- PLUS++ 订阅 SPA 内容 -->
+<div class="plus-container" id="plusContainer">
+  <div class="loading">正在打开 PLUS++ 订阅…</div>
+  <script>
+    (function(){
+      try{
+        if(window.parent&&window.parent!==window){
+          window.parent.location.href='/plus.html';
+        }else{
+          window.location.href='/plus.html';
+        }
+      }catch(e){
+        window.location.href='/plus.html';
+      }
+    })();
+  </script>
+</div>

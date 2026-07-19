@@ -7,8 +7,8 @@ const { generateId } = require('../lib/uniqueId');
 const { luhnModN, generatePlusCardCode, pushUserNotice } = require('../lib/subscription');
 
 const PRICES = {
-  weekly: 300,
-  monthly: 1000
+  weekly: 399,
+  monthly: 699
 };
 
 function readSubscriptions() { return db.readSubscriptions(); }
@@ -70,23 +70,11 @@ module.exports = function(app) {
   });
 
   app.get('/api/user/subscription/price', (req, res) => {
-    const token = req.headers['x-user-token'];
-    if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
-    const session = verifyUserToken(token);
-    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
-
-    const subs = readSubscriptions();
-    const hasHistory = subs.some(s => s.userId === session.id && s.status === 'active');
-    const discountRate = hasHistory ? 0.9 : 1;
-
     res.json({
       ok: true,
       data: {
-        weekly: Math.round(PRICES.weekly * discountRate),
-        monthly: Math.round(PRICES.monthly * discountRate),
-        weeklyOriginal: PRICES.weekly,
-        monthlyOriginal: PRICES.monthly,
-        discount: hasHistory ? '9折' : null
+        weekly: PRICES.weekly,
+        monthly: PRICES.monthly
       }
     });
   });
@@ -147,10 +135,7 @@ module.exports = function(app) {
       }
     }
 
-    const subs = readSubscriptions();
-    const hasHistory = subs.some(s => s.userId === session.id);
-    const discountRate = hasHistory ? 0.9 : 1;
-    const price = Math.round(PRICES[plan] * discountRate);
+    const price = PRICES[plan];
 
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === session.id);
@@ -198,8 +183,21 @@ module.exports = function(app) {
     if (!['weekly', 'monthly'].includes(plan)) return res.json({ ok: false, msg: '请选择周卡或月卡' });
 
     const subs = readSubscriptions();
-    const hasHistory = subs.some(s => s.userId === session.id);
-    const discountRate = hasHistory ? 0.85 : 1;
+    const now = new Date();
+    const userSubs = subs.filter(s => s.userId === session.id && s.status === 'active');
+    const latestSub = userSubs.length > 0 ? userSubs.reduce((a, b) => new Date(a.endTime) > new Date(b.endTime) ? a : b) : null;
+
+    let discountRate = 1;
+    if (latestSub) {
+      const endTime = new Date(latestSub.endTime);
+      const diffMs = endTime.getTime() - now.getTime();
+      const absDiffMs = Math.abs(diffMs);
+      const fortyEightHrs = 48 * 3600 * 1000;
+      if (absDiffMs <= fortyEightHrs) {
+        discountRate = 0.85;
+      }
+    }
+
     const price = Math.round(PRICES[plan] * discountRate);
 
     const users = readUsers();

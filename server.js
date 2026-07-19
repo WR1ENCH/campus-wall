@@ -91,6 +91,7 @@ const FRAME_PAGES = new Set([
   '/agreement.html', '/apply-notice.html', '/credit.html',
   '/featured.html', '/launch.html', '/maintenance.html',
   '/safety.html',
+  '/plus.html',
 ]);
 const MOBILE_UA = /Android|iPhone|iPad|iPod|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i;
 
@@ -136,6 +137,7 @@ const PAGE_MAP = {
   '/knowledge.html': 'pages/knowledge.html',
   '/ecosystem.html': 'pages/ecosystem.html',
   '/safety.html': 'pages/safety.html',
+  '/plus.html': 'pages/plus.html',
 };
 
 app.use((req, res, next) => {
