@@ -431,6 +431,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | POST | `/api/user/register` | 无 | 注册（用户名/密码/昵称 + 滑块验证码） |
+| GET | `/api/user/check-username?username=xxx` | 无 | 账号唯一性实时检测，返回 `{available: bool}` |
 | POST | `/api/user/login` | 无 | 登录（限流 `rateLimitLogin('username')`） |
 | POST | `/api/user/zhixue-login` | 无 | 智学网账号登录 |
 | POST | `/api/user/auto-login` | 无 | 信任浏览器后自动登录 |
