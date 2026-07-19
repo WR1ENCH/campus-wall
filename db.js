@@ -409,6 +409,9 @@ function migrate() {
     'CREATE INDEX IF NOT EXISTS idx_discussions_deleted ON discussions(deleted)',
     'CREATE INDEX IF NOT EXISTS idx_discussion_comments_discussionId ON discussion_comments(discussionId)',
     'CREATE INDEX IF NOT EXISTS idx_qa_questions_status ON qa_questions(status)',
+    'CREATE INDEX IF NOT EXISTS idx_subscriptions_userId_status ON subscriptions(userId, status)',
+    'CREATE INDEX IF NOT EXISTS idx_subscriptions_endTime ON subscriptions(endTime)',
+    'CREATE INDEX IF NOT EXISTS idx_plus_cards_status ON plus_cards(status)',
   ];
   for (const sql of INDEXES) {
     try { db.exec(sql); } catch (e) { /* index may already exist */ }

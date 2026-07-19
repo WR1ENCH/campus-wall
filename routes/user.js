@@ -1325,77 +1325,77 @@ app.get('/api/users/:id/posts', (req, res) => {
       return res.json({ ok: false, msg: '卡密无效（校验码不匹配）' });
     }
 
-    const plusCards = db.readPlusCards();
-    const card = plusCards.find(c => c.code === cleanCode);
-    if (!card) return res.json({ ok: false, msg: '卡密不存在' });
-    if (card.status !== 'unused') return res.json({ ok: false, msg: '该卡密已被使用' });
-
-    card.status = 'used';
-    card.usedBy = session.id;
-    card.usedAt = new Date().toISOString();
-    db.writePlusCards(plusCards);
-
-    const plan = card.plan;
-    const duration = card.duration || 1;
     const now2 = new Date();
-    const durationMs = plan === 'weekly'
-      ? duration * 7 * 24 * 3600 * 1000
-      : duration * 30 * 24 * 3600 * 1000;
 
-    const subs = db.readSubscriptions();
-    const activeSub = subs.find(s => s.userId === session.id && s.status === 'active' && s.endTime > now2.toISOString());
+    try {
+      const result = db.getDb().transaction(() => {
+        const plusCards = db.readPlusCards();
+        const card = plusCards.find(c => c.code === cleanCode);
+        if (!card) return { error: '卡密不存在' };
+        if (card.status !== 'unused') return { error: '该卡密已被使用' };
 
-    let subscription;
-    if (activeSub) {
-      const oldEndTime = new Date(activeSub.endTime);
-      const baseTime = Math.max(oldEndTime.getTime(), now2.getTime());
-      const newEndTime = new Date(baseTime + durationMs);
-      db.updateSubscription(activeSub.id, { endTime: newEndTime.toISOString() });
-      subscription = { ...activeSub, endTime: newEndTime.toISOString() };
-    } else {
-      const sub = {
-        id: generateId('SUBS'),
-        userId: session.id,
-        plan,
-        startTime: now2.toISOString(),
-        endTime: new Date(now2.getTime() + durationMs).toISOString(),
-        price: 0,
-        paymentMethod: 'card',
-        cardCode: cleanCode,
-        status: 'active',
-        renewedFrom: null,
-        createdAt: now2.toISOString()
-      };
-      db.addSubscription(sub);
-      subscription = sub;
+        card.status = 'used';
+        card.usedBy = session.id;
+        card.usedAt = now2.toISOString();
+        db.writePlusCards(plusCards);
+
+        const plan = card.plan;
+        const duration = card.duration || 1;
+        const durationMs = plan === 'weekly'
+          ? duration * 7 * 24 * 3600 * 1000
+          : duration * 30 * 24 * 3600 * 1000;
+
+        const subs = db.readSubscriptions();
+        const activeSub = subs.find(s => s.userId === session.id && s.status === 'active' && s.endTime > now2.toISOString());
+
+        let subscription;
+        if (activeSub) {
+          const oldEndTime = new Date(activeSub.endTime);
+          const baseTime = Math.max(oldEndTime.getTime(), now2.getTime());
+          const newEndTime = new Date(baseTime + durationMs);
+          db.updateSubscription(activeSub.id, { endTime: newEndTime.toISOString() });
+          subscription = { ...activeSub, endTime: newEndTime.toISOString() };
+        } else {
+          const sub = {
+            id: generateId('SUBS'),
+            userId: session.id,
+            plan,
+            startTime: now2.toISOString(),
+            endTime: new Date(now2.getTime() + durationMs).toISOString(),
+            price: 0,
+            paymentMethod: 'card',
+            cardCode: cleanCode,
+            status: 'active',
+            renewedFrom: null,
+            createdAt: now2.toISOString()
+          };
+          db.addSubscription(sub);
+          subscription = sub;
+        }
+        return { subscription, plan, duration };
+      })();
+
+      if (result.error) return res.json({ ok: false, msg: result.error });
+
+      const { subscription, plan, duration } = result;
+      const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const notices = readNotices();
+      notices.push({
+        id: notificationId,
+        title: 'PLUS++ 订阅已激活',
+        content: '恭喜！你已通过卡密兑换激活 PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + ' x' + duration + '，有效期至 ' + new Date(subscription.endTime).toLocaleDateString('zh-CN'),
+        author: '系统', auto: true, level: 'T1',
+        createdAt: new Date().toISOString(),
+        targetUserId: session.id
+      });
+      writeNotices(notices);
+      db.addUserNotification({ notificationId, userId: session.id, read: 0, createdAt: new Date().toISOString() });
+
+      console.warn('[AUDIT] 用户 ' + session.id + ' 通过卡密 ' + cleanCode + ' 兑换 PLUS++ 订阅');
+      res.json({ ok: true, msg: '兑换成功！PLUS++ 权益已激活', data: { subscription } });
+    } catch (e) {
+      console.error('[user] redeem-plus-card tx failed:', e.message);
+      res.json({ ok: false, msg: '兑换失败，请稍后重试' });
     }
-
-    const notices = readNotices();
-    const notificationId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    notices.push({
-      id: notificationId,
-      title: 'PLUS++ 订阅已激活',
-      content: '恭喜！你已通过卡密兑换激活 PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + ' x' + duration + '，有效期至 ' + new Date(subscription.endTime).toLocaleDateString('zh-CN'),
-      author: '系统',
-      auto: true,
-      level: 'T1',
-      createdAt: new Date().toISOString(),
-      targetUserId: session.id
-    });
-    writeNotices(notices);
-    db.addUserNotification({
-      notificationId,
-      userId: session.id,
-      read: 0,
-      createdAt: new Date().toISOString()
-    });
-
-    console.warn('[AUDIT] 用户 ' + session.id + ' 通过卡密 ' + cleanCode + ' 兑换 PLUS++ 订阅');
-
-    res.json({
-      ok: true,
-      msg: '兑换成功！PLUS++ 权益已激活',
-      data: { subscription }
-    });
   });
 };

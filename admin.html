@@ -3376,7 +3376,7 @@
         + '<div style="color:var(--text-sub);font-size:12px;">' + escHtml(c.createdBy || '-') + '</div>'
         + '<div style="color:var(--text-sub);font-size:12px;">' + (c.usedByNickname ? escHtml(c.usedByNickname) : '-') + '</div>'
         + '<div style="color:var(--text-sub);font-size:11px;">' + (c.usedAt ? new Date(c.usedAt).toLocaleString('zh-CN') : '-') + '</div>'
-        + '<div style="text-align:center;"><button class="mini-btn" onclick="copyPlusCardCode(\'' + escHtml(c.code) + '\',event)">📋</button></div>'
+        + '<div style="text-align:center;"><button class="mini-btn copy-pluscard-btn" data-pluscard-code="' + escHtml(c.code) + '">📋</button></div>'
         + '</div>';
     }).join('');
   }
@@ -3392,9 +3392,16 @@
   }
 
   function copyPlusCardCode(code, event) {
-    event.stopPropagation();
+    if (event) event.stopPropagation();
     safeCopy(code, '✅ 已复制: ' + code);
   }
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.copy-pluscard-btn');
+    if (btn && btn.dataset.pluscardCode) {
+      e.stopPropagation();
+      copyPlusCardCode(btn.dataset.pluscardCode);
+    }
+  });
 
   function openCreatePlusCardModal() {
     document.getElementById('plusCardCountInput').value = '1';
