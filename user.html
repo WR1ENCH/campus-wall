@@ -207,6 +207,7 @@
     .profile-uid {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       color: var(--text-muted);
       font-size: 13px;
@@ -1014,6 +1015,24 @@
       gap: 8px;
     }
 
+    .cert-title-apply-btn {
+      margin-left: auto;
+      font-size: 12px;
+      padding: 3px 12px;
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all .2s;
+    }
+
+    .cert-title-apply-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
     .cert-items {
       display: flex;
       flex-direction: column;
@@ -1353,10 +1372,6 @@
             </div>
           </div>
           <div class="profile-actions">
-            <button id="applyCertBtn" class="btn btn-primary" style="display:none;" onclick="openCertChoiceModal()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              申请认证
-            </button>
             <button id="openCreditBtn" class="btn btn-credit" onclick="window.open('credit.html','_blank')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
               我的Credits <span id="userCreditInline" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span>
@@ -1372,6 +1387,7 @@
       <div class="cert-section-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         个人认证
+        <button class="cert-title-apply-btn" onclick="openCertChoiceModal()">申请认证</button>
       </div>
       <div class="cert-items">
         <!-- 同学认证 -->
@@ -1784,13 +1800,6 @@
       }
 
       section.style.display = '';
-
-      // 控制申请认证按钮（仅在非本人时不显示）
-      var applyBtn = document.getElementById('applyCertBtn');
-      if (applyBtn) {
-        var canApply = !schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none';
-        applyBtn.style.display = canApply || !isAdminBound ? '' : 'none';
-      }
     }
 
     function openCertChoiceModal() {
