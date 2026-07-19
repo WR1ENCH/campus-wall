@@ -195,13 +195,14 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ---
 
-### 3.9 处罚机制 / 安全中心 / 统一举报系统（本次提交新增）
+### 3.9 处罚机制 / 安全中心 / 统一举报系统
 
 三个新模块（`lib/penalty.js` / `routes/penalty.js` / `routes/reports.js` / `safety.html` / `pages/safety.html`）构成内容安全闭环。后台管理界面 `admin.html` 另含「处罚管理」（`page-punishments`，`loadPunishments()`）与「申诉处理」（`page-appeals`，`loadAppeals()`）两个页面：申诉处理页通过 `GET /api/admin/appeals` 拉取申诉列表（按 `status` 过滤），在弹窗内可查看关联处罚与申诉内容，并调用 `appeal-action` 通过/驳回。
 
 **统一举报入口（`routes/reports.js`）**
-- 单一公开入口 `POST /api/reports`，按 `type` 区分内容类型：`post` / `comment` / `discussion` / `discussion_comment` / `qa_question` / `qa_answer` / `featured` / `auction`，生成 `REPO-` 前缀唯一 ID（`generateId('REPO')`）。
-- 创建时调用 `penalty.getReportedContent()` 取被举报内容的**证据快照**（正文 + 图片），写入 `evidenceContent` JSON，使后续处理不依赖原文是否被删改。
+- 单一公开入口 `POST /api/reports`，按 `type` 区分内容类型：`post` / `comment` / `discussion` / `discussion_comment` / `qa_question` / `qa_answer` / `whisper` / `featured` / `auction`，生成 `REPO-` 前缀唯一 ID（`generateId('REPO')`）。
+- 创建时调用 `penalty.getReportedContent()` 取被举报内容的**证据快照**（正文 + 图片），写入 `evidenceContent` JSON，使后续处理不依赖原文是否被删改。`getReportedContent()` 支持 `sensitive_` 前缀归一化（Session 1 修复）。
+- 敏感词自动举报（`routes/posts.js` 及 `routes/discussions.js`）在命中敏感词时自动创建 `type:sensitive_post/sensitive_comment` 举报，同样生成 `REPO-` ID、`evidenceContent`（截取正文 + 图片）、`reportedUserId`。`reason` 去掉敏感词原文，仅保留"系统自动检测：内容包含敏感词"（Session 1 改进）。
 - 同时向举报人发系统通知（含 `reportId`）。`GET /api/reports/:reportId` 详情（举报人或管理员可见）；`GET /api/user/my-reports` 我的举报（安全中心用）。
 - 拍卖举报（`routes/pickup.js`）在写入 `pickup_reports` 后，会同步调用 `createReport({type:'auction'})` 进入统一举报表，便于统一管理与用户安全中心查看。
 - **自动合并**：同一条内容有已创建的 `pending` 举报时，新举报不会创建新记录，而是将新举报人加入已有举报的 `reporters` 数组并合并举报原因（去重）。`reportedBy` 保持首位举报人。原举报人收到已合并通知。
@@ -220,17 +221,20 @@ admin → auth → user → posts → discussions → qa → votes → notices
   - `T1 + 已有 T0`：将新 T1 创建为 `status: 'queued'`，标记 `queuedAfter: existingT0.punishmentId`。用户收到「待执行处罚」通知而非完整的处罚通知。T0 过期后由 `getActivePunishment()` 自动激活入队的 T1。
   - `T1（单独）`：正常创建新 T1。
 - 管理员接口：`GET/POST /api/admin/punishments`、详情 `:id`、撤销 `:id/revoke`、申诉处理 `:id/appeal-action`（`approved` 撤销处罚并通知 / `rejected`）。从举报处理处罚时，回填 `report.handledResult='violation'`、`report.punishmentId`，并通知举报人。
+- **举报违规自动删内容**：`POST /api/admin/reports/:id/handle` 中 `handledResult='violation'` 时，`deleteReportedContent()` 根据 `report.type` 自动删除对应内容（post/comment/discussion/discussion_comment/qa_question/qa_answer/whisper），写入 `deleted_items` 归档（Session 10）。
 - 申诉列表接口：`GET /api/admin/appeals`（可按 `status=pending|approved|rejected` 过滤），返回每条申诉并关联处罚信息（级别/原因/状态/限制功能）与用户昵称/UID，供后台「申诉处理」页使用。
 
 **安全中心（前端 `safety.html` + 接口 `/api/user/safety-center`）**
 - 单接口聚合：进行中处罚 `activePunishment`、历史处罚 `history`、我的举报 `myReports`。
+- 信用分概览（第三列）：信用分明细卡片（日志列表）、Credit → 信用分兑换面板（含汇率展示、输入、兑换按钮）、三张说明卡片。
+- **霸凌保护状态**（Session 10）：`GET /api/user/bullying-status` 返回当前用户霸凌举报列表 + `underProtection` 状态。`bully.html` 登录用户可见霸凌状态卡片（保护状态 + 举报记录列表）。`POST /api/admin/bullying/:id/process` 中 `result='bullying'` 时自动设置被举报用户 `bullyingProtection=1`（`db.js` `users` 表列迁移新增）。
 - 页面双 tab：「我的举报」「我的处罚」；处罚卡片可展开看原因/限制功能/时长/证据快照，支持在线提交申诉（`POST /api/user/punishments/:id/appeal`，每处罚仅一次机会 `appealUsed`）。
 - 入口：`index.html` 侧边栏「安全中心」→ 新开 `safety.html`。
 
 **被处罚弹窗（`index.html`）**
 - 页面加载时 `checkPunishment()` 调 `/api/user/safety-center`；若 `activePunishment` 存在，弹出 `punishPopup` 告知限制功能与时长，按钮跳转 `safety.html` 查看详情。
 
-### 3.10 信用分系统（`lib/credibility.js` — 本次新增）
+### 3.10 信用分系统（`lib/credibility.js`）
 
 **信用分（Credibility Score）** 是独立于 Credit 积分的行为评分体系，用于衡量用户在社区中的可信度。初始 90 分，通过同学验证 +10 分。
 
@@ -277,32 +281,80 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - Credit → 信用分兑换面板（含汇率展示、输入、兑换按钮）
 - 三张说明卡片：信用分说明 / 兑换说明 / 失信处罚说明
 
-### 3.11 发帖可见性 / 允许评论 / 敏感词拦截（本次提交新增）
+### 3.11 发帖可见性 / 允许评论 / 敏感词拦截
 
 **帖子可见性（visibility）**：
-- `posts` 表新增 `visibility` 列（值：`'public'` 公开 / `'self_only'` 仅自己可见 / `'whitelist'` 仅指定用户可见 / `'blacklist'` 仅指定用户不可见），默认 `'public'`。
-- `posts` 表新增 `visibleTo` 列（TEXT JSON 数组，白名单用户ID列表）和 `invisibleTo` 列（TEXT JSON 数组，黑名单用户ID列表）。
+- `posts` 表 `visibility` 列（值：`'public'` 公开 / `'self_only'` 仅自己可见 / `'whitelist'` 仅指定用户可见 / `'blacklist'` 仅指定用户不可见），默认 `'public'`。
+- `posts` 表 `visibleTo` 列（TEXT JSON 数组，白名单用户ID列表）和 `invisibleTo` 列（TEXT JSON 数组，黑名单用户ID列表）。
 - 发帖（`POST /api/posts`）接收 `visibility` 参数及 `visibleTo`/`invisibleTo` 数组参数。
-- 三个可见性选项互斥，但发帖者始终可见。
+- 三种非 public 选项互斥，但发帖者始终可见。
 - **讨论区同步的帖子始终为 `public`**（`visibility` 不可为 `self_only`）。
 - `GET /api/posts`：非作者看不到 `self_only` 帖子；非作者且不在 `visibleTo` 中看不到 `whitelist` 帖子；在 `invisibleTo` 中的用户看不到 `blacklist` 帖子（均按 `x-user-token` 过滤）。
 - `GET /api/posts/:id`：非作者访问 `self_only` 帖子返回 `SELF_ONLY`；非作者且不在 `visibleTo` 中访问 `whitelist` 帖子返回 `WHITELIST_BLOCKED`；在 `invisibleTo` 中的用户访问 `blacklist` 帖子返回 `BLACKLIST_BLOCKED`。
 - 帖子可见情况写入数据库后**不可修改**（除非敏感词举报无违规后由后台恢复为 public）。
-- 前端 `index.html` 发帖弹窗新增「更多选项」折叠区（含 `selfOnlyPost` 复选框，`allowComments` 默认勾选）。帖子卡片 `self_only` 显示「👁️ 仅自己可见」标识；`post.html` 顶部固定白色横幅提示「此内容仅自己可见」；`admin.html` 帖子管理表格「可见性」列显示状态。
+- 前端 `index.html` 发帖弹窗「更多选项」折叠区：`selfOnlyPost` 复选框、「仅指定用户可见」（`whitelistPost` + 用户搜索多选组件复用 `/api/users/search`）、「仅指定用户不可见」（`blacklistPost` + 搜索多选）。帖子卡片与详情弹窗显示对应可见性标识；`post.html` 各可见性状态横幅提示（`self-only-banner`、`whitelist-banner`、`blacklist-banner`）；`admin.html` 显示可见性状态。
+- **注意**：`visibility` 和 `allowComments` 必须在 `newPost` 创建时即纳入对象，否则不会写入数据库（Session 13 修复——原代码在首次 `writePosts` 之后才赋值，导致字段从未持久化）。
 
 **是否允许评论（allowComments）**：
-- `posts` 表新增 `allowComments` 列（BOOLEAN，默认 `true`）。
+- `posts` 表 `allowComments` 列（BOOLEAN，默认 `true`）。
 - 发帖时接收 `allowComments` 参数（默认 `true`）。`false` 表示该帖不允许评论。
 - `POST /api/posts/:id/comments`：若 `post.allowComments === false` 返回 `{ok:false, msg:'本帖不允许评论', code:'COMMENTS_DISABLED'}`。
 - 前端：帖子详情弹窗（`index.html`）和帖子详情页（`post.html`）在 `allowComments === false` 时显示「本帖不允许评论」并禁用输入框/按钮；`admin.html` 帖子详情显示「允许评论」状态。
 
 **敏感词拦截新机制（sensitiveForce）**：
 - 发帖检测命中敏感词且 `sensitiveForce=true` 时，帖子 `visibility` 强制设为 `'self_only'`（审核通过前仅自己可见）。
-- 敏感词警告弹窗（`showSensitiveWarning()`，index.html / post.html）文案新增提示：「如果你继续发送，帖子在审核通过前仅你可见」。
+- 敏感词警告弹窗（`showSensitiveWarning()`，index.html / post.html / notice.html）文案新增提示：「如果你继续发送，帖子在审核通过前仅你可见」。
 - 后台处理举报（`POST /api/admin/reports/:id/handle`）的 `no_violation` 分支：若 `report.type` 以 `'sensitive_'` 开头且目标帖子为 `self_only`，则恢复为 `public`（用 `db.readPosts()` / `db.writePosts()`）。
 
 **DB 变更**（`db.js` migrate 自动迁移）：
-- `posts` 表新增列：`visibility`（TEXT DEFAULT 'public'）、`allowComments`（INTEGER DEFAULT 1）
+- `posts` 表新增列：`visibility`（TEXT DEFAULT 'public'）、`allowComments`（INTEGER DEFAULT 1）、`visibleTo`（TEXT DEFAULT '[]'）、`invisibleTo`（TEXT DEFAULT '[]'）
+
+### 3.12 悄悄话（Whisper）私信系统
+
+悄悄话是用户之间的私信功能，区别于帖子的公开评论。
+
+**路由**（`routes/whispers.js`，在 `student-council` 后挂载）：
+| 方法 | 路径 | 权限 | 功能 |
+|------|------|------|------|
+| POST | `/api/whispers` | 用户 | 发送：敏感词+霸凌+处罚检测 → 生成 `WHIS-` ID → 写库 → T1 通知接收方 |
+| GET | `/api/whispers/inbox` | 用户 | 收到的悄悄话列表（未签收优先） |
+| POST | `/api/whispers/:id/sign` | 用户 | 签收（仅接收者可操作）→ T1 通知发送方 |
+
+**核心流程**：
+- 发送前检测 `isFeatureBlocked(userId, 'whisper')`（信用分 < 90 禁止）。
+- 内容经过敏感词 + 霸凌姓名检测。
+- 生成 `WHIS-` 前缀 ID（`lib/uniqueId.js` `VALID_PREFIXES` 增加 `'WHIS'`）。
+- 写库后通过 `broadcastSSE('noticeUpdate')` 通知接收方。
+- 签收后发送方收到签收 T1 通知。
+
+**前端**（`index.html`）：
+- 操作栏「悄悄话」按钮（粉色主题）。
+- 发悄悄话弹窗 `#whisperModalOverlay`：搜索用户（`/api/users/search?q=`）+ 输入内容（50字限制）。采用扁平现代设计（纯白卡片、毛玻璃背景、粉红主题色、搜索圆角 12px、已认证用户绿色 ✅ 徽标、选中用户头像预览、`whisperIn` spring 动画）。
+- 接收弹窗 `#whisperIncomingOverlay`：签收 + 举报入口（`z-index: 10000` 确保不被通知弹窗遮挡）。
+- SSE 集成：`noticeUpdate` 事件触发 `checkIncomingWhispers()`。
+- 举报集成：接收弹窗「举报」→ `POST /api/reports`，`type: 'whisper'`，走统一举报流程。
+
+**每周配额**（Session 15 新增）：
+- 每周免费 2 次（自然周，周一 0:00 重置），超出自动扣 200 Credits。
+- Credit 不足时返回 `INSUFFICIENT_CREDIT`。
+
+**DB**：`whispers` 表（senderId, senderName, receiverId, receiverName, content, notifLevel, notifId, createdAt, deleted, signed, signTime）。
+
+### 3.13 匿名发帖 / 悄悄话配额系统（Session 15）
+
+**匿名发帖配额**（`routes/posts.js`）：
+- 每天免费 2 次匿名发帖（自然日，0:00 重置），统计 `posts` 表 `userId + isAnonymous + time`。
+- count >= 2 时：若请求无 `payWithCredit` 参数 → 返回 `{ok:false, code:'ANON_QUOTA_EXCEEDED', cost:50}`；有 `payWithCredit=true` 且 credit >= 50 则扣除并放行；credit 不足返回 `INSUFFICIENT_CREDIT`。
+- 前端弹窗确认框：2个按钮「返回编辑」「消耗 50 credit 发布」。
+
+**悄悄话配额**（`routes/whispers.js`，见 §3.12）。
+
+**信息图标 + 气泡提示**（`index.html`）：
+- 附图、匿名发布等文字标签改为 SVG info 图标 + 气泡 `.info-tooltip`（opacity + scale 过渡，含三角箭头）。
+- `toggleTooltip(e, id)` 切换气泡；全局 click 关闭。
+
+**更多选项展开收起动画**：
+- `.post-more-options` 改为 `max-height + opacity` 过渡（`.open` class 切换，取代 `display: none/block`）。
 
 ## 4. 数据模型（db.js — SQLite 表）
 
@@ -410,8 +462,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/user/credibility-info` | 用户 | 信用分信息（分数/兑换量/汇率/明细/阈值） |
 | POST | `/api/user/exchange-credibility` | 用户 | credits 兑换信用分（body: `{credits}`） |
 | GET | `/api/user/credibility-logs` | 用户 | 信用分变动日志 |
-
-### 5.3 帖子 / 评论 / 点赞 / 举报（posts.js）
+| POST | `/api/user/check-zhixue-unique` | 用户 | 智学账号唯一性实时校验（Session 17），接收 `zhixueUsername`，返回 `{available: bool}` |
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/posts` | 无 | 帖子列表（支持板块/搜索/排序） |
@@ -451,15 +502,16 @@ admin → auth → user → posts → discussions → qa → votes → notices
 ### 5.6 QA 悬赏问答（qa.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
-| GET | `/api/qa/questions` | 无 | 问题列表 |
-| POST | `/api/qa/questions` | 用户 | 提问（可设 bounty 积分悬赏） |
+| GET | `/api/qa/questions` | 无 | 问题列表（置顶优先） |
+| POST | `/api/qa/questions` | 用户 | 提问（可设 bounty 积分悬赏；支持 `pinned` 参数，置顶额外扣 149 Credits；按周限 3 题免费，超出每题 +100 Credits） |
 | GET | `/api/qa/questions/:id` | 无 | 问题详情 |
 | DELETE | `/api/qa/questions/:id` | 用户/管理员 | 删问题 |
 | POST | `/api/qa/questions/:id/answers` | 用户 | 回答 |
 | DELETE | `/api/qa/answers/:id` | 用户/管理员 | 删回答 |
 | GET | `/api/qa/my-questions` | 用户 | 我的提问 |
-| POST | `/api/qa/questions/:id/accept/:aid` | 用户 | 采纳回答 |
-| GET | `/api/qa/questions/:id/reward` | 用户 | 发放悬赏 |
+| POST | `/api/qa/questions/:id/accept/:aid` | 用户 | 采纳回答并发放全部剩余悬赏（Session 13 新增） |
+| POST | `/api/qa/questions/:id/reward` | 用户 | 手动发放悬赏给多个回答（Session 13 新增） |
+| GET | `/api/qa/quota` | 用户 | 本周提问次数、免费额度、剩余次数、超额费、置顶费（Session 13 新增） |
 | GET/POST | `/api/qa/answers/:aid/like` | 用户 | 答案点赞 |
 | GET | `/api/admin/qa/questions` | 管理员 | 后台问题列表 |
 
@@ -547,7 +599,14 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/reports/:id/ban-user` | 管理员 | 封禁被举报用户 |
 | GET | `/api/admin/pickup/reports` | 管理员 | 拍卖内容举报列表 |
 
-### 5.11 后台管理 — 用户 / 内容管理（admin.js）
+### 5.11 悄悄话（whispers.js，见 §3.12）
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| POST | `/api/whispers` | 用户 | 发送悄悄话（敏感词+霸凌+处罚检测 → 生成 WHIS-ID；每周 2 次免费，超出扣 200 Credits） |
+| GET | `/api/whispers/inbox` | 用户 | 收件箱（未签收优先） |
+| POST | `/api/whispers/:id/sign` | 用户 | 签收（仅接收者）→ T1 通知发送方 |
+
+### 5.13 后台管理 — 用户 / 内容管理（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/users` | 管理员 | 用户列表 |
@@ -566,7 +625,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/stats` | 管理员 | 后台统计 |
 | GET | `/api/admin/whispers` | 管理员 | 私信列表 |
 
-### 5.12 后台管理 — 安全 / 敏感词（admin.js）
+### 5.14 后台管理 — 安全 / 敏感词（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/sensitive-words` | 管理员 | 敏感词列表 |
@@ -582,7 +641,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/bullying-names` | 管理员 | 加名称 |
 | DELETE | `/api/admin/bullying-names/:name` | 管理员 | 删名称 |
 
-### 5.13 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）
+### 5.15 后台管理 — 反馈 / 霸凌 / 认证审核（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/feedbacks` | 管理员 | 反馈列表 |
@@ -602,7 +661,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/credibility-logs` | 管理员 | 信用分日志（可按 `?userId=` 过滤） |
 | POST | `/api/admin/user/:id/credibility` | 管理员 | 修改信用分（body: `{action:'set'|'add'|'deduct', amount, reason}`） |
 
-### 5.14 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）
+### 5.16 后台管理 — 积分卡密 / 报表（admin.js，多数需超级）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/credit/overview` | 超级 | 积分总览 |
@@ -613,7 +672,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/credit-cards/create` | 超级 | 生成单张卡密 |
 | POST | `/api/admin/credit-cards/batch-create` | 超级 | 批量生成卡密 |
 
-### 5.15 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
+### 5.17 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/notice-applications` | 管理员 | 通知发布申请列表 |
@@ -633,7 +692,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/admin/maintenance/test-key/list` | 管理员 | 测试密钥列表 |
 | DELETE | `/api/admin/maintenance/test-key/:key` | 管理员 | 删测试密钥 |
 
-### 5.16 系统 / 通用（system.js + maintenance.js + slider）
+### 5.18 系统 / 通用（system.js + maintenance.js + slider）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/version` | 无 | git 版本号（sha + message） |
@@ -645,6 +704,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/maintenance/info` | 无 | 维护页轮询状态 |
 | POST | `/api/maintenance/verify` | 无 | 测试密钥 + 滑块验证后签发 bypass token |
 | POST | `/api/slider-captcha/grant` | 无 | 滑块验证通过，下发 captcha 会话 token |
+| POST | `/api/page-visit` | 用户(可选) | 全量页面访问记录（Session 16），记录 IP/UA 到 `login_logs`，`type:'page_visit'` |
 
 ---
 
@@ -747,6 +807,23 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - 入口：`index.html` 侧边栏「安全中心」→ `window.open('safety.html')`。
 - 被处罚弹窗：`index.html` 内置 `punishPopup`；页面加载时 `checkPunishment()` 调 `/api/user/safety-center`，若存在 `activePunishment` 则弹出限制说明，「查看详情」跳转 `safety.html`。
 
+### 6.8 验证 / 处罚横幅（index.html — Session 11）
+- **同学验证横幅** `#studentVerifyBanner`：`currentUser.zhixueStatus !== 'approved'` 时显示白色横幅「当前未通过 **同学验证** 功能可能受限」，点击绿色粗体"同学验证"打开 `#bindZhixueModal`（双 Tab：智学认证/手动认证）。叉号关闭后 `localStorage` 记录 `verify_banner_dismiss_{userId}`，同用户永久不再显示。认证成功后自动隐藏。
+- **处罚横幅** `#punishBanner`：`checkPunishment()` 检测到 `activePunishment` 时显示红底黑字「账号违规处罚中 部分功能可能受限」。叉号关闭，会话级不持久化。
+- **z-index 层级**：横幅位于固定顶栏（z-index: 200）下方，CSS 设 `margin-top: 56px` 避免被遮挡。
+
+### 6.9 发帖类型彩色圆点（Session 16）
+- 类型选择按钮由文字+SVG 改为纯色圆形按钮（`width:28px;height:28px;border-radius:50%`），5 种饱和色（黄/粉/绿/橙/蓝），`title` 属性保留文字提示。
+- `.post-tag.active`：`scale(1.2)` + 半透明黑边框 + 阴影。
+- 卡片新增 `@keyframes colorPop` 弹动动画（入场时一次）。
+
+### 6.10 QA 窗口动画优化（Session 13）
+- 新增 CSS 动画：`qaPageIn`（tab 切换上移淡入）、`qaCardIn`（卡片入场）、`qaOverlayOut` + `qaOut`（关闭动画）。
+- `.qa-question-card` hover 上浮 + 阴影过渡；`.qa-answer-card` hover 背景色过渡。
+- `.qa-pinned-badge` 金色渐加入场动画；`.qa-pinned-card` 金色边框 + 浅黄背景。
+- 筛选按钮 `.qa-filter-btn` 和 Tab `.qa-tab` 过渡动画。
+- `closeQAModal()` 带关闭动画（0.25s 后 `display:none`）。
+
 ## 7. 微信小程序端（campus-wall-miniprogram/）
 
 独立微信原生小程序项目，与网页版共享后端 API。
@@ -790,22 +867,85 @@ admin → auth → user → posts → discussions → qa → votes → notices
 
 ---
 
-## 10. 最近修复记录（2026-07-17）
+## 10. 最近修复记录（Bug 修复汇总）
 
-### 修复1：横幅被顶栏挡住
-- **问题**：`index.html` 中的同学验证横幅和处罚横幅被固定顶栏遮挡
-- **修复**：在 `.page-banner` CSS 中增加 `margin-top: 56px`
+> 按功能区域组织，标注修复时间。所有修复已在对应会话中验证通过。
 
-### 修复2：仅自己可见和允许评论选项形同虚设
-- **问题**：发帖时"仅自己可见"和"允许他人评论"两个选项无论开关，帖子都能被查看和评论
-- **根因**：SPA 中的 `openNoteDetail` 函数从本地缓存读取帖子数据，未向服务器验证可见性；`post.html` 的 `loadPost` 未发送用户 token
-- **修复**：
-  - `index.html`：`openNoteDetail` 改为异步函数，从服务器获取帖子详情，若返回 `SELF_ONLY` 则提示并返回
-  - `post.html`：`loadPost` 发送 `x-user-token` 头，后端可正确识别作者身份；新增 `showSelfOnly()` 函数处理仅自己可见的情况
+### 10.1 发帖 / 可见性
 
-### 修复3：帖子仅自己可见状态横幅文案更新
-- **问题**：`post.html` 中仅自己可见横幅文案与需求不符
-- **修复**：将横幅文案从"此内容仅自己可见"更新为"这是一条**仅你可见**的帖子"（"仅你可见"加粗）
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | 横幅被固定顶栏遮挡 | `.page-banner` 增加 `margin-top: 56px` | Session 11 (07-17) |
+| 2 | "仅自己可见"选项无效（SPA 从缓存读数据，未验证服务端） | `openNoteDetail` 改为异步从服务器获取；`post.html` 发 `x-user-token` 头 | 07-17 |
+| 3 | "仅自己可见"横幅文案错误 | 从"此内容仅自己可见"改为"这是一条 **仅你可见** 的帖子" | 07-17 |
+| 4 | `visibility`/`allowComments` 从未写入数据库 | 将赋值移到 `newPost` 创建时，在首次 `writePosts` 前完成 | Session 13 (07-17) |
+| 5 | 发帖窗口颜色不随类型改变 | `selectTag()` 同步设置 `.post-note-card` 背景色；`resetModal()` 重置 | Session 18 (07-19) |
+| 6 | `#` 被特殊字符检测拦截，话题帖子无法发送 | `SPECIAL_CHAR_REG` 移除 `#` | Session 8 (07-15) |
+
+### 10.2 安全中心 / 举报 / 处罚
+
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | safety.html 返回按钮不退出 iframe | `location.href='/'` → `window.top.location.href='/'` | Session 1 (07-12) |
+| 2 | safety.html Token key 不匹配 | `'userToken'` → `'campus_user_token'` | Session 1 |
+| 3 | 举报详情无内容（旧格式无快照） | `showReportDetail()` 补充 `fallbackContent` 降级 | Session 1 |
+| 4 | 处罚限制功能显示为空 | `escHtml` 兼容数组 + `labelMeasures` 映射 | Session 1 |
+| 5 | 申诉提交"网络错误" | SQL `WHERE id = ?` → `WHERE punishmentId = ?` | Session 1 |
+| 6 | 处罚管理页面转圈 | `showPage()` tab 切换添加 `'punishments'` | Session 1 |
+| 7 | 举报处理无申诉查看入口 | 增加「查看关联处罚（含申诉）」按钮 | Session 1 |
+| 8 | 举报处理"网络错误"（reportId 为空） | `r.reportId || r.id || ''` fallback | Session 1 |
+| 9 | 举报弹窗举报人/被举报人 UID 为空 | `reporterInfo` 富化（查用户信息） | Session 1 |
+| 10 | 旧格式举报弹窗无内容 | 降级展示 `report.targetContent`/`postContent`/`commentContent` | Session 1 |
+| 11 | 敏感词检测类型无法查被举报人 | `getReportedContent()` 归一化 `sensitive_` 前缀 | Session 1 |
+| 12 | 举报列表被举报内容/举报人/ID 为空 | 增加 `targetContent` 字段 + 运行时降级捞取 | Session 1 |
+| 13 | `reportedUserId` 列缺失 | `db.js` 列迁移增加 | Session 1 |
+| 14 | 举报列表 reporter 不显示 UID | 改用 `reporterInfo.nickname + (username, UID:xxx)` 格式 | Session 1 |
+
+### 10.3 注册 / 登录
+
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | 注册协议同意可绕过 | `doUserRegister()` 增加 `agreementChecked` 校验 | Session 1 |
+| 2 | 昵称空格/重复检测缺失 | 昵称空格报错；服务端 `readUsers` 查重（case-insensitive） | Session 1 |
+| 3 | UID 科学记数法（`1.23e+15`） | `db.js` `tryParse()` 16 位以上纯数字不转 Number；`migrate()` 用 `toFixed(0)` 修复已有数据 | Session 1 |
+| 4 | 智学网账号密码登录失败（原始密码校验错误） | 解密 `zhixuePassword` 后字符串比较（误用 `verifyPassword`） | Session 7 (07-14) |
+| 5 | 管理员删除 / 修改时密码字段被特殊字符过滤 | `password`/`zhixuePassword`/`oldPwd`/`newPwd` 加入 `inputSanitize` 白名单 | Session 7 |
+| 6 | 智学认证审核清空密码，后续无法登录 | 删除 `zhixuePassword = null`，保留加密密码 | Session 7 |
+| 7 | 管理页用户详情缺失智学信息 | 追加智学账号/密码显示 | Session 7 |
+| 8 | 搜索无法匹配同学认证姓名（比对密文） | 解密 `certRealName` 后比较；补充 `zhixueManualName` 搜索 | Session 7 |
+| 9 | `zhixueUsername` 类型不匹配（DB 存 Number） | `String()` 统一转字符串比较 | Session 7 |
+| 10 | `zhixuePassword` 为 null 时登录报错 | 自动加密存储并放行登录 | Session 7 |
+
+### 10.4 霸凌举报
+
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | 涉事用户搜索结果在添加后重新弹出 | 添加按钮 click 中 `clearTimeout(_involvedSearchTimer)` | Session 8 (07-15) |
+| 2 | 涉事搜索下拉异步重新展开 | fetch 回调检查输入框是否已被清空 | Session 9 (07-15) |
+| 3 | 内容 ID 确认弹窗读取输入框过期值 | 确认按钮传递捕获值 `val`，避免读取被修改的 `postIdInput.value` | Session 8 |
+| 4 | 内容 ID 确认弹窗卡在"添加中…" | `try/finally` 确保弹窗关闭；`saveDraft()` 包 `try/catch` | Session 9 |
+| 5 | 内容 ID 确认弹窗反斜杠破坏 onclick | `val` HTML 属性转义增加 `replace(/\\/g, '\\\\')` | Session 9 |
+| 6 | 紧急模式草稿恢复后无法提交认证 | 删除对 self 无 victimRealName 的草稿丢弃逻辑；设置 `submitBtn.dataset.mode = 'emergency'` | Session 8 |
+| 7 | 紧急模式提交时不弹出同学验证窗口 | `applyVictimNameField()` 紧急模式不强制清空输入框 | Session 9 |
+| 8 | 霸凌处理窗口涉事用户/内容始终显示 0 | `db.js` 新增 `involvedUsers`/`contentIds` 列迁移 + CREATE TABLE 定义 | Session 8 |
+| 9 | 霸凌详情涉事用户/内容为 0（字符串 JSON 兼容） | `GET /api/admin/bullying/:id` 增加字符串 JSON 兼容解析 + 前端降级显示 | Session 9 |
+
+### 10.5 弹窗 / 蒙层层级
+
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | 敏感词/霸凌警告弹窗被发帖弹窗挡住（z-index 999 vs 10000） | 三处文件 `showSensitiveWarning`/`showBullyingWarning` z-index: 999 → 10001 | Session 12 (07-17) |
+| 2 | 密语接收弹窗被通知弹窗覆盖 | `#whisperIncomingOverlay` 内联 `z-index: 10000` | 07-14 |
+| 3 | 处罚弹窗无过渡动画 | `display:none/flex` + `@keyframes` → `visibility/opacity transition` + `.open` class | Session 1 |
+| 4 | 敏感词/霸凌弹窗无过渡动画 | 内层 div 添加 `dialog-anim` 类（动画：缩放+上移+淡入） | Session 1 |
+| 5 | 返回编辑后再次发送报错 | 新增 `_returnToEdit` 标记，`submitNote()` 跳过误报 | Session 12 (07-17) |
+
+### 10.6 样式 / 布局
+
+| # | 问题 | 修复 | 会话 |
+|---|------|------|------|
+| 1 | user.html 帖子预览不协调（标题、计数） | `.posts-header` 改为 `align-items: baseline; gap: 12px` | Session 18 (07-19) |
+| 2 | 申请认证窗口无法打开 (user.html) | `#applyCertBtn` 增加 `onclick="openCertChoiceModal()"` | Session 18 |
 
 ---
 
@@ -874,7 +1014,7 @@ server.js
 
 ---
 
-## 13. 一句话速记（给 AI Agent）
+### 13.1 一句话速记（给 AI Agent）
 
 > 这是一个 **Node+Express+SQLite** 的原生前端校园墙。**所有路由全挂在 `app` 上**（无 router 子模块），**`admin.js` 必须在 `auth.js` 前挂载**，**请求体特殊字符被全局过滤但白名单字段保留**，**三类 token 头是 `x-user-token`/`x-admin-token`/`x-sc-token`**，**数据走 `db.js` 的 read/write 接口且多为整表重写**，**内存 Map 重启即丢**，**实时用 SSE `broadcastSSE`**。改代码前先用 codegraph 探索相关符号。
 
@@ -952,6 +1092,7 @@ server.js
 ## 15. 会话变更日志
 
 > 本节记录 AI Agent 在每次开发会话中对项目所做的全部改动，供后续维护者追溯。
+> 每项改动的详细说明已归入对应的功能章节（§3.9-§3.13、§5-§6、§10 等），本节仅保留原始会话记录便于时间线回溯。
 
 ### 会话 1 — 2026-07-12
 
@@ -1161,7 +1302,76 @@ server.js
 | 修改 `checkPunishment()` | `index.html` | 8797 | 在弹出 `punishPopup` 的同时显示 `#punishBanner` |
 | 新增 `closePunishBanner()` | `index.html` | 4978-4981 | 关闭处罚横幅 |
 
-## 图谱参考
+### 会话 5 — 2026-07-14 · Credit 页面重设计 + 首页 Credit 按钮
+- `credit.html` 推翻旧砖墙背景，采用浅灰/白色卡片新设计语言。
+- `index.html` 操作栏新增 Credits 按钮（金黄色，显示余额），点击打开 `credit.html`。
+- 详情见 §5.14（积分卡密 API）及 credit.html 前端。
+
+### 会话 6 — 2026-07-14 · 悄悄话重设计 + 人机验证优化 + 登录刷新
+- 悄悄话发送窗口扁平现代设计重做（纯白卡片、毛玻璃背景、粉红主题色）。
+- 登录/注册/智学登录后硬刷新 `window.top.location.reload(true)`。
+- 人机验证通过一次免二次验证（`_humanVerified` + `sessionStorage`）。
+- 用户搜索 API 增加 `zhixueStatus`/`certRealName` 字段。
+- 详情见 §3.12（悄悄话）、§6.3（前端调用约定）。
+
+### 会话 7 — 2026-07-14 · 修复智学登录认证 + 搜索匹配认证姓名
+- 修复智学密码校验（误用 `verifyPassword`）、搜索解密 `certRealName` 后比较、密码字段加入 `inputSanitize` 白名单等。
+- 详情见 §10.3（注册/登录修复清单）。
+
+### 会话 10 — 2026-07-16 · 举报自动删内容 + 显示唯一ID + 霸凌保护
+- 举报违规后 `deleteReportedContent()` 自动删除内容并归档。
+- 前端各内容卡片显示唯一 ID（DISC-/DICM-/QAQU-/QAAN-/AURQ-）。
+- 霸凌保护状态 `bullyingProtection` + `/api/user/bullying-status`。
+- 详情见 §3.9（处罚/统一举报）、§3.12（悄悄话 DB）。
+
+### 会话 12 — 2026-07-17 · 敏感词/霸凌弹窗 z-index 修复 + 返回编辑流程修复
+- 警告弹窗 `z-index: 999` → `10001` 避免被发帖弹窗遮挡。
+- 新增 `_returnToEdit` 标记，避免返回编辑后误报发帖失败。
+- 详情见 §10.5（弹窗层级修复清单）。
+
+### 会话 13 — 2026-07-17 · 修复 visibility / allowComments 未持久化
+- 将字段赋值移到 `newPost` 创建时，确保在首次 `writePosts` 前持久化。
+- 详情见 §3.11（发帖可见性/允许评论）。
+
+### 会话 14 — 2026-07-17 · 新增 whitelist/blacklist 可见性选项
+- posts 表增加 `visibleTo`/`invisibleTo` 列；前端新增多选用户搜索组件。
+- 详情见 §3.11。
+
+### 会话 14b — 2026-07-17 · 发帖窗口重设计为 Bottom Sheet
+- 发帖弹窗从居中黄色便利贴改为从下往上滑入的白色 Bottom Sheet。
+- 详情见 §6.7（发帖弹窗设计）。
+
+### 会话 15 — 2026-07-18 · 匿名发帖/悄悄话配额 + 信息气泡 + 更多选项动画
+- 匿名发帖每天免费 2 次，超出需 50 Credits。
+- 悄悄话每周免费 2 次，超出自动扣 200 Credits。
+- SVG info 图标 + 气泡提示替换文字标签。
+- 更多选项 `max-height` + `opacity` 过渡动画。
+- 详情见 §3.13（配额系统）。
+
+### 会话 13b — 2026-07-18 · QA 系统优化（4 项任务）
+- QA 窗口新增入场/出场动画；新增 `accept`/`reward`/`quota` 路由。
+- 用户提问周限额（3 题免费，超出 +100 Credits）。
+- 置顶问题选项（+149 Credits），金色置顶徽章。
+- 详情见 §5.6（QA API）、§6.10（QA 窗口动画）。
+
+### 会话 16 — 2026-07-18 · 发帖类型改为彩色圆点 + 全量访问记录
+- 类型选择按钮改为纯色 28px 圆形按钮（5 种饱和色），`colorPop` 弹动动画。
+- `POST /api/page-visit` 全量记录页面访问。
+- 详情见 §6.9（彩色圆点）、§5.18（系统 API）。
+
+### 会话 17 — 2026-07-19 · 智学认证前端唯一性校验 + 认证展示改造 + 滑块验证码
+- `POST /api/user/check-zhixue-unique` 实时唯一性校验。
+- `user.html` 新增 `.cert-section` 认证展示区（同学/超管双行 SVG 勋章）。
+- 滑块验证码集成到同学认证/超管认证弹窗。
+- 详情见 §5.2（用户 API）。
+
+### 会话 18 — 2026-07-19 · 3 项 Bug 修复
+- 发帖窗口颜色不随类型改变 → `selectTag()` 同步设置背景色。
+- 帖子预览不协调 → `.posts-header` 布局调整。
+- 申请认证窗口无法打开 → 添加 `onclick`。
+- 详情见 §10.6（样式/布局修复）。
+
+## 16. 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。
 
@@ -1199,492 +1409,3 @@ server.js
 答案：`broadcastSSE()` 是系统唯一的实时推送中枢（`lib/sse.js`），被所有业务模块（帖子、通知、投票、QA、讨论区、捡漏拍卖等）依赖，是代码库中耦合度最高的函数。
 
 ---
-
-## 9. 变更记录（Changelog）
-
-> 本节记录本项目的非正式改动，便于后续 Agent 快速对齐。
-
-### 2026-07-17 · 敏感词/霸凌弹窗 z-index 修复 + 返回编辑流程修复
-
-**问题**：敏感词检测和霸凌检测弹窗在弹出时被发帖窗口挡住（z-index: 999 vs modal z-index: 10000），且点击「返回编辑」后再次发送总是报错。
-
-**修复**：
-- `index.html`、`post.html`、`notice.html` 三处 `showSensitiveWarning` / `showBullyingWarning` 的 `z-index: 999` → `10001`
-- `index.html` 新增 `_returnToEdit` 标记，避免「返回编辑」后误报「发帖失败」
-
-### 2026-07-14 · 密语接收弹窗层级修复 + 积分入口与积分页重做
-
-**Bug 修复：`#whisperIncomingOverlay` 被通知弹窗覆盖**
-- 现象：收到密语（whisper）时，接收弹窗有时被「校园通知」弹窗（`notifOverlay`）挡住，用户看不到。
-- 根因：`index.html` 中 `#whisperIncomingOverlay` 没有显式 `z-index`，继承自 `.modal-overlay` 的 `999`；而 `notifOverlay` / `announcementOverlay` 用 `z-index:1000`。并且 `checkNotifBadge()` 在任意 `noticeUpdate` SSE 事件（密语到达也会触发）后，若用户有 T0 通知会自动弹出 `notifOverlay`，恰好盖住密语弹窗。
-- 修复：`index.html` 的 `#whisperIncomingOverlay` 增加内联 `z-index:10000`（高于所有其它弹窗）。已用 Playwright 验证：用户存在 T0 通知且同时收到密语时，密语弹窗正确置顶显示。
-
-**积分（Credit）入口新增**
-- `index.html`：左侧导航新增「我的积分」项（`<li id="sideNavCredit">`），紧接「安全中心」之后；在登录态刷新函数（`login-update`）中同步写入积分数值。顶部 `#topUserCredit` 原本已存在。
-- `user.html`：个人主页 `profile-actions` 新增「我的积分」按钮（`#openCreditBtn`，`.btn-credit` 样式），点击跳转 `credit.html`。`renderUser` 在查看**本人**主页时把 `#userCreditInline` 设为真实积分（来自 `/api/user/me`），他人主页显示公开资料中的积分（公开接口 `/api/users/:id` 不返回 credit，故为 0）。
-
-**`credit.html` 视觉重做（最小化 / 现代风）**
-- 背景：暖色砖墙（`radial-gradient` + `repeating-linear-gradient`）+ 半透明卡片，契合项目整体暖色调。
-- 交互：卡片进场 `rise-in` 动画（错落 `nth-child` 延迟）；余额 `count-up`（`animateCount`）；兑换结果「已兑换 ✅」按钮态 + 微动效。
-- 逻辑保持：保留全部既有 JS —— `loadCredit`、`renderCredit`、`animateCount`、`doRedeem`、`luhnModN` 卡密校验、`showResult`/`clearResult`，以及 `/api/user/me`、`/api/user/credit-logs`、`/api/user/redeem-credit` 调用。
-- CTA：兑换引导按钮指向 `https://www.kufaka.com/shop/2XLA5BYC/2niwrg`。
-
-**图谱更新提示**：本次改动涉及 `index.html` / `user.html` / `credit.html` 三处前端文件，建议在提交后运行 `graphify . --update`（或 `graphify . --code-only`）刷新 `graphify-out/`。
-
-### 会话 5 — 2026-07-14 · Credit 页面重设计 + 首页 Credit 按钮
-
-**Credit 页面重设计 `credit.html`**
-- 推翻旧砖墙背景设计，采用新设计语言：浅灰背景 `#F6F5F3`、白色表面卡片、8px 圆角、`Noto Sans SC` 字体，与 `user.html` 风格一致。
-- 保持全部既有 JS 功能：`loadCredit`、`renderCredit`、`animateCount`（数值滚动动画）、`doRedeem`（卡密兑换）、`luhnModN` 前端校验。
-- 布局：sticky 顶栏（品牌 + 返回按钮）→ Hero 余额卡片（渐变光晕、圆形图标、大号 tabular 数字、CTA 按钮）→ 兑换卡密卡片 → 流水记录卡片 → 底部说明区域。
-- 响应式：`max-width: 640px` 内容区，移动端适配 padding/字号。
-
-**首页 Credit 按钮 `index.html`**
-- `.action-btns` 中 hamburger 按钮后新增 Credits 按钮：金黄色 `var(--brand-gold)` 背景，显示积分余额，点击新窗打开 `credit.html`。
-- `updateUserBar()` 中同步刷新 `#actionBarCredit`，覆盖登录态切换、签到后刷新等场景。
-
-### 会话 6 — 2026-07-14 · 悄悄话重设计 + 人机验证优化 + 登录刷新
-
-**Task 1：悄悄话发送窗口重设计**
-- 推翻旧暖色胶带风格，采用全新扁平现代化设计：
-  - 纯白卡片圆角 `16px`、毛玻璃模糊背景（`.whisper-modal-overlay` `backdrop-filter: blur(4px)`）
-  - 粉红主题色（`#e91e63`）点缀输入框 focus 边框和发送按钮
-  - 搜索输入框圆角 `12px`，focus 时边框变色过渡
-  - 搜索结果显示四类分类标题（匹配账号/匹配昵称/匹配UID/匹配姓名），每项带错落 `stagger` 动画（每项延迟 30ms）
-  - 已通过智学认证的用户显示绿色 ✅ 已认证徽标
-  - 选中用户区域圆角 `12px`、浅粉背景、头像预览
-  - 弹窗打开 `whisperIn` 动画（`scale(0.92) → scale(1)` + `translateY(16px) → 0`，`cubic-bezier(0.16,1,0.3,1)`）
-  - 发送按钮 hover 上移 + 阴影；active 回弹
-- 删除旧的 `.tape` 胶带装饰、`fadeSlideIn` 动画
-- 影响文件：`index.html`（HTML + CSS + JS）
-
-**Task 2：登录后硬刷新**
-- `doUserLogin()` / `doUserRegister()` / `doZhixueLogin()` 三个成功分支全部改为 `window.top.location.reload(true)`，实现 Ctrl+Shift+R 级别的完全硬刷新（清缓存重载全部资源）
-- 移除旧的 toast 提示、信任浏览器弹窗、公告检查等页面内操作（刷新后由新页面自动处理）
-- 影响文件：`index.html`
-
-**Task 3：人机验证通过一次免二次验证**
-- 引入 `_humanVerified` 全局标志 + `sessionStorage` 持久化（页面刷新后仍保持）
-- 首次滑块验证成功后 `_humanVerified = true`，写入 `sessionStorage`
-- `showPostCaptchaModal()` 检测 `_humanVerified = true` 时直接调 grant 拿 token → 提交，跳过滑块 UI
-- Bot-testing 模式同步设置 `_humanVerified`
-- 影响文件：`index.html`
-
-**API 增强**：用户搜索 `/api/users/search` 返回结果增加 `zhixueStatus` 和 `certRealName` 字段，供前端展示认证状态。
-- 影响文件：`routes/user.js`
-
-### 会话 10 — 2026-07-16 · 举报自动删内容 + 显示唯一ID + 霸凌保护状态
-
-#### Task 1：举报确认违规后自动删除内容
-
-- `routes/admin.js`：`POST /api/admin/reports/:id/handle` 中 `handledResult='violation'` 时，根据 `report.type` 自动删除对应内容（post/comment/discussion/discussion_comment/qa_question/qa_answer/whisper），写入 `deleted_items` 归档。新增 `deleteReportedContent()` 函数统一处理。
-
-#### Task 2：任何内容旁边显示唯一ID
-
-- `index.html` 六处渲染函数增加 ID 显示：
-  - `renderDiscussionTopics()`：话题卡片底部显示 `DISC-xxx`
-  - `renderDiscussionComments()`：评论头部显示 `DICM-xxx`
-  - `renderQACard()`：问题列表显示 `QAQU-xxx`
-  - `renderQADetail()`：问题详情显示 `QAQU-xxx`
-  - `renderQAAnswer()`：回答显示 `QAAN-xxx`
-  - `renderPickupTodayContent()`：拍卖内容显示 `AURQ-xxx`
-  - `loadPickupScroll()`：滚动栏显示拍卖 `bidId`
-
-#### Task 3：霸凌报告状态卡片 + 霸凌保护
-
-- `db.js`：`users` 表列迁移新增 `bullyingProtection` 列
-- `routes/admin.js`：`POST /api/admin/bullying/:id/process` 中 `result='bullying'` 时自动设置举报用户 `bullyingProtection=1`
-- `routes/system.js`：新增 `GET /api/user/bullying-status`，返回当前用户的霸凌举报列表 + `underProtection` 状态
-- `bully.html`：登录用户可见霸凌状态卡片（保护状态 + 举报记录列表）
-
-### 会话 7 — 2026-07-14 · 修复智学登录认证 + 搜索匹配认证姓名
-
-**Bug 1：智学网账号密码登录失败 & 管理页用户详情缺失智学信息**
-
-| 修复点 | 文件 | 改动 |
-|--------|------|------|
-| 1a 登录密码校验 | `routes/user.js:272` | 解密 `user.zhixuePassword` 后与用户输入的智学密码进行字符串比较（原代码误用 `verifyPassword` 对 campus-wall 的 PBKDF2 哈希做校验） |
-| 1b 审核清空密码 | `routes/admin.js:700` | 删除 `zhixuePassword = null`，保留加密的智学密码供后续登录使用 |
-| 1c 管理详情弹窗 | `admin.html:4522-4526` | 在「同学认证信息」区块追加智学账号/密码显示（仅 `zhixueCertType === 'zhixue'` 时渲染） |
-
-**Bug 2：搜索无法匹配同学认证姓名**
-- `routes/user.js:1010-1014`：解密 `certRealName` 后再与搜索词比较（原代码对密文做 includes 永不相符）；同时补充 `zhixueManualName` 搜索，覆盖手动认证场景。
-
-**附加修复**
-- `routes/user.js:262`：`zhixueUsername` 在 DB 中以 Number 存储，登录时用 `String()` 统一转字符串再比较，修复类型不匹配导致用户找不到
-- `routes/user.js:273-282`：当 `zhixuePassword` 为 null（旧版代码审核清空导致）时，将用户输入的密码加密存储并放行登录，实现自动恢复
-- `lib/middleware.js:123,139-145`：将 `password` / `zhixuePassword` / `oldPwd` / `newPwd` 等密码字段加入 `inputSanitize` 白名单，防止特殊字符被静默清除
-
-### 会话 8 — 2026-07-17 · post.html 帖子详情页重设计
-
-**设计目标**：推翻原有 post.html 设计，保留便利贴卡片核心视觉，大幅提升现代感、精致度与交互体验。
-
-**设计定位**：Reading this as: 校园社区帖子详情页 for 中学生用户, with a warm/playful/refined language, leaning toward native CSS + 便利贴隐喻 + spring 动效。
-
-** Dial 设定**：`DESIGN_VARIANCE: 7 / MOTION_INTENSITY: 6 / VISUAL_DENSITY: 4`
-
-| 模块 | 原设计 | 新设计 |
-|------|--------|--------|
-| 背景 | 纯棕色 + 网格线 | 增加 radial-gradient 光晕 + 更细腻的网格，模拟真实木板质感 |
-| 顶部导航 | 粗糙半透明棕色 | 深色毛玻璃导航 + z-index 品牌 logo + 圆角返回按钮 |
-| 便利贴卡片 | 矩形圆角2px + 顶部胶带 | 更精致的阴影层次（4层）+ 胶带增加高光条纹 + 微旋转(-0.3deg) |
-| 类型标签 | 方形标签 | 胶囊圆角标签 + SVG 图标 |
-| 正文字号 | 26px | 28px + 行高1.8优化 |
-| 图片展示 | 固定120px方形容器 | 响应式_square_布局 + hover放大动效 + 独立大图预览 |
-| 底部信息 | 简单文字 | 头像组件 + 认证徽章（超管/管理员/已认证）+ 时间 |
-| 点赞按钮 | 方形 | 胶囊按钮 + 心形SVG动画 + 弹性缩放反馈 |
-| 评论输入 | 分离式输入框 | 融合式输入行 + focus时边框高亮 |
-| 评论项 | 白底卡片 | 毛玻璃卡片 + 悬停上浮 + 交错入场动画 |
-| 菜单 | 简单下拉 | 圆角菜单 + 弹性入场动画 |
-| Toast | 简单圆角矩形 | 胶囊 + 阴影 + 弹性入场 |
-| 举报弹窗 | 基础弹窗 | 20px大圆角 + 阴影层次 + 弹性动画 |
-| 响应式 | 基础适配 | 600px断点 + 导航按钮隐藏文字 + 评论输入优化 |
-| 动效 | 线性过渡 | 全局 cubic-bezier spring + 减少动画偏好兼容 |
-
-**新增 CSS 变量**：完整的 `--note-*`、`--accent-*`、`--text-*`、`--surface` 设计 token 系统
-
-**新增组件**：
-- `.pin-dot` / `.pin-line` — 评论区顶部装饰分隔
-- `.comment-count-badge` — 评论数量胶囊徽章
-- `.comment-disabled-notice` — 评论禁用提示卡片
-- `.image-overlay` — 全屏图片预览（替代内联样式）
-- `.self-only-banner` — 仅自己可见横幅（CSS class + 动画）
-
-**移除**：所有内联 `style=""` 样式 → 全部迁移到 CSS class；废弃 SVG emoji 替换为组件化 SVG icon
-**保留**：所有业务逻辑（API 调用、举报、删除、点赞、评论、敏感词/霸凌检测）、`pages/post.html` SPA 片段不变
-
-### 会话 12 — 2026-07-17 — 敏感词/霸凌弹窗 z-index 修复 + 返回编辑流程修复
-
-#### Bug 1：警告弹窗被发帖弹窗遮挡
-
-- **根因**：`showSensitiveWarning()` / `showBullyingWarning()` 创建的覆盖层 `z-index: 999`（三处文件：index.html、post.html、notice.html），而发帖弹窗 `.modal-overlay` 的 `z-index: 10000`，导致警告弹窗永远在发帖框后面。
-- **修复**：三个文件中所有警告弹窗的 `z-index` 从 `999` 改为 `10001`。
-
-| 文件 | 行 | 说明 |
-|------|-----|------|
-| `index.html` | 6295, 6326 | `showSensitiveWarning` / `showBullyingWarning` z-index 修正 |
-| `post.html` | 1068, 1090 | 同上 |
-| `notice.html` | 2040, 2055 | 同上 |
-
-#### Bug 2：返回编辑再发送失败
-
-- **根因**：由于 Bug 1 弹窗被遮挡，用户无法正常操作弹窗按钮。同时，用户点击「返回编辑」后 `createPost()` 返回 `null`，`submitNote()` 误显示「发帖失败，请检查服务器」。
-- **修复**：
-  - 新增 `_returnToEdit` 标记，在「返回编辑」回调中设置为 `true`
-  - `submitNote()` 检测此标记，跳过「发帖失败」误报
-
-| 改动 | 文件 | 行 | 说明 |
-|------|------|-----|------|
-| 新增 `_returnToEdit` 全局变量 | `index.html` | 5017 | 标记用户从警告弹窗返回编辑 |
-| 霸凌返回编辑设标记 | `index.html` | 5076 | `_returnToEdit = true` |
-| 敏感词返回编辑设标记 | `index.html` | 5090 | `_returnToEdit = true` |
-| submitNote 跳过误报 | `index.html` | 6251-6253 | `else if (_returnToEdit)` 分支 |
-
-#### Todo（不提交）
-
-`todo.md` 已写入测试清单（不提交到 git）。
-
-### 会话 14 — 2026-07-17 — 新增 whitelist/blacklist 可见性选项
-
-#### 后端
-| 文件 | 改动 |
-|------|------|
-| `db.js` | posts 表新增 `visibleTo`(TEXT DEFAULT '[]') 和 `invisibleTo`(TEXT DEFAULT '[]') 列迁移 |
-| `routes/posts.js` | POST 创建帖子支持 `visibleTo`/`invisibleTo` 参数；GET 列表添加 `whitelist`/`blacklist` 过滤；GET 详情添加 `WHITELIST_BLOCKED`/`BLACKLIST_BLOCKED` 拦截 |
-
-#### 前端
-| 文件 | 改动 |
-|------|------|
-| `index.html` | 发帖「更多选项」新增「仅指定用户可见」「仅指定用户不可见」复选框 + 用户搜索多选组件（复用 `/api/users/search`）；互斥逻辑；卡片/详情弹窗显示新可见性标识 |
-| `post.html` | 渲染函数新增 `whitelist`/`blacklist` 横幅提示；loadPost 新增 `WHITELIST_BLOCKED`/`BLACKLIST_BLOCKED` 错误处理 |
-
-#### 文档
-| 文件 | 改动 |
-|------|------|
-| `docs_for_agent.md` | §3.11 更新 visibility 取值和新增列说明 |
-
-### 会话 13 — 2026-07-17 — 修复 visibility 和 allowComments 未持久化
-
-#### 根因分析
-
-`routes/posts.js` 创建帖子的 `POST /api/posts` 中，`visibility` 和 `allowComments` 属性在线 284-301 创建 `newPost` 对象时**未包含**，而是在 **首次 `writePosts(posts)`（line 304）之后**的 line 334-340 才赋值到内存对象。由于此后没有第二次 `writePosts(posts)`，这两个字段**从未写入数据库**。
-
-#### 影响
-
-- `visibility` 始终为 `undefined`（数据库无此列值 → `NULL`），导致 **`GET /api/posts` 列表不过滤 `self_only` 帖子**、**`GET /api/posts/:id` 不拦截非作者查看**
-- `allowComments` 始终为 `undefined`，导致 **`POST /api/posts/:id/comments` 的 `allowComments===false` 检查永不触发**、前端始终显示评论输入框
-
-#### 修复
-
-| 文件 | 改动 |
-|------|------|
-| `routes/posts.js` | 将 visibility/allowComments 计算移到 `newPost` 创建之前，把 `finalVisibility` 和 `finalAllowComments` 直接纳入 `newPost` 对象，在第一个 `writePosts(posts)` 时即持久化。移除后续重复赋值。
-
-### 会话 14 — 2026-07-17 — 发帖窗口重设计为 Bottom Sheet
-
-#### 背景
-原发帖弹窗为暖黄色便利贴（`.modal-note`），居中弹出。需求为：
-- 改成白色扁平设计
-- 从下往上滑入（Bottom Sheet），高度约占屏幕 2/3
-- 便利贴卡片仅在文字输入框区域保留
-- 类型标签、图片上传、选项等放在便利贴外部的白色区域
-- 所有图标使用 SVG，无 emoji
-- 保留所有原有功能
-- 敏感词/霸凌弹窗始终在发帖弹窗之上
-
-#### 设计
-
-| 模块 | 原设计 | 新设计 |
-|------|--------|--------|
-| 触发方式 | 居中弹出（`.modal-overlay` 居中） | 底部对齐（`#modalOverlay { align-items: flex-end }`） |
-| 容器 | `.modal-note`（黄色便利贴，圆角 4px） | `.post-sheet`（白色面板，圆角 20px 顶部，宽度 100% max 480px） |
-| 入场动画 | `noteAppear`（缩放+上移） | `@keyframes sheetUp`（`translateY(100%) → 0`，spring easing 0.4s） |
-| 高度 | `min-height: 340px` | `max-height: 75vh` |
-| 便利贴范围 | 整个弹窗 | 仅 textarea 区域（`.post-note-card`，`max-width: 92%`，居中） |
-| 类型标签 | 便利贴内 | `.post-tags`（便利贴外） |
-| 图片上传 | 便利贴内 | `.post-image-section`（便利贴外） |
-| 匿名/更多选项 | 便利贴内 | `.post-option-row` + `.post-more-options`（便利贴外） |
-| 底部操作 | `.modal-actions` 便利贴内 | `.post-sheet-footer` 固定底部（白底） |
-| z-index | 10000 | 10000（不变，警告弹窗 10001 仍在上方） |
-| 减弱动画 | 未处理 | `@media (prefers-reduced-motion: reduce)` 禁用动画 |
-
-#### 关键 CSS 类
-
-| 类名 | 作用 |
-|------|------|
-| `.post-sheet` | Bottom Sheet 白色容器 |
-| `.post-sheet-handle` | 顶部 40×4px 灰色把手 |
-| `.post-sheet-header` | 标题 + 关闭按钮区 |
-| `.post-sheet-body` | 内容滚动区（`overflow-y: auto`，`flex: 1`） |
-| `.post-sheet-footer` | 底部固定操作栏 |
-| `.post-note-card` | 便利贴卡片（仅包裹 textarea） |
-| `.post-tags` / `.post-tag` | 类型标签（5 种配色：日常/表白/树洞/失物招领/活动） |
-| `.post-image-section` / `.post-image-list` / `.post-image-item` / `.post-image-add` / `.post-image-remove` | 图片上传组件 |
-| `.post-option-row` | 复选框行（匿名/仅自己可见/允许评论） |
-| `.post-more-toggle` / `.post-more-options` | 更多选项折叠区 |
-| `.post-btn-cancel` / `.post-btn-submit` | 底部按钮 |
-
-#### JS 函数调整
-
-| 函数 | 改动 |
-|------|------|
-| `selectTag(btn)` | 选择器 `.modal-tags`/`.modal-tag` → `.post-tags`/`.post-tag` |
-| `renderPostImages()` | 移除内联样式，改为 `.post-image-item`/`.post-image-add`/`.post-image-remove` |
-| `submitNote()` / `createPost()` / `addPostImage()` / `removePostImage()` / `togglePostOptions()` / `openModal()` / `closeModal()` | **未改动**（元素 ID 全部保留） |
-
-#### 改动文件
-
-| 文件 | 改动 |
-|------|------|
-| `index.html` | 新增 `.post-sheet` 等 16 个 CSS 类（约 280 行），修改 `#modalOverlay` 改为底部对齐，替换 `#modalOverlay` 内部 HTML 为新结构，更新 `selectTag()` 和 `renderPostImages()` 函数 |
-
-#### 后端 / 数据库
-未变动。
-
-#### 图谱
-本次仅修改前端 CSS/HTML 与少量 JS 选择器，未触动后端路由或数据层；图谱（`graphify-out/`）无需重建。
-
-#### 测试
-`todo.md`（不提交到 git）已写入完整测试清单（A 视觉/B 功能/C 安全/D 响应式/E 层级/F 性能/G 回归 7 大类共 70+ 项）。
-
----
-
-### 会话 15 — 2026-07-18 — 匿名发帖/悄悄话配额 + 发帖窗口信息图标+气泡 + 更多选项动画
-
-#### Task 1：匿名发帖每天限量2次，超出需50credit
-
-**后端**（`routes/posts.js`）：
-- `POST /api/posts` 新增匿名发帖配额检测（自然日，0:00 重置）
-- 从 `posts` 表统计当日已发匿名帖数（`userId + isAnonymous + time`）
-- count >= 2 时：
-  - 若请求无 `payWithCredit` 参数 → 返回 `{ok:false, code:'ANON_QUOTA_EXCEEDED', cost:50}`
-  - 若请求有 `payWithCredit=true` → 检查 credit >= 50 → 扣除 → 写 `credit_logs` → 放行
-  - credit 不足 → 返回 `{ok:false, code:'INSUFFICIENT_CREDIT'}`
-- 新增 `readCreditLogs()` / `writeCreditLogs()` 本地包装函数
-
-**前端**（`index.html`）：
-- `createPost()` 新增 `payWithCredit` 参数，body 中发送
-- 收到 `ANON_QUOTA_EXCEEDED` 弹窗确认框：2个按钮「返回编辑」「消耗 50 credit 发布」
-- 敏感词「继续发送」路径已适配传递 `payWithCredit`
-
-#### Task 2：悄悄话每周限量2次，超出需200credit
-
-**后端**（`routes/whispers.js`）：
-- `POST /api/whispers` 新增每周配额检测（自然周，周一 0:00 重置）
-- 从 `whispers` 表统计 `senderId + createdAt >= 本周一` 的条数
-- count >= 2 时：自动检查 credit >= 200 → 自动扣除 → 写 `credit_logs` → 放行
-- credit 不足 → 返回 `{ok:false, code:'INSUFFICIENT_CREDIT'}`
-
-#### Task 3：Info 图标 + 气泡提示
-
-**前端**（`index.html`）：
-- 移除 `附图（最多 4 张，每张 ≤ 2MB）` 文字，替换为 SVG info 图标 + 气泡 `.info-tooltip#imageInfoTip`
-- 移除 `匿名发布（不显示昵称和头像）` 文字，替换为 SVG info 图标 + 气泡 `.info-tooltip#anonInfoTip`
-- 新增 CSS：`.info-icon` / `.info-tooltip` / `.info-tooltip.open`（opacity + scale 过渡，含三角箭头）
-- 新增 JS：`toggleTooltip(e, id)` 切换气泡；全局 click 关闭气泡
-
-#### Task 4：更多选项展开收起动画
-
-**前端**（`index.html`）：
-- `.post-more-options` 改为 `max-height + opacity` 过渡动画
-- `togglePostOptions()` 改用 `.open` class 切换（移除 `display: none/block`）
-- `openModal()` / `closeModal()` 同步更新
-
-#### 变更文件
-
-| 文件 | 改动 |
-|------|------|
-| `routes/posts.js` | 匿名发帖配额 + 扣费 + 新增 readCreditLogs/writeCreditLogs 包装 |
-| `routes/whispers.js` | 每周悄悄话配额 + 自动扣费 |
-| `index.html` | 信息图标+气泡 HTML/CSS/JS，更多选项动画，匿名配额弹窗 |
-
-### 会话 13 — 2026-07-18 — QA 系统优化（4 项任务）
-
-#### Task 1：你问我答窗口动画优化
-
-**前端**（`index.html`）：
-- 新增 CSS 动画：`qaPageIn`（tab 切换上移淡入）、`qaCardIn`（卡片入场）、`qaOverlayOut` + `qaOut`（关闭动画）
-- `.qa-page-enter` 类绑定了 `qaPageIn` keyframe（之前 JS 引用但缺少 CSS 定义）
-- `.qa-question-card` 添加 hover 上浮 + 阴影过渡
-- `.qa-answer-card` 添加 hover 背景色过渡
-- `.qa-pinned-badge` 金色渐加入场动画
-- `.qa-pinned-card` 金色边框 + 浅黄背景
-- `closeQAModal()` 改为带关闭动画（0.25s 后 display:none）
-- 筛选按钮 `.qa-filter-btn` 和 Tab `.qa-tab` 添加过渡动画
-
-#### Task 2：修复采纳/发放悬赏 404 错误
-
-**后端**（`routes/qa.js`）：
-- 新增 `POST /api/qa/questions/:id/accept/:aid` 路由：采纳回答并发放全部剩余悬赏
-  - 校验提问者身份 → 查找回答 → 发放剩余悬赏给回答者 → 更新问题状态为 `accepted`
-  - 返回 `{ok:true, data:{acceptedAnswerId, rewarded}}`
-- 新增 `POST /api/qa/questions/:id/reward` 路由：手动发放悬赏给多个回答
-  - 校验提问者身份 → 校验总额 ≤ 剩余悬赏 → 逐一 changeCredit → 累加 distributedCredits
-  - 返回 `{ok:true, data:{distributed}}`
-- 排序优化：`GET /api/qa/questions` 置顶问题优先展示
-
-#### Task 3：用户创建问题限额
-
-**后端**（`routes/qa.js`）：
-- 新增 `GET /api/qa/quota` 接口：返回本周提问次数、免费额度、剩余次数、超额费、置顶费
-- `POST /api/qa/questions` 新增限额检测逻辑：
-  - 按自然周（周一 00:00～周日 23:59）统计 `userId` 的提问数
-  - 前 3 题免费，超出部分每题 +100 Credits
-  - 总费用 = bounty + 超额费(extraFee) + 置顶费(pinFee)
-  - 余额不足时拒绝并提示
-
-**前端**（`index.html`）：
-- `submitQAQuestion()` 提交前不再预检余额（后端统一校验）
-- 发布成功后不手动减积分（后端已处理），调用 `loadQAQuota()` 刷新额度信息
-- Tab 切换到「提问」时调用 `loadQAQuota()` 显示额度
-
-#### Task 4：置顶问题选项
-
-**后端**（`routes/qa.js` + `db.js`）：
-- `POST /api/qa/questions` 接收 `pinned` 布尔参数
-  - 勾选时额外扣除 149 Credits（一次性费用，不可取消）
-  - 写入 `pinned=1` 到问题记录
-- `db.js` `tableMigrations` 新增 `{ name: 'qa_questions', columns: ['pinned'] }`
-- 问题列表排序置顶优先
-
-**前端**（`index.html`）：
-- 提问表单新增「置顶问题」复选框 + 信息图标 ℹ️（气泡提示「置顶问题能够快速得到答案」）
-- 勾选时显示费用提示「置顶需额外支付 149 Credits（一次性费用，不可取消）」
-- `updateQACostHint()` 联动费用提示显隐
-- `renderQACard()` / `renderQADetail()` 显示金色置顶徽章
-- 清单/详情中置顶卡片有金色边框和浅黄背景
-
-#### 变更文件
-
-| 文件 | 改动 |
-|------|------|
-| `routes/qa.js` | 新增 accept/reward/quota 路由，限额+置顶扣费逻辑，置顶优先排序 |
-| `db.js` | `tableMigrations` 新增 `qa_questions.pinned` 列 |
-| `index.html` | QA 窗口动画 CSS，置顶选项 HTML/JS，额度显示 |
-
-### 会话 16 — 2026-07-18 — 发帖类型改为彩色圆点 + 全量访问记录
-
-#### Task 1：发帖类型选择改为彩色圆点
-
-| 改动 | 文件 | 说明 |
-|------|------|------|
-| 类型按钮 HTML | `index.html` | `.post-tag` 按钮移除 SVG 图标和文字，改为纯色圆形按钮，保留 `data-tag` 和 `onclick`，添加 `title` 属性 |
-| `.post-tag` CSS | `index.html` | 改为 `width:28px;height:28px;border-radius:50%;padding:0`，移除文字相关样式，用更饱和的颜色（黄 `#fbbf24` / 粉 `#f472b6` / 绿 `#34d399` / 橙 `#fb923c` / 蓝 `#60a5fa`） |
-| `.post-tag.active` | `index.html` | active 态：`scale(1.2)` + 半透明黑边框 + 阴影 |
-| 卡片弹动动画 | `index.html` | 新增 `@keyframes colorPop`：0%→scale(1), 30%→scale(1.08), 60%→scale(0.97), 100%→scale(1)；`.sticky-note` 添加 `colorPop` 动画 |
-
-#### Task 2：全量访问记录
-
-| 改动 | 文件 | 说明 |
-|------|------|------|
-| 新增端点 | `routes/system.js` | `POST /api/page-visit`：接收 `x-user-token`（可选），记录 IP/UA/用户信息到 `login_logs`，`type:'page_visit'`，未登录用户 account='游客' |
-| 前端调用 | `index.html` | `init()` 启动时调用 `POST /api/page-visit`，携带 `authHeaders()` |
-| admin 显示 | `admin.html` | `loadLoginLogs()` 中 `type==='page_visit'` 显示紫色「访问」徽章和「浏览」状态；新增 `.badge-visit` CSS 类 |
-
-#### Task 3：测试清单
-
-`todo.md` 已写入（不提交 git）。
-
-### 会话 17 — 2026-07-19 — 智学认证前端唯一性校验 + user.html 认证展示改造 + 滑块验证码
-
-#### Task 1：智学认证前端校验
-
-| 改动 | 文件 | 说明 |
-|------|------|------|
-| 新增端点 | `routes/user.js` | `POST /api/user/check-zhixue-unique`：接收 `{zhixueUsername}`，查 `users` 表中 `zhixueUsername` 匹配且 `zhixueStatus==='approved'` 的用户，返回 `{available: bool}` |
-| 前端实时校验 | `user.html` | `checkZhixueUnique()` 函数：智学账号输入框 blur 和 input 时 500ms 防抖调后端，不可用时显示红色提示「此智学网账号已被绑定」 |
-
-#### Task 2：user.html 认证展示区域改造
-
-| 改动 | 文件 | 说明 |
-|------|------|------|
-| HTML 变更 | `user.html` | 删除原有 `#bindZhixueBtn`（btn-cert 同学认证按钮）和 `#zhixueInfo`（旧 cert-info 区域） |
-| 新增认证展示区 | `user.html` | 在 profile 与 posts 之间新增 `.cert-section`：包含同学认证（绿色圆形SVG勋章）和超管认证（橙色圆形SVG勋章）两行，显示状态标签 + 操作按钮 |
-| 申请认证按钮 | `user.html` | `.profile-actions` 中新增 `#applyCertBtn`，点击打开 `#certChoiceModal` 选择弹窗 |
-| 选择弹窗 | `user.html` | `#certChoiceModal`：两个选项「同学认证」→ 打开原智学/手动认证弹窗；「超管认证」→ 打开管理员验证弹窗 |
-| 超管认证弹窗 | `user.html` | `#adminAuthModal`：输入管理员ID + 密码 + 滑块验证，调 `POST /api/user/bind-admin` 即时绑定 |
-| 状态渲染 | `user.html` | `renderCertSection()` 函数：调 `/api/user/me/zhixue-info` 和 `/api/user/me` 获取认证状态，动态渲染两行认证信息 |
-| 修改入口 | `user.html` | schoolCertActions：status 为 pending/rejected 时显示「修改」按钮，打开预填编辑弹窗 |
-| SVG 勋章 | `user.html` | 同学认证：绿色渐变圆底 + 书本/毕业帽 SVG；超管认证：橙色渐变圆底 + 盾牌/星 SVG |
-
-#### Task 3：滑块验证码集成
-
-| 改动 | 文件 | 说明 |
-|------|------|------|
-| CSS 引入 | `user.html` | 添加 `<link href="slider-captcha/slidercaptcha.min.css">` |
-| JS 引入 | `user.html` | 底部添加 `<script src="slider-captcha/longbow.slidercaptcha.min.js">` |
-| 滑块弹窗 | `user.html` | `#sliderCaptchaOverlay`：复用 index.html 同款滑块弹窗 |
-| 同学认证滑块 | `user.html` | `initCertCaptcha()`：在认证弹窗中初始化「人机验证」按钮，调用 `showSliderCaptcha()` |
-| 超管认证滑块 | `user.html` | `openAdminCert()`：在管理员弹窗中初始化「人机验证」按钮 |
-| 滑块核心函数 | `user.html` | `showSliderCaptcha(purpose, callback)`：打开滑块弹窗，成功后 `POST /api/slider-captcha/grant` 获取 token，触发回调 |
-| 后端滑块校验 | `routes/user.js` | `POST /api/user/bind-zhixue` 新增 `captchaId`/`captchaText` 校验（Bot-Testing 模式跳过） |
-| 前端提交携带 | `user.html` | `doBindZhixue()` 提交 body 中附加 `captchaId: _certCaptchaToken, captchaText: '1'` |
-
-#### API 变更
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/user/check-zhixue-unique` | 新增，智学账号唯一性实时校验 |
-| POST | `/api/user/bind-zhixue` | 改造，新增 captchaId/captchaText 必填参数 |
-
-### 会话 18 — 2026-07-19 — 3 项 Bug 修复
-
-#### Issue 1：发帖窗口颜色不变（index.html）
-
-| 改动 | 文件 | 行 | 说明 |
-|------|------|-----|------|
-| 新增 TAG_COLORS 映射 | `index.html` | 5847 | 定义 5 种类型颜色（日常 #fbbf24 / 表白 #f472b6 / 树洞 #34d399 / 失物招领 #fb923c / 活动 #60a5fa） |
-| 修改 selectTag() | `index.html` | 5849-5854 | 选中标签时同步设置 `.post-note-card` 的 `style.background` |
-| 修改 resetModal() | `index.html` | 6061-6063 | 重置 note-card 背景色为 `var(--note-yellow)` |
-
-#### Issue 2：帖子预览不协调（user.html）
-
-| 改动 | 文件 | 行 | 说明 |
-|------|------|-----|------|
-| 修改 .posts-header CSS | `user.html` | 396-398 | `align-items: center; justify-content: space-between` → `align-items: baseline; gap: 12px`，使标题和计数自然相邻 |
-
-#### Issue 3：申请认证窗口无法打开（user.html）
-
-| 改动 | 文件 | 行 | 说明 |
-|------|------|-----|------|
-| 添加 onclick | `user.html` | 1355 | `#applyCertBtn` 增加 `onclick="openCertChoiceModal()"` |
