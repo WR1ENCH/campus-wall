@@ -5844,11 +5844,15 @@ async function showPostCaptchaModal() {
  renderNotes(currentFilter);
  }
 
- function selectTag(btn) {
- btn.closest('.post-tags').querySelectorAll('.post-tag').forEach(b => b.classList.remove('active'));
- btn.classList.add('active');
- currentTag = btn.dataset.tag;
- }
+  var TAG_COLORS = { '日常': '#fbbf24', '表白': '#f472b6', '树洞': '#34d399', '失物招领': '#fb923c', '活动': '#60a5fa' };
+
+  function selectTag(btn) {
+  btn.closest('.post-tags').querySelectorAll('.post-tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTag = btn.dataset.tag;
+  var card = document.querySelector('.post-note-card');
+  if (card) card.style.background = TAG_COLORS[currentTag] || 'var(--note-yellow)';
+  }
 
  async function handleLike(id) {
  const result = await likePost(id);
@@ -6057,6 +6061,9 @@ async function showPostCaptchaModal() {
     tagBtns[0].classList.add('active');
     currentTag = tagBtns[0].dataset.tag;
   }
+  // 重置 note-card 背景色
+  var card = document.querySelector('.post-note-card');
+  if (card) card.style.background = 'var(--note-yellow)';
   document.getElementById('visibilityUserArea').style.display = 'none';
   _visibilityTargetUsers = [];
   renderVisibilitySelectedUsers();

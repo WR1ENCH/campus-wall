@@ -1662,3 +1662,25 @@ server.js
 |------|------|------|
 | POST | `/api/user/check-zhixue-unique` | 新增，智学账号唯一性实时校验 |
 | POST | `/api/user/bind-zhixue` | 改造，新增 captchaId/captchaText 必填参数 |
+
+### 会话 18 — 2026-07-19 — 3 项 Bug 修复
+
+#### Issue 1：发帖窗口颜色不变（index.html）
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 新增 TAG_COLORS 映射 | `index.html` | 5847 | 定义 5 种类型颜色（日常 #fbbf24 / 表白 #f472b6 / 树洞 #34d399 / 失物招领 #fb923c / 活动 #60a5fa） |
+| 修改 selectTag() | `index.html` | 5849-5854 | 选中标签时同步设置 `.post-note-card` 的 `style.background` |
+| 修改 resetModal() | `index.html` | 6061-6063 | 重置 note-card 背景色为 `var(--note-yellow)` |
+
+#### Issue 2：帖子预览不协调（user.html）
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 修改 .posts-header CSS | `user.html` | 396-398 | `align-items: center; justify-content: space-between` → `align-items: baseline; gap: 12px`，使标题和计数自然相邻 |
+
+#### Issue 3：申请认证窗口无法打开（user.html）
+
+| 改动 | 文件 | 行 | 说明 |
+|------|------|-----|------|
+| 添加 onclick | `user.html` | 1355 | `#applyCertBtn` 增加 `onclick="openCertChoiceModal()"` |
