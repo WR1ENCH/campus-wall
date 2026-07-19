@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLUS++ 订阅 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F6F5F3;
+      --surface: #FFFFFF;
+      --border: #E8E6E4;
+      --text-primary: #1C1B1A;
+      --text-secondary: #8C8A88;
+      --text-muted: #B8B6B4;
+      --accent: #8B6F5E;
+      --gold: #f5c518;
+      --gold-light: #fef7d0;
+      --gold-deep: #5a3d00;
+      --gold-glow: rgba(245,197,24,0.2);
+      --pos: #346538;
+      --pos-light: #EDF3EC;
+      --neg: #DC4A3D;
+      --neg-light: #FDEBEC;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font: 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ===== Top Bar ===== */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(246,245,243,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gold-deep);
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .top-bar-brand svg {
+      width: 20px;
+      height: 20px;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .top-bar-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .top-bar-back:hover {
+      border-color: var(--gold);
+      color: var(--gold-deep);
+    }
+
+    .top-bar-back svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ===== Animations ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .anim-1 { animation: fadeUp 0.5s ease 0.05s both; }
+    .anim-2 { animation: fadeUp 0.5s ease 0.10s both; }
+    .anim-3 { animation: fadeUp 0.5s ease 0.15s both; }
+    .anim-4 { animation: fadeUp 0.5s ease 0.20s both; }
+    .anim-5 { animation: fadeUp 0.5s ease 0.25s both; }
+    .anim-6 { animation: fadeUp 0.5s ease 0.30s both; }
+    .anim-7 { animation: fadeUp 0.5s ease 0.35s both; }
+    .anim-8 { animation: fadeUp 0.5s ease 0.40s both; }
+    .anim-9 { animation: fadeUp 0.5s ease 0.45s both; }
+
+    /* ===== Hero ===== */
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      margin: 24px 0 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), #e0a800, var(--gold));
+      background-size: 200% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .hero-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--gold-light);
+      color: var(--gold-deep);
+    }
+
+    .hero-icon svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .hero-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold-deep);
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+
+    .hero-status {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero-status.active {
+      background: var(--gold-light);
+      color: var(--gold-deep);
+    }
+
+    .hero-status.inactive {
+      background: var(--pos-light);
+      color: var(--pos);
+    }
+
+    .hero-social {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .hero-social svg {
+      width: 14px;
+      height: 14px;
+      color: var(--gold);
+    }
+
+    /* ===== Section ===== */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 18px;
+    }
+
+    .section-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    /* ===== Benefits Grid ===== */
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .benefit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 14px;
+      transition: all 0.15s ease;
+      cursor: default;
+    }
+
+    .benefit-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-color: var(--gold);
+    }
+
+    .benefit-icon {
+      width: 36px;
+      height: 36px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: var(--gold-light);
+      color: var(--gold-deep);
+    }
+
+    .benefit-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .benefit-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .benefit-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .benefit-limit {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .benefit-limit strong {
+      color: var(--neg);
+      font-weight: 500;
+    }
+
+    /* ===== Pricing ===== */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .pricing-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--gold);
+      background: linear-gradient(180deg, #fffdf0 0%, var(--surface) 100%);
+    }
+
+    .pricing-card.featured .pricing-badge {
+      display: inline-block;
+    }
+
+    .pricing-badge {
+      display: none;
+      position: absolute;
+      top: -10px;
+      right: 12px;
+      padding: 3px 12px;
+      background: linear-gradient(135deg, var(--gold), #e0a800);
+      color: var(--gold-deep);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .pricing-plan {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .pricing-price {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 4px;
+    }
+
+    .pricing-price .unit {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .pricing-original {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: line-through;
+      min-height: 20px;
+    }
+
+    .pricing-saving {
+      font-size: 12px;
+      color: var(--pos);
+      font-weight: 600;
+      margin-top: 4px;
+      min-height: 18px;
+    }
+
+    .pricing-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 12px 0 0;
+      line-height: 1.5;
+    }
+
+    .pricing-renew-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* ===== Buttons ===== */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--gold), #e0a800);
+      color: var(--gold-deep);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 2px 8px var(--gold-glow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(245,197,24,0.35);
+      filter: brightness(1.04);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-primary svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px 20px;
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gold);
+      color: var(--gold-deep);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-secondary.plan-toggle {
+      width: auto;
+    }
+
+    /* ===== Collapsible ===== */
+    .collapse-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .collapse-header .label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .collapse-header .label svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gold);
+    }
+
+    .collapse-header .arrow {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .collapse-header.open .arrow {
+      transform: rotate(180deg);
+    }
+
+    .collapse-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapse-body.open {
+      max-height: 400px;
+    }
+
+    .collapse-inner {
+      padding: 4px 0 14px;
+    }
+
+    /* ===== Redeem ===== */
+    .redeem-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .redeem-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: var(--font);
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+      outline: none;
+      background: var(--surface);
+      transition: border-color 0.15s ease;
+    }
+
+    .redeem-input::placeholder {
+      color: var(--text-muted);
+      letter-spacing: 0;
+    }
+
+    .redeem-input:focus {
+      border-color: var(--gold);
+    }
+
+    .redeem-btn {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, var(--gold), #e0a800);
+      color: var(--gold-deep);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.12s ease;
+    }
+
+    .redeem-btn:hover {
+      filter: brightness(1.04);
+    }
+
+    .redeem-btn:active {
+      transform: scale(0.97);
+    }
+
+    .redeem-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .redeem-result {
+      margin-top: 10px;
+      font-size: 13px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .redeem-result.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .redeem-result.success { color: var(--pos); }
+    .redeem-result.error { color: var(--neg); }
+
+    .redeem-result svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ===== Renew Area ===== */
+    .renew-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .renew-info .expiry {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .renew-info .expiry strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .renew-info .countdown {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold-deep);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      padding: 24px;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      transform: scale(0.92);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--gold-light);
+      color: var(--gold-deep);
+    }
+
+    .modal-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-desc .highlight {
+      color: var(--gold-deep);
+      font-weight: 700;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-actions .btn-secondary {
+      flex: 1;
+    }
+
+    .modal-actions .btn-primary {
+      flex: 2;
+    }
+
+    /* ===== States ===== */
+    .login-prompt,
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .login-prompt a {
+      color: var(--gold-deep);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .login-prompt svg,
+    .loading-state svg {
+      width: 32px;
+      height: 32px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .msg-tip {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .msg-tip.show { display: block; }
+    .msg-tip.success { background: var(--pos-light); color: var(--pos); }
+    .msg-tip.error { background: var(--neg-light); color: var(--neg); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .container { padding: 0 16px; }
+      .top-bar-inner { padding: 0 16px; }
+      .hero-card { padding: 28px 20px; margin-top: 16px; }
+      .benefits-grid { gap: 8px; }
+      .benefit-card { padding: 14px 12px; }
+      .pricing-card { padding: 20px 16px; }
+      .pricing-price { font-size: 30px; }
+    }
+
+    @media (max-width: 480px) {
+      .section-card { padding: 20px 16px; }
+      .benefits-grid { gap: 8px; }
+      .pricing-price { font-size: 28px; }
+      .pricing-grid { gap: 10px; }
+      .modal-box { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        PLUS++
+      </div>
+      <a href="index.html" class="top-bar-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        返回
+      </a>
+    </div>
+  </div>
+
+  <div class="container" id="app">
+    <div class="loading-state" id="initialLoading">
+      <div class="spinner"></div>
+      加载中…
+    </div>
+  </div>
+
+  <script>
+    var CARD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var CARD_MOD = CARD_CHARS.length;
+    var TOKEN_KEY = 'campus_user_token';
+
+    function escHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function tok() { return localStorage.getItem(TOKEN_KEY); }
+
+    function luhnModN(codeStr) {
+      var factor = 2, sum = 0, n = CARD_MOD;
+      for (var i = codeStr.length - 2; i >= 0; i--) {
+        var val = CARD_CHARS.indexOf(codeStr[i]);
+        if (val === -1) return false;
+        var add = val * factor;
+        sum += Math.floor(add / n) + (add % n);
+        factor = factor === 2 ? 1 : 2;
+      }
+      var expected = (n - (sum % n)) % n;
+      return CARD_CHARS[expected] === codeStr[codeStr.length - 1];
+    }
+
+    function showTip(msg, type) {
+      var el = document.getElementById('msgTip');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'msg-tip show ' + type;
+      setTimeout(function(){ el.className = 'msg-tip'; }, 4000);
+    }
+
+    function isIn48hWindow(sub) {
+      if (!sub || !sub.endTime) return false;
+      var end = new Date(sub.endTime).getTime();
+      var now = Date.now();
+      var diff = Math.abs(end - now);
+      return diff <= 48 * 3600 * 1000;
+    }
+
+    var BENEFITS = [
+      { icon: 'pencil', title: '发帖次数', desc: '每天可发布 20 条帖子', limit: '非PLUS每天仅 2 次' },
+      { icon: 'incognito', title: '匿名发帖', desc: '每天可匿名发帖 20 次', limit: '非PLUS每天仅 2 次' },
+      { icon: 'chat', title: '悄悄话', desc: '每周可发送 20 条悄悄话', limit: '非PLUS每周仅 2 次' },
+      { icon: 'pin', title: '帖子置顶', desc: '免费置顶帖子，更多曝光', limit: '仅PLUS专属' },
+      { icon: 'badge', title: '金色身份', desc: '专属 ⭐PLUS++ 金色标识', limit: '仅PLUS专属' },
+      { icon: 'medal', title: '投票特权', desc: '创建投票无次数限制', limit: '仅PLUS专属' },
+      { icon: 'qa', title: '问答特权', desc: '提问与回答无次数限制', limit: '仅PLUS专属' },
+      { icon: 'discuss', title: '讨论区特权', desc: '发起讨论无每日上限', limit: '仅PLUS专属' },
+      { icon: 'priority', title: '优先体验', desc: '新功能抢先体验资格', limit: '仅PLUS专属' }
+    ];
+
+    var BENEFIT_ICONS = {
+      pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+      incognito: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+      chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+      pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>',
+      badge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>',
+      medal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>',
+      qa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      discuss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+      priority: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'
+    };
+
+    function renderBenefits() {
+      return BENEFITS.map(function(b, i){
+        return '<div class="benefit-card anim-' + (i + 1) + '">' +
+          '<div class="benefit-icon">' + BENEFIT_ICONS[b.icon] + '</div>' +
+          '<div class="benefit-title">' + b.title + '</div>' +
+          '<div class="benefit-desc">' + b.desc + '</div>' +
+          '<div class="benefit-limit"><strong>' + b.limit + '</strong></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderPricing(plan, price) {
+      return '<div class="pricing-grid">' +
+        '<div class="pricing-card' + (plan !== 'weekly' ? '' : '') + '">' +
+          '<div class="pricing-plan">周卡</div>' +
+          '<div class="pricing-price">' + price.weekly + ' <span class="unit">Credit</span></div>' +
+          '<div class="pricing-original"></div>' +
+          '<div class="pricing-saving"></div>' +
+          '<div class="pricing-desc">' + Math.round(price.weekly / 7) + ' Credit / 天</div>' +
+          '<div class="pricing-renew-hint">续订享 85 折</div>' +
+        '</div>' +
+        '<div class="pricing-card featured">' +
+          '<span class="pricing-badge">省更多</span>' +
+          '<div class="pricing-plan">月卡</div>' +
+          '<div class="pricing-price">' + price.monthly + ' <span class="unit">Credit</span></div>' +
+          '<div class="pricing-original">原价 ' + (price.weekly * 4.3).toFixed(0) + ' Credit</div>' +
+          '<div class="pricing-saving">每月省 ' + (price.weekly * 4.3 - price.monthly).toFixed(0) + ' Credit</div>' +
+          '<div class="pricing-desc">' + Math.round(price.monthly / 30) + ' Credit / 天</div>' +
+          '<div class="pricing-renew-hint">续订享 85 折 · 约 ' + Math.round(price.monthly * 0.85) + ' Credit</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderPage(subData, priceData) {
+      var app = document.getElementById('app');
+      var isLoggedIn = !!tok();
+      var isPlus = subData && subData.isPlus;
+      var token = tok();
+      var statusHtml = '';
+      if (!isLoggedIn) {
+        statusHtml = '<span class="hero-status inactive">请登录后订阅</span>';
+      } else if (isPlus) {
+        var days = subData.daysLeft || 0;
+        statusHtml = '<span class="hero-status active">⭐PLUS++ 会员 · 剩余 ' + days + ' 天</span>';
+      } else {
+        statusHtml = '<span class="hero-status inactive">立即加入 PLUS++</span>';
+      }
+
+      var expiryHtml = '';
+      var renewalHtml = '';
+      var subscribeBtnLabel = '立即订阅';
+      var subscribeBtnPlan = 'monthly';
+      var selectedPlan = 'monthly';
+
+      if (isLoggedIn && isPlus) {
+        var end = subData.endTime ? new Date(subData.endTime).toLocaleDateString('zh-CN') : '-';
+        var inWindow = isIn48hWindow(subData);
+        var renewPrice = inWindow ? Math.round(priceData.monthly * 0.85) : priceData.monthly;
+        expiryHtml =
+          '<div class="section-card anim-3">' +
+            '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 我的订阅</div>' +
+            '<div class="renew-info">' +
+              '<div class="expiry">到期日：<strong>' + end + '</strong><br><span style="font-size:12px;color:var(--text-muted)">' + (inWindow ? '续订享 85 折优惠中' : '已过续订优惠窗口') + '</span></div>' +
+              '<button class="btn-primary" onclick="doRenew(\'monthly\', ' + renewPrice + ')" style="width:auto;padding:8px 20px;font-size:13px;">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+                '续订 ' + renewPrice + ' Credit' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+        subscribeBtnLabel = '续订月卡';
+      }
+
+      var price = priceData || { weekly: 399, monthly: 699 };
+
+      app.innerHTML =
+        '<div id="msgTip" class="msg-tip"></div>' +
+
+        '<div class="hero-card anim-1">' +
+          '<div class="hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
+          '<div class="hero-title">PLUS++ 会员</div>' +
+          '<div class="hero-subtitle">解锁全部校园墙特权 · 畅享无限制体验</div>' +
+          statusHtml +
+          '<div class="hero-social"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 已有 ⭐ 128+ 位同学加入 PLUS++</div>' +
+        '</div>' +
+
+        expiryHtml +
+
+        '<div class="section-card anim-2" id="benefitsSection">' +
+          '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 全部权益</div>' +
+          '<div class="benefits-grid">' +
+            renderBenefits() +
+          '</div>' +
+        '</div>' +
+
+        '<div class="section-card anim-3">' +
+          '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg> 选择方案</div>' +
+          renderPricing(subscribeBtnPlan, price) +
+          '<div style="margin-top:16px">' +
+            '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'weekly' ? ' active' : '') + '" data-plan="weekly" onclick="selectPlan(\'weekly\')" style="flex:1;' + (selectedPlan === 'weekly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">周卡 399 Credit</button>' +
+              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'monthly' ? ' active' : '') + '" data-plan="monthly" onclick="selectPlan(\'monthly\')" style="flex:1;' + (selectedPlan === 'monthly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">月卡 699 Credit</button>' +
+            '</div>' +
+            '<button class="btn-primary" onclick="openSubscribeModal(selectedPlan)">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' +
+              subscribeBtnLabel +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="section-card anim-4">' +
+          '<div class="collapse-header" id="redeemHeader" onclick="toggleRedeem()">' +
+            '<span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 已有卡密？</span>' +
+            '<svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '</div>' +
+          '<div class="collapse-body" id="redeemBody">' +
+            '<div class="collapse-inner">' +
+              '<div class="redeem-row">' +
+                '<input type="text" id="redeemInput" class="redeem-input" placeholder="输入卡密（如 PLUS-XXXX-XXXX-XXXX）" maxlength="23" onkeydown="if(event.key===\'Enter\')doRedeem()">' +
+                '<button class="redeem-btn" id="redeemBtn" onclick="doRedeem()">兑换</button>' +
+              '</div>' +
+              '<div class="redeem-result" id="redeemResult"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+      if (!isLoggedIn) {
+        document.querySelector('.btn-primary').onclick = function(){ window.location.href = 'index.html'; };
+      }
+    }
+
+    function toggleRedeem() {
+      var body = document.getElementById('redeemBody');
+      var hdr = document.getElementById('redeemHeader');
+      body.classList.toggle('open');
+      hdr.classList.toggle('open');
+    }
+
+    var selectedPlan = 'monthly';
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+      document.querySelectorAll('.plan-toggle').forEach(function(el){
+        if (el.dataset.plan === plan) {
+          el.style.borderColor = 'var(--gold)';
+          el.style.color = 'var(--gold-deep)';
+          el.style.background = 'var(--gold-light)';
+        } else {
+          el.style.borderColor = '';
+          el.style.color = '';
+          el.style.background = '';
+        }
+      });
+    }
+
+    // ===== Subscribe / Renew =====
+    function openSubscribeModal(plan) {
+      plan = plan || 'monthly';
+      var token = tok();
+      if (!token) { window.location.href = 'index.html'; return; }
+      var priceData = window._priceData || { weekly: 399, monthly: 699 };
+      var price = priceData[plan];
+
+      var overlay = document.getElementById('subModal');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'subModal';
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML =
+          '<div class="modal-box">' +
+            '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>' +
+            '<div class="modal-title" id="modalTitle">确认订阅</div>' +
+            '<div class="modal-desc" id="modalDesc">即将订阅 <span class="highlight">PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + '</span>，消耗 <span class="highlight" id="modalPrice">' + price + '</span> Credit</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" onclick="closeModal(\'subModal\')">取消</button>' +
+              '<button class="btn-primary" id="modalConfirm" onclick="doSubscribe()">确认支付</button>' +
+            '</div>' +
+          '</div>';
+        overlay.dataset.plan = plan;
+        document.body.appendChild(overlay);
+      } else {
+        document.getElementById('modalPrice').textContent = price;
+        document.getElementById('modalDesc').querySelector('.highlight').textContent = 'PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡');
+        overlay.dataset.plan = plan;
+      }
+      setTimeout(function(){ overlay.classList.add('open'); }, 10);
+    }
+
+    function closeModal(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.remove('open');
+    }
+
+    function doSubscribe() {
+      var token = tok();
+      if (!token) return;
+      var overlay = document.getElementById('subModal');
+      var plan = overlay ? (overlay.dataset.plan || 'monthly') : 'monthly';
+      var btn = document.getElementById('modalConfirm');
+      btn.disabled = true;
+      btn.textContent = '处理中…';
+
+      fetch('/api/user/subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+        body: JSON.stringify({ plan: plan, payment: 'credit' })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j.ok) {
+          showTip('订阅成功！PLUS++ 权益已激活', 'success');
+          closeModal('subModal');
+          loadPage();
+        } else {
+          showTip(j.msg || '订阅失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '确认支付';
+        }
+      })
+      .catch(function(){
+        showTip('网络错误，请稍后重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '确认支付';
+      });
+    }
+
+    function doRenew(plan, price) {
+      plan = plan || 'monthly';
+      var token = tok();
+      if (!token) return;
+      var priceData = window._priceData || { weekly: 399, monthly: 699 };
+
+      var overlay = document.getElementById('renewModal');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'renewModal';
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML =
+          '<div class="modal-box">' +
+            '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>' +
+            '<div class="modal-title">续订 PLUS++</div>' +
+            '<div class="modal-desc">续订 <span class="highlight" id="renewPlanLabel">PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + '</span>，消耗 <span class="highlight" id="renewPrice">' + price + '</span> Credit' + (price < priceData[plan] ? '<br><span style="color:var(--pos);font-size:12px;">续订优惠 85 折</span>' : '') + '</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" onclick="closeModal(\'renewModal\')">取消</button>' +
+              '<button class="btn-primary" id="renewConfirm" onclick="doRenewConfirm()">确认续订</button>' +
+            '</div>' +
+          '</div>';
+        overlay.dataset.plan = plan;
+        document.body.appendChild(overlay);
+      } else {
+        document.getElementById('renewPrice').textContent = price;
+        document.getElementById('renewPlanLabel').textContent = 'PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡');
+        overlay.dataset.plan = plan;
+      }
+      setTimeout(function(){ overlay.classList.add('open'); }, 10);
+    }
+
+    function doRenewConfirm() {
+      var token = tok();
+      if (!token) return;
+      var overlay = document.getElementById('renewModal');
+      var plan = overlay ? (overlay.dataset.plan || 'monthly') : 'monthly';
+      var btn = document.getElementById('renewConfirm');
+      btn.disabled = true;
+      btn.textContent = '处理中…';
+
+      fetch('/api/user/subscriptions/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+        body: JSON.stringify({ plan: plan })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j.ok) {
+          showTip('续订成功！', 'success');
+          closeModal('renewModal');
+          loadPage();
+        } else {
+          showTip(j.msg || '续订失败', 'error');
+          btn.disabled = false;
+          btn.textContent = '确认续订';
+        }
+      })
+      .catch(function(){
+        showTip('网络错误，请稍后重试', 'error');
+        btn.disabled = false;
+        btn.textContent = '确认续订';
+      });
+    }
+
+    // ===== Redeem =====
+    function showRedeemResult(el, msg, type) {
+      el.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        (type === 'success'
+          ? '<polyline points="20 6 9 17 4 12"/>'
+          : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>') +
+        '</svg> ' + escHtml(msg);
+      el.className = 'redeem-result show ' + type;
+    }
+
+    function clearRedeemResult(el) {
+      el.textContent = '';
+      el.className = 'redeem-result';
+    }
+
+    function doRedeem() {
+      var code = document.getElementById('redeemInput').value.trim().toUpperCase();
+      var result = document.getElementById('redeemResult');
+      var btn = document.getElementById('redeemBtn');
+      var token = tok();
+
+      if (!token) { showRedeemResult(result, '请先登录', 'error'); return; }
+      if (!code) { showRedeemResult(result, '请输入卡密', 'error'); return; }
+      if (!/^PLUS-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
+        showRedeemResult(result, '卡密格式不正确', 'error'); return;
+      }
+      var codePart = code.replace(/-/g, '').slice(3);
+      if (!luhnModN(codePart)) {
+        showRedeemResult(result, '卡密无效（校验码不匹配）', 'error'); return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '兑换中…';
+      clearRedeemResult(result);
+
+      fetch('/api/user/redeem-plus-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+        body: JSON.stringify({ code: code })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j.ok) {
+          showRedeemResult(result, '兑换成功！PLUS++ 已激活', 'success');
+          document.getElementById('redeemInput').value = '';
+          setTimeout(loadPage, 1500);
+        } else {
+          showRedeemResult(result, j.msg || '兑换失败', 'error');
+        }
+      })
+      .catch(function(){
+        showRedeemResult(result, '网络错误，请稍后重试', 'error');
+      })
+      .then(function(){
+        btn.disabled = false;
+        btn.textContent = '兑换';
+      });
+    }
+
+    // ===== Load =====
+    function loadPage() {
+      var token = tok();
+
+      if (!token) {
+        renderPage(null, window._priceData || { weekly: 399, monthly: 699 });
+        return;
+      }
+
+      fetch('/api/user/subscription/price')
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if (j.ok) window._priceData = j.data;
+          return fetch('/api/user/subscription', { headers: { 'x-user-token': token } });
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var subData = null;
+          if (j.ok && j.data) {
+            subData = j.data;
+          }
+          renderPage(subData, window._priceData || { weekly: 399, monthly: 699 });
+        })
+        .catch(function(){
+          renderPage(null, window._priceData || { weekly: 399, monthly: 699 });
+        });
+    }
+
+    loadPage();
+  </script>
+</body>
+</html>

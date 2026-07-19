@@ -55,6 +55,7 @@ campus-wall/
 │   ├── sse.js                    # SSE 实时推送（broadcastSSE）
 │   ├── cache.js                  # 极简缓存（get/set）
 │   ├── helpers.js                # getClientIP 等工具
+│   ├── subscription.js           # PLUS++ 共享逻辑（Luhn mod N 校验、卡密生成、通知推送、isUserPlus 检测）
 │   └── hotness.js                # 帖子热度计算
 ├── routes/                       # 后端 API 模块（每个文件 module.exports = function(app){...}）
 │   ├── admin.js                  # 后台管理（最大，152 符号）
@@ -67,13 +68,14 @@ campus-wall/
 │   ├── notices.js                # 校园通知 + 公告
 │   ├── pickup.js                 # 失物/捡漏拍卖
 │   ├── student-council.js        # 学生会登录
+│   ├── subscription.js           # PLUS++ 订阅系统（定价/购买/续订/卡密兑换）
 │   ├── maintenance.js            # 维护模式公开接口
 │   └── system.js                 # 版本/统计/心跳/霸凌举报/SSE 流
 ├── campus-wall-miniprogram/      # 微信小程序端（独立项目）
 └── data/                         # 运行时生成（.gitignore 忽略）：campus.db 等
 ```
 
-> 注意：根目录的 `index.html / admin.html / post.html / user.html / notice.html / report.html / bully.html / knowledge.html / ecosystem.html` 既是**完整独立可访问的页面**，也通过 `pages/*.html` 提供 SPA 片段。SPA 内部导航时带 `X-SPA-Request: 1` 头，server.js 会只返回 `pages/` 下的片段。
+> 注意：根目录的 `index.html / admin.html / post.html / user.html / notice.html / report.html / bully.html / knowledge.html / ecosystem.html / credit.html / plus.html` 既是**完整独立可访问的页面**，也通过 `pages/*.html` 提供 SPA 片段。SPA 内部导航时带 `X-SPA-Request: 1` 头，server.js 会只返回 `pages/` 下的片段。
 
 ---
 
@@ -93,7 +95,7 @@ campus-wall/
    - `inputSanitize`（`lib/middleware.js`）— 全局特殊字符过滤
    - `createCheckMaintenance(...)` — 维护模式闸门
 6. **桌面端强制移动端 UI（iframe 设备框）**：在维护闸门之后、SPA 片段中间件之前，插入一个中间件 `FRAME_PAGES` + `MOBILE_UA` 判断：
-   - 对**桌面 UA** 且**非 SPA 片段**且**未带 `?mf=1`** 的前台整页 HTML 请求（`/`、`/index.html`、`/post.html`、`/user.html`、`/notice.html`、`/report.html`、`/bully.html`、`/knowledge.html`、`/ecosystem.html`、`/agreement.html`、`/apply-notice.html`、`/credit.html`、`/featured.html`、`/launch.html`、`/maintenance.html`，**不含 `admin.html`**），直接返回一段外壳 HTML：一个居中、宽 `768px` 的 `<iframe>`，其 `src` 指向原 URL 加 `?mf=1`。
+   - 对**桌面 UA** 且**非 SPA 片段**且**未带 `?mf=1`** 的前台整页 HTML 请求（`/`、`/index.html`、`/post.html`、`/user.html`、`/notice.html`、`/report.html`、`/bully.html`、`/knowledge.html`、`/ecosystem.html`、`/agreement.html`、`/apply-notice.html`、`/credit.html`、`/featured.html`、`/launch.html`、`/maintenance.html`、`/plus.html`，**不含 `admin.html`**），直接返回一段外壳 HTML：一个居中、宽 `768px` 的 `<iframe>`，其 `src` 指向原 URL 加 `?mf=1`。
    - iframe 内部视口宽度为 768px，因此 `@media (max-width:768px)` 与 `vw` 单位全部按移动端渲染，**真实手机（命中 `MOBILE_UA`）不套框、直接原生渲染**。
    - 桌面浏览器会**忽略** `<meta name="viewport">`，故单纯改 viewport 无法触发移动端布局；iframe 框是本项目的唯一生效方案。
 7. SPA 片段中间件：仅当 `GET` 且 `X-SPA-Request: 1` 时，按 `PAGE_MAP` 返回 `pages/*.html` 片段。
@@ -134,7 +136,7 @@ server.js 中挂载顺序：
 
 ```
 admin → auth → user → posts → discussions → qa → votes → notices
-→ pickup → student-council → maintenance → system
+→ pickup → student-council → subscription → maintenance → system
 ```
 
 **重要**：`routes/admin.js` 必须在 `routes/auth.js` **之前**挂载。原因：`admin.js` 注册了特化路由 `/api/admin/votes/:id`（及类似），而 `auth.js` 注册了通用路由 `/api/admin/:id`。若顺序相反，`PUT/DELETE /api/admin/votes/:id` 会被通用 `/api/admin/:id` 捕获，返回「管理员不存在」。改动挂载顺序前务必理解此冲突。
@@ -378,6 +380,8 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `credit_logs` | id, userId, amount, reason, createdAt | 积分变动日志 |
 | `credibility_logs` | id(PK 'CRDL-'), userId, amount, score, reason, type('exchange'/'deduction'/'restore'/'refresh'/'bonus'/'admin'), createdAt | 信用分变动日志 |
 | `credit_cards` | id, code(UNIQUE), value, status('active'/used), createdBy, createdAt, usedBy, usedAt | 积分卡密 |
+| `subscriptions` | id(SUBS-), userId, plan('weekly'/'monthly'), startTime, endTime, price, paymentMethod('credit'/'card'), cardCode, status('active'/'expired'), renewedFrom, createdAt | PLUS++ 订阅记录 |
+| `plus_cards` | id, code(UNIQUE, PLUS-XXXX-XXXX-XXXX), plan('weekly'/'monthly'), value, status('unused'/'used'), createdBy, createdAt, usedBy, usedAt | PLUS++ 卡密（Luhn mod N 校验） |
 | `announcement` | _id, title, content, createdAt, updatedAt, publishedAt, publishedBy | 全站公告（单行） |
 | `discussions` | id, title, expiresAt, deleted, createdAt, createdBy, commentCount | 讨论话题（最多 3 个活跃） |
 | `discussion_comments` | id, discussionId, parentId, content, author, avatar, userId, createdAt, deleted, syncPostId, likes, likedBy, hidden | 讨论评论（支持嵌套 parentId） |
@@ -672,7 +676,23 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/admin/credit-cards/create` | 超级 | 生成单张卡密 |
 | POST | `/api/admin/credit-cards/batch-create` | 超级 | 批量生成卡密 |
 
-### 5.17 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
+### 5.17 PLUS++ 订阅系统（subscription.js + user.js + admin.js）
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/user/subscription` | 用户 | 当前订阅详情 + 价格列表 |
+| GET | `/api/user/subscription/price` | 无 | 价格列表（周卡 399 / 月卡 699） |
+| GET | `/api/user/subscription/status` | 用户(可选) | `{isPlus: bool}` 快速检测 |
+| POST | `/api/user/subscriptions` | 用户 | 创建订阅（credit 或卡密） |
+| POST | `/api/user/subscriptions/renew` | 用户 | 续订（48h 窗口内 85 折） |
+| POST | `/api/user/subscriptions/check-expiry` | 无 | 检查即将到期 + 自动过期 |
+| POST | `/api/user/redeem-plus-card` | 用户 | 卡密兑换 PLUS++（user.js） |
+| GET | `/api/admin/subscriptions` | 管理员 | 订阅列表 |
+| GET | `/api/admin/subscriptions/overview` | 管理员 | 订阅总览（活跃数等） |
+| GET | `/api/admin/plus-cards` | 管理员 | PLUS++ 卡密列表 |
+| POST | `/api/admin/plus-cards/create` | 管理员 | 创建单张卡密 |
+| POST | `/api/admin/plus-cards/batch-create` | 管理员 | 批量创建卡密 |
+
+### 5.18 后台管理 — 通知发布 / 维护（admin.js + maintenance.js）
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/admin/notice-applications` | 管理员 | 通知发布申请列表 |
