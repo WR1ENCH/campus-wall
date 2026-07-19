@@ -230,6 +230,30 @@ function migrate() {
     "usedBy" TEXT,
     "usedAt" TEXT
   )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "subscriptions" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "plan" TEXT NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
+    "price" INTEGER,
+    "paymentMethod" TEXT,
+    "cardCode" TEXT,
+    "status" TEXT DEFAULT 'active',
+    "renewedFrom" TEXT,
+    "createdAt" TEXT
+  )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "plus_cards" (
+    "code" TEXT PRIMARY KEY,
+    "plan" TEXT NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "durationUnit" TEXT NOT NULL,
+    "status" TEXT DEFAULT 'unused',
+    "createdBy" TEXT,
+    "createdAt" TEXT,
+    "usedBy" TEXT,
+    "usedAt" TEXT
+  )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "announcement" (
     "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "title" TEXT,
@@ -686,6 +710,23 @@ function insertCredibilityLog(log) { insertRow('credibility_logs', log); }
 function readCreditCards() { return all('credit_cards'); }
 function writeCreditCards(data) { dropAndInsert('credit_cards', data); }
 
+// Subscriptions (PLUS++)
+function readSubscriptions() { return all('subscriptions'); }
+function writeSubscriptions(data) { dropAndInsert('subscriptions', data); }
+function addSubscription(sub) { insertRow('subscriptions', sub); }
+function updateSubscription(id, updates) {
+  const d = getDb();
+  const cols = Object.keys(updates);
+  const setClause = cols.map(c => `"${c}" = ?`).join(',');
+  const vals = cols.map(c => toSqlValue(updates[c]));
+  d.prepare(`UPDATE "subscriptions" SET ${setClause} WHERE id = ?`).run(...vals, id);
+  invalidateCache('subscriptions');
+}
+
+// PLUS cards
+function readPlusCards() { return all('plus_cards'); }
+function writePlusCards(data) { dropAndInsert('plus_cards', data); }
+
 // Announcement
 function readAnnouncement() {
   const row = getDb().prepare('SELECT * FROM "announcement" LIMIT 1').get();
@@ -1010,6 +1051,8 @@ module.exports = {
   readCreditLogs, writeCreditLogs,
   readCredibilityLogs, writeCredibilityLogs, insertCredibilityLog,
   readCreditCards, writeCreditCards,
+  readSubscriptions, writeSubscriptions, addSubscription, updateSubscription,
+  readPlusCards, writePlusCards,
   readAnnouncement, writeAnnouncement,
   readDiscussions, writeDiscussions,
   readDiscussionComments, writeDiscussionComments,

@@ -2050,4 +2050,112 @@ app.put('/api/admin/votes/:id', requireAdmin, (req, res) => {
   res.json({ ok: true, data: vote });
 });
 
+// ===== PLUS++ 卡密管理 =====
+function readSubscriptions() { return db.readSubscriptions(); }
+
+const plusCardCreateLimits = new Map();
+const PLUS_CARD_DAILY_LIMIT = 100;
+
+app.get('/api/admin/plus-cards', requireAdmin, requireSuper, (req, res) => {
+  const cards = db.readPlusCards();
+  const users = readUsers();
+  const list = cards.reverse().map(c => ({
+    ...c,
+    usedByNickname: c.usedBy ? (users.find(u => u.id === c.usedBy)?.nickname || '未知') : null
+  }));
+  res.json({ ok: true, data: list });
+});
+
+app.post('/api/admin/plus-cards/create', requireAdmin, requireSuper, (req, res) => {
+  const { count, plan, duration } = req.body;
+  const num = parseInt(count) || 1;
+  const cardPlan = plan || 'weekly';
+  const dur = parseInt(duration) || 1;
+  if (num < 1 || num > 100) return res.json({ ok: false, msg: '数量范围 1~100' });
+  if (!['weekly', 'monthly'].includes(cardPlan)) return res.json({ ok: false, msg: '套餐类型错误' });
+  if (dur < 1 || dur > 12) return res.json({ ok: false, msg: '时长范围 1~12' });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const key = req.admin.id + '|' + today;
+  const used = plusCardCreateLimits.get(key) || 0;
+  if (used + num > PLUS_CARD_DAILY_LIMIT) {
+    return res.json({ ok: false, msg: '今日创建已达上限（' + PLUS_CARD_DAILY_LIMIT + ' 张），请明天再试' });
+  }
+  plusCardCreateLimits.set(key, used + num);
+
+  const cards = db.readPlusCards();
+  const now = new Date().toISOString();
+  const newCards = [];
+  for (let i = 0; i < num; i++) {
+    newCards.push({
+      code: generatePlusCardCode(cards.concat(newCards)),
+      plan: cardPlan,
+      duration: dur,
+      durationUnit: cardPlan === 'weekly' ? 'week' : 'month',
+      status: 'unused',
+      createdBy: req.admin.id,
+      createdAt: now,
+      usedBy: null,
+      usedAt: null
+    });
+  }
+  db.writePlusCards(cards.concat(newCards));
+  console.warn('[AUDIT] 超级管理员 ' + req.admin.id + ' 创建了 ' + num + ' 张 PLUS++ 卡密（' + cardPlan + ' x ' + dur + '）');
+  res.json({ ok: true, data: { count: num, plan: cardPlan, duration: dur, cards: newCards.map(c => c.code) } });
+});
+
+app.get('/api/admin/subscriptions', requireAdmin, (req, res) => {
+  const subs = readSubscriptions();
+  const users = readUsers();
+  const list = subs.reverse().map(s => ({
+    ...s,
+    userNickname: s.userId ? (users.find(u => u.id === s.userId)?.nickname || '未知') : null
+  }));
+  res.json({ ok: true, data: list });
+});
+
+app.get('/api/admin/subscriptions/overview', requireAdmin, (req, res) => {
+  const subs = readSubscriptions();
+  const now = new Date().toISOString();
+  const active = subs.filter(s => s.status === 'active' && s.endTime > now);
+  const totalRevenue = active.reduce((sum, s) => sum + (s.price || 0), 0);
+  res.json({
+    ok: true,
+    data: {
+      activeCount: active.length,
+      totalCount: subs.length,
+      totalRevenue,
+      weeklyCount: active.filter(s => s.plan === 'weekly').length,
+      monthlyCount: active.filter(s => s.plan === 'monthly').length
+    }
+  });
+});
+
+function generatePlusCardCode(existingCards) {
+  const codeSet = new Set((existingCards || []).map(c => c.code));
+  let code;
+  let attempts = 0;
+  do {
+    const raw = [];
+    for (let i = 0; i < 11; i++) {
+      raw.push(CARD_CHARS[crypto.randomInt(CARD_MOD)]);
+    }
+    let factor = 2;
+    let sum = 0;
+    const n = CARD_MOD;
+    for (let i = raw.length - 1; i >= 0; i--) {
+      let val = CARD_CHARS.indexOf(raw[i]);
+      let add = val * factor;
+      sum += Math.floor(add / n) + (add % n);
+      factor = factor === 2 ? 1 : 2;
+    }
+    const check = CARD_CHARS[(n - (sum % n)) % n];
+    const rawCode = raw.join('') + check;
+    code = 'PLUS-' + rawCode.slice(0, 4) + '-' + rawCode.slice(4, 8) + '-' + rawCode.slice(8, 12);
+    attempts++;
+    if (attempts > 100) break;
+  } while (codeSet.has(code));
+  return code;
+}
+
 };
