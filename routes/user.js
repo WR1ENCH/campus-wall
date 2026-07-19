@@ -1056,7 +1056,7 @@ app.get('/api/users/:id', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   // 不返回密码等敏感信息
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, zhixueStatus: getDisplayZhixueStatus(user) } });
 });
 
 app.get('/api/users/:id/posts', (req, res) => {

@@ -1728,70 +1728,89 @@
       return map[status] || '';
     }
 
-    async function renderCertSection() {
-      var token = localStorage.getItem('campus_user_token');
-      if (!token) return;
+    async function renderCertSection(viewedUser) {
       var section = document.getElementById('certSection');
       var schoolStatus = document.getElementById('schoolCertStatus');
       var schoolActions = document.getElementById('schoolCertActions');
       var adminStatus = document.getElementById('adminCertStatus');
       var adminActions = document.getElementById('adminCertActions');
+      var isSelf = !viewedUser || (currentLoggedInUser && currentLoggedInUser.id === userId);
 
-      // 加载同学认证信息
       var schoolStatusText = '未认证';
       var schoolStatusRaw = null;
       var adminStatusText = '未认证';
-      try {
-        var resp = await fetch('/api/user/me/zhixue-info', {
-          headers: { 'x-user-token': token }
-        });
-        var data = await resp.json();
-        if (data.ok && data.data) {
-          var info = data.data;
-          schoolStatusRaw = info.status;
-          schoolStatusText = getCertStatusText(info.status);
-          _pendingEditData = info.editData || null;
-        }
-      } catch (e) { console.error('加载认证信息失败', e); }
 
-      // 加载超管认证信息
-      try {
-        var meResp = await fetch('/api/user/me', {
-          headers: { 'x-user-token': token }
-        });
-        var meData = await meResp.json();
-        if (meData.ok && meData.data) {
-          if (meData.data.bindAdminRole === 'super') {
-            adminStatusText = '已认证 · ' + (meData.data.bindAdminId || '超管');
-          } else if (meData.data.bindAdminRole === 'admin') {
-            adminStatusText = '已绑定管理员';
+      if (isSelf) {
+        // 自己主页：调 API 获取详细状态
+        var token = localStorage.getItem('campus_user_token');
+        if (!token) return;
+        try {
+          var resp = await fetch('/api/user/me/zhixue-info', {
+            headers: { 'x-user-token': token }
+          });
+          var data = await resp.json();
+          if (data.ok && data.data) {
+            var info = data.data;
+            schoolStatusRaw = info.status;
+            schoolStatusText = getCertStatusText(info.status);
+            _pendingEditData = info.editData || null;
           }
+        } catch (e) { console.error('加载认证信息失败', e); }
+        try {
+          var meResp = await fetch('/api/user/me', {
+            headers: { 'x-user-token': token }
+          });
+          var meData = await meResp.json();
+          if (meData.ok && meData.data) {
+            if (meData.data.bindAdminRole === 'super') {
+              adminStatusText = '已认证 · ' + (meData.data.bindAdminId || '超管');
+            } else if (meData.data.bindAdminRole === 'admin') {
+              adminStatusText = '已绑定管理员';
+            }
+          }
+        } catch (e) { console.error('加载用户信息失败', e); }
+      } else {
+        // 他人主页：直接用 viewedUser 数据，只显示 approved
+        schoolStatusRaw = viewedUser.zhixueStatus || null;
+        if (schoolStatusRaw !== 'approved') {
+          schoolStatusRaw = null;
+        } else {
+          schoolStatusText = '已认证';
         }
-      } catch (e) { console.error('加载用户信息失败', e); }
+        if (viewedUser.bindAdminRole === 'super') {
+          adminStatusText = '已认证 · ' + (viewedUser.bindAdminId || '超管');
+        } else if (viewedUser.bindAdminRole === 'admin') {
+          adminStatusText = '已绑定管理员';
+        } else {
+          adminStatusText = '未认证';
+        }
+      }
 
       // 渲染同学认证行
       var schoolTag = getCertStatusTag(schoolStatusRaw);
       schoolStatus.innerHTML = schoolStatusText + (schoolTag ? ' <span class="tag ' + schoolTag + '">' + getCertStatusText(schoolStatusRaw) + '</span>' : '');
       schoolActions.innerHTML = '';
-      if (!schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none') {
-        var btn = document.createElement('button');
-        btn.className = 'btn-sm primary';
-        btn.textContent = '申请认证';
-        btn.onclick = function() { openCertChoiceModal(); };
-        schoolActions.appendChild(btn);
-      } else if (schoolStatusRaw === 'pending' || schoolStatusRaw === 'pending_confirm') {
-        var editBtn = document.createElement('button');
-        editBtn.className = 'btn-sm';
-        editBtn.textContent = '修改';
-        editBtn.onclick = function() { openSchoolCertModal(); };
-        schoolActions.appendChild(editBtn);
+      if (isSelf) {
+        if (!schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none') {
+          var btn = document.createElement('button');
+          btn.className = 'btn-sm primary';
+          btn.textContent = '申请认证';
+          btn.onclick = function() { openCertChoiceModal(); };
+          schoolActions.appendChild(btn);
+        } else if (schoolStatusRaw === 'pending' || schoolStatusRaw === 'pending_confirm') {
+          var editBtn = document.createElement('button');
+          editBtn.className = 'btn-sm';
+          editBtn.textContent = '修改';
+          editBtn.onclick = function() { openSchoolCertModal(); };
+          schoolActions.appendChild(editBtn);
+        }
       }
 
       // 渲染超管认证行
       var isAdminBound = adminStatusText !== '未认证';
       adminStatus.textContent = adminStatusText;
       adminActions.innerHTML = '';
-      if (!isAdminBound) {
+      if (!isAdminBound && isSelf) {
         var adminBtn = document.createElement('button');
         adminBtn.className = 'btn-sm primary';
         adminBtn.textContent = '申请认证';
@@ -1799,12 +1818,23 @@
         adminActions.appendChild(adminBtn);
       }
 
+      // 判断是否需要隐藏整个认证区域
+      var hasApproved = schoolStatusRaw === 'approved' || isAdminBound;
+      if (!isSelf && !hasApproved) {
+        section.style.display = 'none';
+        return;
+      }
+
       section.style.display = 'block';
 
       var applyTitleBtn = document.querySelector('.cert-title-apply-btn');
       if (applyTitleBtn) {
-        var canShow = !schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none';
-        applyTitleBtn.style.display = canShow ? '' : 'none';
+        if (isSelf) {
+          var canShow = !schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none';
+          applyTitleBtn.style.display = canShow ? '' : 'none';
+        } else {
+          applyTitleBtn.style.display = 'none';
+        }
       }
     }
 
@@ -2431,6 +2461,9 @@
       if (user) {
         renderUser(user);
         calculateStats(posts);
+        if (!currentLoggedInUser || currentLoggedInUser.id !== userId) {
+          renderCertSection(user);
+        }
       }
       if (posts) {
         renderPosts(posts);
