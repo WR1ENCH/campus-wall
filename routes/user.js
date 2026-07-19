@@ -123,6 +123,16 @@ module.exports = function(app) {
     captchaStore.set(id, { verified: true, t: now });
     res.json({ ok: true, data: { token: id } });
   });
+  app.get('/api/user/check-username', (req, res) => {
+    const { username } = req.query;
+    if (!username) return res.json({ ok: false, msg: '请提供账号' });
+    if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+      return res.json({ ok: true, data: { available: false } });
+    }
+    const users = readUsers();
+    const existing = users.find(u => u.username === username);
+    res.json({ ok: true, data: { available: !existing } });
+  });
   app.post('/api/user/register', (req, res) => {
     const { username, password, nickname, captchaId, captchaText } = req.body;
     if (!username || !password || !nickname) {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>校园墙 — 让每一张便利贴都被看见</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="slider-captcha/slidercaptcha.min.css" rel="stylesheet">
   <style>
     :root {
       --bg-deep: #010101;
@@ -639,6 +640,238 @@
       .hero__lens { opacity: 0.7; }
     }
 
+    /* ===== Pre-registration Modal ===== */
+    .prereg-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(1,1,1,0.7);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: preregFadeIn 0.35s var(--ease-glide);
+    }
+    @keyframes preregFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .prereg-modal {
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      max-width: 420px; width: 100%;
+      padding: 40px 36px 36px;
+      position: relative;
+      animation: preregSlideIn 0.4s var(--ease-glide);
+      max-height: 90vh; overflow-y: auto;
+    }
+    @keyframes preregSlideIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .prereg-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; color: var(--text-white-40);
+      font-size: 24px; cursor: pointer; padding: 4px 8px;
+      line-height: 1; border-radius: 8px;
+      transition: all 0.3s var(--ease-glide);
+    }
+    .prereg-close:hover { color: var(--text-white); background: rgba(255,255,255,0.06); }
+    .prereg-title {
+      font-family: var(--font-display);
+      font-size: 24px; font-weight: 600;
+      color: var(--text-white); text-align: center;
+      margin-bottom: 4px;
+    }
+    .prereg-subtitle {
+      font-family: var(--font-display);
+      font-size: var(--text-caption); color: var(--text-white-40);
+      text-align: center; margin-bottom: 28px;
+    }
+    .prereg-field {
+      margin-bottom: 18px;
+    }
+    .prereg-field label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: var(--text-label); font-weight: 500;
+      color: var(--text-white-65);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .prereg-field input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm);
+      color: var(--text-white);
+      outline: none;
+      transition: border-color 0.3s var(--ease-glide);
+    }
+    .prereg-field input:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+    .prereg-field input::placeholder {
+      color: var(--text-white-40);
+    }
+    .prereg-username-wrap {
+      position: relative;
+    }
+    .prereg-username-status {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      display: flex; align-items: center;
+    }
+    .prereg-username-status svg {
+      width: 20px; height: 20px;
+    }
+    .prereg-username-hint {
+      font-size: 11px; margin-top: 4px;
+      font-family: var(--font-display);
+    }
+    .prereg-captcha {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-glide);
+      margin-bottom: 22px;
+    }
+    .prereg-captcha:hover {
+      background: rgba(255,255,255,0.06);
+    }
+    .prereg-captcha.done {
+      background: rgba(34,197,94,0.08);
+      border-color: rgba(34,197,94,0.2);
+      cursor: default;
+    }
+    .prereg-captcha-text {
+      font-family: var(--font-display);
+      font-size: 13px; color: var(--text-white-40);
+      flex: 1;
+    }
+    .prereg-captcha-badge {
+      display: none;
+      font-family: var(--font-display);
+      font-size: 13px; color: #22c55e;
+    }
+    .prereg-captcha.done .prereg-captcha-text { display: none; }
+    .prereg-captcha.done .prereg-captcha-badge { display: inline; }
+    .prereg-submit {
+      width: 100%;
+      padding: 13px;
+      border: none; border-radius: 75px;
+      background: var(--text-white); color: var(--bg-deep);
+      font-family: var(--font-display);
+      font-size: var(--text-body-sm); font-weight: 500;
+      cursor: pointer;
+      transition: all 0.5s var(--ease-glide);
+    }
+    .prereg-submit:hover {
+      background: linear-gradient(270deg, rgba(131,235,149,1), rgba(255,179,64,1), var(--coral-orange));
+      background-size: 200% 200%;
+      animation: gradientShift 3s ease-in-out infinite;
+      transform: scale(1.02);
+    }
+    .prereg-submit:disabled {
+      opacity: 0.4; cursor: not-allowed; transform: none;
+    }
+    .prereg-error {
+      font-family: var(--font-display);
+      font-size: 12px; color: #ef4444;
+      text-align: center; margin-top: 10px;
+      min-height: 1.2em;
+    }
+    /* ===== Success Animation ===== */
+    .prereg-success {
+      text-align: center; padding: 20px 0;
+    }
+    .prereg-success-svg {
+      width: 120px; height: 120px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+    .prereg-success-svg circle {
+      fill: none; stroke: #22c55e; stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      animation: successDrawCircle 2s var(--ease-glide) forwards;
+    }
+    @keyframes successDrawCircle {
+      to { stroke-dashoffset: 0; }
+    }
+    .prereg-success-svg polyline {
+      fill: none; stroke: #22c55e; stroke-width: 4;
+      stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 60;
+      stroke-dashoffset: 60;
+      animation: successDrawCheck 1.5s var(--ease-glide) 2s forwards;
+    }
+    @keyframes successDrawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+    .prereg-success-title {
+      font-family: var(--font-display);
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(270deg, rgba(131,235,149,1), rgba(255,179,64,1));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 3s ease-in-out infinite, successFadeIn 1s var(--ease-glide) 3s forwards;
+      opacity: 0;
+      margin-bottom: 8px;
+    }
+    @keyframes successFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .prereg-success-message {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: var(--text-body);
+      color: var(--text-white-65);
+      opacity: 0;
+      animation: successFadeIn 1.5s var(--ease-glide) 7s forwards;
+    }
+    .prereg-field input.error {
+      border-color: #ef4444;
+    }
+    .prereg-pwd-strength {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 8px;
+    }
+    .prereg-pwd-bar {
+      flex: 1; height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px; overflow: hidden;
+    }
+    .prereg-pwd-fill {
+      height: 100%; width: 0%;
+      border-radius: 2px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    .prereg-pwd-label {
+      font-size: 11px;
+      color: var(--text-white-40);
+      white-space: nowrap;
+      min-width: 48px; text-align: right;
+      font-family: var(--font-display);
+    }
+    .prereg-pwd-match {
+      font-size: 12px; margin-top: 6px; min-height: 18px;
+      font-family: var(--font-display);
+    }
+    /* ===== Slider Captcha Overlay (reuse shared pattern) ===== */
+    #sliderCaptchaOverlay {
+      z-index: 100000 !important;
+    }
+
     /* Disable expensive effects for users who prefer reduced motion */
     @media (prefers-reduced-motion: reduce) {
       .hero__lens { display: none; }
@@ -649,7 +882,7 @@
 
   <!-- 顶部公告横幅 -->
   <div style="background:#fff;text-align:center;padding:10px 16px;font-size:14px;color:#333;font-family:var(--font-display);box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-    🚀 <strong>校园墙2.0</strong> 即将到来，敬请期待 ✨
+    🎉 <strong>校园墙2.0</strong>现已开放<strong>预注册</strong> 🎉
   </div>
 
   <!-- Hero -->
@@ -662,7 +895,7 @@
         墙不说话，但他让一切开始
       </p>
       <div class="hero__actions text-entrance text-entrance-delay-3">
-        <a href="#start" class="btn btn--filled">开始使用</a>
+        <a href="javascript:;" onclick="openPreRegister();return false;" class="btn btn--filled">开始使用</a>
         <a href="#features" class="btn btn--text">
           了解更多
           <span class="arrow">→</span>
@@ -831,7 +1064,7 @@
       而你，只需站在那里。
     </p>
     <div class="cta-section__actions reveal reveal-delay-2">
-      <a href="#" class="btn btn--filled">开始使用</a>
+      <a href="javascript:;" onclick="openPreRegister();return false;" class="btn btn--filled">开始使用</a>
       <a href="#" class="btn btn--outline">了解更多</a>
     </div>
   </section>
@@ -843,6 +1076,84 @@
       <p style="font-style:italic;color:var(--text-white-30);font-size:12px;margin:0;font-family:var(--font-serif);">powered by wr1Ench</p>
     </div>
   </footer>
+
+  <!-- ===== 滑块验证码弹窗（共享）===== -->
+  <div class="prereg-overlay" id="sliderCaptchaOverlay" style="display:none;">
+    <div class="prereg-modal" style="max-width:360px;padding:24px;text-align:center;">
+      <button class="prereg-close" onclick="document.getElementById('sliderCaptchaOverlay').style.display='none';_preregSliderPending=null;">&times;</button>
+      <div style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--text-white);margin-bottom:16px;">
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg> 人机验证
+      </div>
+      <div id="preregSharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text-white-40);font-family:var(--font-display);">拖动滑块完成拼图验证</div>
+    </div>
+  </div>
+
+  <!-- ===== 预注册弹窗 ===== -->
+  <div class="prereg-overlay" id="preregOverlay" onclick="if(event.target===this)closePreRegister()">
+    <div class="prereg-modal">
+      <button class="prereg-close" onclick="closePreRegister()">&times;</button>
+
+      <!-- 表单 -->
+      <div id="preregFormView">
+        <div class="prereg-title">抢先注册</div>
+        <div class="prereg-subtitle">成为校园墙2.0首批用户</div>
+
+        <div class="prereg-field">
+          <label for="preregUsername">账号</label>
+          <div class="prereg-username-wrap">
+            <input id="preregUsername" placeholder="字母、数字、下划线，3-16位" maxlength="16" oninput="onPreregUsernameInput()">
+            <span class="prereg-username-status" id="preregUsernameStatus"></span>
+          </div>
+          <div class="prereg-username-hint" id="preregUsernameHint"></div>
+        </div>
+
+        <div class="prereg-field">
+          <label for="preregPassword">密码</label>
+          <input id="preregPassword" type="password" placeholder="至少 6 位" maxlength="20" oninput="updatePreregPwdStrength()">
+          <div class="prereg-pwd-strength">
+            <div class="prereg-pwd-bar"><div class="prereg-pwd-fill" id="preregPwdFill"></div></div>
+            <span class="prereg-pwd-label" id="preregPwdLabel"></span>
+          </div>
+        </div>
+
+        <div class="prereg-field">
+          <label for="preregPwdConfirm">确认密码</label>
+          <input id="preregPwdConfirm" type="password" placeholder="再次输入密码" maxlength="20" oninput="updatePreregPwdMatch()">
+          <div class="prereg-pwd-match" id="preregPwdMatch"></div>
+        </div>
+
+        <div class="prereg-field">
+          <label for="preregNickname">昵称</label>
+          <input id="preregNickname" placeholder="在墙上显示的名字，2-12字" maxlength="12">
+        </div>
+
+        <div class="prereg-captcha" id="preregCaptchaArea" onclick="showPreregSliderCaptcha()">
+          <span class="prereg-captcha-text">
+            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg> 点击完成人机验证
+          </span>
+          <span class="prereg-captcha-badge">
+            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 已验证
+          </span>
+        </div>
+
+        <button class="prereg-submit" id="preregSubmitBtn" onclick="submitPreRegister()">提交预注册</button>
+        <div class="prereg-error" id="preregError"></div>
+      </div>
+
+      <!-- 成功动画 -->
+      <div id="preregSuccessView" class="prereg-success" style="display:none;">
+        <div class="prereg-success-svg">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <circle cx="60" cy="60" r="40"/>
+            <polyline points="45,60 55,70 75,48"/>
+          </svg>
+        </div>
+        <div class="prereg-success-title">Deployment Ready</div>
+        <div class="prereg-success-message" id="preregFinalMessage">校园墙2.0即将到来，期待与你相遇</div>
+      </div>
+    </div>
+  </div>
 
   <!-- WebGL Lens Refraction Shader — Hero only -->
   <script>
@@ -1101,6 +1412,282 @@
         }
       }, { passive: true });
     });
+  </script>
+
+  <!-- Slider Captcha Library -->
+  <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
+
+  <!-- Pre-registration & Slider Captcha Integration -->
+  <script>
+    var _preregSliderToken = null;
+    var _preregSliderPending = null;
+    var _preregUsernameTimer = null;
+    var _preregUsernameAvailable = false;
+
+    function calcPreregPwdStrength(pwd) {
+      if (!pwd) return { level: 0, label: '', color: 'rgba(255,255,255,0.1)', pct: 0 };
+      var score = 0;
+      if (pwd.length >= 6) score += 20;
+      if (pwd.length >= 8) score += 10;
+      if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score += 20;
+      else if (/[a-zA-Z]/.test(pwd)) score += 10;
+      if (/\d/.test(pwd)) score += 20;
+      if (/[^a-zA-Z0-9]/.test(pwd)) score += 20;
+      if (pwd.length >= 12) score += 10;
+      if (score < 30) return { level: 1, label: '弱', color: '#ef4444', pct: 25 };
+      if (score < 50) return { level: 2, label: '较弱', color: '#f97316', pct: 45 };
+      if (score < 70) return { level: 3, label: '中等', color: '#eab308', pct: 65 };
+      if (score < 85) return { level: 4, label: '强', color: '#22c55e', pct: 85 };
+      return { level: 5, label: '非常强', color: '#16a34a', pct: 100 };
+    }
+
+    function updatePreregPwdStrength() {
+      var pwd = document.getElementById('preregPassword').value;
+      var fill = document.getElementById('preregPwdFill');
+      var label = document.getElementById('preregPwdLabel');
+      var s = calcPreregPwdStrength(pwd);
+      fill.style.width = s.pct + '%';
+      fill.style.background = s.color;
+      label.textContent = s.label;
+      label.style.color = s.color;
+      updatePreregPwdMatch();
+    }
+
+    function updatePreregPwdMatch() {
+      var pwd = document.getElementById('preregPassword').value;
+      var confirm = document.getElementById('preregPwdConfirm').value;
+      var hint = document.getElementById('preregPwdMatch');
+      if (!confirm) { hint.innerHTML = ''; return; }
+      if (pwd === confirm) {
+        hint.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> <span style="color:#22c55e">密码匹配</span>';
+      } else {
+        hint.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> <span style="color:#ef4444">密码不匹配</span>';
+      }
+    }
+
+    function openPreRegister() {
+      document.getElementById('preregOverlay').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePreRegister() {
+      document.getElementById('preregOverlay').style.display = 'none';
+      document.body.style.overflow = '';
+      _preregSliderPending = null;
+      resetPreregForm();
+    }
+
+    function resetPreregForm() {
+      document.getElementById('preregFormView').style.display = '';
+      document.getElementById('preregSuccessView').style.display = 'none';
+      document.getElementById('preregSuccessView').classList.remove('hide');
+      document.getElementById('preregUsername').value = '';
+      document.getElementById('preregPassword').value = '';
+      document.getElementById('preregPwdConfirm').value = '';
+      document.getElementById('preregNickname').value = '';
+      document.getElementById('preregError').textContent = '';
+      document.getElementById('preregUsernameStatus').innerHTML = '';
+      document.getElementById('preregUsernameHint').textContent = '';
+      document.getElementById('preregUsername').classList.remove('error');
+      var captchaArea = document.getElementById('preregCaptchaArea');
+      captchaArea.classList.remove('done');
+      _preregSliderToken = null;
+      _preregUsernameAvailable = false;
+      document.getElementById('preregSubmitBtn').disabled = false;
+    }
+
+    // ===== Username Real-time Check =====
+    function onPreregUsernameInput() {
+      var input = document.getElementById('preregUsername');
+      var val = input.value.trim();
+      var statusEl = document.getElementById('preregUsernameStatus');
+      var hintEl = document.getElementById('preregUsernameHint');
+      input.classList.remove('error');
+      if (_preregUsernameTimer) { clearTimeout(_preregUsernameTimer); _preregUsernameTimer = null; }
+      if (!val) {
+        statusEl.innerHTML = '';
+        hintEl.textContent = '';
+        _preregUsernameAvailable = false;
+        return;
+      }
+      if (!/^[a-zA-Z0-9_]{1,16}$/.test(val)) {
+        statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+        hintEl.textContent = '只允许字母、数字、下划线';
+        hintEl.style.color = '#ef4444';
+        _preregUsernameAvailable = false;
+        return;
+      }
+      if (val.length < 3) {
+        statusEl.innerHTML = '';
+        hintEl.textContent = '至少 3 位';
+        hintEl.style.color = 'var(--text-white-40)';
+        _preregUsernameAvailable = false;
+        return;
+      }
+      statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--text-white-40)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-6 6-4-4" stroke-dasharray="2 2"/></svg>';
+      hintEl.textContent = '检查中...';
+      hintEl.style.color = 'var(--text-white-40)';
+      _preregUsernameTimer = setTimeout(function() {
+        fetch('/api/user/check-username?username=' + encodeURIComponent(val))
+          .then(function(r) { return r.json(); })
+          .then(function(j) {
+            if (j.ok && j.data) {
+              if (j.data.available) {
+                statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+                hintEl.textContent = '账号可用';
+                hintEl.style.color = '#22c55e';
+                _preregUsernameAvailable = true;
+              } else {
+                statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                hintEl.textContent = '账号已被注册';
+                hintEl.style.color = '#ef4444';
+                input.classList.add('error');
+                _preregUsernameAvailable = false;
+              }
+            }
+          })
+          .catch(function() {
+            statusEl.innerHTML = '';
+            hintEl.textContent = '检查失败，请稍后重试';
+            hintEl.style.color = '#ef4444';
+          });
+      }, 400);
+    }
+
+    // ===== Slider Captcha =====
+    function showPreregSliderCaptcha() {
+      var captchaArea = document.getElementById('preregCaptchaArea');
+      if (captchaArea.classList.contains('done')) return;
+      _preregSliderPending = 'prereg';
+      var overlay = document.getElementById('sliderCaptchaOverlay');
+      overlay.style.display = 'flex';
+      var el = document.getElementById('preregSharedSliderCaptcha');
+      el.innerHTML = '';
+      setTimeout(function() {
+        try {
+          var c = sliderCaptcha({
+            id: 'preregSharedSliderCaptcha',
+            width: 280,
+            height: 155,
+            offset: 10,
+            setSrc: function() {
+              return 'slider-captcha/images/Pic' + Math.round(Math.random() * 4) + '.jpg';
+            },
+            onSuccess: function() {
+              fetch('/api/slider-captcha/grant', { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(j) {
+                  if (j.ok) {
+                    _preregSliderToken = j.data.token;
+                    captchaArea.classList.add('done');
+                    overlay.style.display = 'none';
+                    _preregSliderPending = null;
+                  }
+                })
+                .catch(function(err) { console.error('[prereg] slider grant error:', err); });
+            },
+            onFail: function() {}
+          });
+        } catch(e) { console.error('slider captcha init error', e); }
+      }, 100);
+    }
+
+    document.getElementById('sliderCaptchaOverlay').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.style.display = 'none';
+        _preregSliderPending = null;
+      }
+    });
+
+    // ===== Submit =====
+    async function submitPreRegister() {
+      var username = document.getElementById('preregUsername').value.trim();
+      var password = document.getElementById('preregPassword').value;
+      var pwdConfirm = document.getElementById('preregPwdConfirm').value;
+      var nickname = document.getElementById('preregNickname').value.trim();
+      var errorEl = document.getElementById('preregError');
+      var btn = document.getElementById('preregSubmitBtn');
+      errorEl.textContent = '';
+
+      if (!username || !password || !pwdConfirm || !nickname) {
+        errorEl.textContent = '请填写所有必填项';
+        return;
+      }
+      if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+        errorEl.textContent = '账号需 3-16 位字母、数字、下划线';
+        return;
+      }
+      if (!_preregUsernameAvailable) {
+        errorEl.textContent = '账号不可用，请更换';
+        return;
+      }
+      if (password.length < 6) {
+        errorEl.textContent = '密码至少 6 位';
+        return;
+      }
+      if (password !== pwdConfirm) {
+        errorEl.textContent = '两次输入的密码不一致';
+        return;
+      }
+      if (nickname.length < 2 || nickname.length > 12) {
+        errorEl.textContent = '昵称需 2-12 个字符';
+        return;
+      }
+      if (nickname.indexOf(' ') !== -1) {
+        errorEl.textContent = '昵称不能包含空格';
+        return;
+      }
+      if (!_preregSliderToken) {
+        errorEl.textContent = '请先完成人机验证';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+
+      try {
+        var res = await fetch('/api/user/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+            nickname: nickname,
+            captchaId: _preregSliderToken,
+            captchaText: '1'
+          })
+        });
+        var json = await res.json();
+        if (json.ok) {
+          // 注册成功 → 显示成功动画
+          document.getElementById('preregFormView').style.display = 'none';
+          var sv = document.getElementById('preregSuccessView');
+          sv.style.display = 'block';
+          // 重置动画：重新触发 CSS 动画
+          var circle = sv.querySelector('circle');
+          var polyline = sv.querySelector('polyline');
+          [circle, polyline].forEach(function(el) {
+            if (el) {
+              el.style.animation = 'none';
+              void el.offsetHeight;
+              el.style.animation = '';
+            }
+          });
+          var title = sv.querySelector('.prereg-success-title');
+          title.style.animation = 'none';
+          void title.offsetHeight;
+          title.style.animation = '';
+        } else {
+          errorEl.textContent = json.msg || '注册失败';
+          btn.disabled = false;
+          btn.textContent = '提交预注册';
+        }
+      } catch(e) {
+        errorEl.textContent = '网络错误，请稍后重试';
+        btn.disabled = false;
+        btn.textContent = '提交预注册';
+      }
+    }
   </script>
 </body>
 </html>
