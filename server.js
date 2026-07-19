@@ -170,6 +170,7 @@ require('./routes/notices')(app);
 require('./routes/pickup')(app);
 require('./routes/student-council')(app);
 require('./routes/whispers')(app);
+require('./routes/subscription')(app);
 require('./routes/maintenance')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
 

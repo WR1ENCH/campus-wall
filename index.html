@@ -5505,11 +5505,32 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  }
  }
 
- // 获取用户 token（用于举报等需要登录的接口）
- function authHeaders() {
+// 获取用户 token（用于举报等需要登录的接口）
+function authHeaders() {
  const t = localStorage.getItem('campus_user_token');
  return t ? { 'x-user-token': t } : {};
+}
+
+// ===== PLUS++ 订阅状态 =====
+let _userPlusCache = null;
+let _userPlusCacheTime = 0;
+const PLUS_CACHE_TTL = 60000;
+
+function checkUserPlusStatus() {
+ const token = localStorage.getItem('campus_user_token');
+ if (!token) return Promise.resolve(false);
+ const now = Date.now();
+ if (_userPlusCache !== null && (now - _userPlusCacheTime) < PLUS_CACHE_TTL) {
+   return Promise.resolve(_userPlusCache);
  }
+ return fetch('/api/user/subscription/status', { headers: authHeaders() })
+   .then(r => r.json())
+   .then(j => {
+     _userPlusCache = !!(j.ok && j.data && j.data.isPlus);
+     _userPlusCacheTime = now;
+     return _userPlusCache;
+   })
+   .catch(() => { _userPlusCache = false; _userPlusCacheTime = now; return false; });
 
    async function createPost(type, content, sensitiveForce = false, isAnonymous = false, visibility = 'public', allowComments = true, visibleTo = [], invisibleTo = [], payWithCredit = false) {
  if (!currentUser) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请先登录才能发帖'); return null; }
@@ -9527,6 +9548,10 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
 .whisper-modal-overlay{background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);}
 .whisper-incoming-modal{animation:fadeSlideIn 0.25s ease-out;}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* PLUS++ 会员样式 */
+.plus-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);}
+.plus-gold{border-color:#f59e0b !important;box-shadow:0 0 0 2px rgba(245,158,11,0.15),0 2px 8px rgba(245,158,11,0.1) !important;}
+.plus-gold .note-type::after{content:' ⭐PLUS';color:#d97706;font-weight:700;}
 </style>
 <script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);var pb=document.getElementById('punishBanner');if(pb)pb.style.display='flex';adjustTopBar();}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
