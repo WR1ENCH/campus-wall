@@ -7,6 +7,7 @@ const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
+const { isUserPlus } = require('../lib/subscription');
 
 function readQAQuestions() { return db.readQAQuestions(); }
 function writeQAQuestions(data) { db.writeQAQuestions(data); broadcastSSE('qaUpdate', { t: Date.now() }); }
@@ -114,9 +115,11 @@ app.get('/api/qa/quota', (req, res) => {
     q.userId === session.id && !q.deleted &&
     new Date(q.createdAt).getTime() >= monday.getTime()
   ).length;
-  const FREE_QUOTA = 3;
   const EXTRA_COST = 100;
-  res.json({ ok: true, data: { thisWeekCount, freeQuota: FREE_QUOTA, remaining: Math.max(0, FREE_QUOTA - thisWeekCount), extraCost: EXTRA_COST, pinCost: 149 } });
+  const isPlus = isUserPlus(session.id);
+  const freeQuota = isPlus ? Infinity : 3;
+  const remaining = isPlus ? Infinity : Math.max(0, 3 - thisWeekCount);
+  res.json({ ok: true, data: { thisWeekCount, freeQuota, remaining, extraCost: EXTRA_COST, pinCost: 149, isPlus } });
 });
 
 app.post('/api/qa/questions', (req, res) => {
@@ -171,7 +174,8 @@ app.post('/api/qa/questions', (req, res) => {
   const EXTRA_COST = 100;
   const PIN_COST = 149;
   const isPinned = pinned === true;
-  const extraFee = thisWeekCount >= FREE_QUOTA ? EXTRA_COST : 0;
+  const isPlus = isUserPlus(session.id);
+  const extraFee = isPlus ? 0 : (thisWeekCount >= FREE_QUOTA ? EXTRA_COST : 0);
   const pinFee = isPinned ? PIN_COST : 0;
   const totalCost = b + extraFee + pinFee;
   if ((user.credit || 0) < totalCost) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });

@@ -104,7 +104,7 @@ module.exports = function(app) {
       if (!cardCode || !cardCode.trim()) return res.json({ ok: false, msg: '请输入卡密' });
       const cleanCode = cardCode.trim().toUpperCase();
       if (!/^PLUS-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(cleanCode)) return res.json({ ok: false, msg: '卡密格式不正确' });
-      const codePart = cleanCode.replace(/-/g, '').slice(3);
+      const codePart = cleanCode.replace(/-/g, '').slice(4);
       if (!luhnModN(codePart)) return res.json({ ok: false, msg: '卡密无效（校验码不匹配）' });
 
       try {
