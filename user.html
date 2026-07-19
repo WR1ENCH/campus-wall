@@ -1800,6 +1800,12 @@
       }
 
       section.style.display = '';
+
+      var applyTitleBtn = document.querySelector('.cert-title-apply-btn');
+      if (applyTitleBtn) {
+        var canShow = !schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none';
+        applyTitleBtn.style.display = canShow ? '' : 'none';
+      }
     }
 
     function openCertChoiceModal() {

@@ -4553,9 +4553,10 @@ backdrop-filter: blur(4px);
     }
   });
 
-  function initCertCaptcha() {
+  function initCertCaptcha(retries) {
+    retries = retries || 0;
     var area = document.getElementById('certCaptchaArea');
-    if (!area) return;
+    if (!area) { if (retries < 5) { setTimeout(function() { initCertCaptcha(retries + 1); }, 100); } return; }
     if (_humanVerified) {
       area.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;background:rgba(76,175,80,0.15);color:#388e3c;font-size:12px;font-weight:600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> 已验证</span>';
       return;
@@ -5869,11 +5870,12 @@ async function showPostCaptchaModal() {
  renderNotes(currentFilter);
  }
 
+  var TAG_COLORS = { '日常': 'var(--tag-daily)', '表白': 'var(--tag-love)', '树洞': 'var(--tag-tree)', '失物招领': 'var(--tag-lost)', '活动': 'var(--tag-event)' };
+
   function syncCardColor() {
-  var active = document.querySelector('.post-tag.active');
   var card = document.querySelector('.post-note-card');
   if (!card) return;
-  card.style.background = active ? getComputedStyle(active).backgroundColor : 'var(--note-yellow)';
+  card.style.background = TAG_COLORS[currentTag] || 'var(--note-yellow)';
   }
 
   function selectTag(btn) {
@@ -6692,30 +6694,31 @@ async function showPostCaptchaModal() {
  closeReportModal();
  }
  });
-  function closeModal(e) {
-  if (e && e.target !== e.currentTarget) return;
-  document.getElementById('modalOverlay').classList.remove('show');
-  _selectedDiscussionId = null;
-  // 清除输入，下次打开时重新预填 #
-  document.getElementById('noteInput').value = '';
-  document.getElementById('noteCount').textContent = '0';
-  const anonChk = document.getElementById('anonymousPost');
-  if (anonChk) anonChk.checked = false;
-  document.getElementById('postMoreOptions').classList.remove('open');
-  const selfOnlyChk = document.getElementById('selfOnlyPost');
-  if (selfOnlyChk) selfOnlyChk.checked = false;
-  const whitelistChk = document.getElementById('whitelistPost');
-  if (whitelistChk) whitelistChk.checked = false;
-  const blacklistChk = document.getElementById('blacklistPost');
-  if (blacklistChk) blacklistChk.checked = false;
-  const allowCommentsChk = document.getElementById('allowComments');
-  if (allowCommentsChk) allowCommentsChk.checked = true;
-  document.getElementById('visibilityUserArea').style.display = 'none';
-  _visibilityTargetUsers = [];
-  renderVisibilitySelectedUsers();
-  hideDiscussionSuggest();
-  syncCardColor();
-  }
+   function closeModal(e) {
+   if (e && e.target !== e.currentTarget) return;
+   document.getElementById('modalOverlay').classList.remove('show');
+   _selectedDiscussionId = null;
+   document.getElementById('noteInput').value = '';
+   document.getElementById('noteCount').textContent = '0';
+   const anonChk = document.getElementById('anonymousPost');
+   if (anonChk) anonChk.checked = false;
+   document.getElementById('postMoreOptions').classList.remove('open');
+   const selfOnlyChk = document.getElementById('selfOnlyPost');
+   if (selfOnlyChk) selfOnlyChk.checked = false;
+   const whitelistChk = document.getElementById('whitelistPost');
+   if (whitelistChk) whitelistChk.checked = false;
+   const blacklistChk = document.getElementById('blacklistPost');
+   if (blacklistChk) blacklistChk.checked = false;
+   const allowCommentsChk = document.getElementById('allowComments');
+   if (allowCommentsChk) allowCommentsChk.checked = true;
+   const tagBtns = document.querySelectorAll('#modalOverlay .post-tag');
+   tagBtns.forEach(b => b.classList.remove('active'));
+   currentTag = '';
+   document.getElementById('visibilityUserArea').style.display = 'none';
+   _visibilityTargetUsers = [];
+   renderVisibilitySelectedUsers();
+   hideDiscussionSuggest();
+   }
 
   function togglePostOptions() {
     const el = document.getElementById('postMoreOptions');

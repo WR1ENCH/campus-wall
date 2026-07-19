@@ -1781,7 +1781,8 @@
       if (!note) { showErr('请填写认证说明'); return; }
       if (_manualImages.length === 0) { showErr('请至少上传一张证明图片'); return; }
       // 检查姓名是否与霸凌报告中的姓名一致
-      var reportName = document.getElementById('victimNameInput').value.trim();
+      var reportNameEl = document.getElementById('victimNameInput');
+      var reportName = reportNameEl ? reportNameEl.value.trim() : '';
       if (reportName && name !== reportName) {
         showErr('认证姓名与举报填写的姓名不一致，请保持一致');
         return;
@@ -2072,9 +2073,10 @@
     }
   });
 
-  function initCertCaptcha() {
+  function initCertCaptcha(retries) {
+    retries = retries || 0;
     var area = document.getElementById('certCaptchaArea');
-    if (!area) return;
+    if (!area) { if (retries < 5) { setTimeout(function() { initCertCaptcha(retries + 1); }, 100); } return; }
     area.innerHTML = '<div id="certSliderStatus" style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(200,168,120,0.08);border-radius:14px;cursor:pointer;" onclick="showSliderCaptcha(\'cert\')">' +
       '<span style="color:#999;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg> 点击完成人机验证</span>' +
       '<span id="certSliderBadge" style="display:none;color:#22c55e;font-size:13px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 已验证</span>' +
