@@ -9,6 +9,7 @@ const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const maintenance = require('../maintenance');
+const { isUserPlus } = require('../lib/subscription');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -272,15 +273,28 @@ app.post('/api/posts', (req, res) => {
     }
   }
 
-  // 匿名发帖配额检测（每天最多2次免费，超出需50credit）
+  // 每日发帖次数限额（PLUS 20次/天，非PLUS 2次/天）
+  if (realUserId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const allPosts = readPosts();
+    const uid = String(realUserId);
+    const todayPosts = allPosts.filter(p => String(p.userId) === uid && p.time && String(p.time).startsWith(today));
+    const dailyLimit = isUserPlus(realUserId) ? 20 : 2;
+    if (todayPosts.length >= dailyLimit) {
+      return res.json({ ok: false, code: 'DAILY_POST_LIMIT', msg: '今日发帖次数已用完（' + dailyLimit + '/' + dailyLimit + '）' });
+    }
+  }
+
+  // 匿名发帖配额检测（PLUS 20次/天免费，非PLUS 2次/天免费，超出需50credit）
   if (anonymousFlag && realUserId) {
     const today = new Date().toISOString().slice(0, 10);
     const allPosts = readPosts();
     const uid = String(realUserId);
     const todayAnonPosts = allPosts.filter(p => String(p.userId) === uid && p.isAnonymous && p.time && String(p.time).startsWith(today));
-    if (todayAnonPosts.length >= 2) {
+    const anonLimit = isUserPlus(realUserId) ? 20 : 2;
+    if (todayAnonPosts.length >= anonLimit) {
       if (!payWithCredit) {
-        return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（2/2），每次需消耗 50 credit', cost: 50 });
+        return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（' + anonLimit + '/' + anonLimit + '），每次需消耗 50 credit', cost: 50 });
       }
       const users = readUsers();
       const user = users.find(u => u.id === realUserId);

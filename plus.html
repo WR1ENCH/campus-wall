@@ -862,9 +862,7 @@
       { icon: 'pencil', title: '发帖次数', desc: '每天可发布 20 条帖子', limit: '非PLUS每天仅 2 次' },
       { icon: 'incognito', title: '匿名发帖', desc: '每天可匿名发帖 20 次', limit: '非PLUS每天仅 2 次' },
       { icon: 'chat', title: '悄悄话', desc: '每周可发送 20 条悄悄话', limit: '非PLUS每周仅 2 次' },
-      { icon: 'pin', title: '帖子置顶', desc: '免费置顶帖子，更多曝光', limit: '仅PLUS专属' },
       { icon: 'badge', title: '金色身份', desc: '专属 ⭐PLUS++ 金色标识', limit: '仅PLUS专属' },
-      { icon: 'medal', title: '投票特权', desc: '创建投票无次数限制', limit: '仅PLUS专属' },
       { icon: 'qa', title: '问答特权', desc: '提问与回答无次数限制', limit: '仅PLUS专属' },
       { icon: 'discuss', title: '讨论区特权', desc: '发起讨论无每日上限', limit: '仅PLUS专属' },
       { icon: 'priority', title: '优先体验', desc: '新功能抢先体验资格', limit: '仅PLUS专属' }
@@ -895,7 +893,7 @@
 
     function renderPricing(plan, price) {
       return '<div class="pricing-grid">' +
-        '<div class="pricing-card' + (plan !== 'weekly' ? '' : '') + '">' +
+        '<div class="pricing-card' + (plan !== 'weekly' ? '' : '') + '" onclick="selectPlan(\'weekly\')" style="cursor:pointer">' +
           '<div class="pricing-plan">周卡</div>' +
           '<div class="pricing-price">' + price.weekly + ' <span class="unit">Credit</span></div>' +
           '<div class="pricing-original"></div>' +
@@ -903,7 +901,7 @@
           '<div class="pricing-desc">' + Math.round(price.weekly / 7) + ' Credit / 天</div>' +
           '<div class="pricing-renew-hint">续订享 85 折</div>' +
         '</div>' +
-        '<div class="pricing-card featured">' +
+        '<div class="pricing-card featured" onclick="selectPlan(\'monthly\')" style="cursor:pointer">' +
           '<span class="pricing-badge">省更多</span>' +
           '<div class="pricing-plan">月卡</div>' +
           '<div class="pricing-price">' + price.monthly + ' <span class="unit">Credit</span></div>' +
@@ -927,7 +925,7 @@
         var days = subData.daysLeft || 0;
         statusHtml = '<span class="hero-status active">⭐PLUS++ 会员 · 剩余 ' + days + ' 天</span>';
       } else {
-        statusHtml = '<span class="hero-status inactive">立即加入 PLUS++</span>';
+        statusHtml = '<span class="hero-status inactive" onclick="document.getElementById(\'pricingSection\').scrollIntoView({behavior:\'smooth\'})" style="cursor:pointer">立即加入 PLUS++</span>';
       }
 
       var expiryHtml = '';
@@ -939,15 +937,14 @@
       if (isLoggedIn && isPlus) {
         var end = subData.endTime ? new Date(subData.endTime).toLocaleDateString('zh-CN') : '-';
         var inWindow = isIn48hWindow(subData);
-        var renewPrice = inWindow ? Math.round(priceData.monthly * 0.85) : priceData.monthly;
         expiryHtml =
-          '<div class="section-card anim-3">' +
+        '<div class="section-card anim-3">' +
             '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 我的订阅</div>' +
             '<div class="renew-info">' +
               '<div class="expiry">到期日：<strong>' + end + '</strong><br><span style="font-size:12px;color:var(--text-muted)">' + (inWindow ? '续订享 85 折优惠中' : '已过续订优惠窗口') + '</span></div>' +
-              '<button class="btn-primary" onclick="doRenew(\'monthly\', ' + renewPrice + ')" style="width:auto;padding:8px 20px;font-size:13px;">' +
+              '<button class="btn-primary" onclick="openRenewModal()" style="width:auto;padding:8px 20px;font-size:13px;">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
-                '续订 ' + renewPrice + ' Credit' +
+                '续订' +
               '</button>' +
             '</div>' +
           '</div>';
@@ -976,14 +973,10 @@
           '</div>' +
         '</div>' +
 
-        '<div class="section-card anim-3">' +
+        '<div class="section-card anim-3" id="pricingSection">' +
           '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg> 选择方案</div>' +
           renderPricing(subscribeBtnPlan, price) +
           '<div style="margin-top:16px">' +
-            '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
-              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'weekly' ? ' active' : '') + '" data-plan="weekly" onclick="selectPlan(\'weekly\')" style="flex:1;' + (selectedPlan === 'weekly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">周卡 399 Credit</button>' +
-              '<button class="btn-secondary plan-toggle' + (selectedPlan === 'monthly' ? ' active' : '') + '" data-plan="monthly" onclick="selectPlan(\'monthly\')" style="flex:1;' + (selectedPlan === 'monthly' ? 'border-color:var(--gold);color:var(--gold-deep);background:var(--gold-light);' : '') + '">月卡 699 Credit</button>' +
-            '</div>' +
             '<button class="btn-primary" onclick="openSubscribeModal(selectedPlan)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ' +
               subscribeBtnLabel +
@@ -1023,15 +1016,18 @@
 
     function selectPlan(plan) {
       selectedPlan = plan;
-      document.querySelectorAll('.plan-toggle').forEach(function(el){
-        if (el.dataset.plan === plan) {
+      document.querySelectorAll('.pricing-card').forEach(function(el){
+        el.classList.remove('featured');
+        el.style.borderColor = '';
+        el.style.background = '';
+      });
+      var cards = document.querySelectorAll('.pricing-card');
+      cards.forEach(function(el){
+        var name = el.querySelector('.pricing-plan').textContent;
+        if ((plan === 'weekly' && name === '周卡') || (plan === 'monthly' && name === '月卡')) {
+          el.classList.add('featured');
           el.style.borderColor = 'var(--gold)';
-          el.style.color = 'var(--gold-deep)';
-          el.style.background = 'var(--gold-light)';
-        } else {
-          el.style.borderColor = '';
-          el.style.color = '';
-          el.style.background = '';
+          el.style.background = 'linear-gradient(180deg, #fffdf0 0%, var(--surface) 100%)';
         }
       });
     }
@@ -1044,6 +1040,45 @@
       var priceData = window._priceData || { weekly: 399, monthly: 699 };
       var price = priceData[plan];
 
+      fetch('/api/user/me', { headers: { 'x-user-token': token } })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var credit = (j.ok && j.data) ? (j.data.credit || 0) : 0;
+          if (credit < price) {
+            showCreditInsufficient(price, credit);
+            return;
+          }
+          showSubscribeModal(plan, price);
+        })
+        .catch(function(){
+          showCreditInsufficient(price, 0);
+        });
+    }
+
+    function showCreditInsufficient(need, have) {
+      var overlay = document.getElementById('creditInsufficientModal');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'creditInsufficientModal';
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML =
+          '<div class="modal-box">' +
+            '<div class="modal-icon" style="background:var(--neg-light);color:var(--neg);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+            '<div class="modal-title">Credit 不足</div>' +
+            '<div class="modal-desc">当前余额 <span class="highlight">' + have + '</span> Credit，需要 <span class="highlight">' + need + '</span> Credit 才能订阅</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn-secondary" onclick="closeModal(\'creditInsufficientModal\')">关闭</button>' +
+              '<button class="btn-primary" onclick="closeModal(\'creditInsufficientModal\');window.open(\'credit.html\',\'_blank\')">去充值</button>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(overlay);
+      } else {
+        overlay.querySelector('.modal-desc').innerHTML = '当前余额 <span class="highlight">' + have + '</span> Credit，需要 <span class="highlight">' + need + '</span> Credit 才能订阅';
+      }
+      setTimeout(function(){ overlay.classList.add('open'); }, 10);
+    }
+
+    function showSubscribeModal(plan, price) {
       var overlay = document.getElementById('subModal');
       if (!overlay) {
         overlay = document.createElement('div');
@@ -1107,11 +1142,13 @@
       });
     }
 
-    function doRenew(plan, price) {
-      plan = plan || 'monthly';
+    function openRenewModal() {
       var token = tok();
       if (!token) return;
       var priceData = window._priceData || { weekly: 399, monthly: 699 };
+      var weeklyPrice = Math.round(priceData.weekly * 0.85);
+      var monthlyPrice = Math.round(priceData.monthly * 0.85);
+      var selected = 'monthly';
 
       var overlay = document.getElementById('renewModal');
       if (!overlay) {
@@ -1119,23 +1156,59 @@
         overlay.id = 'renewModal';
         overlay.className = 'modal-overlay';
         overlay.innerHTML =
-          '<div class="modal-box">' +
+          '<div class="modal-box" style="max-width:400px">' +
             '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>' +
             '<div class="modal-title">续订 PLUS++</div>' +
-            '<div class="modal-desc">续订 <span class="highlight" id="renewPlanLabel">PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡') + '</span>，消耗 <span class="highlight" id="renewPrice">' + price + '</span> Credit' + (price < priceData[plan] ? '<br><span style="color:var(--pos);font-size:12px;">续订优惠 85 折</span>' : '') + '</div>' +
+            '<div class="modal-desc" style="margin-bottom:16px">续订享 <span style="color:var(--pos);font-weight:700;">85 折</span> 优惠</div>' +
+            '<div style="display:flex;gap:10px;margin-bottom:20px">' +
+              '<div class="pricing-card" onclick="selectRenewPlan(\'weekly\')" style="flex:1;cursor:pointer;padding:16px 12px;text-align:center;border:1.5px solid var(--border);border-radius:var(--radius)" id="renewCardWeekly">' +
+                '<div style="font-size:13px;font-weight:600;margin-bottom:6px">周卡</div>' +
+                '<div style="font-size:24px;font-weight:800">' + weeklyPrice + ' <span style="font-size:12px;font-weight:500;color:var(--text-muted)">Credit</span></div>' +
+                '<div style="font-size:11px;color:var(--text-muted);text-decoration:line-through">' + priceData.weekly + ' Credit</div>' +
+                '<div style="font-size:11px;color:var(--pos);font-weight:600;margin-top:2px">85 折</div>' +
+              '</div>' +
+              '<div class="pricing-card featured" onclick="selectRenewPlan(\'monthly\')" style="flex:1;cursor:pointer;padding:16px 12px;text-align:center;border:1.5px solid var(--gold);border-radius:var(--radius);background:linear-gradient(180deg,#fffdf0 0%,#fff 100%)" id="renewCardMonthly">' +
+                '<div style="font-size:13px;font-weight:600;margin-bottom:6px">月卡</div>' +
+                '<div style="font-size:24px;font-weight:800">' + monthlyPrice + ' <span style="font-size:12px;font-weight:500;color:var(--text-muted)">Credit</span></div>' +
+                '<div style="font-size:11px;color:var(--text-muted);text-decoration:line-through">' + priceData.monthly + ' Credit</div>' +
+                '<div style="font-size:11px;color:var(--pos);font-weight:600;margin-top:2px">85 折</div>' +
+              '</div>' +
+            '</div>' +
             '<div class="modal-actions">' +
               '<button class="btn-secondary" onclick="closeModal(\'renewModal\')">取消</button>' +
               '<button class="btn-primary" id="renewConfirm" onclick="doRenewConfirm()">确认续订</button>' +
             '</div>' +
           '</div>';
-        overlay.dataset.plan = plan;
+        overlay.dataset.plan = selected;
+        overlay.dataset.weeklyPrice = weeklyPrice;
+        overlay.dataset.monthlyPrice = monthlyPrice;
         document.body.appendChild(overlay);
       } else {
-        document.getElementById('renewPrice').textContent = price;
-        document.getElementById('renewPlanLabel').textContent = 'PLUS++ ' + (plan === 'weekly' ? '周卡' : '月卡');
-        overlay.dataset.plan = plan;
+        overlay.dataset.plan = selected;
+        overlay.dataset.weeklyPrice = weeklyPrice;
+        overlay.dataset.monthlyPrice = monthlyPrice;
+        selectRenewPlan('monthly');
       }
       setTimeout(function(){ overlay.classList.add('open'); }, 10);
+    }
+
+    function selectRenewPlan(plan) {
+      var overlay = document.getElementById('renewModal');
+      if (!overlay) return;
+      overlay.dataset.plan = plan;
+      var weeklyCard = document.getElementById('renewCardWeekly');
+      var monthlyCard = document.getElementById('renewCardMonthly');
+      if (plan === 'weekly') {
+        weeklyCard.style.borderColor = 'var(--gold)';
+        weeklyCard.style.background = 'linear-gradient(180deg,#fffdf0 0%,#fff 100%)';
+        monthlyCard.style.borderColor = 'var(--border)';
+        monthlyCard.style.background = '';
+      } else {
+        monthlyCard.style.borderColor = 'var(--gold)';
+        monthlyCard.style.background = 'linear-gradient(180deg,#fffdf0 0%,#fff 100%)';
+        weeklyCard.style.borderColor = 'var(--border)';
+        weeklyCard.style.background = '';
+      }
     }
 
     function doRenewConfirm() {
@@ -1198,7 +1271,7 @@
       if (!/^PLUS-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code)) {
         showRedeemResult(result, '卡密格式不正确', 'error'); return;
       }
-      var codePart = code.replace(/-/g, '').slice(3);
+      var codePart = code.replace(/-/g, '').slice(4);
       if (!luhnModN(codePart)) {
         showRedeemResult(result, '卡密无效（校验码不匹配）', 'error'); return;
       }

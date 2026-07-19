@@ -5,6 +5,7 @@ const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked, emitUserNotice } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const db = require('../db');
+const { isUserPlus } = require('../lib/subscription');
 
 const WHISPER_MAX_LENGTH = 50;
 
@@ -28,7 +29,7 @@ module.exports = function(app) {
       return res.json({ ok: false, msg: '当前账号功能受限，无法发送悄悄话', code: 'FEATURE_BLOCKED' });
     }
 
-    // 悄悄话每周配额检测（每周最多2次免费，超出自动扣200credit）
+    // 悄悄话每周配额检测（PLUS 20次/周免费，非PLUS 2次/周免费，超出自动扣200credit）
     const _now = new Date();
     const dayOfWeek = _now.getDay();
     const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
@@ -39,11 +40,12 @@ module.exports = function(app) {
     const allWhispers = db.readWhispers();
     const sid = String(session.id);
     const weekWhispers = allWhispers.filter(w => String(w.senderId) === sid && !w.deleted && w.createdAt >= weekStart);
-    if (weekWhispers.length >= 2) {
+    const whisperLimit = isUserPlus(session.id) ? 20 : 2;
+    if (weekWhispers.length >= whisperLimit) {
       const users = db.readUsers();
       const sender = users.find(u => String(u.id) === sid);
       if (!sender || (sender.credit || 0) < 200) {
-        return res.json({ ok: false, msg: '本周悄悄话次数已用完，credit 不足 200，无法发送', code: 'INSUFFICIENT_CREDIT' });
+        return res.json({ ok: false, msg: '本周悄悄话次数已用完（' + whisperLimit + '/' + whisperLimit + '），credit 不足 200，无法发送', code: 'INSUFFICIENT_CREDIT' });
       }
       sender.credit = (sender.credit || 0) - 200;
       db.writeUsers(users);
