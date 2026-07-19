@@ -58,9 +58,9 @@ function deleteSyncedDiscComment(postId) {
 }
 
 function addLoginLog(type, account, success, ip, ua) {
-  const logs = db.readLogs();
+  const cutoff = Date.now() - 100 * 24 * 60 * 60 * 1000;
+  const logs = db.readLogs().filter(l => new Date(l.time).getTime() >= cutoff);
   logs.unshift({ id: 'log_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, account: account || '未登录用户', success, ip: ip || '-', ua: ua || '-', time: new Date().toISOString() });
-  if (logs.length > 500) logs.splice(500);
   db.writeLogs(logs);
 }
 
@@ -316,6 +316,16 @@ module.exports = function(app) {
         zhixueStatus: 'approved'
       }
     });
+  });
+  app.post('/api/user/check-zhixue-unique', (req, res) => {
+    const { zhixueUsername } = req.body;
+    if (!zhixueUsername) return res.json({ ok: false, msg: '请提供智学网账号' });
+    const users = readUsers();
+    const existing = users.find(u =>
+      String(u.zhixueUsername) === String(zhixueUsername) &&
+      u.zhixueStatus === 'approved'
+    );
+    res.json({ ok: true, data: { available: !existing } });
   });
   app.post('/api/user/trust-browser', (req, res) => {
     const auth = verifyUserToken(req.headers['x-user-token']);
@@ -797,7 +807,17 @@ module.exports = function(app) {
     if (users[userIndex].zhixueStatus === 'approved') {
       return res.json({ ok: false, msg: '账号已认证，如需修改请联系管理员' });
     }
-  
+
+    // 滑块验证码校验（Bot-Testing 模式下跳过）
+    if (!maintenance.isBotTesting()) {
+      const { captchaId, captchaText } = req.body;
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, msg: '请完成人机验证' });
+      }
+      captchaStore.delete(captchaId);
+    }
+
     const { type } = req.body;
   
     if (type === 'zhixue') {

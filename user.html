@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>用户 · 校园墙</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
   <style>
     :root {
       --bg: #F6F5F3;
@@ -992,6 +993,248 @@
       background: #7A5F4E;
     }
 
+    /* ===== Certification Section ===== */
+    .cert-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .cert-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cert-items {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cert-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+
+    .cert-item:hover {
+      border-color: var(--border);
+    }
+
+    .cert-badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .cert-badge-icon.school {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: #fff;
+    }
+
+    .cert-badge-icon.admin {
+      background: linear-gradient(135deg, #FF9800, #E65100);
+      color: #fff;
+    }
+
+    .cert-badge-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .cert-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cert-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .cert-item-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .cert-item-status .tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .cert-item-status .tag.pending {
+      background: rgba(255,193,7,0.15);
+      color: #f57c00;
+    }
+
+    .cert-item-status .tag.approved {
+      background: rgba(76,175,80,0.15);
+      color: #388e3c;
+    }
+
+    .cert-item-status .tag.rejected {
+      background: rgba(244,67,54,0.15);
+      color: #d32f2f;
+    }
+
+    .cert-item-status .tag.bound {
+      background: rgba(76,175,80,0.15);
+      color: #388e3c;
+    }
+
+    .cert-item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .cert-item-actions .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+
+    .cert-item-actions .btn-sm:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .cert-item-actions .btn-sm.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .cert-item-actions .btn-sm.primary:hover {
+      background: #7A5F4E;
+    }
+
+    /* ===== Cert Choice Modal ===== */
+    .choice-modal {
+      text-align: center;
+    }
+
+    .choice-modal .choice-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .choice-modal .choice-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .choice-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .choice-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-align: left;
+      background: var(--surface);
+    }
+
+    .choice-option:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .choice-option:active {
+      transform: scale(0.98);
+    }
+
+    .choice-option-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .choice-option-icon.school {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: #fff;
+    }
+
+    .choice-option-icon.admin {
+      background: linear-gradient(135deg, #FF9800, #E65100);
+      color: #fff;
+    }
+
+    .choice-option-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .choice-option-text {
+      flex: 1;
+    }
+
+    .choice-option-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .choice-option-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .slider-captcha-wrap {
+      margin: 16px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    #sliderCaptchaOverlay {
+      z-index: 99999;
+    }
+
     /* ===== Responsive ===== */
     @media (max-width: 768px) {
       .container {
@@ -1109,28 +1352,48 @@
             </div>
           </div>
           <div class="profile-actions">
-            <button id="bindZhixueBtn" class="btn btn-cert" style="display:none;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-              同学认证
+            <button id="applyCertBtn" class="btn btn-primary" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              申请认证
             </button>
             <button id="openCreditBtn" class="btn btn-credit" onclick="window.open('credit.html','_blank')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
               我的Credits <span id="userCreditInline" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span>
             </button>
           </div>
-          <div id="zhixueInfo" class="cert-info">
-            <div class="cert-info-header">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <span>同学认证</span>
-              <span id="zhixueStatusBadge" class="cert-badge"></span>
-            </div>
-            <div id="zhixueEditArea" class="cert-edit-area" style="display:none;">
-              <button id="editCertBtn" class="btn btn-ghost" style="font-size:12px; padding:5px 14px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                编辑认证信息
-              </button>
-            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Certification Section ===== -->
+    <div id="certSection" class="cert-section">
+      <div class="cert-section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        个人认证
+      </div>
+      <div class="cert-items">
+        <!-- 同学认证 -->
+        <div class="cert-item" id="certItemSchool">
+          <div class="cert-badge-icon school">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          </div>
+          <div class="cert-item-info">
+            <div class="cert-item-name">同学认证</div>
+            <div class="cert-item-status" id="schoolCertStatus">未认证</div>
+          </div>
+          <div class="cert-item-actions" id="schoolCertActions"></div>
+        </div>
+        <!-- 超管认证 -->
+        <div class="cert-item" id="certItemAdmin">
+          <div class="cert-badge-icon admin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="cert-item-info">
+            <div class="cert-item-name">超管认证</div>
+            <div class="cert-item-status" id="adminCertStatus">未认证</div>
+          </div>
+          <div class="cert-item-actions" id="adminCertActions"></div>
         </div>
       </div>
     </div>
@@ -1183,6 +1446,86 @@
           <button class="btn btn-primary" id="saveEditBtn">保存更改</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== Cert Choice Modal ===== -->
+  <div id="certChoiceModal" class="modal-overlay">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <span class="modal-title">申请认证</span>
+        <button class="modal-close" onclick="closeCertChoiceModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body choice-modal">
+        <div class="choice-title">选择认证类型</div>
+        <div class="choice-desc">通过认证后将在个人主页展示对应勋章</div>
+        <div class="choice-options">
+          <div class="choice-option" onclick="openSchoolCert()">
+            <div class="choice-option-icon school">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            </div>
+            <div class="choice-option-text">
+              <div class="choice-option-label">同学认证</div>
+              <div class="choice-option-hint">通过智学网账号或提交资料认证学生身份</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="choice-option" onclick="openAdminCert()">
+            <div class="choice-option-icon admin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="choice-option-text">
+              <div class="choice-option-label">超管认证</div>
+              <div class="choice-option-hint">使用管理面板账号密码进行即时认证</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Super Admin Auth Modal ===== -->
+  <div id="adminAuthModal" class="modal-overlay">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <span class="modal-title">超管认证</span>
+        <button class="modal-close" onclick="closeAdminAuthModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="adminAuthStatus" class="form-status"></div>
+        <div class="cert-notice info">输入管理面板的账号和密码进行即时验证，验证通过后自动绑定超管身份</div>
+        <div class="form-group">
+          <label class="form-label">管理员账号</label>
+          <input type="text" id="adminAuthId" class="form-input" placeholder="输入管理员 ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">管理员密码</label>
+          <input type="password" id="adminAuthPwd" class="form-input" placeholder="输入管理员密码">
+        </div>
+        <div id="adminCaptchaArea" class="slider-captcha-wrap"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeAdminAuthModal()">取消</button>
+          <button class="btn btn-primary" onclick="doAdminAuth()" id="adminAuthSubmitBtn">立即认证</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Slider Captcha Overlay ===== -->
+  <div class="modal-overlay" id="sliderCaptchaOverlay" style="display:none;animation:sliderFadeIn 0.25s ease;z-index:99999;">
+    <div class="modal" style="max-width:380px;text-align:center;">
+      <div class="modal-header" style="justify-content:center;margin-bottom:8px;">
+        <span class="modal-title" style="font-size:15px;">人机验证</span>
+      </div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">请完成滑块验证以继续</p>
+      <div id="sliderCaptchaContainer" style="width:100%;"></div>
+      <div id="sliderCaptchaError" style="font-size:12px;color:var(--danger);margin-top:8px;display:none;"></div>
+      <button class="btn btn-outline" style="margin-top:14px;width:auto;" onclick="closeSliderCaptcha()">取消</button>
     </div>
   </div>
 
@@ -1356,62 +1699,154 @@
     }
 
     // ===== Zhixue Bind =====
-    var bindZhixueBtn = document.getElementById('bindZhixueBtn');
-    var zhixueInfo = document.getElementById('zhixueInfo');
-
-    var statusStyles = {
-      pending: { bg: 'rgba(255,193,7,0.15)', color: '#f57c00', text: '待审核' },
-      approved: { bg: 'rgba(76,175,80,0.15)', color: '#388e3c', text: '已认证' },
-      rejected: { bg: 'rgba(244,67,54,0.15)', color: '#d32f2f', text: '已拒绝' }
-    };
-
-    if (bindZhixueBtn) {
-      bindZhixueBtn.addEventListener('click', function() { openBindZhixueModal(null); });
-    }
-
     var _pendingEditData = null;
 
-    async function loadZhixueInfo() {
+    function getCertStatusText(status) {
+      var map = { pending: '待审核', approved: '已认证', rejected: '已拒绝', pending_confirm: '待确认' };
+      return map[status] || '未认证';
+    }
+
+    function getCertStatusTag(status) {
+      var map = { pending: 'pending', approved: 'approved', rejected: 'rejected', pending_confirm: 'pending' };
+      return map[status] || '';
+    }
+
+    async function renderCertSection() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token) return;
+      var section = document.getElementById('certSection');
+      var schoolStatus = document.getElementById('schoolCertStatus');
+      var schoolActions = document.getElementById('schoolCertActions');
+      var adminStatus = document.getElementById('adminCertStatus');
+      var adminActions = document.getElementById('adminCertActions');
+
+      // 加载同学认证信息
+      var schoolStatusText = '未认证';
+      var schoolStatusRaw = null;
+      var adminStatusText = '未认证';
       try {
         var resp = await fetch('/api/user/me/zhixue-info', {
-          headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
+          headers: { 'x-user-token': token }
         });
         var data = await resp.json();
         if (data.ok && data.data) {
           var info = data.data;
-          var statusBadge = document.getElementById('zhixueStatusBadge');
-          var style = statusStyles[info.status] || statusStyles.pending;
-          statusBadge.textContent = style.text;
-          statusBadge.style.background = style.bg;
-          statusBadge.style.color = style.color;
-          zhixueInfo.style.display = '';
+          schoolStatusRaw = info.status;
+          schoolStatusText = getCertStatusText(info.status);
           _pendingEditData = info.editData || null;
-          var editArea = document.getElementById('zhixueEditArea');
-          var editBtn = document.getElementById('editCertBtn');
-          if (info.status === 'pending' || info.status === 'rejected') {
-            editArea.style.display = '';
-            if (editBtn) editBtn.onclick = function() { openBindZhixueModal(_pendingEditData); };
-          } else {
-            editArea.style.display = 'none';
-          }
-          if (!info.status || info.status === 'rejected' || info.status === 'none') {
-            if (bindZhixueBtn) bindZhixueBtn.style.display = '';
-          } else {
-            if (bindZhixueBtn) bindZhixueBtn.style.display = 'none';
-          }
-        } else {
-          zhixueInfo.style.display = 'none';
-          _pendingEditData = null;
-          if (bindZhixueBtn) bindZhixueBtn.style.display = '';
         }
-      } catch (e) {
-        console.error('加载同学认证信息失败', e);
+      } catch (e) { console.error('加载认证信息失败', e); }
+
+      // 加载超管认证信息
+      try {
+        var meResp = await fetch('/api/user/me', {
+          headers: { 'x-user-token': token }
+        });
+        var meData = await meResp.json();
+        if (meData.ok && meData.data) {
+          if (meData.data.bindAdminRole === 'super') {
+            adminStatusText = '已认证 · ' + (meData.data.bindAdminId || '超管');
+          } else if (meData.data.bindAdminRole === 'admin') {
+            adminStatusText = '已绑定管理员';
+          }
+        }
+      } catch (e) { console.error('加载用户信息失败', e); }
+
+      // 渲染同学认证行
+      var schoolTag = getCertStatusTag(schoolStatusRaw);
+      schoolStatus.innerHTML = schoolStatusText + (schoolTag ? ' <span class="tag ' + schoolTag + '">' + getCertStatusText(schoolStatusRaw) + '</span>' : '');
+      schoolActions.innerHTML = '';
+      if (!schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none') {
+        var btn = document.createElement('button');
+        btn.className = 'btn-sm primary';
+        btn.textContent = '申请认证';
+        btn.onclick = function() { openCertChoiceModal(); };
+        schoolActions.appendChild(btn);
+      } else if (schoolStatusRaw === 'pending' || schoolStatusRaw === 'pending_confirm') {
+        var editBtn = document.createElement('button');
+        editBtn.className = 'btn-sm';
+        editBtn.textContent = '修改';
+        editBtn.onclick = function() { openSchoolCertModal(); };
+        schoolActions.appendChild(editBtn);
       }
+
+      // 渲染超管认证行
+      var isAdminBound = adminStatusText !== '未认证';
+      adminStatus.textContent = adminStatusText;
+      adminActions.innerHTML = '';
+      if (!isAdminBound) {
+        var adminBtn = document.createElement('button');
+        adminBtn.className = 'btn-sm primary';
+        adminBtn.textContent = '申请认证';
+        adminBtn.onclick = function() { openAdminCert(); };
+        adminActions.appendChild(adminBtn);
+      }
+
+      section.style.display = '';
+
+      // 控制申请认证按钮（仅在非本人时不显示）
+      var applyBtn = document.getElementById('applyCertBtn');
+      if (applyBtn) {
+        var canApply = !schoolStatusRaw || schoolStatusRaw === 'rejected' || schoolStatusRaw === 'none';
+        applyBtn.style.display = canApply || !isAdminBound ? '' : 'none';
+      }
+    }
+
+    function openCertChoiceModal() {
+      document.getElementById('certChoiceModal').classList.add('show');
+    }
+
+    function closeCertChoiceModal() {
+      document.getElementById('certChoiceModal').classList.remove('show');
+    }
+
+    function openSchoolCert() {
+      closeCertChoiceModal();
+      openBindZhixueModal(_pendingEditData);
+    }
+
+    function openSchoolCertModal() {
+      openBindZhixueModal(_pendingEditData);
+    }
+
+    var _certCaptchaToken = null;
+    var _zhixueUniqueTimer = null;
+    var _zhixueUniqueAvailable = true;
+
+    function checkZhixueUnique(username) {
+      if (_zhixueUniqueTimer) clearTimeout(_zhixueUniqueTimer);
+      if (!username || username.length < 2) {
+        var errEl = document.getElementById('zhixueUniqueError');
+        if (errEl) errEl.style.display = 'none';
+        _zhixueUniqueAvailable = true;
+        return;
+      }
+      _zhixueUniqueTimer = setTimeout(async function() {
+        var token = localStorage.getItem('campus_user_token');
+        try {
+          var resp = await fetch('/api/user/check-zhixue-unique', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-user-token': token || '' },
+            body: JSON.stringify({ zhixueUsername: username })
+          });
+          var data = await resp.json();
+          var errEl = document.getElementById('zhixueUniqueError');
+          if (data.ok && data.data) {
+            _zhixueUniqueAvailable = data.data.available;
+            if (!data.data.available) {
+              if (errEl) { errEl.textContent = '此智学网账号已被绑定'; errEl.style.display = ''; }
+            } else {
+              if (errEl) errEl.style.display = 'none';
+            }
+          }
+        } catch (e) { console.error('唯一性检查失败', e); }
+      }, 500);
     }
 
     function openBindZhixueModal(editData) {
       var old = document.getElementById('bindZhixueModal');
       if (old) old.remove();
+      _certCaptchaToken = null;
       var isEdit = editData && (editData.certType === 'zhixue' || editData.certType === 'manual');
       var headerTitle = isEdit ? '修改认证信息' : '同学认证';
       var headerDesc = isEdit
@@ -1444,6 +1879,7 @@
               '<div class="form-group">' +
                 '<label class="form-label">智学网账号</label>' +
                 '<input type="text" id="zhixueInputUsername" class="form-input" placeholder="输入智学网账号">' +
+                '<div id="zhixueUniqueError" style="font-size:12px;color:var(--danger);margin-top:4px;display:none;"></div>' +
               '</div>' +
               '<div class="form-group">' +
                 '<label class="form-label">智学网密码</label>' +
@@ -1476,6 +1912,7 @@
               '</div>' +
               '<div class="form-hint" style="padding:10px;background:var(--accent-light);border-radius:var(--radius-sm);margin-top:4px;text-align:center;">提交的信息仅用于一次性审核，校园墙承诺保护你的信息安全</div>' +
             '</div>' +
+            '<div id="certCaptchaArea" class="slider-captcha-wrap" style="margin-top:4px;"></div>' +
             '<div class="modal-actions">' +
               '<button class="btn btn-outline" onclick="closeBindZhixueModal()">取消</button>' +
               '<button class="btn btn-primary" style="background:var(--success);" onclick="doBindZhixue()">' + (isEdit ? '重新提交审核' : '提交审核') + '</button>' +
@@ -1510,6 +1947,20 @@
           }
         }
       }
+
+      // 绑定唯一性检查
+      var usernameInput = document.getElementById('zhixueInputUsername');
+      if (usernameInput) {
+        usernameInput.addEventListener('blur', function() {
+          checkZhixueUnique(this.value.trim());
+        });
+        usernameInput.addEventListener('input', function() {
+          if (this.value.trim().length >= 2) checkZhixueUnique(this.value.trim());
+        });
+      }
+
+      // 初始化滑块验证码
+      setTimeout(function() { initCertCaptcha(); }, 100);
 
       requestAnimationFrame(function() { modal.classList.add('show'); });
     }
@@ -1607,6 +2058,165 @@
     function closeBindZhixueModal() {
       var modal = document.getElementById('bindZhixueModal');
       if (modal) modal.remove();
+      _certCaptchaToken = null;
+    }
+
+    // ===== Slider Captcha =====
+    function showSliderCaptcha(purpose, callback) {
+      var overlay = document.getElementById('sliderCaptchaOverlay');
+      overlay.style.display = 'flex';
+      requestAnimationFrame(function() { overlay.classList.add('show'); });
+      var container = document.getElementById('sliderCaptchaContainer');
+      container.innerHTML = '';
+      var errEl = document.getElementById('sliderCaptchaError');
+      errEl.style.display = 'none';
+      try {
+        sliderCaptcha({
+          id: 'sliderCaptchaContainer',
+          onSuccess: function() {
+            fetch('/api/slider-captcha/grant', { method: 'POST' })
+              .then(function(r) { return r.json(); })
+              .then(function(j) {
+                if (j.ok) {
+                  _certCaptchaToken = j.data.token;
+                  closeSliderCaptcha();
+                  if (callback) callback();
+                } else {
+                  errEl.textContent = '验证失败，请重试';
+                  errEl.style.display = '';
+                }
+              })
+              .catch(function() {
+                errEl.textContent = '验证请求失败';
+                errEl.style.display = '';
+              });
+          },
+          setSrc: function() { return 'slider-captcha/images/Pic' + Math.round(Math.random() * 4) + '.jpg'; },
+          onFail: function() { errEl.textContent = '验证失败，请重试'; errEl.style.display = ''; }
+        });
+      } catch(e) { console.error('slider captcha init error', e); }
+    }
+
+    function closeSliderCaptcha() {
+      var overlay = document.getElementById('sliderCaptchaOverlay');
+      overlay.classList.remove('show');
+      overlay.style.display = 'none';
+    }
+
+    function initCertCaptcha() {
+      var area = document.getElementById('certCaptchaArea');
+      if (!area) return;
+      area.innerHTML = '';
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-ghost';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 人机验证';
+      btn.id = 'certCaptchaBtn';
+      btn.onclick = function() {
+        showSliderCaptcha('cert', function() {
+          var badge = document.createElement('span');
+          badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;background:rgba(76,175,80,0.15);color:#388e3c;font-size:12px;font-weight:600;';
+          badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> 已验证';
+          area.innerHTML = '';
+          area.appendChild(badge);
+        });
+      };
+      area.appendChild(btn);
+    }
+
+    // ===== Super Admin Auth =====
+    var _adminCaptchaToken = null;
+
+    function openAdminCert() {
+      _adminCaptchaToken = null;
+      document.getElementById('adminAuthId').value = '';
+      document.getElementById('adminAuthPwd').value = '';
+      document.getElementById('adminAuthStatus').className = 'form-status';
+      document.getElementById('adminAuthStatus').style.display = 'none';
+      document.getElementById('adminAuthSubmitBtn').disabled = false;
+      document.getElementById('adminAuthSubmitBtn').textContent = '立即认证';
+      var captchaArea = document.getElementById('adminCaptchaArea');
+      captchaArea.innerHTML = '';
+      var btn = document.createElement('button');
+      btn.className = 'btn btn-ghost';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 人机验证';
+      btn.onclick = function() {
+        showSliderCaptcha('admin', function() {
+          _adminCaptchaToken = _certCaptchaToken;
+          var badge = document.createElement('span');
+          badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;background:rgba(76,175,80,0.15);color:#388e3c;font-size:12px;font-weight:600;';
+          badge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> 已验证';
+          captchaArea.innerHTML = '';
+          captchaArea.appendChild(badge);
+        });
+      };
+      captchaArea.appendChild(btn);
+      document.getElementById('adminAuthModal').classList.add('show');
+    }
+
+    function closeAdminAuthModal() {
+      document.getElementById('adminAuthModal').classList.remove('show');
+      _adminCaptchaToken = null;
+    }
+
+    async function doAdminAuth() {
+      var adminId = document.getElementById('adminAuthId').value.trim();
+      var adminPwd = document.getElementById('adminAuthPwd').value;
+      var statusEl = document.getElementById('adminAuthStatus');
+
+      if (!adminId) { showAdminAuthStatus('请输入管理员账号', 'error'); return; }
+      if (!adminPwd) { showAdminAuthStatus('请输入管理员密码', 'error'); return; }
+      if (!_adminCaptchaToken) { showAdminAuthStatus('请先完成人机验证', 'error'); return; }
+
+      document.getElementById('adminAuthSubmitBtn').disabled = true;
+      document.getElementById('adminAuthSubmitBtn').textContent = '验证中...';
+      statusEl.className = 'form-status show';
+      statusEl.textContent = '正在验证...';
+
+      try {
+        var token = localStorage.getItem('campus_user_token');
+        // 先获取当前用户信息以获取用户密码
+        var meResp = await fetch('/api/user/me', {
+          headers: { 'x-user-token': token || '' }
+        });
+        var meData = await meResp.json();
+        if (!meData.ok) { showAdminAuthStatus('请先登录', 'error'); return; }
+
+        // 用户需要在输入框输入自己的密码进行授权
+        // 简单提示用户需要先在校验弹窗输入自己的密码
+        showAdminAuthStatus('请输入你的校园墙账号密码进行授权', 'error');
+        // 弹窗让用户输入自己的密码
+        var userPwd = prompt('请输入你的校园墙账号密码以授权绑定超管身份：');
+        if (!userPwd) { showAdminAuthStatus('已取消', 'error'); return; }
+
+        var resp = await fetch('/api/user/bind-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': token || '' },
+          body: JSON.stringify({ password: userPwd, adminId: adminId, adminPassword: adminPwd })
+        });
+        var data = await resp.json();
+        if (data.ok) {
+          showAdminAuthStatus('🎉 超管认证成功！', 'success');
+          document.getElementById('adminAuthSubmitBtn').textContent = '已完成';
+          setTimeout(function() {
+            closeAdminAuthModal();
+            renderCertSection();
+          }, 1500);
+        } else {
+          showAdminAuthStatus(data.msg || '认证失败', 'error');
+          document.getElementById('adminAuthSubmitBtn').disabled = false;
+          document.getElementById('adminAuthSubmitBtn').textContent = '立即认证';
+        }
+      } catch (e) {
+        showAdminAuthStatus('网络错误：' + e.message, 'error');
+        document.getElementById('adminAuthSubmitBtn').disabled = false;
+        document.getElementById('adminAuthSubmitBtn').textContent = '立即认证';
+      }
+    }
+
+    function showAdminAuthStatus(msg, type) {
+      var el = document.getElementById('adminAuthStatus');
+      el.textContent = msg;
+      el.className = 'form-status show ' + (type || '');
     }
 
     async function doBindZhixue() {
@@ -1618,13 +2228,17 @@
         statusEl.className = 'form-status show error';
       }
 
+      // 滑块验证检查
+      if (!_certCaptchaToken) { showErr('请先完成人机验证'); return; }
+
       var body;
       if (isZhixueTab) {
         var username = document.getElementById('zhixueInputUsername').value.trim();
         var password = document.getElementById('zhixueInputPassword').value;
         if (!username) { showErr('请填写智学网账号'); return; }
         if (!password) { showErr('请填写智学网密码'); return; }
-        body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
+        if (!_zhixueUniqueAvailable) { showErr('此智学网账号已被绑定，请更换'); return; }
+        body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password, captchaId: _certCaptchaToken, captchaText: '1' };
       } else {
         var name = document.getElementById('manualName').value.trim();
         var email = document.getElementById('manualEmail').value.trim();
@@ -1633,7 +2247,7 @@
         if (!email) { showErr('请填写邮箱'); return; }
         if (!note) { showErr('请填写认证说明'); return; }
         if (manualImages.length === 0) { showErr('请至少上传一张证明图片'); return; }
-        body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: manualImages.slice() };
+        body = { type: 'manual', manualName: name, manualEmail: email, manualNote: note, manualImages: manualImages.slice(), captchaId: _certCaptchaToken, captchaText: '1' };
       }
 
       statusEl.textContent = '正在提交...';
@@ -1652,7 +2266,7 @@
           statusEl.className = 'form-status show success';
           setTimeout(function() {
             closeBindZhixueModal();
-            loadZhixueInfo();
+            renderCertSection();
           }, 1500);
         } else {
           throw new Error(data.msg || '提交失败');
@@ -1678,8 +2292,7 @@
           currentLoggedInUser = data.data;
           if (currentLoggedInUser.id === userId) {
             document.getElementById('editProfileBtn').style.display = '';
-            if (bindZhixueBtn) bindZhixueBtn.style.display = '';
-            loadZhixueInfo();
+            renderCertSection();
           }
         }
       } catch (err) {
@@ -1810,5 +2423,6 @@
 
     init();
   </script>
+  <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 </body>
 </html>

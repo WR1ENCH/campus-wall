@@ -1597,3 +1597,68 @@ server.js
 | `routes/qa.js` | 新增 accept/reward/quota 路由，限额+置顶扣费逻辑，置顶优先排序 |
 | `db.js` | `tableMigrations` 新增 `qa_questions.pinned` 列 |
 | `index.html` | QA 窗口动画 CSS，置顶选项 HTML/JS，额度显示 |
+
+### 会话 16 — 2026-07-18 — 发帖类型改为彩色圆点 + 全量访问记录
+
+#### Task 1：发帖类型选择改为彩色圆点
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 类型按钮 HTML | `index.html` | `.post-tag` 按钮移除 SVG 图标和文字，改为纯色圆形按钮，保留 `data-tag` 和 `onclick`，添加 `title` 属性 |
+| `.post-tag` CSS | `index.html` | 改为 `width:28px;height:28px;border-radius:50%;padding:0`，移除文字相关样式，用更饱和的颜色（黄 `#fbbf24` / 粉 `#f472b6` / 绿 `#34d399` / 橙 `#fb923c` / 蓝 `#60a5fa`） |
+| `.post-tag.active` | `index.html` | active 态：`scale(1.2)` + 半透明黑边框 + 阴影 |
+| 卡片弹动动画 | `index.html` | 新增 `@keyframes colorPop`：0%→scale(1), 30%→scale(1.08), 60%→scale(0.97), 100%→scale(1)；`.sticky-note` 添加 `colorPop` 动画 |
+
+#### Task 2：全量访问记录
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 新增端点 | `routes/system.js` | `POST /api/page-visit`：接收 `x-user-token`（可选），记录 IP/UA/用户信息到 `login_logs`，`type:'page_visit'`，未登录用户 account='游客' |
+| 前端调用 | `index.html` | `init()` 启动时调用 `POST /api/page-visit`，携带 `authHeaders()` |
+| admin 显示 | `admin.html` | `loadLoginLogs()` 中 `type==='page_visit'` 显示紫色「访问」徽章和「浏览」状态；新增 `.badge-visit` CSS 类 |
+
+#### Task 3：测试清单
+
+`todo.md` 已写入（不提交 git）。
+
+### 会话 17 — 2026-07-19 — 智学认证前端唯一性校验 + user.html 认证展示改造 + 滑块验证码
+
+#### Task 1：智学认证前端校验
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| 新增端点 | `routes/user.js` | `POST /api/user/check-zhixue-unique`：接收 `{zhixueUsername}`，查 `users` 表中 `zhixueUsername` 匹配且 `zhixueStatus==='approved'` 的用户，返回 `{available: bool}` |
+| 前端实时校验 | `user.html` | `checkZhixueUnique()` 函数：智学账号输入框 blur 和 input 时 500ms 防抖调后端，不可用时显示红色提示「此智学网账号已被绑定」 |
+
+#### Task 2：user.html 认证展示区域改造
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| HTML 变更 | `user.html` | 删除原有 `#bindZhixueBtn`（btn-cert 同学认证按钮）和 `#zhixueInfo`（旧 cert-info 区域） |
+| 新增认证展示区 | `user.html` | 在 profile 与 posts 之间新增 `.cert-section`：包含同学认证（绿色圆形SVG勋章）和超管认证（橙色圆形SVG勋章）两行，显示状态标签 + 操作按钮 |
+| 申请认证按钮 | `user.html` | `.profile-actions` 中新增 `#applyCertBtn`，点击打开 `#certChoiceModal` 选择弹窗 |
+| 选择弹窗 | `user.html` | `#certChoiceModal`：两个选项「同学认证」→ 打开原智学/手动认证弹窗；「超管认证」→ 打开管理员验证弹窗 |
+| 超管认证弹窗 | `user.html` | `#adminAuthModal`：输入管理员ID + 密码 + 滑块验证，调 `POST /api/user/bind-admin` 即时绑定 |
+| 状态渲染 | `user.html` | `renderCertSection()` 函数：调 `/api/user/me/zhixue-info` 和 `/api/user/me` 获取认证状态，动态渲染两行认证信息 |
+| 修改入口 | `user.html` | schoolCertActions：status 为 pending/rejected 时显示「修改」按钮，打开预填编辑弹窗 |
+| SVG 勋章 | `user.html` | 同学认证：绿色渐变圆底 + 书本/毕业帽 SVG；超管认证：橙色渐变圆底 + 盾牌/星 SVG |
+
+#### Task 3：滑块验证码集成
+
+| 改动 | 文件 | 说明 |
+|------|------|------|
+| CSS 引入 | `user.html` | 添加 `<link href="slider-captcha/slidercaptcha.min.css">` |
+| JS 引入 | `user.html` | 底部添加 `<script src="slider-captcha/longbow.slidercaptcha.min.js">` |
+| 滑块弹窗 | `user.html` | `#sliderCaptchaOverlay`：复用 index.html 同款滑块弹窗 |
+| 同学认证滑块 | `user.html` | `initCertCaptcha()`：在认证弹窗中初始化「人机验证」按钮，调用 `showSliderCaptcha()` |
+| 超管认证滑块 | `user.html` | `openAdminCert()`：在管理员弹窗中初始化「人机验证」按钮 |
+| 滑块核心函数 | `user.html` | `showSliderCaptcha(purpose, callback)`：打开滑块弹窗，成功后 `POST /api/slider-captcha/grant` 获取 token，触发回调 |
+| 后端滑块校验 | `routes/user.js` | `POST /api/user/bind-zhixue` 新增 `captchaId`/`captchaText` 校验（Bot-Testing 模式跳过） |
+| 前端提交携带 | `user.html` | `doBindZhixue()` 提交 body 中附加 `captchaId: _certCaptchaToken, captchaText: '1'` |
+
+#### API 变更
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/user/check-zhixue-unique` | 新增，智学账号唯一性实时校验 |
+| POST | `/api/user/bind-zhixue` | 改造，新增 captchaId/captchaText 必填参数 |

@@ -125,6 +125,10 @@
       "lib_credibility_refresh_months",
       "lib_credibility_restorecredibility",
       "lib_credibility_thresholds",
+<<<<<<< HEAD
+=======
+      "lib_crypto_verifyusertoken",
+>>>>>>> origin/master
       "lib_idmigration",
       "lib_idmigration_ensureuniqueids",
       "lib_idmigration_generateid_generateuid_isvalididformat_logidassignment",
@@ -269,6 +273,45 @@
       "routes_user_writeusers"
     ],
     "6": [
+<<<<<<< HEAD
+=======
+      "bullyingnames",
+      "bullyingnames_addname",
+      "bullyingnames_check",
+      "bullyingnames_data_dir",
+      "bullyingnames_ensuredir",
+      "bullyingnames_fs",
+      "bullyingnames_getall",
+      "bullyingnames_loadnames",
+      "bullyingnames_names_file",
+      "bullyingnames_path",
+      "bullyingnames_protected_names",
+      "bullyingnames_reload",
+      "bullyingnames_removename",
+      "bullyingnames_savenames",
+      "routes_qa",
+      "routes_qa_broadcastsse",
+      "routes_qa_changecredit",
+      "routes_qa_check_checkbullyingnames",
+      "routes_qa_check_checksensitive",
+      "routes_qa_credibility",
+      "routes_qa_db",
+      "routes_qa_getclientip",
+      "routes_qa_isfeatureblocked",
+      "routes_qa_readcreditlogs",
+      "routes_qa_readqaanswers",
+      "routes_qa_readqaquestions",
+      "routes_qa_readusers",
+      "routes_qa_settleexpiredquestions",
+      "routes_qa_uniqueid",
+      "routes_qa_verifyusertoken_verifysignedtoken",
+      "routes_qa_writecreditlogs",
+      "routes_qa_writeqaanswers",
+      "routes_qa_writeqaquestions",
+      "routes_qa_writeusers"
+    ],
+    "7": [
+>>>>>>> origin/master
       "acorn",
       "better_sqlite3",
       "compression",
@@ -301,7 +344,11 @@
       "playwright",
       "slider_captcha"
     ],
+<<<<<<< HEAD
     "7": [
+=======
+    "8": [
+>>>>>>> origin/master
       "routes_posts",
       "routes_posts_broadcastsse",
       "routes_posts_captchastore_postratelimit",
@@ -334,7 +381,11 @@
       "routes_posts_writereports",
       "routes_posts_writeusers"
     ],
+<<<<<<< HEAD
     "8": [
+=======
+    "9": [
+>>>>>>> origin/master
       "db",
       "db_cache",
       "db_database",
@@ -365,7 +416,11 @@
       "db_readvotes",
       "db_readwhispers"
     ],
+<<<<<<< HEAD
     "9": [
+=======
+    "10": [
+>>>>>>> origin/master
       "db_adddeleteditem",
       "db_dropandinsert",
       "db_writeadmins",
@@ -395,7 +450,11 @@
       "db_writevotes",
       "db_writewhispers"
     ],
+<<<<<<< HEAD
     "10": [
+=======
+    "11": [
+>>>>>>> origin/master
       "readme",
       "readme_10_\u5904\u7f5a\u673a\u5236",
       "readme_11_\u4fe1\u7528\u5206\u7cfb\u7edf",
@@ -425,6 +484,7 @@
       "readme_\u8d21\u732e\u6307\u5357",
       "readme_\u9879\u76ee\u7ed3\u6784"
     ],
+<<<<<<< HEAD
     "11": [
       "lib_crypto_verifysignedtoken",
       "lib_crypto_verifyusertoken",
@@ -484,6 +544,9 @@
       "routes_votes_writevoterecords"
     ],
     "13": [
+=======
+    "12": [
+>>>>>>> origin/master
       "docs_for_agent_15_\u4f1a\u8bdd\u53d8\u66f4\u65e5\u5fd7",
       "docs_for_agent_admin_html_\u4fee\u590d",
       "docs_for_agent_bug_1_\u53d1\u5e16_\u8bdd\u9898_\u81ea\u52a8\u540c\u6b65\u5230\u8ba8\u8bba\u533a_\u84dd\u8272\u53ef\u70b9\u51fb\u94fe\u63a5",
@@ -511,6 +574,7 @@
       "docs_for_agent_\u654f\u611f\u8bcd\u81ea\u52a8\u4e3e\u62a5\u683c\u5f0f\u5316",
       "docs_for_agent_\u8ba8\u8bba\u533a\u5f00\u653e\u7528\u6237\u521b\u5efa\u8bdd\u9898"
     ],
+<<<<<<< HEAD
     "14": [
       "lib_sse",
       "lib_sse_broadcastsse",
@@ -540,6 +604,9 @@
       "routes_votes_writevotes"
     ],
     "15": [
+=======
+    "13": [
+>>>>>>> origin/master
       "routes_pickup",
       "routes_pickup_broadcastsse",
       "routes_pickup_changecredit",
@@ -567,7 +634,11 @@
       "routes_pickup_writepickupreports",
       "routes_pickup_writeusers"
     ],
+<<<<<<< HEAD
     "16": [
+=======
+    "14": [
+>>>>>>> origin/master
       "db_addidinput",
       "db_all",
       "db_allsql",
@@ -594,6 +665,7 @@
       "db_writesc",
       "db_writetrusttokens"
     ],
+<<<<<<< HEAD
     "17": [
       "routes_qa",
       "routes_qa_broadcastsse",
@@ -615,6 +687,84 @@
       "routes_qa_writeqaanswers",
       "routes_qa_writeqaquestions",
       "routes_qa_writeusers"
+=======
+    "15": [
+      "db_readadmins",
+      "db_readdiscussions",
+      "db_readlogs",
+      "lib_helpers",
+      "lib_helpers_getclientip",
+      "lib_helpers_hasspecialchars",
+      "lib_helpers_parselocaldatetime",
+      "lib_middleware",
+      "lib_middleware_getclientip",
+      "lib_middleware_inputsanitize",
+      "lib_middleware_loginfailures_login_window_ms_login_max_fails",
+      "lib_middleware_ratelimitlogin",
+      "lib_middleware_recordloginfail",
+      "lib_middleware_requiresuper",
+      "lib_middleware_sanitizestring",
+      "lib_middleware_verifysignedtoken",
+      "routes_auth",
+      "routes_auth_addloginlog",
+      "routes_auth_broadcastsse",
+      "routes_auth_getclientip",
+      "routes_auth_hasadmins",
+      "routes_auth_hashpassword_verifypassword_maketoken_verifysignedtoken",
+      "routes_auth_readadmins_writeadmins_readlogs_writelogs",
+      "routes_auth_requireadmin_requiresuper_ratelimitlogin_recordloginfail"
+    ],
+    "16": [
+      "routes_discussions",
+      "routes_discussions_broadcastsse",
+      "routes_discussions_check_checkbullyingnames",
+      "routes_discussions_check_checksensitive",
+      "routes_discussions_commentdeletelimit",
+      "routes_discussions_credibility",
+      "routes_discussions_db",
+      "routes_discussions_discussioncreatelimit",
+      "routes_discussions_getclientip",
+      "routes_discussions_hasspecialchars",
+      "routes_discussions_isfeatureblocked",
+      "routes_discussions_parselocaldatetime",
+      "routes_discussions_readdiscussioncomments",
+      "routes_discussions_readdiscussions",
+      "routes_discussions_readnotices",
+      "routes_discussions_readposts",
+      "routes_discussions_readreports",
+      "routes_discussions_readusers",
+      "routes_discussions_savedeleteditem",
+      "routes_discussions_uniqueid",
+      "routes_discussions_verifyusertoken_verifysignedtoken",
+      "routes_discussions_writediscussioncomments",
+      "routes_discussions_writereports",
+      "routes_discussions_writeusers"
+    ],
+    "17": [
+      "routes_votes",
+      "routes_votes_broadcastsse",
+      "routes_votes_check_checkbullyingnames",
+      "routes_votes_check_checksensitive",
+      "routes_votes_credibility",
+      "routes_votes_db",
+      "routes_votes_getclientip",
+      "routes_votes_isfeatureblocked",
+      "routes_votes_readnotices",
+      "routes_votes_readsc",
+      "routes_votes_readusers",
+      "routes_votes_readvoteiprecords",
+      "routes_votes_readvoterecords",
+      "routes_votes_readvotes",
+      "routes_votes_requireadmin",
+      "routes_votes_resolveadminorsc",
+      "routes_votes_uniqueid",
+      "routes_votes_updatevoteoptions",
+      "routes_votes_verifyusertoken_verifysignedtoken",
+      "routes_votes_writenotices",
+      "routes_votes_writeusers",
+      "routes_votes_writevoteiprecords",
+      "routes_votes_writevoterecords"
+>>>>>>> origin/master
     ],
     "18": [
       "home_wr1ench_campus_wall_dev_campus_wall_miniprogram_app_json",
@@ -638,6 +788,30 @@
       "ref_pages_notice_notice"
     ],
     "19": [
+<<<<<<< HEAD
+=======
+      "lib_sse",
+      "lib_sse_sseclients",
+      "server",
+      "server_app",
+      "server_compression",
+      "server_cookieparser",
+      "server_cors",
+      "server_db",
+      "server_ensureuniqueids",
+      "server_envpath",
+      "server_express",
+      "server_frame_pages",
+      "server_fs",
+      "server_inputsanitize_createcheckmaintenance",
+      "server_maintenance",
+      "server_page_map",
+      "server_path",
+      "server_sseclients",
+      "server_verifysignedtoken"
+    ],
+    "20": [
+>>>>>>> origin/master
       "docs_for_agent_5_10_\u7edf\u4e00\u4e3e\u62a5_\u5904\u7f5a_\u7533\u8bc9_\u9738\u51cc_reports_penalty_system_admin",
       "docs_for_agent_5_11_\u540e\u53f0\u7ba1\u7406_\u7528\u6237_\u5185\u5bb9\u7ba1\u7406_admin_js",
       "docs_for_agent_5_12_\u540e\u53f0\u7ba1\u7406_\u5b89\u5168_\u654f\u611f\u8bcd_admin_js",
@@ -656,7 +830,11 @@
       "docs_for_agent_5_9_\u5931\u7269_\u6361\u6f0f\u62cd\u5356_pickup_js",
       "docs_for_agent_5_api_\u53c2\u8003_\u6309\u529f\u80fd\u6a21\u5757\u5206\u7ec4"
     ],
+<<<<<<< HEAD
     "20": [
+=======
+    "21": [
+>>>>>>> origin/master
       "lib_penalty",
       "lib_penalty_broadcastsse",
       "lib_penalty_db",
@@ -675,6 +853,7 @@
       "lib_penalty_parseimages",
       "lib_penalty_parsemeasures"
     ],
+<<<<<<< HEAD
     "21": [
       "server",
       "server_app",
@@ -694,6 +873,8 @@
       "server_sseclients",
       "server_verifysignedtoken"
     ],
+=======
+>>>>>>> origin/master
     "22": [
       "docs_superpowers_specs_2026_07_14_whisper_feature_design",
       "docs_superpowers_specs_2026_07_14_whisper_feature_design_action_bar",
@@ -749,6 +930,7 @@
       "routes_penalty_writeusers"
     ],
     "25": [
+<<<<<<< HEAD
       "lib_hotness",
       "lib_hotness_cache",
       "lib_hotness_computehotness",
@@ -782,6 +964,8 @@
       "bullyingnames_savenames"
     ],
     "27": [
+=======
+>>>>>>> origin/master
       "maintenance",
       "maintenance_createtestkey",
       "maintenance_crypto",
@@ -797,6 +981,7 @@
       "maintenance_verifytestkey",
       "maintenance_write"
     ],
+<<<<<<< HEAD
     "28": [
       "db_readadmins",
       "db_readdiscussions",
@@ -813,6 +998,25 @@
       "routes_auth_requireadmin_requiresuper_ratelimitlogin_recordloginfail"
     ],
     "29": [
+=======
+    "26": [
+      "routes_notices",
+      "routes_notices_broadcastsse",
+      "routes_notices_check_checkbullyingnames",
+      "routes_notices_check_checksensitive",
+      "routes_notices_db",
+      "routes_notices_readannouncement",
+      "routes_notices_readnotices",
+      "routes_notices_readsc",
+      "routes_notices_readusers",
+      "routes_notices_readvotes",
+      "routes_notices_requireadmin",
+      "routes_notices_verifysignedtoken_verifyusertoken",
+      "routes_notices_writeannouncement",
+      "routes_notices_writeusers"
+    ],
+    "27": [
+>>>>>>> origin/master
       "campus_wall_miniprogram_pages_notice_notice",
       "campus_wall_miniprogram_pages_notice_notice_closedetail",
       "campus_wall_miniprogram_pages_notice_notice_fetchannouncement",
@@ -826,7 +1030,11 @@
       "campus_wall_miniprogram_pages_notice_notice_opendetail",
       "campus_wall_miniprogram_pages_notice_notice_switchtab"
     ],
+<<<<<<< HEAD
     "30": [
+=======
+    "28": [
+>>>>>>> origin/master
       "docs_for_agent",
       "docs_for_agent_0_\u4e00\u53e5\u8bdd\u5b9a\u4f4d",
       "docs_for_agent_10_\u5982\u4f55\u65b0\u589e\u4e00\u4e2a\u540e\u7aef\u529f\u80fd_\u6807\u51c6\u6d41\u7a0b",
@@ -840,7 +1048,11 @@
       "docs_for_agent_agent_dev_campus_wall_\u5f00\u53d1\u6587\u6863_ai_agent_\u4e0a\u624b\u6307\u5357",
       "docs_for_agent_\u4ed3\u5e93\u5730\u5740"
     ],
+<<<<<<< HEAD
     "31": [
+=======
+    "29": [
+>>>>>>> origin/master
       "docs_for_agent_3_10_\u4fe1\u7528\u5206\u7cfb\u7edf_lib_credibility_js_\u672c\u6b21\u65b0\u589e",
       "docs_for_agent_3_11_\u53d1\u5e16\u53ef\u89c1\u6027_\u5141\u8bb8\u8bc4\u8bba_\u654f\u611f\u8bcd\u62e6\u622a_\u672c\u6b21\u63d0\u4ea4\u65b0\u589e",
       "docs_for_agent_3_1_\u8bf7\u6c42\u751f\u547d\u5468\u671f_server_js",
@@ -854,7 +1066,11 @@
       "docs_for_agent_3_9_\u5904\u7f5a\u673a\u5236_\u5b89\u5168\u4e2d\u5fc3_\u7edf\u4e00\u4e3e\u62a5\u7cfb\u7edf_\u672c\u6b21\u63d0\u4ea4\u65b0\u589e",
       "docs_for_agent_3_\u540e\u7aef\u67b6\u6784"
     ],
+<<<<<<< HEAD
     "32": [
+=======
+    "30": [
+>>>>>>> origin/master
       "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation",
       "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_campus_wall_\u4ecb\u7ecd\u9875\u5b9e\u73b0\u8ba1\u5212",
       "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_global_constraints",
@@ -868,7 +1084,11 @@
       "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_\u6587\u4ef6\u7ed3\u6784\u6620\u5c04",
       "docs_superpowers_plans_2026_07_15_campus_wall_intro_page_implementation_\u81ea\u6211\u5ba1\u67e5"
     ],
+<<<<<<< HEAD
     "33": [
+=======
+    "31": [
+>>>>>>> origin/master
       "docs_superpowers_specs_2026_07_15_bullying_report_redesign",
       "docs_superpowers_specs_2026_07_15_bullying_report_redesign_1_\u9738\u51cc\u62a5\u544a\u673a\u5236\u66f4\u6539",
       "docs_superpowers_specs_2026_07_15_bullying_report_redesign_2_\u6570\u636e\u552f\u4e00\u5316",
@@ -881,7 +1101,11 @@
       "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u81ea\u6211\u4e3e\u62a5_self",
       "docs_superpowers_specs_2026_07_15_bullying_report_redesign_\u9738\u51cc\u62a5\u544a\u7cfb\u7edf\u91cd\u8bbe\u8ba1"
     ],
+<<<<<<< HEAD
     "34": [
+=======
+    "32": [
+>>>>>>> origin/master
       "lib_crypto",
       "lib_crypto_cert_enc_key",
       "lib_crypto_crypto",
@@ -894,6 +1118,33 @@
       "lib_crypto_signtoken",
       "lib_crypto_verifypassword"
     ],
+<<<<<<< HEAD
+=======
+    "33": [
+      "lib_crypto_verifysignedtoken",
+      "lib_middleware_createcheckmaintenance",
+      "lib_middleware_requireadmin",
+      "routes_discussions_requireadmin",
+      "routes_maintenance",
+      "routes_maintenance_captchastore",
+      "routes_maintenance_db",
+      "routes_maintenance_maintenance",
+      "routes_maintenance_requireadmin",
+      "routes_maintenance_signtoken_verifysignedtoken"
+    ],
+    "34": [
+      "lib_sse_broadcastsse",
+      "routes_discussions_writediscussions",
+      "routes_discussions_writenotices",
+      "routes_discussions_writeposts",
+      "routes_notices_writenotices",
+      "routes_notices_writevotes",
+      "routes_pickup_writenotices",
+      "routes_user_writenotices",
+      "routes_user_writeposts",
+      "routes_votes_writevotes"
+    ],
+>>>>>>> origin/master
     "35": [
       "routes_student_council",
       "routes_student_council_broadcastsse",
@@ -938,7 +1189,31 @@
       "db_insertrow",
       "db_insertuser"
     ],
+<<<<<<< HEAD
     "39": [
+=======
+    "38": [
+      "lib_hotness",
+      "lib_hotness_cache",
+      "lib_hotness_computehotness",
+      "lib_hotness_db",
+      "lib_hotness_getcachedhotness",
+      "lib_hotness_onlineusers",
+      "lib_hotness_recompute",
+      "lib_state_onlineusers"
+    ],
+    "39": [
+      "lib_state",
+      "lib_state_captchagrantlimit",
+      "lib_state_captchastore",
+      "lib_state_cardcreatelimits",
+      "lib_state_loginfailures",
+      "lib_state_postratelimit",
+      "lib_state_qrcodestore",
+      "lib_state_redeemratelimit"
+    ],
+    "40": [
+>>>>>>> origin/master
       "task",
       "task_1_\u53d1\u5e16\u65f6\u65b0\u589e\u9009\u9879_\u6240\u6709\u4eba\u53ef\u89c1_\u4ec5\u81ea\u5df1\u53ef\u89c1",
       "task_2_\u53d1\u5e16\u654f\u611f\u8bcd\u81ea\u52a8\u62e6\u622a\u65b0\u673a\u5236",
@@ -948,7 +1223,11 @@
       "task_\u51c6\u5907\u5de5\u4f5c",
       "task_\u8981\u6c42"
     ],
+<<<<<<< HEAD
     "40": [
+=======
+    "41": [
+>>>>>>> origin/master
       "campus_wall_miniprogram_pages_login_login",
       "campus_wall_miniprogram_pages_login_login_handlescanresult",
       "campus_wall_miniprogram_pages_login_login_onload",
@@ -957,7 +1236,11 @@
       "campus_wall_miniprogram_pages_login_login_scanqrcode",
       "campus_wall_miniprogram_pages_login_login_submitmanualtoken"
     ],
+<<<<<<< HEAD
     "41": [
+=======
+    "42": [
+>>>>>>> origin/master
       "docs_for_agent_14_1_\u53cc\u91cd\u5b58\u50a8\u6a21\u578b_\u6838\u5fc3\u8ba4\u77e5",
       "docs_for_agent_14_2_\u4e09\u6761\u8bfb\u53d6_\u4e0b\u53d1\u901a\u9053_\u6ce8\u610f\u8bed\u4e49\u5dee\u5f02",
       "docs_for_agent_14_3_\u81ea\u52a8\u89e6\u53d1\u70b9\u5b8c\u6574\u6e05\u5355",
@@ -966,7 +1249,11 @@
       "docs_for_agent_14_6_\u5c0f\u7ed3_\u7ed9_ai_agent_\u7684\u901f\u8bb0",
       "docs_for_agent_14_\u901a\u77e5\u7cfb\u7edf\u6df1\u5ea6\u5206\u6790_\u81ea\u52a8\u89e6\u53d1\u901a\u77e5"
     ],
+<<<<<<< HEAD
     "42": [
+=======
+    "43": [
+>>>>>>> origin/master
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_md",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u5f00\u53d1\u8bf4\u660e",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u6821\u56ed\u5899\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
@@ -975,6 +1262,7 @@
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u80cc\u666f\u6837\u5f0f_\u4e0e\u7f51\u9875\u7248\u4e00\u81f4",
       "home_wr1ench_campus_wall_dev_x_campus_wall_miniprogram_readme_\u989c\u8272\u7cfb\u7edf"
     ],
+<<<<<<< HEAD
     "43": [
       "lib_state_captchastore",
       "routes_maintenance",
@@ -984,6 +1272,8 @@
       "routes_maintenance_requireadmin",
       "routes_maintenance_signtoken_verifysignedtoken"
     ],
+=======
+>>>>>>> origin/master
     "44": [
       "spa",
       "spa_sparouter",
@@ -1105,6 +1395,7 @@
   "cohesion": {
     "0": 0.03508771929824561,
     "1": 0.04421768707482993,
+<<<<<<< HEAD
     "2": 0.07862679955703211,
     "3": 0.05555555555555555,
     "4": 0.05555555555555555,
@@ -1145,6 +1436,48 @@
     "39": 0.25,
     "40": 0.42857142857142855,
     "41": 0.2857142857142857,
+=======
+    "2": 0.07610993657505286,
+    "3": 0.05555555555555555,
+    "4": 0.05555555555555555,
+    "5": 0.06050420168067227,
+    "6": 0.0873440285204991,
+    "7": 0.06451612903225806,
+    "8": 0.07526881720430108,
+    "9": 0.06896551724137931,
+    "10": 0.07142857142857142,
+    "11": 0.07142857142857142,
+    "12": 0.08,
+    "13": 0.08923076923076922,
+    "14": 0.09666666666666666,
+    "15": 0.11956521739130435,
+    "16": 0.08333333333333333,
+    "17": 0.09486166007905138,
+    "18": 0.10526315789473684,
+    "19": 0.1111111111111111,
+    "20": 0.11764705882352941,
+    "21": 0.16911764705882354,
+    "22": 0.125,
+    "23": 0.14166666666666666,
+    "24": 0.13333333333333333,
+    "25": 0.27472527472527475,
+    "26": 0.14285714285714285,
+    "27": 0.3181818181818182,
+    "28": 0.16666666666666666,
+    "29": 0.16666666666666666,
+    "30": 0.16666666666666666,
+    "31": 0.18181818181818182,
+    "32": 0.23636363636363636,
+    "33": 0.2222222222222222,
+    "34": 0.2,
+    "35": 0.2,
+    "36": 0.25,
+    "37": 0.25,
+    "38": 0.32142857142857145,
+    "39": 0.25,
+    "40": 0.25,
+    "41": 0.42857142857142855,
+>>>>>>> origin/master
     "42": 0.2857142857142857,
     "43": 0.2857142857142857,
     "44": 0.5238095238095238,
@@ -1188,6 +1521,14 @@
       "degree": 20
     },
     {
+<<<<<<< HEAD
+=======
+      "id": "lib_crypto_verifysignedtoken",
+      "label": "verifySignedToken()",
+      "degree": 17
+    },
+    {
+>>>>>>> origin/master
       "id": "readme_\u6838\u5fc3\u529f\u80fd\u8be6\u89e3",
       "label": "\ud83d\ude80 \u6838\u5fc3\u529f\u80fd\u8be6\u89e3",
       "degree": 17
@@ -1201,6 +1542,7 @@
       "id": "routes_admin_deletereportedcontent",
       "label": "deleteReportedContent()",
       "degree": 14
+<<<<<<< HEAD
     },
     {
       "id": "lib_uniqueid_generateid",
@@ -1213,6 +1555,15 @@
       "degree": 12
     },
     {
+=======
+    },
+    {
+      "id": "lib_uniqueid_generateid",
+      "label": "generateId()",
+      "degree": 13
+    },
+    {
+>>>>>>> origin/master
       "id": "docs_for_agent_3_\u540e\u7aef\u67b6\u6784",
       "label": "3. \u540e\u7aef\u67b6\u6784",
       "degree": 12
