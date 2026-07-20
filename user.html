@@ -1878,7 +1878,10 @@
 
     async function fetchUserInfo() {
       try {
-        const resp = await fetch(API_BASE + '/users/' + userId);
+        var token = localStorage.getItem('campus_user_token');
+        var headers = {};
+        if (token) headers['x-user-token'] = token;
+        const resp = await fetch(API_BASE + '/users/' + userId, { headers });
         const data = await resp.json();
         if (!data.ok) throw new Error(data.msg || '获取用户信息失败');
         return data.data;
