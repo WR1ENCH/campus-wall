@@ -1403,6 +1403,19 @@ server.js
 - 申请认证窗口无法打开 → 添加 `onclick`。
 - 详情见 §10.6（样式/布局修复）。
 
+### 会话 19 — 2026-07-20 · PLUS 续订改造 + 优惠窗口修复 + notice 白屏修复
+
+#### Task A：续订弹窗改为页面滚动
+- `plus.html:945`：`onclick="openRenewModal()"` → `onclick="scrollToPricing()"`
+- `plus.html:1038`：新增 `scrollToPricing()` 函数，滚动到方案区并选中月卡
+- 删除 `openRenewModal()`、`selectRenewPlan()`、`doRenewConfirm()` 三个函数（约 100 行）
+
+#### Task B：修复"已过续订优惠窗口"误显示
+- `plus.html:940-944`：区分三种状态 —— `isIn48hWindow` → "续订享 85 折优惠中"、未到期但不在窗口 → "到期前48小时内可享续订优惠"、已过期 → "已过续订优惠窗口"
+
+#### Task C：修复 notice.html 白屏
+- `notice.html:970`：移除 stray `}` 导致的 `Uncaught SyntaxError: missing ) after argument list`
+
 ## 16. 图谱参考
 
 本项目使用 graphify 构建了代码知识图谱（位于 `graphify-out/`），包含 **679 个节点**、**1128 条边**、**41 个社区**（最近一次为 `--code-only` 重建，仅索引代码、未做 LLM 语义提取，社区名为占位 `Community N`）。在编辑代码前，建议先查看此图谱以理解整体架构和模块间关系。

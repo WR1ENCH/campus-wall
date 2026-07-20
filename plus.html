@@ -937,12 +937,21 @@
       if (isLoggedIn && isPlus) {
         var end = subData.endTime ? new Date(subData.endTime).toLocaleDateString('zh-CN') : '-';
         var inWindow = isIn48hWindow(subData);
+        var endTs = subData.endTime ? new Date(subData.endTime).getTime() : 0;
+        var renewalMsg;
+        if (inWindow) {
+          renewalMsg = '续订享 85 折优惠中';
+        } else if (endTs > Date.now()) {
+          renewalMsg = '到期前48小时内可享续订优惠';
+        } else {
+          renewalMsg = '已过续订优惠窗口';
+        }
         expiryHtml =
         '<div class="section-card anim-3">' +
             '<div class="section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 我的订阅</div>' +
             '<div class="renew-info">' +
-              '<div class="expiry">到期日：<strong>' + end + '</strong><br><span style="font-size:12px;color:var(--text-muted)">' + (inWindow ? '续订享 85 折优惠中' : '已过续订优惠窗口') + '</span></div>' +
-              '<button class="btn-primary" onclick="openRenewModal()" style="width:auto;padding:8px 20px;font-size:13px;">' +
+              '<div class="expiry">到期日：<strong>' + end + '</strong><br><span style="font-size:12px;color:var(--text-muted)">' + renewalMsg + '</span></div>' +
+              '<button class="btn-primary" onclick="scrollToPricing()" style="width:auto;padding:8px 20px;font-size:13px;">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
                 '续订' +
               '</button>' +
@@ -1033,6 +1042,11 @@
           el.style.background = 'linear-gradient(180deg, #fffdf0 0%, var(--surface) 100%)';
         }
       });
+    }
+
+    function scrollToPricing() {
+      document.getElementById('pricingSection').scrollIntoView({ behavior: 'smooth' });
+      selectPlan('monthly');
     }
 
     // ===== Subscribe / Renew =====
@@ -1145,107 +1159,7 @@
       });
     }
 
-    function openRenewModal() {
-      var token = tok();
-      if (!token) return;
-      var priceData = window._priceData || { weekly: 399, monthly: 699 };
-      var weeklyPrice = Math.round(priceData.weekly * 0.85);
-      var monthlyPrice = Math.round(priceData.monthly * 0.85);
-      var selected = 'monthly';
 
-      var overlay = document.getElementById('renewModal');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'renewModal';
-        overlay.className = 'modal-overlay';
-        overlay.innerHTML =
-          '<div class="modal-box" style="max-width:400px">' +
-            '<div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>' +
-            '<div class="modal-title">续订 PLUS++</div>' +
-            '<div class="modal-desc" style="margin-bottom:16px">续订享 <span style="color:var(--pos);font-weight:700;">85 折</span> 优惠</div>' +
-            '<div style="display:flex;gap:10px;margin-bottom:20px">' +
-              '<div class="pricing-card" onclick="selectRenewPlan(\'weekly\')" style="flex:1;cursor:pointer;padding:16px 12px;text-align:center;border:1.5px solid var(--border);border-radius:var(--radius)" id="renewCardWeekly">' +
-                '<div style="font-size:13px;font-weight:600;margin-bottom:6px">周卡</div>' +
-                '<div style="font-size:24px;font-weight:800">' + weeklyPrice + ' <span style="font-size:12px;font-weight:500;color:var(--text-muted)">Credit</span></div>' +
-                '<div style="font-size:11px;color:var(--text-muted);text-decoration:line-through">' + priceData.weekly + ' Credit</div>' +
-                '<div style="font-size:11px;color:var(--pos);font-weight:600;margin-top:2px">85 折</div>' +
-              '</div>' +
-              '<div class="pricing-card featured" onclick="selectRenewPlan(\'monthly\')" style="flex:1;cursor:pointer;padding:16px 12px;text-align:center;border:1.5px solid var(--gold);border-radius:var(--radius);background:linear-gradient(180deg,#fffdf0 0%,#fff 100%)" id="renewCardMonthly">' +
-                '<div style="font-size:13px;font-weight:600;margin-bottom:6px">月卡</div>' +
-                '<div style="font-size:24px;font-weight:800">' + monthlyPrice + ' <span style="font-size:12px;font-weight:500;color:var(--text-muted)">Credit</span></div>' +
-                '<div style="font-size:11px;color:var(--text-muted);text-decoration:line-through">' + priceData.monthly + ' Credit</div>' +
-                '<div style="font-size:11px;color:var(--pos);font-weight:600;margin-top:2px">85 折</div>' +
-              '</div>' +
-            '</div>' +
-            '<div class="modal-actions">' +
-              '<button class="btn-secondary" onclick="closeModal(\'renewModal\')">取消</button>' +
-              '<button class="btn-primary" id="renewConfirm" onclick="doRenewConfirm()">确认续订</button>' +
-            '</div>' +
-          '</div>';
-        overlay.dataset.plan = selected;
-        overlay.dataset.weeklyPrice = weeklyPrice;
-        overlay.dataset.monthlyPrice = monthlyPrice;
-        document.body.appendChild(overlay);
-      } else {
-        overlay.dataset.plan = selected;
-        overlay.dataset.weeklyPrice = weeklyPrice;
-        overlay.dataset.monthlyPrice = monthlyPrice;
-        selectRenewPlan('monthly');
-      }
-      setTimeout(function(){ overlay.classList.add('open'); }, 10);
-    }
-
-    function selectRenewPlan(plan) {
-      var overlay = document.getElementById('renewModal');
-      if (!overlay) return;
-      overlay.dataset.plan = plan;
-      var weeklyCard = document.getElementById('renewCardWeekly');
-      var monthlyCard = document.getElementById('renewCardMonthly');
-      if (plan === 'weekly') {
-        weeklyCard.style.borderColor = 'var(--gold)';
-        weeklyCard.style.background = 'linear-gradient(180deg,#fffdf0 0%,#fff 100%)';
-        monthlyCard.style.borderColor = 'var(--border)';
-        monthlyCard.style.background = '';
-      } else {
-        monthlyCard.style.borderColor = 'var(--gold)';
-        monthlyCard.style.background = 'linear-gradient(180deg,#fffdf0 0%,#fff 100%)';
-        weeklyCard.style.borderColor = 'var(--border)';
-        weeklyCard.style.background = '';
-      }
-    }
-
-    function doRenewConfirm() {
-      var token = tok();
-      if (!token) return;
-      var overlay = document.getElementById('renewModal');
-      var plan = overlay ? (overlay.dataset.plan || 'monthly') : 'monthly';
-      var btn = document.getElementById('renewConfirm');
-      btn.disabled = true;
-      btn.textContent = '处理中…';
-
-      fetch('/api/user/subscriptions/renew', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
-        body: JSON.stringify({ plan: plan })
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if (j.ok) {
-          showTip('续订成功！', 'success');
-          closeModal('renewModal');
-          loadPage();
-        } else {
-          showTip(j.msg || '续订失败', 'error');
-          btn.disabled = false;
-          btn.textContent = '确认续订';
-        }
-      })
-      .catch(function(){
-        showTip('网络错误，请稍后重试', 'error');
-        btn.disabled = false;
-        btn.textContent = '确认续订';
-      });
-    }
 
     // ===== Redeem =====
     function showRedeemResult(el, msg, type) {
