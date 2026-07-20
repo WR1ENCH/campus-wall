@@ -356,6 +356,17 @@ admin → auth → user → posts → discussions → qa → votes → notices
 **更多选项展开收起动画**：
 - `.post-more-options` 改为 `max-height + opacity` 过渡（`.open` class 切换，取代 `display: none/block`）。
 
+### 5.3.1 PLUS++ 金框认证标识
+
+`GET /api/posts` 和 `GET /api/posts/:id` 的响应中，如果帖子作者有活跃的 PLUS++ 订阅，会多出 `authorIsPlus: true/false` 字段。
+
+前端在以下位置显示金框 + 徽标：
+- **index.html 帖子卡片**（`renderNotes()`）：`.sticky-note` 加 `.plus-gold` 类（金色边框 + shimmer 扫光动画），作者名后显示 `plus-badge` 星标徽章
+- **index.html 详情弹窗**（`openNoteDetail()`）：`.note-detail-box` 加 `.plus-gold` 类，author 区显示 `detail-plus-badge` 认证标识
+- **post.html 详情页**（`renderPost()`）：`.note-card` 加 `.plus-gold` 类，badges 区显示 `plus-cert-badge` 认证标识
+
+后端逻辑在 `routes/posts.js`：导入 `lib/subscription.js` 的 `isUserPlus(userId)` 函数，在 author 数据增强区块中注入 `authorIsPlus` 字段。
+
 ## 4. 数据模型（db.js — SQLite 表）
 
 数据库文件：`data/campus.db`，WAL 模式。所有表在 `migrate()` 中 `CREATE TABLE IF NOT EXISTS` 自动建表（**无需手动迁移**）。代码统一通过 `readXxx()` / `writeXxx()` 接口访问（底层用 `dropAndInsert` 全表替换或 `insertRow` 单行插入）。

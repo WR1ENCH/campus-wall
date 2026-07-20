@@ -9,6 +9,7 @@ const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const maintenance = require('../maintenance');
+const { isUserPlus } = require('../lib/subscription');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -144,6 +145,7 @@ app.get('/api/posts', (req, res) => {
           likedBy: Array.isArray(p.likedBy) ? p.likedBy : [],
           authorAdminRole: adminRole,
           authorBindAdminId: adminId,
+          authorIsPlus: isUserPlus(author.id),
           authorZhixueStatus: zhixueStatus,
           authorZhixueCertType: author.zhixueCertType || null
         };
@@ -223,7 +225,7 @@ app.get('/api/posts/:id', (req, res) => {
       if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
         zhixueStatus = null;
       }
-      return res.json({ ok: true, data: { ...post, authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
+      return res.json({ ok: true, data: { ...post, authorIsPlus: isUserPlus(author.id), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
     }
   }
   res.json({ ok: true, data: post });
