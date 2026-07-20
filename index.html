@@ -5840,16 +5840,17 @@ async function showPostCaptchaModal() {
   data-id="${post.id}"
   onclick="openNoteDetail('${post.id}')">
   ${pinHtml}
+  ${post.authorIsPlus ? '<div class="plus-corner-badge"><span>PLUS</span></div>' : ''}
     <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
   <div class="note-content">${renderPostContent(post)}</div>
  <div class="note-footer" onclick="event.stopPropagation()">
  <div class="note-author">
- ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
+  ${post.userId && !post.isAnonymous ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
  ${post.avatar && post.avatar.startsWith('data:') ? `<img src="${escHtml(post.avatar)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display='none'">` : `<span style="font-size:16px;">${post.avatar && post.avatar.length <= 4 ? post.avatar : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'}</span>`}
- ${post.userId ? '</a>' : ''}
- ${post.userId ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
-  <span>${post.author}</span>${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}${post.authorIsPlus ? '<span class="plus-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++</span>' : ''}
-  ${post.userId ? '</a>' : ''}
+ ${post.userId && !post.isAnonymous ? '</a>' : ''}
+  ${post.userId && !post.isAnonymous ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
+  <span>${post.author}</span>${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}  ${post.authorIsPlus ? '<span class="plus-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++</span>' : ''}
+  ${post.userId && !post.isAnonymous ? '</a>' : ''}
   <span class="note-time">· ${post.time}</span>
  </div>
  <div style="display:flex;gap:4px;align-items:center;">
@@ -6220,7 +6221,7 @@ async function showPostCaptchaModal() {
   // PLUS++ 认证标识
   const plusBadge = document.getElementById('detailPlusBadge');
   if (post.authorIsPlus) {
-    plusBadge.innerHTML = '<span class="detail-plus-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++ 认证</span>';
+    plusBadge.innerHTML = '<span class="detail-plus-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++</span>';
     plusBadge.style.display = '';
   } else {
     plusBadge.style.display = 'none';
@@ -6229,7 +6230,7 @@ async function showPostCaptchaModal() {
   // 同学认证标识
   const certBadge = document.getElementById('detailCertBadge');
  if (post.authorZhixueStatus === 'approved') {
- const certLabel = post.authorZhixueCertType === 'manual' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> 已认证' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> 已认证';
+  const certLabel = post.authorZhixueCertType === 'manual' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' : '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>';
   certBadge.innerHTML = certLabel;
  certBadge.style.display = '';
  } else {
@@ -6239,13 +6240,13 @@ async function showPostCaptchaModal() {
  // 设置用户主页链接
  const avatarLink = document.getElementById('detailAvatarLink');
  const authorLink = document.getElementById('detailAuthorLink');
- if (post.userId) {
- const userProfileUrl = `user.html?id=${post.userId}`;
- avatarLink.href = userProfileUrl;
- authorLink.href = userProfileUrl;
- avatarLink.style.cursor = 'pointer';
- authorLink.style.cursor = 'pointer';
- } else {
+  if (post.userId && !post.isAnonymous) {
+  const userProfileUrl = `user.html?id=${post.userId}`;
+  avatarLink.href = userProfileUrl;
+  authorLink.href = userProfileUrl;
+  avatarLink.style.cursor = 'pointer';
+  authorLink.style.cursor = 'pointer';
+  } else {
  // 没有 userId，可能是匿名帖子，移除链接
  avatarLink.href = '#';
  authorLink.href = '#';
