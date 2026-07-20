@@ -141,7 +141,7 @@ app.get('/api/posts', (req, res) => {
             adminId = author.bindAdminId;
           }
         }
-        return {
+        const enriched = {
           ...p,
           likes: Number(p.likes) || 0,
           likedBy: Array.isArray(p.likedBy) ? p.likedBy : [],
@@ -151,9 +151,13 @@ app.get('/api/posts', (req, res) => {
           authorZhixueStatus: zhixueStatus,
           authorZhixueCertType: author.zhixueCertType || null
         };
+        if (p.isAnonymous) enriched.userId = undefined;
+        return enriched;
       }
     }
-    return { ...p, likes: Number(p.likes) || 0, likedBy: Array.isArray(p.likedBy) ? p.likedBy : [] };
+    const fallback = { ...p, likes: Number(p.likes) || 0, likedBy: Array.isArray(p.likedBy) ? p.likedBy : [] };
+    if (p.isAnonymous) fallback.userId = undefined;
+    return fallback;
   });
   res.json({ ok: true, data: postsWithAdmin });
 });
@@ -227,9 +231,12 @@ app.get('/api/posts/:id', (req, res) => {
       if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
         zhixueStatus = null;
       }
-      return res.json({ ok: true, data: { ...post, authorIsPlus: isUserPlus(author.id), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null } });
+      const detail = { ...post, authorIsPlus: isUserPlus(author.id), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null };
+      if (post.isAnonymous) detail.userId = undefined;
+      return res.json({ ok: true, data: detail });
     }
   }
+  if (post.isAnonymous) post.userId = undefined;
   res.json({ ok: true, data: post });
 });
 

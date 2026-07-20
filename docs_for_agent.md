@@ -363,9 +363,9 @@ admin → auth → user → posts → discussions → qa → votes → notices
 `GET /api/posts` 和 `GET /api/posts/:id` 的响应中，如果帖子作者有活跃的 PLUS++ 订阅，会多出 `authorIsPlus: true/false` 字段。
 
 前端在以下位置显示金框 + 徽标：
-- **index.html 帖子卡片**（`renderNotes()`）：`.sticky-note` 加 `.plus-gold` 类（金色边框 + shimmer 扫光动画），作者名后显示 `plus-badge` 星标徽章
-- **index.html 详情弹窗**（`openNoteDetail()`）：`.note-detail-box` 加 `.plus-gold` 类，author 区显示 `detail-plus-badge` 认证标识
-- **post.html 详情页**（`renderPost()`）：`.note-card` 加 `.plus-gold` 类，badges 区显示 `plus-cert-badge` 认证标识
+- **index.html 帖子卡片**（`renderNotes()`）：`.sticky-note` 加 `.plus-gold` 类（双层发光边框 + 顶部金色渐变条 + shimmer 扫光动画），左上角 `.plus-corner-badge` 角标，作者名后显示 `plus-badge` 星标徽章
+- **index.html 详情弹窗**（`openNoteDetail()`）：`.note-detail-box` 加 `.plus-gold` 类（双层发光边框 + 顶部金色渐变条），author 区显示 `detail-plus-badge` 认证标识
+- **post.html 详情页**（`renderPost()`）：`.note-card` 加 `.plus-gold` 类（双层发光边框 + 顶部金色渐变条 + 角标），badges 区显示 `plus-cert-badge` 认证标识
 
 后端逻辑在 `routes/posts.js`：导入 `lib/subscription.js` 的 `isUserPlus(userId)` 函数，在 author 数据增强区块中注入 `authorIsPlus` 字段。
 

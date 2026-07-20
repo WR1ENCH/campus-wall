@@ -1,14 +1,19 @@
 /* PLUS++ 会员样式 - 共享于 index.html 和 post.html */
-.plus-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);}
+.plus-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 2px 8px rgba(245,158,11,0.5);}
 .plus-badge svg{flex-shrink:0;}
-.plus-gold{position:relative;border-color:#f59e0b !important;box-shadow:0 0 0 2px rgba(245,158,11,0.15),0 2px 8px rgba(245,158,11,0.1) !important;overflow:hidden;}
-.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.25),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
+.plus-gold{position:relative;border-color:#f59e0b !important;box-shadow:0 0 0 2px rgba(245,158,11,0.3),0 0 0 5px rgba(245,158,11,0.1),inset 0 1px 6px rgba(245,158,11,0.08),0 2px 12px rgba(245,158,11,0.15) !important;overflow:hidden;}
+.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.25),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;z-index:2;}
+.plus-gold::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);pointer-events:none;z-index:3;}
 @keyframes shimmer{0%{left:-60%}50%{left:100%}100%{left:100%}}
 .plus-gold .note-type::after{content:' ⭐PLUS';color:#d97706;font-weight:700;}
 .plus-gold .note-footer .note-author .plus-badge{display:inline-flex;vertical-align:middle;margin-left:3px;font-size:10px;padding:1px 6px;}
-.note-detail-box.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.12),0 4px 16px rgba(245,158,11,0.15) !important;}
-.note-detail-box.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
-.note-detail-box .detail-plus-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);vertical-align:middle;}
-.note-card.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.12),0 6px 24px rgba(245,158,11,0.15) !important;position:relative;overflow:hidden;}
-.note-card.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;z-index:1;}
-.note-card .plus-cert-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);vertical-align:middle;}
+.note-detail-box.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.25),0 0 0 6px rgba(245,158,11,0.08),inset 0 1px 8px rgba(245,158,11,0.06),0 4px 20px rgba(245,158,11,0.18) !important;}
+.note-detail-box.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;z-index:2;}
+.note-detail-box.plus-gold::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);pointer-events:none;z-index:3;}
+.note-detail-box .detail-plus-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:13px;font-weight:700;letter-spacing:0.05em;box-shadow:0 2px 8px rgba(245,158,11,0.5);vertical-align:middle;}
+.note-card.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.25),0 0 0 6px rgba(245,158,11,0.08),inset 0 1px 8px rgba(245,158,11,0.06),0 6px 28px rgba(245,158,11,0.18) !important;position:relative;overflow:hidden;}
+.note-card.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;z-index:2;}
+.note-card.plus-gold::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);pointer-events:none;z-index:3;}
+.note-card .plus-cert-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:13px;font-weight:700;letter-spacing:0.05em;box-shadow:0 2px 8px rgba(245,158,11,0.5);vertical-align:middle;}
+.plus-corner-badge{position:absolute;top:5px;left:5px;z-index:5;pointer-events:none;}
+.plus-corner-badge span{display:inline-block;padding:2px 8px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:9px;font-weight:800;letter-spacing:0.06em;border-radius:3px;box-shadow:0 2px 6px rgba(245,158,11,0.4);line-height:1.5;}
