@@ -500,7 +500,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/users/search?q=xxx` | 无 | 搜索用户，按 `q` 匹配账号/昵称/UID(user.id)/实名姓名，返回分类结果（accounts/nicknames/uids/names，每类上限 20）。`q` 需至少 2 个非空格字符 |
-| GET | `/api/users/:id` | 无 | 用户公开资料 |
+| GET | `/api/users/:id` | 用户 | 用户公开资料（含完整 MBTI 类型，对所有人可见） |
 | GET | `/api/users/:id/posts` | 无 | 用户历史帖子 |
 | GET | `/api/user/notices` | 用户 | 用户相关通知 |
 
