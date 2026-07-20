@@ -1062,6 +1062,10 @@ app.get('/api/users/search', (req, res) => {
 });
 
 app.get('/api/users/:id', (req, res) => {
+  const token = req.headers['x-user-token'];
+  if (!token) return res.json({ ok: false, msg: '请先登录' });
+  const session = verifyUserToken(token);
+  if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
   const users = readUsers();
   const user = users.find(u => u.id === req.params.id);
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
@@ -1076,7 +1080,7 @@ app.get('/api/users/:id/posts', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   const posts = readPosts();
-  const userPosts = posts.filter(p => !p.deleted && (p.userId === user.id || p.author === user.nickname));
+  const userPosts = posts.filter(p => !p.deleted && !p.isAnonymous && (p.userId === user.id || p.author === user.nickname));
   res.json({ ok: true, data: userPosts });
 });
 
