@@ -13,6 +13,12 @@ const { isUserPlus } = require('../lib/subscription');
 
 const CONTENT_MAX_LENGTH = 50;
 
+function getMbtiFirst(user) {
+  if (!user || !user.mbti) return null;
+  const c = user.mbti.charAt(0);
+  return (c === 'I' || c === 'E') ? c : null;
+}
+
 function readPosts() { return db.readPosts(); }
 function writePosts(posts) { db.writePosts(posts); broadcastSSE('postUpdate', { t: Date.now() }); }
 function readUsers() { return db.readUsers(); }
@@ -141,6 +147,7 @@ app.get('/api/posts', (req, res) => {
             adminId = author.bindAdminId;
           }
         }
+        const authorMbtiFirst = getMbtiFirst(author);
         const enriched = {
           ...p,
           likes: Number(p.likes) || 0,
@@ -149,7 +156,8 @@ app.get('/api/posts', (req, res) => {
           authorBindAdminId: adminId,
           authorIsPlus: plusUserIds.has(author.id),
           authorZhixueStatus: zhixueStatus,
-          authorZhixueCertType: author.zhixueCertType || null
+          authorZhixueCertType: author.zhixueCertType || null,
+          authorMbti: authorMbtiFirst
         };
         if (p.isAnonymous) enriched.userId = undefined;
         return enriched;
@@ -231,7 +239,7 @@ app.get('/api/posts/:id', (req, res) => {
       if (zhixueStatus === 'approved' && !author.zhixueReviewedBy) {
         zhixueStatus = null;
       }
-      const detail = { ...post, authorIsPlus: isUserPlus(author.id), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null };
+      const detail = { ...post, authorIsPlus: isUserPlus(author.id), authorMbti: getMbtiFirst(author), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null };
       if (post.isAnonymous) detail.userId = undefined;
       return res.json({ ok: true, data: detail });
     }
