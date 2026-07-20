@@ -3590,7 +3590,8 @@ backdrop-filter: blur(4px);
   <span class="info-icon" onclick="event.stopPropagation();toggleTooltip(event,'qaPinInfoTip')" tabindex="0" role="button" aria-label="置顶问题说明"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
   <div class="info-tooltip" id="qaPinInfoTip">置顶问题能够快速得到答案</div>
   </label>
-  <div id="qaAskPinFeeHint" style="font-size:11px;color:#aaa;margin-top:2px;display:none;">置顶需额外支付 <b style="color:#e8a800;">149</b> Credits（一次性费用，不可取消）</div>
+   <div id="qaAskPinFeeHint" style="font-size:11px;color:#aaa;margin-top:2px;display:none;">置顶需额外支付 <b style="color:#e8a800;">149</b> Credits（一次性费用，不可取消）</div>
+   <div id="qaAskPinPlusHint" style="font-size:11px;color:#2a6846;margin-top:2px;display:none;"><span style="color:#f5c518;">⭐PLUS++</span> 免费置顶</div>
   </div>
   <div style="margin-bottom:14px;">
   <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:6px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图（最多3张，每张≤2MB）</label>
@@ -7992,12 +7993,16 @@ async function showPostCaptchaModal() {
  if (tab === 'my') {
  document.getElementById('qaTabMy') && document.getElementById('qaTabMy').classList.add('active');
  loadMyQuestions();
-  } else if (tab === 'ask') {
-  document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
-  if (currentUser) {
-  document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
-  loadQAQuota();
-  }
+   } else if (tab === 'ask') {
+   document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
+   if (currentUser) {
+   document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
+   loadQAQuota();
+   if (currentUser.isPlus) {
+     const pinCb = document.getElementById('qaAskPinned');
+     if (pinCb) { pinCb.checked = true; updateQACostHint(); }
+   }
+   }
   } else if (tab === 'list') {
  document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
  qaCurrentPage = 1;
@@ -8258,6 +8263,8 @@ function escJsStr(s) {
   if (hint) {
     if (d.isPlus) {
       hint.textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits · PLUS会员提问无限制';
+      const pinCb = document.getElementById('qaAskPinned');
+      if (pinCb) { pinCb.checked = true; updateQACostHint(); }
     } else {
       hint.textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits · 本周已提 ' + d.thisWeekCount + '/' + d.freeQuota + ' 个免费问题';
       if (d.remaining <= 0) {
@@ -8271,8 +8278,16 @@ function escJsStr(s) {
 
   function updateQACostHint() {
   const pinned = document.getElementById('qaAskPinned').checked;
+  const isPlus = currentUser && currentUser.isPlus;
   const feeHint = document.getElementById('qaAskPinFeeHint');
-  if (feeHint) feeHint.style.display = pinned ? 'block' : 'none';
+  const plusHint = document.getElementById('qaAskPinPlusHint');
+  if (isPlus) {
+    if (feeHint) feeHint.style.display = 'none';
+    if (plusHint) plusHint.style.display = pinned ? 'block' : 'none';
+  } else {
+    if (plusHint) plusHint.style.display = 'none';
+    if (feeHint) feeHint.style.display = pinned ? 'block' : 'none';
+  }
   }
 
   async function submitQAQuestion(sensitiveForce = false) {
@@ -8541,7 +8556,7 @@ function escJsStr(s) {
  const total = rewards.reduce((s, r) => s + r.amount, 0);
  const remainEl = document.getElementById('qaRewardRemain');
  const remainVal = parseInt(remainEl.textContent) || 0;
- if (total > remainVal + total) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 发放总额超出剩余悬赏'); return; }
+  if (total > remainVal) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 发放总额超出剩余悬赏'); return; }
 
  try {
  const res = await fetch('/api/qa/questions/' + qaRewardQuestionId + '/reward', {
@@ -8551,7 +8566,7 @@ function escJsStr(s) {
  });
  const json = await res.json();
  if (json.ok) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 已发放 ' + json.distributed + ' Credits！');
+  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 已发放 ' + json.data.distributed + ' Credits！');
  closeQAReward();
  loadMyQuestions();
  } else {

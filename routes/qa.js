@@ -119,7 +119,7 @@ app.get('/api/qa/quota', (req, res) => {
   const isPlus = isUserPlus(session.id);
   const freeQuota = isPlus ? Infinity : 3;
   const remaining = isPlus ? Infinity : Math.max(0, 3 - thisWeekCount);
-  res.json({ ok: true, data: { thisWeekCount, freeQuota, remaining, extraCost: EXTRA_COST, pinCost: 149, isPlus } });
+  res.json({ ok: true, data: { thisWeekCount, freeQuota, remaining, extraCost: EXTRA_COST, pinCost: isPlus ? 0 : 149, isPlus } });
 });
 
 app.post('/api/qa/questions', (req, res) => {
@@ -176,7 +176,7 @@ app.post('/api/qa/questions', (req, res) => {
   const isPinned = pinned === true;
   const isPlus = isUserPlus(session.id);
   const extraFee = isPlus ? 0 : (thisWeekCount >= FREE_QUOTA ? EXTRA_COST : 0);
-  const pinFee = isPinned ? PIN_COST : 0;
+  const pinFee = (isPinned && !isPlus) ? PIN_COST : 0;
   const totalCost = b + extraFee + pinFee;
   if ((user.credit || 0) < totalCost) return res.json({ ok: false, msg: 'Credits不足，当前余额：' + (user.credit || 0) });
 
