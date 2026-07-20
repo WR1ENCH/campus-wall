@@ -7,7 +7,8 @@
  <link href="https://fonts.googleapis.cn/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.cn/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="spa-transitions.css">
-  <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
+   <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
+   <link rel="stylesheet" href="css/plus.css">
   <style>
  /* ===== Design Tokens ===== */
  :root {
@@ -9559,17 +9560,6 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
 .whisper-modal-overlay{background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);}
 .whisper-incoming-modal{animation:fadeSlideIn 0.25s ease-out;}
 @keyframes fadeSlideIn{from{opacity:0;transform:translateY(-12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-/* PLUS++ 会员样式 */
-.plus-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);}
-.plus-badge svg{flex-shrink:0;}
-.plus-gold{position:relative;border-color:#f59e0b !important;box-shadow:0 0 0 2px rgba(245,158,11,0.15),0 2px 8px rgba(245,158,11,0.1) !important;overflow:hidden;}
-.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.25),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
-@keyframes shimmer{0%{left:-60%}50%{left:100%}100%{left:100%}}
-.plus-gold .note-type::after{content:' ⭐PLUS';color:#d97706;font-weight:700;}
-.plus-gold .note-footer .note-author .plus-badge{display:inline-flex;vertical-align:middle;margin-left:3px;font-size:10px;padding:1px 6px;}
-.note-detail-box.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.12),0 4px 16px rgba(245,158,11,0.15) !important;}
-.note-detail-box.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
-.note-detail-box .detail-plus-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);vertical-align:middle;}
 </style>
 <script>var _punishShown=false;var ML={whisper:'悄悄话',anonymous_post:'匿名发帖/拍卖',qa:'你问我答',post:'发帖/参与讨论',vote:'投票区'};window.checkPunishment=async function(){if(_punishShown)return;try{var t=localStorage.getItem('campus_user_token');if(!t)return;var r=await fetch('/api/user/safety-center',{headers:{'x-user-token':t}});var j=await r.json();if(j.ok&&j.data&&j.data.activePunishment){var p=j.data.activePunishment;var measures=p.level==='T0'?'所有交互功能':(Array.isArray(p.measures)?p.measures.map(function(m){return ML[m]||m;}).join('、'):'-');var desc='你因「'+escHtml(p.reason)+'」被处罚，限制功能：'+measures+'，时长：'+(p.durationDays>0?p.durationDays+'天':'永久')+'。';document.getElementById('punishPopupDesc').textContent=desc;_punishShown=true;setTimeout(function(){document.getElementById('punishPopup').classList.add('open');},500);var pb=document.getElementById('punishBanner');if(pb)pb.style.display='flex';adjustTopBar();}}catch(e){}}</script>
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>

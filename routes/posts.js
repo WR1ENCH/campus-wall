@@ -119,6 +119,8 @@ app.get('/api/posts', (req, res) => {
   });
   const users = readUsers();
   const admins = readAdmins(); // 用于验证管理员绑定是否仍有效
+  const now = new Date().toISOString();
+  const plusUserIds = new Set(db.readSubscriptions().filter(s => s.status === 'active' && s.endTime > now).map(s => s.userId));
   // 为每个帖子附加作者的管理员角色信息
   const postsWithAdmin = activePosts.map(p => {
     if (p.userId) {
@@ -145,7 +147,7 @@ app.get('/api/posts', (req, res) => {
           likedBy: Array.isArray(p.likedBy) ? p.likedBy : [],
           authorAdminRole: adminRole,
           authorBindAdminId: adminId,
-          authorIsPlus: isUserPlus(author.id),
+          authorIsPlus: plusUserIds.has(author.id),
           authorZhixueStatus: zhixueStatus,
           authorZhixueCertType: author.zhixueCertType || null
         };
