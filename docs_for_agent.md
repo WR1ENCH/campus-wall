@@ -508,7 +508,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/qa/questions` | 无 | 问题列表（置顶优先） |
-| POST | `/api/qa/questions` | 用户 | 提问（可设 bounty 积分悬赏；支持 `pinned` 参数，置顶额外扣 149 Credits；按周限 3 题免费，超出每题 +100 Credits） |
+| POST | `/api/qa/questions` | 用户 | 提问（可设 bounty 积分悬赏；支持 `pinned` 参数，置顶额外扣 149 Credits，PLUS++ 会员免费置顶；按周限 3 题免费，PLUS++ 会员无限，超出每题 +100 Credits） |
 | GET | `/api/qa/questions/:id` | 无 | 问题详情 |
 | DELETE | `/api/qa/questions/:id` | 用户/管理员 | 删问题 |
 | POST | `/api/qa/questions/:id/answers` | 用户 | 回答 |
@@ -516,7 +516,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | GET | `/api/qa/my-questions` | 用户 | 我的提问 |
 | POST | `/api/qa/questions/:id/accept/:aid` | 用户 | 采纳回答并发放全部剩余悬赏（Session 13 新增） |
 | POST | `/api/qa/questions/:id/reward` | 用户 | 手动发放悬赏给多个回答（Session 13 新增） |
-| GET | `/api/qa/quota` | 用户 | 本周提问次数、免费额度、剩余次数、超额费、置顶费（Session 13 新增） |
+| GET | `/api/qa/quota` | 用户 | 本周提问次数、免费额度、剩余次数、超额费、置顶费（PLUS++ 会员 pinCost 为 0）（Session 13 新增） |
 | GET/POST | `/api/qa/answers/:aid/like` | 用户 | 答案点赞 |
 | GET | `/api/admin/qa/questions` | 管理员 | 后台问题列表 |
 

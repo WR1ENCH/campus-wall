@@ -952,6 +952,9 @@
       }
 
       var price = priceData || { weekly: 399, monthly: 699 };
+      if (isLoggedIn && isPlus) {
+        price = { weekly: Math.round(price.weekly * 0.85), monthly: Math.round(price.monthly * 0.85) };
+      }
 
       app.innerHTML =
         '<div id="msgTip" class="msg-tip"></div>' +
