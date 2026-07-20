@@ -1588,7 +1588,7 @@
         校园墙
       </a>
       <div style="display:flex;align-items:center;gap:8px;">
-        <a href="index.html" class="top-bar-back">
+        <a href="index.html" target="_top" class="top-bar-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           返回
         </a>
@@ -1640,7 +1640,7 @@
             </div>
           </div>
           <div class="profile-actions">
-            <button id="openCreditBtn" class="btn btn-credit" onclick="window.open('credit.html','_blank')">
+            <button id="openCreditBtn" class="btn btn-credit" onclick="window.open('credit.html','_blank')" style="display:none;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg>
               我的Credits <span id="userCreditInline" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span>
             </button>
@@ -1960,9 +1960,14 @@
               plusLabel.textContent = 'PLUS++';
             });
         } else {
-          plusBtn.style.display = 'inline-flex';
+          plusBtn.style.display = 'none';
           plusLabel.textContent = 'PLUS++';
         }
+      }
+
+      var creditBtn = document.getElementById('openCreditBtn');
+      if (creditBtn) {
+        creditBtn.style.display = _isSelf ? '' : 'none';
       }
 
       var mbtiBtn = document.getElementById('mbtiBtn');
