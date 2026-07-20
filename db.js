@@ -122,7 +122,8 @@ function migrate() {
     "zhixueConfirmedAt" TEXT,
     "certRealName" TEXT,
     "certClassName" TEXT,
-    "noticePublisher" INTEGER DEFAULT 0
+    "noticePublisher" INTEGER DEFAULT 0,
+    "mbti" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "posts" (
     "id" TEXT PRIMARY KEY,
@@ -486,7 +487,7 @@ function migrate() {
   }
 
   // 信用分（credibility_score）相关列迁移
-  const credCols = ['credibility_score', 'credibility_exchanged_total', 'credibility_last_refresh'];
+  const credCols = ['credibility_score', 'credibility_exchanged_total', 'credibility_last_refresh', 'mbti'];
   let existingUserCols = [];
   try {
     const colInfo = db.prepare(`PRAGMA table_info("users")`).all();
