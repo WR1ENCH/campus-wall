@@ -738,6 +738,22 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/slider-captcha/grant` | 无 | 滑块验证通过，下发 captcha 会话 token |
 | POST | `/api/page-visit` | 用户(可选) | 全量页面访问记录（Session 16），记录 IP/UA 到 `login_logs`，`type:'page_visit'` |
 
+### 5.19 MBTI 性格测试集成
+
+| 文件 | 类型 | 说明 |
+|------|------|------|
+| `db.js` | 修改 | `users` 表迁移列追加 `mbti` |
+| `routes/user.js` | 修改 | `PATCH /api/user/me` 接收 `mbti`（格式校验 `/^[EISNTFJP]{4}$/`）；`GET /api/user/me` 和 `GET /api/users/:id` 返回 `mbti` |
+| `routes/posts.js` | 修改 | 帖子 enrichment 加 `authorMbti` 字段（仅暴露首字母 I/E，不暴露完整类型） |
+| `mbti-questions.js` | **新建** | 30 题 MBTI 题库，`window.MBTI_QUESTIONS` 全局变量，每维度分布：E/I×8、S/N×7、T/F×7、J/P×8 |
+| `user.html` | 修改 | 测验入口按钮、30 题弹窗（进度条/选项卡片/计分）、结果弹窗（16 人格中文名 + 维度柱状图）、昵称行 MBTI 标签（完整类型 + I/E 药丸） |
+| `index.html` | 修改 | 帖子卡片 author 区加 I/E 药丸（`<span class="mbti-pill mbti-i/e">`） |
+| `post.html` | 修改 | 帖子详情 badges 区加 I/E 药丸 |
+
+**前后端数据流：** 前端 30 题 → `calcMbti()` 四维度计票 → `PATCH /api/user/me {mbti:"INTJ"}` → DB 存储 → `GET /api/posts` enrichment 提取首字母 I/E → 前端 `<span class="mbti-pill">` 渲染。
+
+**约束：** 仅暴露 MBTI 首字母（I/E）在帖子中，不公开完整类型；已测验用户不可重复测验；零新依赖。
+
 ---
 
 ## 6. 前端架构（SPA）
