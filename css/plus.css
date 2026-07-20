@@ -1,0 +1,14 @@
+/* PLUS++ 会员样式 - 共享于 index.html 和 post.html */
+.plus-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);}
+.plus-badge svg{flex-shrink:0;}
+.plus-gold{position:relative;border-color:#f59e0b !important;box-shadow:0 0 0 2px rgba(245,158,11,0.15),0 2px 8px rgba(245,158,11,0.1) !important;overflow:hidden;}
+.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.25),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
+@keyframes shimmer{0%{left:-60%}50%{left:100%}100%{left:100%}}
+.plus-gold .note-type::after{content:' ⭐PLUS';color:#d97706;font-weight:700;}
+.plus-gold .note-footer .note-author .plus-badge{display:inline-flex;vertical-align:middle;margin-left:3px;font-size:10px;padding:1px 6px;}
+.note-detail-box.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.12),0 4px 16px rgba(245,158,11,0.15) !important;}
+.note-detail-box.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;}
+.note-detail-box .detail-plus-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);vertical-align:middle;}
+.note-card.plus-gold{border:2px solid #f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,0.12),0 6px 24px rgba(245,158,11,0.15) !important;position:relative;overflow:hidden;}
+.note-card.plus-gold::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.2),transparent);animation:shimmer 3s ease-in-out infinite;pointer-events:none;z-index:1;}
+.note-card .plus-cert-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:12px;font-weight:700;letter-spacing:0.05em;box-shadow:0 1px 4px rgba(245,158,11,0.4);vertical-align:middle;}
