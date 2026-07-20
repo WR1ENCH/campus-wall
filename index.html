@@ -7981,12 +7981,16 @@ async function showPostCaptchaModal() {
  if (tab === 'my') {
  document.getElementById('qaTabMy') && document.getElementById('qaTabMy').classList.add('active');
  loadMyQuestions();
-  } else if (tab === 'ask') {
-  document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
-  if (currentUser) {
-  document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
-  loadQAQuota();
-  }
+   } else if (tab === 'ask') {
+   document.getElementById('qaTabAsk') && document.getElementById('qaTabAsk').classList.add('active');
+   if (currentUser) {
+   document.getElementById('qaAskBountyHint').textContent = '当前余额：' + (currentUser.credit || 0) + ' Credits';
+   loadQAQuota();
+   if (currentUser.isPlus) {
+     const pinCb = document.getElementById('qaAskPinned');
+     if (pinCb) { pinCb.checked = true; updateQACostHint(); }
+   }
+   }
   } else if (tab === 'list') {
  document.getElementById('qaTabList') && document.getElementById('qaTabList').classList.add('active');
  qaCurrentPage = 1;
