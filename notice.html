@@ -587,12 +587,12 @@ body {
         </div>
       </div>
       <!-- 滑块验证码弹窗 -->
-      <div class="overlay" id="sliderCaptchaOverlay" style="display:none;animation:sliderFadeIn 0.25s ease;z-index:99999;" onclick="if(event.target===this)this.style.display='none'">
-        <div class="dialog" style="border:2px solid #fff;border-radius:18px;animation:sliderModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:360px;text-align:center;">
-          <button class="close-btn" onclick="document.getElementById('sliderCaptchaOverlay').style.display='none'">&times;</button>
-          <h3>人机验证</h3>
-          <div id="sharedSliderCaptcha" style="width:280px;margin:10px auto;"></div>
-          <div style="font-size:12px;color:#999;">拖动滑块完成拼图验证</div>
+      <div class="overlay" id="sliderCaptchaOverlay" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);animation:sliderFadeIn 0.25s ease;z-index:99999;" onclick="if(event.target===this)this.style.display='none'">
+        <div class="dialog" style="background:#fff;padding:28px 24px 20px;border-radius:18px;animation:sliderModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+          <button class="close-btn" onclick="document.getElementById('sliderCaptchaOverlay').style.display='none'" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">&times;</button>
+          <h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#333;">人机验证</h3>
+          <div id="sharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
+          <div style="font-size:12px;color:#999;margin-top:10px;">拖动滑块完成拼图验证</div>
         </div>
       </div>
         <div style="font-size:11px;color:var(--text-sub);margin-top:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-bulb"/></svg> 点击图片刷新验证码</div>
