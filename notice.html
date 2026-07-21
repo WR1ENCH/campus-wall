@@ -511,7 +511,7 @@ body {
 <!-- ===== Login Screen ===== -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <h2 id="loginTitle">&#x1F4E2; 学生会登录</h2>
+    <h2 id="loginTitle">&#x1F4E2; 通知系统登录</h2>
     <div class="login-sub" id="loginSub">登录后即可发布通知</div>
     <div class="login-error" id="loginError"></div>
 
@@ -886,7 +886,7 @@ body {
       var json = await res.json();
       if (json.ok && json.data.needInit) {
         // 显示首次设置
-        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 设置学生会账号';
+        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 设置通知系统账号';
         document.getElementById('loginSub').textContent = '首次使用，请创建学生会账号';
         document.getElementById('initForm').style.display = '';
         document.getElementById('loginForm').style.display = 'none';
@@ -931,7 +931,7 @@ body {
         // 创建成功后自动切换到登录
         document.getElementById('initForm').style.display = 'none';
         document.getElementById('loginForm').style.display = '';
-        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 学生会登录';
+        document.getElementById('loginTitle').textContent = '\uD83D\uDCE2 通知系统登录';
         document.getElementById('loginSub').textContent = '登录后即可发布通知';
         document.getElementById('loginError').textContent = '';
       } else {
@@ -943,7 +943,7 @@ body {
 
   var _sliderCaptchaToken = null;
 
-  function showSliderCaptcha() {
+  window.showSliderCaptcha = function() {
     var overlay = document.getElementById('sliderCaptchaOverlay');
     overlay.style.display = 'flex';
     var el = document.getElementById('sharedSliderCaptcha');
