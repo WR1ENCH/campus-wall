@@ -1787,9 +1787,9 @@ body {
 
   window.openEditNoticeVote = function(voteId) {
     var vote = null;
-    if (window._votes && window._votes.length > 0) {
-      for (var i = 0; i < window._votes.length; i++) {
-        if (window._votes[i].id === voteId) { vote = window._votes[i]; break; }
+    if (_votes && _votes.length > 0) {
+      for (var i = 0; i < _votes.length; i++) {
+        if (_votes[i].id === voteId) { vote = _votes[i]; break; }
       }
     }
     if (!vote) { showToast('未找到投票数据', 'error'); return; }
@@ -2205,7 +2205,7 @@ body {
       if (!json.ok) { list.innerHTML = '<div class="empty-tip">加载失败</div>'; return; }
       var data = json.data || [];
       _votes = data;
-      _voteUserVotes = {};
+      var _voteUserVotes = {};
       data.forEach(function(v) {
         if (v.userVoted && v.userVoted.length > 0) {
           _voteUserVotes[v.id] = v.userVoted;
@@ -2226,6 +2226,7 @@ body {
     }
     var html = '';
     voteList.forEach(function(vote) {
+      if (!vote.options) vote.options = [];
       var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
       var totalVotes = vote.totalVotes !== undefined
         ? vote.totalVotes
