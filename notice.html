@@ -1828,7 +1828,7 @@ body {
 
     try {
       var token = localStorage.getItem(SC_TOKEN_KEY);
-      var res = await fetch('/api/notice/votes/' + encodeURIComponent(voteId), {
+      var res = await fetch('/api/votes/' + encodeURIComponent(voteId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
         body: JSON.stringify({
@@ -1886,7 +1886,7 @@ body {
     btn.disabled = true; btn.textContent = '\u53D1\u5E03\u4E2D\u2026';
 
     try {
-      var res = await fetch('/api/notice/votes', {
+      var res = await fetch('/api/votes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': localStorage.getItem(SC_TOKEN_KEY) || '' },
         body: JSON.stringify({
@@ -2169,9 +2169,10 @@ body {
     var html = '';
     voteList.forEach(function(vote) {
       var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
+      var voteOpts = vote.options || [];
       var totalVotes = vote.totalVotes !== undefined
         ? vote.totalVotes
-        : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+        : voteOpts.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
 
       html += '<div class="vote-card">';
       html += '<div class="vote-card-header">';
@@ -2196,7 +2197,7 @@ body {
       html += '</div>';
 
       html += '<div class="vote-card-options">';
-      vote.options.forEach(function(opt) {
+      (voteOpts).forEach(function(opt) {
         var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
         html += '<div class="vote-option" style="cursor:default;">';
         html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:20px;height:20px;border-radius:3px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escHtml(opt.text) + '</span>';
