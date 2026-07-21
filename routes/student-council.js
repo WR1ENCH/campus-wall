@@ -11,6 +11,26 @@ function writeUsers(users) { db.writeUsers(users); }
 
 module.exports = function(app) {
 
+// 检查是否需要首次初始化
+app.get('/api/student-council/check-init', (req, res) => {
+  const sc = readSC();
+  res.json({ ok: true, data: { needInit: !sc || !sc.id } });
+});
+
+// 首次初始化学生会账号
+app.post('/api/student-council/init', (req, res) => {
+  const { id, name, password } = req.body;
+  if (!id || !name || !password) return res.json({ ok: false, msg: '请填写完整信息' });
+  if (id.length < 3 || id.length > 20) return res.json({ ok: false, msg: '账号长度3-20位' });
+  if (password.length < 6) return res.json({ ok: false, msg: '密码至少6位' });
+
+  const sc = readSC();
+  if (sc && sc.id) return res.json({ ok: false, msg: '学生会账号已存在' });
+
+  writeSC({ id, name, password: hashPassword(password) });
+  res.json({ ok: true, msg: '创建成功，请登录' });
+});
+
 // 验证学生会 token 是否有效
 app.get('/api/student-council/me', (req, res) => {
   const token = req.headers['x-sc-token'];
