@@ -877,6 +877,8 @@ body {
   var currentUser = null;
   var SC_TOKEN_KEY = 'sc_token';
 
+  function refreshLoginCaptcha() {}
+
   // ===== 初始化检测 =====
   async function checkInit() {
     try {
@@ -895,6 +897,7 @@ body {
       document.getElementById('loginScreen').classList.add('show');
     } catch(e) {
       showToast('\u274C 网络错误', 'error');
+      document.getElementById('loginScreen').classList.add('show');
     }
   }
 
