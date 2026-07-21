@@ -1886,7 +1886,7 @@ body {
 
     try {
       var token = localStorage.getItem(SC_TOKEN_KEY);
-      var res = await fetch('/api/notice/votes/' + encodeURIComponent(voteId), {
+      var res = await fetch('/api/votes/' + encodeURIComponent(voteId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
         body: JSON.stringify({
@@ -2319,16 +2319,13 @@ body {
         } else {
           localStorage.removeItem(SC_TOKEN_KEY);
           localStorage.removeItem('sc_name');
-          refreshLoginCaptcha();
           checkInit();
         }
       })
       .catch(function() {
-        refreshLoginCaptcha();
         checkInit();
       });
   } else {
-    refreshLoginCaptcha();
     checkInit();
   }
 })();
