@@ -2077,6 +2077,8 @@ backdrop-filter: blur(4px);
  width: 98vw !important;
  border-radius: 12px;
  margin: 8px;
+ padding: 0 !important;
+ overflow: hidden !important;
  }
  #notifOverlay > div > div:last-child { flex-direction: column !important; }
  #notifSidebar {
@@ -2085,7 +2087,7 @@ backdrop-filter: blur(4px);
  border-bottom: 1px solid #e5e7eb;
  overflow-y: auto !important;
  }
- #notifContent { min-height: 200px; }
+ #notifContent { min-height: 200px; min-width: 0; overflow-x: hidden; }
 
  /* 我的拍卖 */
   #pickupMyBidsList { max-height: 260px !important; }
@@ -2669,11 +2671,14 @@ backdrop-filter: blur(4px);
  max-width: min(94vw, 820px);
  max-height: min(88vh, 700px);
  width: min(94vw, 820px);
+ padding: 0 !important;
+ overflow: hidden !important;
  }
  #notifSidebar {
  overflow-y: auto;
  scrollbar-width: thin;
  scrollbar-color: #d1d5db #f3f4f6;
+ min-width: 0;
  }
  #notifSidebar::-webkit-scrollbar { width: 5px; }
  #notifSidebar::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 3px; }
@@ -2681,8 +2686,10 @@ backdrop-filter: blur(4px);
  #notifSidebar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
  #notifContent {
  overflow-y: auto;
+ overflow-x: hidden;
  scrollbar-width: thin;
  scrollbar-color: #d1d5db transparent;
+ min-width: 0;
  }
  #notifContent::-webkit-scrollbar { width: 5px; }
  #notifContent::-webkit-scrollbar-track { background: transparent; }
