@@ -3966,11 +3966,12 @@ backdrop-filter: blur(4px);
  }
 
  var html = '';
- voteList.forEach(function(vote) {
- var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
- var totalVotes = vote.totalVotes !== undefined
- ? vote.totalVotes
- : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+  voteList.forEach(function(vote) {
+    if (!vote.options) vote.options = [];
+    var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
+    var totalVotes = vote.totalVotes !== undefined
+    ? vote.totalVotes
+    : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
  var hasVoted = voteUserVotes[vote.id] && voteUserVotes[vote.id].length > 0;
  var userVotedOptions = hasVoted ? voteUserVotes[vote.id] : [];
 
