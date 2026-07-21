@@ -995,7 +995,7 @@ body {
       if (json.ok) {
         currentUser = json.data;
         localStorage.setItem(SC_TOKEN_KEY, currentUser.token);
-        localStorage.setItem('sc_name', currentUser.name);        localStorage.setItem('sc_name', currentUser.name);
+        localStorage.setItem('sc_name', currentUser.name);
         document.getElementById('loginScreen').classList.remove('show');
         document.getElementById('mainApp').classList.add('show');
         document.getElementById('userBadge').style.display = 'inline-flex';
@@ -1005,10 +1005,6 @@ body {
         loadVoteList();
       } else {
         errEl.textContent = json.msg || '\u767B\u5F55\u5931\u8D25';
-        if (json.msg && json.msg.indexOf('验证码') >= 0) {
-          refreshLoginCaptcha();
-          document.getElementById('loginCaptchaInput').value = '';
-        }
       }
     } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
     finally { btn.disabled = false; btn.textContent = '\u767B \u5F55'; }
@@ -1024,9 +1020,7 @@ body {
     document.getElementById('loginId').value = '';
     document.getElementById('loginPwd').value = '';
     document.getElementById('loginError').textContent = '';
-    document.getElementById('loginCaptchaInput').value = '';
     checkInit();
-    refreshLoginCaptcha();
   };
 
   // ===== 账号设置 =====
@@ -1828,7 +1822,7 @@ body {
 
     try {
       var token = localStorage.getItem(SC_TOKEN_KEY);
-      var res = await fetch('/api/notice/votes/' + encodeURIComponent(voteId), {
+      var res = await fetch('/api/votes/' + encodeURIComponent(voteId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
         body: JSON.stringify({
@@ -2261,16 +2255,13 @@ body {
         } else {
           localStorage.removeItem(SC_TOKEN_KEY);
           localStorage.removeItem('sc_name');
-          refreshLoginCaptcha();
           checkInit();
         }
       })
       .catch(function() {
-        refreshLoginCaptcha();
         checkInit();
       });
   } else {
-    refreshLoginCaptcha();
     checkInit();
   }
 })();
