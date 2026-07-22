@@ -157,6 +157,8 @@ function migrate() {
   try { db.exec(`ALTER TABLE "posts" ADD COLUMN "allowComments" INTEGER DEFAULT 1`); } catch(e) {}
   try { db.exec(`ALTER TABLE "posts" ADD COLUMN "visibleTo" TEXT DEFAULT '[]'`); } catch(e) {}
   try { db.exec(`ALTER TABLE "posts" ADD COLUMN "invisibleTo" TEXT DEFAULT '[]'`); } catch(e) {}
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "pinned" INTEGER DEFAULT 0`); } catch(e) {}
+  try { db.exec(`ALTER TABLE "posts" ADD COLUMN "pinnedAt" TEXT`); } catch(e) {}
   db.exec(`CREATE TABLE IF NOT EXISTS "login_logs" (
     "id" TEXT PRIMARY KEY,
     "type" TEXT,
@@ -507,6 +509,19 @@ function migrate() {
     if (!existingUserCols.includes(col)) {
       try {
         const def = col === 'credibility_score' ? ' INTEGER DEFAULT 90' : ' TEXT';
+        db.exec(`ALTER TABLE "users" ADD COLUMN "${col}"${def}`);
+        console.log(`[db.js] ✅ 已添加列 users.${col}`);
+      } catch (e) {
+        console.warn(`[db.js] ⚠️ 添加列 users.${col} 失败:`, e.message);
+      }
+    }
+  }
+  // 帖子置顶月度计数列
+  const pinCols = ['pinCount', 'pinMonth'];
+  for (const col of pinCols) {
+    if (!existingUserCols.includes(col)) {
+      try {
+        const def = col === 'pinCount' ? ' INTEGER DEFAULT 0' : ' TEXT';
         db.exec(`ALTER TABLE "users" ADD COLUMN "${col}"${def}`);
         console.log(`[db.js] ✅ 已添加列 users.${col}`);
       } catch (e) {
