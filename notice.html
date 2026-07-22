@@ -1727,7 +1727,7 @@ body {
             '</div>' : '') +
           '</div>' +
           '<div class="notice-meta">' +
-          '<span>' + ICONS.user + ' ' + escHtml(n.author || '\u5B66\u751F\u4F1A') + '</span>' +
+          '<span>' + ICONS.user + ' ' + escHtml(n.author || '\u6821\u56ED\u5899') + '</span>' +
           '<span>' + ICONS.calendar + ' ' + time + '</span>' +
           '</div></div>';
       });
@@ -1944,7 +1944,7 @@ body {
     btn.disabled = true; btn.textContent = '\u53D1\u5E03\u4E2D\u2026';
 
     try {
-      var res = await fetch('/api/votes', {
+      var res = await fetch('/api/notice/votes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': localStorage.getItem(SC_TOKEN_KEY) || '' },
         body: JSON.stringify({

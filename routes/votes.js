@@ -79,7 +79,7 @@ module.exports = function(app) {
     const session = _resolveAdminOrSC(req);
     if (!session) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
     const { title, options, multiple, allowCustom, endTime } = req.body;
-    if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
+    if (!title || !options || !Array.isArray(options) || options.length < 2 || options.length > 20) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
     votes.push({ id: uniqueId.generateId('VOTE'), userId: session.id, author: '', avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
     writeVotes(votes);

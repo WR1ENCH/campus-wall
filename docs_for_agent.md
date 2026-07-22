@@ -535,7 +535,8 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/votes` | 无 | 投票列表 |
-| POST | `/api/votes` | 用户 | 创建投票 |
+| POST | `/api/notice/votes` | 学生会/管理员 | 创建投票（notice.html 前端调用；需 `x-sc-token` 或 `x-admin-token`，路由 `_resolveAdminOrSC`） |
+| POST | `/api/votes` | 管理员 | 创建投票（需 `x-admin-token`，`requireAdmin`） |
 | GET | `/api/votes/:id` | 无 | 投票详情 |
 | DELETE | `/api/votes/:id` | 用户/管理员 | 删除 |
 | PUT | `/api/votes/:id` | 管理员 | 编辑 |
