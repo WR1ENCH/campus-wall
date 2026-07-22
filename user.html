@@ -1592,6 +1592,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           返回
         </a>
+        <button id="visitorBtn" class="btn btn-ghost" style="padding:6px 14px;font-size:13px;position:relative;" onclick="openVisitorModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          访客
+          <span id="visitorBadge" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#DC4A3D;border:2px solid var(--surface);"></span>
+        </button>
         <button id="editProfileBtn" class="btn btn-ghost" style="display:none;padding:6px 14px;font-size:13px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           编辑资料
@@ -1737,6 +1745,35 @@
         <div class="modal-actions">
           <button class="btn btn-outline" id="cancelEditBtn">取消</button>
           <button class="btn btn-primary" id="saveEditBtn">保存更改</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Visitor Modal ===== -->
+  <div id="visitorModal" class="modal-overlay">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <span class="modal-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          主页访客
+        </span>
+        <button class="modal-close" onclick="closeVisitorModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="visitorListContainer">
+        <div id="visitorLoading" class="loading-state" style="padding:40px 0;text-align:center;color:var(--text-muted);">加载中...</div>
+        <div id="visitorList" style="display:none;"></div>
+        <div id="visitorEmpty" style="display:none;padding:40px 0;text-align:center;color:var(--text-muted);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <div>还没有访客记录</div>
         </div>
       </div>
     </div>
@@ -2973,6 +3010,117 @@
       }
     }
 
+    // ===== Profile Visitors =====
+    var _visitorData = null;
+
+    async function openVisitorModal() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token || !currentLoggedInUser || currentLoggedInUser.id !== userId) return;
+
+      document.getElementById('visitorList').style.display = 'none';
+      document.getElementById('visitorEmpty').style.display = 'none';
+      document.getElementById('visitorLoading').style.display = '';
+      document.getElementById('visitorModal').classList.add('show');
+
+      try {
+        var [listResp, subResp] = await Promise.all([
+          fetch('/api/user/profile-visits?page=1&limit=50', { headers: { 'x-user-token': token } }),
+          fetch('/api/user/subscription/status', { headers: { 'x-user-token': token } })
+        ]);
+        var listData = await listResp.json();
+        var subData = await subResp.json();
+        var isPlus = !!(subData.ok && subData.data && subData.data.isPlus);
+        _visitorData = listData.ok ? listData.data : null;
+
+        document.getElementById('visitorLoading').style.display = 'none';
+        if (!_visitorData || _visitorData.visits.length === 0) {
+          document.getElementById('visitorEmpty').style.display = '';
+          return;
+        }
+        renderVisitorList(_visitorData, isPlus);
+      } catch (e) {
+        document.getElementById('visitorLoading').textContent = '加载失败，请重试';
+      }
+    }
+
+    function renderVisitorList(data, isPlus) {
+      var container = document.getElementById('visitorList');
+      container.style.display = '';
+      var html = '<div style="padding:0 0 12px;font-size:13px;color:var(--text-muted);">共 ' + data.total + ' 位访客</div>';
+
+      for (var i = 0; i < data.visits.length; i++) {
+        var v = data.visits[i];
+        var name = isPlus ? (v.visitorNickname || '未知用户') : '匿名访客';
+        var avatar = isPlus && v.visitorAvatar ? v.visitorAvatar : '';
+        var time = formatRelativeTime(v.createdAt);
+        var isNew = !v.read;
+
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">';
+        if (avatar) {
+          html += '<img src="' + avatar + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
+          if (!isPlus) html += 'filter:blur(4px);';
+          html += '">';
+        } else {
+          html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-muted);flex-shrink:0;">' + (isPlus ? (v.visitorNickname ? v.visitorNickname.charAt(0) : '?') : '?') + '</div>';
+        }
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-size:14px;font-weight:500;color:var(--text);';
+        if (!isPlus) html += 'filter:blur(4px);';
+        html += '">' + name + '</div>';
+        html += '<div style="font-size:12px;color:var(--text-muted);">' + time + '</div>';
+        html += '</div>';
+        if (isNew && isPlus) {
+          html += '<span style="width:6px;height:6px;border-radius:50%;background:#DC4A3D;flex-shrink:0;"></span>';
+        }
+        html += '</div>';
+      }
+
+      if (!isPlus) {
+        html += '<div style="text-align:center;padding:20px 0 8px;font-size:14px;font-weight:700;color:var(--text);">订阅PLUS++以查看访客</div>';
+        html += '<div style="text-align:center;padding:0 0 4px;"><a href="plus.html" class="btn btn-primary" style="text-decoration:none;">了解PLUS++</a></div>';
+      }
+
+      container.innerHTML = html;
+    }
+
+    function formatRelativeTime(dateStr) {
+      var diff = Date.now() - new Date(dateStr).getTime();
+      var mins = Math.floor(diff / 60000);
+      if (mins < 1) return '刚刚';
+      if (mins < 60) return mins + '分钟前';
+      var hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + '小时前';
+      var days = Math.floor(hrs / 24);
+      if (days < 30) return days + '天前';
+      return new Date(dateStr).toLocaleDateString('zh-CN');
+    }
+
+    function closeVisitorModal() {
+      document.getElementById('visitorModal').classList.remove('show');
+      // 标记全部已读
+      var token = localStorage.getItem('campus_user_token');
+      if (token && _visitorData && _visitorData.unreadCount > 0) {
+        fetch('/api/user/profile-visits/mark-read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+          body: JSON.stringify({ all: true })
+        }).then(function(){ checkVisitorBadge(); }).catch(function(){});
+      }
+    }
+
+    async function checkVisitorBadge() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token || !currentLoggedInUser || currentLoggedInUser.id !== userId) return;
+      try {
+        var resp = await fetch('/api/user/profile-visits/unread-count', {
+          headers: { 'x-user-token': token }
+        });
+        var data = await resp.json();
+        var badge = document.getElementById('visitorBadge');
+        if (badge) badge.style.display = (data.ok && data.data.count > 0) ? '' : 'none';
+      } catch(e) {}
+    }
+
     // ===== Init =====
     function initEventListeners() {
       document.getElementById('editProfileBtn').addEventListener('click', openEditModal);
@@ -2981,6 +3129,9 @@
       document.getElementById('editAvatarFile').addEventListener('change', handleAvatarFileSelect);
       document.getElementById('editProfileModal').addEventListener('click', function(event) {
         if (event.target === this) closeEditModal();
+      });
+      document.getElementById('visitorModal').addEventListener('click', function(event) {
+        if (event.target === this) closeVisitorModal();
       });
     }
 
@@ -2999,6 +3150,13 @@
       }
       if (posts) {
         renderPosts(posts);
+      }
+      // 检查未读访客
+      checkVisitorBadge();
+      // 从通知跳转自动打开访客弹窗
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('autoOpenVisitors') === 'true') {
+        setTimeout(openVisitorModal, 500);
       }
     }
 

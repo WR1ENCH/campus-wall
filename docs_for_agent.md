@@ -69,6 +69,7 @@ campus-wall/
 │   ├── pickup.js                 # 失物/捡漏拍卖
 │   ├── student-council.js        # 学生会登录
 │   ├── subscription.js           # PLUS++ 订阅系统（定价/购买/续订/卡密兑换）
+│   ├── visits.js                 # 主页访客记录（4个API + 每日汇总通知）
 │   ├── maintenance.js            # 维护模式公开接口
 │   └── system.js                 # 版本/统计/心跳/霸凌举报/SSE 流
 ├── campus-wall-miniprogram/      # 微信小程序端（独立项目）
@@ -183,6 +184,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `VOTE` | 投票 | `routes/votes.js` 创建投票 |
 | `AURQ` | 代拿请求 | `routes/pickup.js` 创建代拿 |
 | `CRDL` | 信用分日志 | `lib/credibility.js` 信用分变动 |
+| `PV` | 主页访客 | `routes/visits.js` / `db.js` 创建访客记录 |
 | (无前缀) | 用户 uid | 16 位随机数字 `0-9` |
 
 **核心 API**：
@@ -406,6 +408,7 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | `user_notifications` | id, userId, notificationId, read, createdAt, readAt | 用户通知已读状态 |
 | `student_council` | _key, _value | 学生会配置（key-value） |
 | `whispers` | id, senderId, senderName, receiverId, receiverName, content, notifLevel, createdAt, deleted | 私信/密语 |
+| `profile_visits` | id(PK `PV-`), visitedUserId, visitorUserId, createdAt, read(0/1) | 主页访客记录（含索引 idx_pv_visited_created/idx_pv_visited_read） |
 
 ### 4.2 投票 / 评分 / 其它表
 
@@ -622,6 +625,16 @@ admin → auth → user → posts → discussions → qa → votes → notices
 | POST | `/api/whispers` | 用户 | 发送悄悄话（敏感词+霸凌+处罚检测 → 生成 WHIS-ID；每周 2 次免费，超出扣 200 Credits） |
 | GET | `/api/whispers/inbox` | 用户 | 收件箱（未签收优先） |
 | POST | `/api/whispers/:id/sign` | 用户 | 签收（仅接收者）→ T1 通知发送方 |
+
+### 5.12 主页访客记录（visits.js）
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| POST | `/api/user/profile-visit` | 用户 | 记录主页访问（body: `{visitedUserId}`，自访跳过，同目标5分钟限流1次） |
+| GET | `/api/user/profile-visits` | 用户 | 访客列表（分页 `?page=&limit=`，默认20，附访客昵称/头像） |
+| GET | `/api/user/profile-visits/unread-count` | 用户 | 未读访客数 |
+| POST | `/api/user/profile-visits/mark-read` | 用户 | 标记已读（`{visitId}` 或 `{all:true}`） |
+
+定时任务：每日北京时间 12:00 查昨日访客分组，给有访客的用户发 T1 通知（含 `autoOpenVisitors=true` 链接）。
 
 ### 5.13 后台管理 — 用户 / 内容管理（admin.js）
 | 方法 | 路径 | 权限 | 说明 |
