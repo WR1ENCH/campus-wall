@@ -1196,13 +1196,16 @@
       selfOnlyBanner = '<div class="self-only-banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 此内容<b>对部分用户</b>不可见</div>';
     }
 
-    const avatarHtml = post.avatar
-      ? (post.avatar.startsWith('data:')
-        ? '<img src="' + escHtml(post.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
-        : (post.avatar.length <= 4
-          ? '<span style="font-size:16px">' + escHtml(post.avatar) + '</span>'
-          : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
-      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+     const _rawAvatarHtml = post.avatar
+       ? (post.avatar.startsWith('data:')
+         ? '<img src="' + escHtml(post.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
+         : (post.avatar.length <= 4
+           ? '<span style="font-size:16px">' + escHtml(post.avatar) + '</span>'
+           : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
+       : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+     const avatarHtml = post.authorIsPlus
+       ? '<div class="plus-avatar-wrap plus-avatar-lg" style="display:inline-flex;">' + _rawAvatarHtml + '<div class="plus-avatar-tag"></div></div>'
+       : _rawAvatarHtml;
 
     let badges = '';
     if (post.authorAdminRole === 'super') badges = '<span class="verify-badge">超管</span>';
@@ -1328,13 +1331,16 @@
       const isCommentAuthor = currentUserId && c.userId && currentUserId === c.userId;
       const canDelete = isCommentAuthor || isPostAuthor;
 
-      const cAvatar = c.avatar
-        ? (c.avatar.startsWith('data:')
-          ? '<img src="' + escHtml(c.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
-          : (c.avatar.length <= 4
-            ? '<span style="font-size:16px">' + escHtml(c.avatar) + '</span>'
-            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
-        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+     const _rawCAvatar = c.avatar
+       ? (c.avatar.startsWith('data:')
+         ? '<img src="' + escHtml(c.avatar) + '" alt="头像" onerror="this.style.display=\'none\'">'
+         : (c.avatar.length <= 4
+           ? '<span style="font-size:16px">' + escHtml(c.avatar) + '</span>'
+           : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'))
+       : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+     const cAvatar = c.isPlus
+       ? '<div class="plus-avatar-wrap plus-avatar-sm" style="display:inline-flex;">' + _rawCAvatar + '<div class="plus-avatar-tag"></div></div>'
+       : _rawCAvatar;
 
       return `
         <div class="comment-item" id="comment-${c.id}" style="animation-delay:${i * 0.04}s">

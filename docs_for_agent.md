@@ -44,6 +44,7 @@ campus-wall/
 ├── zhixue.js                     # 智学网自动登录模块（可选，加载失败不致命）
 ├── sensitiveWords.js             # 敏感词库加载（含 tencent_sensitive_words.enc 解密）
 ├── crypto_words.js / bullyingNames.js  # 加密词库 / 霸凌名称库
+├── nicknameChanges.js            # 昵称修改追踪（按月计数，data/nickname_changes.json）
 ├── spa.js                        # 前端 SPA 无刷新路由（class SpaRouter）
 ├── *.html                        # 前端页面（index.html 是主壳，其余是完整独立页 + SPA 片段）
 ├── pages/                        # SPA 页面片段（wall/user/post/notice/report/bully/knowledge/ecosystem/admin）
@@ -370,6 +371,53 @@ admin → auth → user → posts → discussions → qa → votes → notices
 - **post.html 详情页**（`renderPost()`）：`.note-card` 加 `.plus-gold` 类（双层发光边框 + 顶部金色渐变条 + 角标），badges 区显示 `plus-cert-badge` 认证标识
 
 后端逻辑在 `routes/posts.js`：导入 `lib/subscription.js` 的 `isUserPlus(userId)` 函数，在 author 数据增强区块中注入 `authorIsPlus` 字段。
+
+### 5.3.2 PLUS++ 头像框（旋转金色边框）
+
+PLUS++ 用户在所有头像显示位置拥有特殊头像框：金色渐变旋转边框 + 角落 PLUS 徽章。
+
+**CSS 类**（`css/plus.css`）：
+- `.plus-avatar-wrap`：头像框容器，`::before` 使用 `conic-gradient` 金色渐变 + `plusAvatarSpin` 旋转动画，`::after` 遮盖中心仅留边框
+- `.plus-avatar-tag`：角落圆形 PLUS 徽章（金色背景 + `+` 符号）
+- `.plus-avatar-lg`：40px+ 头像（侧边栏），徽章尺寸 22px
+- `.plus-avatar-sm`：<24px 头像（帖子卡片），隐藏徽章避免遮挡，边框更细
+
+**显示位置**：
+- **user.html** 侧边栏 `.profile-avatar`：`#plusAvatarFrame` 包裹原头像，`#userAvatarFramed` 显示带框头像，由 `window._currentUserIsPlus` 控制显隐
+- **index.html** 侧边栏 `#sideNavAvatar`：JS 动态创建 `#sideNavAvatarFrame` 包裹，读取 `u.isPlus`
+- **index.html** 帖子卡片作者头像：模板中根据 `post.authorIsPlus` 选择渲染普通头像或 `.plus-avatar-wrap plus-avatar-sm` 框架
+- **post.html** 详情页 `.note-avatar`：根据 `post.authorIsPlus` 选择渲染，使用 `.plus-avatar-lg`
+- **post.html** 评论头像 `.comment-avatar`：根据 `c.isPlus` 选择渲染，使用 `.plus-avatar-sm`
+- **user.html** 帖子卡片 `.post-author-avatar`：根据 `window._currentUserIsPlus` 选择渲染
+
+**后端支持**：
+- `routes/posts.js` `GET /api/posts/:id/comments`：返回评论时注入 `isPlus` 字段
+- `routes/user.js` `GET /api/users/:id`：返回用户数据时包含 `isPlus` 字段
+- 登录/自动登录/智学登录接口返回 `isPlus` 字段，前端存入 localStorage
+
+### 5.3.3 昵称修改（信用分消耗 + 敏感词/霸凌检测）
+
+`PATCH /api/user/me` 的昵称更新逻辑已增强：
+
+**验证流程**：
+1. 昵称长度 2-12 字符
+2. `sensitiveWords.check(nickname)` 违禁词检测 → 返回 `SENSITIVE_WORD` 错误码
+3. `bullyingNames.check(nickname)` 霸凌姓名检测 → 返回 `BULLYING_NAME` 错误码
+
+**信用分消耗**：
+- PLUS++ 用户：每月首次免费（通过 `nicknameChanges.js` 跟踪），第二次起 99 Credits
+- 非 PLUS++ 用户：始终 199 Credits
+- 信用分不足 → 返回 `NO_CREDIT` 错误码
+
+**追踪模块** `nicknameChanges.js`：
+- 存储位置：`data/nickname_changes.json`，格式 `{ "userId:YYYY-MM": count }`
+- `getMonthlyCount(userId)`：获取当月改名次数
+- `recordChange(userId)`：记录一次改名并返回新次数
+
+**前端**（`user.html`）：
+- `#nicknameCostHint` 元素显示改名费用提示
+- `renderNicknameCostHint()` 函数实时更新提示文本
+- 保存成功后更新 `#userCreditInline` 显示最新信用分
 
 ## 4. 数据模型（db.js — SQLite 表）
 

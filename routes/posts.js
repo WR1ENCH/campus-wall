@@ -588,7 +588,8 @@ app.get('/api/posts/:id/comments', (req, res) => {
   const post = posts.find(p => p.id === req.params.id);
   if (!post) return res.json({ ok: false, msg: '帖子不存在' });
   const comments = (Array.isArray(post.comments) ? post.comments : []).filter(c => !c.deleted);
-  res.json({ ok: true, data: comments });
+  const enriched = comments.map(c => ({ ...c, isPlus: isUserPlus(c.userId) }));
+  res.json({ ok: true, data: enriched });
 });
 
 app.post('/api/posts/:id/comments', (req, res) => {
