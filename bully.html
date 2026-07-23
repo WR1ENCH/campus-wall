@@ -904,7 +904,7 @@
 
     <!-- 截图证据 -->
     <div class="form-group">
-      <label class="form-label">截图证据 <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，最多3张，每张不超过2MB）</span></label>
+      <label class="form-label">截图证据 <span style="font-weight:400;color:#aaa;font-size:12px;">（选填，最多3张，每张不超过10MB）</span></label>
       <div class="img-upload-area" id="uploadArea" onclick="document.getElementById('imgInput').click()">
         <div class="upload-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
         <div class="upload-text">点击上传截图 / 拖拽上传</div>
@@ -943,7 +943,7 @@
   var attachedImages = [];
   var confirmedPostIds = [];   // 已确认的帖子ID数组
   var MAX_IMAGES = 3;
-  var MAX_SIZE = 2 * 1024 * 1024; // 2MB
+  var MAX_SIZE = 10 * 1024 * 1024; // 10MB
   var isAnonymous = true;
   var _formSubmitted = false; // 提交成功后标记
   var reporterRole = null;     // 'self' | 'witness'
@@ -1571,7 +1571,7 @@
       }
       var file = files[i];
       if (!file.type.startsWith('image/')) { showMsg('只能上传图片文件', 'error'); continue; }
-      if (file.size > MAX_SIZE) { showMsg('图片 "' + file.name + '" 超过 2MB 限制', 'error'); continue; }
+      if (file.size > MAX_SIZE) { showMsg('图片 "' + file.name + '" 超过 10MB 限制', 'error'); continue; }
       (function(f) {
         var reader = new FileReader();
         reader.onload = function(e) { attachedImages.push(e.target.result); renderPreviews(); saveDraft(); };

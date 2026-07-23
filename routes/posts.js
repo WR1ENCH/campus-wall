@@ -466,9 +466,9 @@ if (!content || !content.trim()) {
 
   const posts = readPosts();
 
-  // 验证图片（base64 data URL，每张≤2MB，最多4张）
+  // 验证图片（base64 data URL，每张≤10MB，最多4张）
   var validImages = [];
-  var maxImageSize = 2 * 1024 * 1024;
+  var maxImageSize = 10 * 1024 * 1024;
   if (Array.isArray(images)) {
     images.forEach(function(img) {
       if (typeof img === 'string' && img.startsWith('data:') && img.length <= maxImageSize && validImages.length < 4) {

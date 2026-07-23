@@ -1745,7 +1745,7 @@
               选择 JPG 图片
               <input type="file" id="editAvatarFile" class="file-input" accept=".jpg,.jpeg" />
             </label>
-            <div class="file-hint">仅支持 JPG 格式，大小不超过 500KB</div>
+            <div class="file-hint">仅支持 JPG 格式，大小不超过 10MB</div>
           </div>
         </div>
         <div class="modal-actions">
@@ -2992,8 +2992,8 @@
         event.target.value = '';
         return;
       }
-      if (file.size > 500 * 1024) {
-        alert('图片大小不能超过 500KB');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('图片大小不能超过 10MB');
         event.target.value = '';
         return;
       }
@@ -3208,6 +3208,16 @@
       }
       // 检查未读访客
       checkVisitorBadge();
+
+      // 记录主页访问（仅当查看他人主页且已登录时）
+      var visitToken = localStorage.getItem('campus_user_token');
+      if (visitToken && currentLoggedInUser && currentLoggedInUser.id !== userId) {
+        fetch('/api/user/profile-visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': visitToken },
+          body: JSON.stringify({ visitedUserId: userId })
+        }).catch(function(){}); // 静默失败，不影响页面渲染
+      }
       // 从通知跳转自动打开访客弹窗
       var urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('autoOpenVisitors') === 'true') {

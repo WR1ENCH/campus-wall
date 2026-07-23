@@ -773,8 +773,8 @@ module.exports = function(app) {
         return res.json({ ok: false, msg: '头像数据不完整' });
       }
       // 计算 base64 数据大小（约等于原文件的 4/3）
-      if (base64Data.length > 700000) { // 对应约 500KB 的 JPG 文件
-        return res.json({ ok: false, msg: '头像图片太大，请压缩到 500KB 以内' });
+      if (base64Data.length > 14000000) { // 对应约 10MB 的 JPG 文件
+        return res.json({ ok: false, msg: '头像图片太大，请压缩到 10MB 以内' });
       }
       // 可选：验证 base64 有效性
       try {
