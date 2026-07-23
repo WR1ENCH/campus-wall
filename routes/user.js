@@ -9,6 +9,8 @@ const db = require('../db');
 const nodeCrypto = require('crypto');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { isUserPlus } = require('../lib/subscription');
+const nicknameChanges = require('../nicknameChanges');
 const maintenance = require('../maintenance');
 const credibility = require('../lib/credibility');
 
@@ -250,7 +252,9 @@ module.exports = function(app) {
         username: user.username,
         nickname: user.nickname,
         avatar: user.avatar,
-        zhixueStatus: getDisplayZhixueStatus(user)
+        credit: user.credit || 0,
+        zhixueStatus: getDisplayZhixueStatus(user),
+        isPlus: isUserPlus(user.id)
       }
     });
   });
@@ -324,7 +328,9 @@ module.exports = function(app) {
         username: user.username,
         nickname: user.nickname,
         avatar: user.avatar,
-        zhixueStatus: 'approved'
+        credit: user.credit || 0,
+        zhixueStatus: 'approved',
+        isPlus: isUserPlus(user.id)
       }
     });
   });
@@ -365,7 +371,7 @@ module.exports = function(app) {
     }
     entry.lastUsedAt = Date.now();
     writeTrustTokens(tokens);
-    res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user) } });
+    res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user), isPlus: isUserPlus(user.id) } });
   });
   app.post('/api/user/revoke-trust', (req, res) => {
     const { trustToken } = req.body;
@@ -714,8 +720,42 @@ module.exports = function(app) {
       if (nickname.length < 2 || nickname.length > 12) {
         return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
       }
-      user.nickname = nickname;
-      updated = true;
+      if (nickname !== user.nickname) {
+        const sensitiveFound = checkSensitive(nickname);
+        if (sensitiveFound.length > 0) {
+          return res.json({ ok: false, msg: '昵称包含违禁词语：' + sensitiveFound.slice(0, 3).join('、'), code: 'SENSITIVE_WORD' });
+        }
+        const bullyingFound = checkBullyingNames(nickname);
+        if (bullyingFound.length > 0) {
+          return res.json({ ok: false, msg: '昵称包含受保护姓名，请尊重他人', code: 'BULLYING_NAME' });
+        }
+        const plus = isUserPlus(user.id);
+        const monthlyCount = nicknameChanges.getMonthlyCount(user.id);
+        let cost = 0;
+        if (plus) {
+          cost = monthlyCount >= 1 ? 99 : 0;
+        } else {
+          cost = 199;
+        }
+        if (cost > 0) {
+          if ((user.credit || 0) < cost) {
+            return res.json({ ok: false, msg: 'Credits 不足，需要 ' + cost + ' Credits 才能改名', code: 'NO_CREDIT' });
+          }
+          user.credit = (user.credit || 0) - cost;
+          const logs = readCreditLogs();
+          logs.push({
+            id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            userId: user.id,
+            amount: -cost,
+            reason: '昵称修改',
+            createdAt: new Date().toISOString()
+          });
+          writeCreditLogs(logs);
+        }
+        nicknameChanges.recordChange(user.id);
+        user.nickname = nickname;
+        updated = true;
+      }
     }
 
     // 更新头像（base64 data URL）
@@ -765,7 +805,7 @@ module.exports = function(app) {
 
     users[userIndex] = user;
     writeUsers(users);
-    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null } });
+    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null, credit: user.credit || 0 } });
   });
   app.post('/api/user/bind-admin', (req, res) => {
     const token = req.headers['x-user-token'];
@@ -1084,7 +1124,7 @@ app.get('/api/users/:id', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   // 不返回密码等敏感信息
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, zhixueStatus: getDisplayZhixueStatus(user), mbti: user.mbti || null } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, zhixueStatus: getDisplayZhixueStatus(user), mbti: user.mbti || null, isPlus: isUserPlus(user.id) } });
 });
 
 app.get('/api/users/:id/posts', (req, res) => {

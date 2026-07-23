@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>用户 · 校园墙</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/plus.css">
   <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
   <style>
     :root {
@@ -1612,9 +1613,13 @@
     <!-- ===== Profile ===== -->
     <div class="profile">
       <div class="profile-inner">
-        <div class="profile-avatar" id="userAvatar">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
+         <div class="profile-avatar" id="userAvatar">
+           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+         </div>
+         <div id="plusAvatarFrame" class="plus-avatar-wrap plus-avatar-lg" style="display:none;">
+           <div class="profile-avatar" id="userAvatarFramed" style="width:88px;height:88px;border-radius:50%;"></div>
+           <div class="plus-avatar-tag"></div>
+         </div>
         <div class="profile-info">
           <div class="profile-name-row">
             <span class="profile-name" id="userNickname">加载中...</span>
@@ -1727,10 +1732,11 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">昵称</label>
-          <input type="text" id="editNickname" class="form-input" placeholder="2-12个字符" maxlength="12">
-        </div>
+         <div class="form-group">
+           <label class="form-label">昵称</label>
+           <input type="text" id="editNickname" class="form-input" placeholder="2-12个字符" maxlength="12" oninput="renderNicknameCostHint()">
+           <div id="nicknameCostHint" style="display:none;font-size:12px;margin-top:4px;"></div>
+         </div>
         <div class="form-group">
           <label class="form-label">头像</label>
           <div class="avatar-upload">
@@ -1957,15 +1963,23 @@
       document.getElementById('postCount').textContent = user.postCount || 0;
 
       const avatarEl = document.getElementById('userAvatar');
-      if (user.avatar && user.avatar.trim()) {
-        if (user.avatar.startsWith('data:image')) {
-          avatarEl.innerHTML = '<img src="' + user.avatar + '" alt="头像">';
-        } else {
-          avatarEl.textContent = (user.avatar && user.avatar.length <= 4) ? user.avatar : (user.nickname ? user.nickname.charAt(0) : '');
-        }
-      } else {
-        avatarEl.textContent = user.nickname ? user.nickname.charAt(0) : '';
-      }
+       const plusFrame = document.getElementById('plusAvatarFrame');
+       const avatarFramed = document.getElementById('userAvatarFramed');
+       const _isPlus = !!(window._currentUserIsPlus);
+       if (plusFrame && avatarFramed) {
+         plusFrame.style.display = _isPlus ? 'inline-flex' : 'none';
+         avatarEl.style.display = _isPlus ? 'none' : '';
+       }
+       const targetAvatarEl = _isPlus ? avatarFramed : avatarEl;
+       if (user.avatar && user.avatar.trim()) {
+         if (user.avatar.startsWith('data:image')) {
+           targetAvatarEl.innerHTML = '<img src="' + user.avatar + '" alt="头像" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+         } else {
+           targetAvatarEl.textContent = (user.avatar && user.avatar.length <= 4) ? user.avatar : (user.nickname ? user.nickname.charAt(0) : '');
+         }
+       } else {
+         targetAvatarEl.textContent = user.nickname ? user.nickname.charAt(0) : '';
+       }
 
       const badge = document.getElementById('adminBadge');
       if (user.bindAdminRole === 'super') {
@@ -1981,29 +1995,35 @@
       }
 
       var plusBadge = document.getElementById('plusBadge');
-      var plusBtn = document.getElementById('plusBtn');
-      var plusLabel = document.getElementById('plusBtnLabel');
-      if (plusBadge && plusBtn && plusLabel) {
-        var _token = localStorage.getItem('campus_user_token');
-        var _isSelf = currentLoggedInUser && currentLoggedInUser.id === userId;
-        if (_isSelf && _token) {
-          fetch('/api/user/subscription/status', { headers: { 'x-user-token': _token } })
-            .then(function(r){ return r.json(); })
-            .then(function(j){
-              var isPlus = !!(j.ok && j.data && j.data.isPlus);
-              plusBadge.style.display = isPlus ? 'inline-block' : 'none';
-              plusBtn.style.display = 'inline-flex';
-              plusLabel.textContent = isPlus ? 'PLUS++会员' : '加入PLUS++';
-            })
-            .catch(function(){
-              plusBtn.style.display = 'inline-flex';
-              plusLabel.textContent = 'PLUS++';
-            });
-        } else {
-          plusBtn.style.display = 'none';
-          plusLabel.textContent = 'PLUS++';
-        }
-      }
+       var plusBtn = document.getElementById('plusBtn');
+       var plusLabel = document.getElementById('plusBtnLabel');
+       if (plusBadge && plusBtn && plusLabel) {
+         var _token = localStorage.getItem('campus_user_token');
+         var _isSelf = currentLoggedInUser && currentLoggedInUser.id === userId;
+         if (_isSelf && _token) {
+           fetch('/api/user/subscription/status', { headers: { 'x-user-token': _token } })
+             .then(function(r){ return r.json(); })
+             .then(function(j){
+               var isPlus = !!(j.ok && j.data && j.data.isPlus);
+               window._currentUserIsPlus = isPlus;
+               plusBadge.style.display = isPlus ? 'inline-block' : 'none';
+               plusBtn.style.display = 'inline-flex';
+               plusLabel.textContent = isPlus ? 'PLUS++会员' : '加入PLUS++';
+               if (typeof renderUser === 'function' && currentLoggedInUser) {
+                 renderUser(currentLoggedInUser);
+               }
+             })
+             .catch(function(){
+               window._currentUserIsPlus = false;
+               plusBtn.style.display = 'inline-flex';
+               plusLabel.textContent = 'PLUS++';
+             });
+         } else {
+           window._currentUserIsPlus = false;
+           plusBtn.style.display = 'none';
+           plusLabel.textContent = 'PLUS++';
+         }
+       }
 
       var creditBtn = document.getElementById('openCreditBtn');
       if (creditBtn) {
@@ -2246,42 +2266,49 @@
         '活动': 'event'
       };
 
-      posts.forEach(function(post) {
-        var card = document.createElement('div');
-        card.className = 'post-card';
-        card.addEventListener('click', function() {
-          alert('帖子详情：' + (post.content ? post.content.substring(0, 50) : '') + '...');
-        });
+      var _viewedIsPlus = !!(window._currentUserIsPlus);
+       var _avatarFrameHtml = _viewedIsPlus
+         ? '<div class="plus-avatar-wrap plus-avatar-sm"><div class="post-author-avatar">' +
+             (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
+           '</div><div class="plus-avatar-tag"></div></div>'
+         : '<div class="post-author-avatar">' +
+             (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
+           '</div>';
 
-        var typeClass = typeMap[post.type] || 'default';
-        var time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        var content = post.content && post.content.length > 120 ? post.content.substring(0, 120) + '...' : (post.content || '');
+       posts.forEach(function(post) {
+         var card = document.createElement('div');
+         card.className = 'post-card';
+         card.addEventListener('click', function() {
+           alert('帖子详情：' + (post.content ? post.content.substring(0, 50) : '') + '...');
+         });
 
-        card.innerHTML =
-          '<span class="post-type ' + typeClass + '">' + (post.type || '日常') + '</span>' +
-          '<div class="post-content">' + content + '</div>' +
-          '<div class="post-footer">' +
-            '<div class="post-author">' +
-              '<div class="post-author-avatar">' +
-                (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
-              '</div>' +
-              '<span class="post-author-name">' + (post.author || '匿名') + '</span>' +
-            '</div>' +
-            '<div class="post-stats">' +
-              '<span>' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
-                (post.likes || 0) +
-              '</span>' +
-              '<span>' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-                (post.commentsCount || 0) +
-              '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="post-time">' + time + '</div>';
+         var typeClass = typeMap[post.type] || 'default';
+         var time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+         var content = post.content && post.content.length > 120 ? post.content.substring(0, 120) + '...' : (post.content || '');
 
-        grid.appendChild(card);
-      });
+         card.innerHTML =
+           '<span class="post-type ' + typeClass + '">' + (post.type || '日常') + '</span>' +
+           '<div class="post-content">' + content + '</div>' +
+           '<div class="post-footer">' +
+             '<div class="post-author">' +
+               _avatarFrameHtml +
+               '<span class="post-author-name">' + (post.author || '匿名') + '</span>' +
+             '</div>' +
+             '<div class="post-stats">' +
+               '<span>' +
+                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
+                 (post.likes || 0) +
+               '</span>' +
+               '<span>' +
+                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                 (post.commentsCount || 0) +
+               '</span>' +
+             '</div>' +
+           '</div>' +
+           '<div class="post-time">' + time + '</div>';
+
+         grid.appendChild(card);
+       });
     }
 
     // ===== Zhixue Bind =====
@@ -2916,19 +2943,40 @@
     }
 
     function openEditModal() {
-      if (!currentLoggedInUser) return;
-      document.getElementById('editNickname').value = currentLoggedInUser.nickname || '';
-      var avatarPreview = document.getElementById('avatarPreview');
-      if (currentLoggedInUser.avatar && currentLoggedInUser.avatar.startsWith('data:image')) {
-        avatarPreview.innerHTML = '<img src="' + currentLoggedInUser.avatar + '" alt="头像">';
-        avatarPreview.dataset.base64 = currentLoggedInUser.avatar;
-      } else {
-        avatarPreview.textContent = currentLoggedInUser.avatar || (currentLoggedInUser.nickname ? currentLoggedInUser.nickname.charAt(0) : '');
-        avatarPreview.dataset.base64 = '';
-      }
-      document.getElementById('editAvatarFile').value = '';
-      document.getElementById('editProfileModal').classList.add('show');
-    }
+       if (!currentLoggedInUser) return;
+       document.getElementById('editNickname').value = currentLoggedInUser.nickname || '';
+       var avatarPreview = document.getElementById('avatarPreview');
+       if (currentLoggedInUser.avatar && currentLoggedInUser.avatar.startsWith('data:image')) {
+         avatarPreview.innerHTML = '<img src="' + currentLoggedInUser.avatar + '" alt="头像">';
+         avatarPreview.dataset.base64 = currentLoggedInUser.avatar;
+       } else {
+         avatarPreview.textContent = currentLoggedInUser.avatar || (currentLoggedInUser.nickname ? currentLoggedInUser.nickname.charAt(0) : '');
+         avatarPreview.dataset.base64 = '';
+       }
+       document.getElementById('editAvatarFile').value = '';
+       renderNicknameCostHint();
+       document.getElementById('editProfileModal').classList.add('show');
+     }
+
+     function renderNicknameCostHint() {
+       var hint = document.getElementById('nicknameCostHint');
+       if (!hint) return;
+       var newVal = document.getElementById('editNickname').value.trim();
+       if (newVal === (currentLoggedInUser.nickname || '')) {
+         hint.textContent = '';
+         hint.style.display = 'none';
+         return;
+       }
+       var isPlus = !!(window._currentUserIsPlus);
+       if (isPlus) {
+         hint.textContent = 'PLUS++ 会员：每月首次改名免费，第二次起 99 Credits';
+         hint.style.color = '#956400';
+       } else {
+         hint.textContent = '改名需消耗 199 Credits（当前余额：' + (currentLoggedInUser.credit || 0) + '）';
+         hint.style.color = '#8C8A88';
+       }
+       hint.style.display = 'block';
+     }
 
     function closeEditModal() {
       document.getElementById('editProfileModal').classList.remove('show');
@@ -2959,56 +3007,63 @@
     }
 
     async function saveProfile() {
-      var nickname = document.getElementById('editNickname').value.trim();
-      var avatarPreview = document.getElementById('avatarPreview');
-      var avatarBase64 = avatarPreview.dataset.base64;
-      var currentAvatar = currentLoggedInUser.avatar;
+       var nickname = document.getElementById('editNickname').value.trim();
+       var avatarPreview = document.getElementById('avatarPreview');
+       var avatarBase64 = avatarPreview.dataset.base64;
+       var currentAvatar = currentLoggedInUser.avatar;
 
-      if (nickname.length < 2 || nickname.length > 12) {
-        alert('昵称需 2-12 个字符');
-        return;
-      }
+       if (nickname.length < 2 || nickname.length > 12) {
+         alert('昵称需 2-12 个字符');
+         return;
+       }
 
-      var updateData = {};
-      if (nickname !== currentLoggedInUser.nickname) {
-        updateData.nickname = nickname;
-      }
-      if (avatarBase64 && avatarBase64 !== currentAvatar) {
-        updateData.avatar = avatarBase64;
-      }
+       var updateData = {};
+       if (nickname !== currentLoggedInUser.nickname) {
+         updateData.nickname = nickname;
+       }
+       if (avatarBase64 && avatarBase64 !== currentAvatar) {
+         updateData.avatar = avatarBase64;
+       }
 
-      if (Object.keys(updateData).length === 0) {
-        closeEditModal();
-        return;
-      }
+       if (Object.keys(updateData).length === 0) {
+         closeEditModal();
+         return;
+       }
 
-      var token = localStorage.getItem('campus_user_token');
-      if (!token) {
-        alert('登录已过期，请重新登录');
-        return;
-      }
+       var token = localStorage.getItem('campus_user_token');
+       if (!token) {
+         alert('登录已过期，请重新登录');
+         return;
+       }
 
-      try {
-        var resp = await fetch('/api/user/me', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-token': token
-          },
-          body: JSON.stringify(updateData)
-        });
-        var data = await resp.json();
-        if (!data.ok) throw new Error(data.msg || '更新失败');
-        if (updateData.nickname) currentLoggedInUser.nickname = updateData.nickname;
-        if (updateData.avatar) currentLoggedInUser.avatar = updateData.avatar;
-        renderUser(currentLoggedInUser);
-        closeEditModal();
-        alert('资料更新成功！');
-      } catch (err) {
-        console.error('保存失败', err);
-        alert('保存失败：' + err.message);
-      }
-    }
+       try {
+         var resp = await fetch('/api/user/me', {
+           method: 'PATCH',
+           headers: {
+             'Content-Type': 'application/json',
+             'x-user-token': token
+           },
+           body: JSON.stringify(updateData)
+         });
+         var data = await resp.json();
+         if (!data.ok) throw new Error(data.msg || '更新失败');
+         if (updateData.nickname) currentLoggedInUser.nickname = updateData.nickname;
+         if (updateData.avatar) currentLoggedInUser.avatar = updateData.avatar;
+         if (data.data && typeof data.data.credit === 'number') {
+           currentLoggedInUser.credit = data.data.credit;
+           var creditInline = document.getElementById('userCreditInline');
+           if (creditInline) creditInline.textContent = data.data.credit;
+         }
+         renderUser(currentLoggedInUser);
+         closeEditModal();
+         alert('资料更新成功！');
+       } catch (err) {
+         console.error('保存失败', err);
+         alert('保存失败：' + err.message);
+       }
+     }
+
+
 
     // ===== Profile Visitors =====
     var _visitorData = null;

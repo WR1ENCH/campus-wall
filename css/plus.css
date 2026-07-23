@@ -17,3 +17,35 @@
 .note-card .plus-cert-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:13px;font-weight:700;letter-spacing:0.05em;box-shadow:0 2px 8px rgba(245,158,11,0.5);vertical-align:middle;}
 .plus-corner-badge{position:absolute;top:5px;left:5px;z-index:5;pointer-events:none;}
 .plus-corner-badge span{display:inline-block;padding:2px 8px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:9px;font-weight:800;letter-spacing:0.06em;border-radius:3px;box-shadow:0 2px 6px rgba(245,158,11,0.4);line-height:1.5;}
+
+.plus-avatar-wrap{position:relative;display:inline-flex;flex-shrink:0;}
+.plus-avatar-wrap::before{
+  content:'';position:absolute;inset:-3px;border-radius:inherit;
+  background:conic-gradient(from 0deg,#f59e0b,#fbbf24,#f59e0b,#d97706,#f59e0b);
+  animation:plusAvatarSpin 4s linear infinite;
+  z-index:0;
+}
+.plus-avatar-wrap::after{
+  content:'';position:absolute;inset:-1px;border-radius:inherit;
+  background:var(--bg,#F6F5F3);z-index:1;
+}
+@keyframes plusAvatarSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.plus-avatar-wrap > *{position:relative;z-index:2;}
+.plus-avatar-tag{
+  position:absolute;bottom:-2px;right:-2px;z-index:5;
+  width:18px;height:18px;border-radius:50%;
+  background:linear-gradient(135deg,#f59e0b,#fbbf24);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(245,158,11,0.5);
+  font-size:0;pointer-events:none;
+}
+.plus-avatar-tag::after{
+  content:'+';color:#fff;font-size:11px;font-weight:800;line-height:1;
+}
+.plus-avatar-wrap.plus-avatar-lg .plus-avatar-tag{
+  width:22px;height:22px;bottom:-1px;right:-1px;
+}
+.plus-avatar-wrap.plus-avatar-lg .plus-avatar-tag::after{font-size:13px;}
+.plus-avatar-wrap.plus-avatar-sm .plus-avatar-tag{display:none;}
+.plus-avatar-wrap.plus-avatar-sm::before{inset:-2px;}
+.plus-avatar-wrap.plus-avatar-sm::after{inset:0px;}
