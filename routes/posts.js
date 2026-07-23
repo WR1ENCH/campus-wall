@@ -9,7 +9,7 @@ const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const maintenance = require('../maintenance');
-const { isUserPlus } = require('../lib/subscription');
+const { isUserPlus, pushUserNotice, getUserMonthlyPinCount, incrementUserPinCount } = require('../lib/subscription');
 
 const CONTENT_MAX_LENGTH = 50;
 
@@ -98,6 +98,24 @@ app.get('/api/posts', (req, res) => {
   const posts = readPosts();
   // 过滤已删除的帖子（普通用户不可见）
   let activePosts = posts.filter(p => !p.deleted);
+  // 置顶过期清理（7天自动失效）
+  const pinNow = Date.now();
+  let needsWrite = false;
+  activePosts.forEach(p => {
+    if (p.pinned && p.pinnedAt && (pinNow - Number(p.pinnedAt) > 7 * 24 * 60 * 60 * 1000)) {
+      p.pinned = false;
+      p.pinnedAt = undefined;
+      needsWrite = true;
+    }
+  });
+  if (needsWrite) writePosts(posts);
+  // 置顶帖优先排序（按 pinnedAt 降序）
+  activePosts.sort((a, b) => {
+    if (a.pinned && b.pinned) return (Number(b.pinnedAt) || 0) - (Number(a.pinnedAt) || 0);
+    if (a.pinned) return -1;
+    if (b.pinned) return 1;
+    return 0;
+  });
   // 仅自己可见的帖子：仅作者本人可见
   const token = req.headers['x-user-token'];
   let currentUserId = null;
@@ -265,7 +283,7 @@ app.post('/api/posts', (req, res) => {
     realAvatar = (user && user.avatar) || '🙈';
   }
 
-  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit } = req.body;
+  const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit, pinned } = req.body;
 
   // 如果勾选了匿名发布，覆盖为匿名显示
   let anonymousFlag = false;
@@ -291,15 +309,33 @@ app.post('/api/posts', (req, res) => {
     }
   }
 
-  // 每日发帖次数限额（PLUS 20次/天，非PLUS 2次/天）
+  // 每日发帖次数限额（PLUS 无限制，非PLUS 5次/天，超出需39 credit）
   if (realUserId) {
     const today = new Date().toISOString().slice(0, 10);
     const allPosts = readPosts();
     const uid = String(realUserId);
     const todayPosts = allPosts.filter(p => String(p.userId) === uid && p.time && String(p.time).startsWith(today));
-    const dailyLimit = isUserPlus(realUserId) ? 20 : 2;
+    const dailyLimit = isUserPlus(realUserId) ? Infinity : 5;
     if (todayPosts.length >= dailyLimit) {
-      return res.json({ ok: false, code: 'DAILY_POST_LIMIT', msg: '今日发帖次数已用完（' + dailyLimit + '/' + dailyLimit + '）' });
+      if (!payWithCredit) {
+        return res.json({ ok: false, code: 'DAILY_POST_LIMIT', msg: '今日免费发帖次数已用完（' + dailyLimit + '/' + dailyLimit + '），每次需消耗 39 credit', cost: 39 });
+      }
+      const users = readUsers();
+      const user = users.find(u => u.id === realUserId);
+      if (!user || (user.credit || 0) < 39) {
+        return res.json({ ok: false, msg: 'credit 不足，无法发帖', code: 'INSUFFICIENT_CREDIT' });
+      }
+      user.credit = (user.credit || 0) - 39;
+      writeUsers(users);
+      const logs = readCreditLogs();
+      logs.push({
+        id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        userId: realUserId,
+        amount: -39,
+        reason: '发帖超额消耗（自然日限制）',
+        createdAt: new Date().toISOString()
+      });
+      writeCreditLogs(logs);
     }
   }
 
@@ -327,6 +363,51 @@ app.post('/api/posts', (req, res) => {
         userId: realUserId,
         amount: -50,
         reason: '匿名发帖超额消耗（自然日限制）',
+        createdAt: new Date().toISOString()
+      });
+      writeCreditLogs(logs);
+    }
+  }
+
+  // 置顶处理：检查并扣除置顶费用/次数
+  if (pinned && realUserId) {
+    if (isUserPlus(realUserId)) {
+      const used = getUserMonthlyPinCount(realUserId);
+      if (used >= 40) {
+        // PLUS 用户超过 40 次/月 → 按非 PLUS 处理（扣 100 credit）
+        const users = readUsers();
+        const user = users.find(u => u.id === realUserId);
+        if (!user || (user.credit || 0) < 100) {
+          return res.json({ ok: false, msg: 'credit 不足，无法置顶（需 100 credit）', code: 'INSUFFICIENT_CREDIT' });
+        }
+        user.credit = (user.credit || 0) - 100;
+        writeUsers(users);
+        const logs = readCreditLogs();
+        logs.push({
+          id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          userId: realUserId,
+          amount: -100,
+          reason: '帖子置顶费用（PLUS 额度超限）',
+          createdAt: new Date().toISOString()
+        });
+        writeCreditLogs(logs);
+      } else {
+        incrementUserPinCount(realUserId);
+      }
+    } else {
+      const users = readUsers();
+      const user = users.find(u => u.id === realUserId);
+      if (!user || (user.credit || 0) < 100) {
+        return res.json({ ok: false, msg: 'credit 不足，无法置顶（需 100 credit）', code: 'INSUFFICIENT_CREDIT' });
+      }
+      user.credit = (user.credit || 0) - 100;
+      writeUsers(users);
+      const logs = readCreditLogs();
+      logs.push({
+        id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        userId: realUserId,
+        amount: -100,
+        reason: '帖子置顶费用',
         createdAt: new Date().toISOString()
       });
       writeCreditLogs(logs);
@@ -425,6 +506,12 @@ if (!content || !content.trim()) {
     visibleTo: finalVisibility === 'whitelist' ? (Array.isArray(visibleTo) ? visibleTo : []) : undefined,
     invisibleTo: finalVisibility === 'blacklist' ? (Array.isArray(invisibleTo) ? invisibleTo : []) : undefined
   };
+
+  // 置顶标记
+  if (pinned && realUserId) {
+    newPost.pinned = true;
+    newPost.pinnedAt = Date.now();
+  }
 
   posts.unshift(newPost);
   writePosts(posts);
@@ -529,7 +616,10 @@ app.put('/api/posts/:id', requireAdmin, (req, res) => {
 
   const { content, pinned } = req.body;
   if (content !== undefined) post.content = content;
-  if (pinned !== undefined) post.pinned = pinned;
+  if (pinned !== undefined) {
+    post.pinned = pinned;
+    post.pinnedAt = pinned ? Date.now() : undefined;
+  }
 
   writePosts(posts);
   res.json({ ok: true, data: post });
@@ -577,9 +667,23 @@ app.post('/api/posts/:id/like', (req, res) => {
   post.likes = post.likedBy.length;
   post.liked = post.likedBy.includes(likerId);
 
+  // 确定 true/false（而非 0/1）
+  const wasLiked = Boolean(post.liked);
   writePosts(posts);
 
-  res.json({ ok: true, data: { liked: post.liked, likes: post.likes } });
+  // 点赞通知：点赞、非自己点、有点赞者 token
+  if (idx === -1 && token && post.userId && post.userId !== likerId) {
+    const likerSession = verifyUserToken(token);
+    if (likerSession) {
+      const likerName = likerSession.nickname || '某用户';
+      pushUserNotice(post.userId,
+        '❤️ 收到点赞',
+        likerName + ' 赞了你的帖子「' + (post.content || '').substring(0, 20) + '...」',
+        'T1');
+    }
+  }
+
+  res.json({ ok: true, data: { liked: wasLiked, likes: post.likes } });
 });
 
 // 获取帖子评论列表
@@ -689,6 +793,14 @@ app.post('/api/posts/:id/comments', (req, res) => {
       status: 'pending'
     });
     writeReports(reports);
+  }
+
+  // 评论通知：非自己评论自己的帖子
+  if (post.userId && post.userId !== userId) {
+    pushUserNotice(post.userId,
+      '💬 收到评论',
+      author + ' 评论了你的帖子「' + (post.content || '').substring(0, 20) + '...」',
+      'T1');
   }
 
   writePosts(posts);
