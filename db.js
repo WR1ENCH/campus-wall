@@ -453,6 +453,16 @@ function migrate() {
     "handledBy" TEXT,
     "resultNote" TEXT
   )`);
+  // 主页访客记录
+  db.exec(`CREATE TABLE IF NOT EXISTS "profile_visits" (
+    "id" TEXT PRIMARY KEY,
+    "visitedUserId" TEXT NOT NULL,
+    "visitorUserId" TEXT NOT NULL,
+    "createdAt" TEXT NOT NULL,
+    "read" INTEGER DEFAULT 0
+  )`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pv_visited_created ON profile_visits(visitedUserId, createdAt DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pv_visited_read ON profile_visits(visitedUserId, read)`);
 
   // 已有表的列迁移
   const tableMigrations = [
@@ -1040,6 +1050,42 @@ function addIdInput(entityType, entityId, content) {
   }
 }
 
+// ===== Profile Visits =====
+function addProfileVisit(visit) {
+  if (!visit.id) visit.id = generateId('PV');
+  const stmt = db.prepare(`INSERT INTO profile_visits (id, visitedUserId, visitorUserId, createdAt, read) VALUES (@id, @visitedUserId, @visitorUserId, @createdAt, @read)`);
+  stmt.run(visit);
+}
+
+function getProfileVisits(visitedUserId, page = 1, limit = 20) {
+  const offset = (page - 1) * limit;
+  const total = db.prepare(`SELECT COUNT(*) as count FROM profile_visits WHERE visitedUserId = ?`).get(visitedUserId).count;
+  const visits = db.prepare(`SELECT * FROM profile_visits WHERE visitedUserId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?`).all(visitedUserId, limit, offset);
+  return { total, visits };
+}
+
+function getUnreadVisitCount(visitedUserId) {
+  const row = db.prepare(`SELECT COUNT(*) as count FROM profile_visits WHERE visitedUserId = ? AND read = 0`).get(visitedUserId);
+  return row.count;
+}
+
+function getYesterdayVisitsGrouped() {
+  const now = new Date();
+  const bjDate = new Date(now.getTime() + 8 * 3600000);
+  const bjYesterdayStart = new Date(Date.UTC(bjDate.getUTCFullYear(), bjDate.getUTCMonth(), bjDate.getUTCDate() - 1));
+  const bjYesterdayEnd = new Date(Date.UTC(bjDate.getUTCFullYear(), bjDate.getUTCMonth(), bjDate.getUTCDate()));
+  const stmt = db.prepare(`SELECT visitedUserId, COUNT(*) as count FROM profile_visits WHERE createdAt >= ? AND createdAt < ? GROUP BY visitedUserId`);
+  return stmt.all(bjYesterdayStart.toISOString(), bjYesterdayEnd.toISOString());
+}
+
+function markVisitRead(visitId, userId) {
+  db.prepare(`UPDATE profile_visits SET read = 1 WHERE id = ? AND visitedUserId = ?`).run(visitId, userId);
+}
+
+function markAllVisitsRead(userId) {
+  db.prepare(`UPDATE profile_visits SET read = 1 WHERE visitedUserId = ? AND read = 0`).run(userId);
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -1089,4 +1135,6 @@ module.exports = {
   getDb, runSql, allSql,
   // 数据唯一化：ID 分配日志表
   addIdInput,
+  // Profile Visits
+  addProfileVisit, getProfileVisits, getUnreadVisitCount, getYesterdayVisitsGrouped, markVisitRead, markAllVisitsRead,
 };

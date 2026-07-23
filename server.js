@@ -174,6 +174,7 @@ require('./routes/student-council')(app);
 require('./routes/whispers')(app);
 require('./routes/subscription')(app);
 require('./routes/maintenance')(app);
+require('./routes/visits')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
 
 // ===== 启动 =====
