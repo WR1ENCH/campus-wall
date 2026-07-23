@@ -1293,8 +1293,8 @@ body {
     if (!file || !_importMdTarget) return;
 
     // === 安全检查 1：文件大小限制 ===
-    if (file.size > 1024 * 1024) {
-      showToast('<svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg> ' + file.name + ' 超过1MB', 'error');
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('<svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg> ' + file.name + ' 超过10MB', 'error');
       return;
     }
     if (file.size === 0) {

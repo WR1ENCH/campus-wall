@@ -2840,7 +2840,7 @@ backdrop-filter: blur(4px);
  </div>
  <!-- 图片上传 -->
  <div class="post-image-section">
-  <label class="post-image-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图 <span class="info-icon" onclick="event.stopPropagation();toggleTooltip(event,'imageInfoTip')" tabindex="0" role="button" aria-label="图片上传说明"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><div class="info-tooltip" id="imageInfoTip">最多 4 张，每张 ≤ 2MB</div></label>
+  <label class="post-image-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图 <span class="info-icon" onclick="event.stopPropagation();toggleTooltip(event,'imageInfoTip')" tabindex="0" role="button" aria-label="图片上传说明"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><div class="info-tooltip" id="imageInfoTip">最多 4 张，每张 ≤ 10MB</div></label>
  <div class="post-image-list" id="postImgList">
  <label for="postImgInput" class="post-image-add" aria-label="添加图片">+</label>
  </div>
@@ -3627,7 +3627,7 @@ backdrop-filter: blur(4px);
    <div id="qaAskPinPlusHint" style="font-size:11px;color:#2a6846;margin-top:2px;display:none;"><span style="color:#f5c518;">⭐PLUS++</span> 免费置顶</div>
   </div>
   <div style="margin-bottom:14px;">
-  <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:6px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图（最多3张，每张≤2MB）</label>
+  <label style="font-size:13px;font-weight:600;color:#7a5700;display:block;margin-bottom:6px;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图（最多3张，每张≤10MB）</label>
  <div style="display:flex;gap:8px;flex-wrap:wrap;" id="qaAskImgList">
  <label class="qa-img-add" for="qaAskImgInput" title="添加图片">+</label>
  <input id="qaAskImgInput" type="file" accept="image/*" style="display:none;" onchange="addQAImage(this,'ask')">
@@ -6981,10 +6981,10 @@ async function showPostCaptchaModal() {
  if (postImages.length >= 4) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 最多4张图片'); input.value = ''; return; }
  var file = input.files[0];
  if (!file) return;
- if (file.size > 2 * 1024 * 1024) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 图片不超过2MB'); input.value = ''; return; }
- var reader = new FileReader();
- reader.onload = function(e) {
- postImages.push(e.target.result);
+if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 图片不超过10MB'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+  postImages.push(e.target.result);
  renderPostImages();
  };
  reader.readAsDataURL(file);
@@ -8306,18 +8306,18 @@ function escJsStr(s) {
  if (imgs.length >= 3) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 最多3张图片'); input.value = ''; return; }
  const file = input.files[0];
  if (!file) return;
- if (file.size > 2 * 1024 * 1024) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 图片不超过2MB'); input.value = ''; return; }
- const reader = new FileReader();
- reader.onload = function(e) {
- const src = e.target.result;
- imgs.push(src);
- renderQAImgList(listId, inputId, imgs, target);
- };
- reader.readAsDataURL(file);
- input.value = '';
- }
+if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 图片不超过10MB'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+  const src = e.target.result;
+  imgs.push(src);
+  renderQAImgList(listId, inputId, imgs, target);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+  }
 
- function removeQAImage(index, target) {
+  function removeQAImage(index, target) {
  const imgs = target === 'ask' ? qaImages_ask : qaImages_answer;
  const listId = target === 'ask' ? 'qaAskImgList' : 'qaAnswerImgList';
  const inputId = target === 'ask' ? 'qaAskImgInput' : 'qaAnswerImgInput';
@@ -9213,7 +9213,7 @@ function escJsStr(s) {
        _wrap.className = 'plus-avatar-wrap plus-avatar-lg';
        _wrap.style.width = '40px';
        _wrap.style.height = '40px';
-       _wrap.style.borderRadius = '12px';
+       _wrap.style.borderRadius = '50%';
        avatarEl.parentNode.insertBefore(_wrap, avatarEl);
        _wrap.appendChild(avatarEl);
        var _tag = document.createElement('div');
@@ -9222,7 +9222,7 @@ function escJsStr(s) {
      }
    }
    if (u.avatar && u.avatar.startsWith('data:image/')) {
-   avatarEl.innerHTML = '<img src="' + u.avatar + '" style="width:100%;height:100%;border-radius:12px;object-fit:cover;" onerror="this.style.display=\'none\'">';
+   avatarEl.innerHTML = '<img src="' + u.avatar + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">';
    } else if (u.avatar && u.avatar.length <= 4) {
    avatarEl.innerHTML = '<span style="font-size:22px;">' + u.avatar + '</span>';
    } else {
