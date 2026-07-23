@@ -5949,11 +5949,11 @@ async function showPostCaptchaModal() {
 
  let finalHtml = '';
  notesData.forEach(data => {
- const pos = packer.place(data.width, data.height);
- finalHtml += data.html.replace(
- 'style="',
- `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
- );
+  const pos = packer.place(data.width, data.height);
+  finalHtml += data.html.replace(
+  'style="',
+  `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
+  );
  });
 
  grid.innerHTML = finalHtml;
@@ -9724,6 +9724,126 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
       });
     }
   });
+</script>
+
+<style>
+/* ===== 开屏广告 ===== */
+.splash-overlay {
+  position: fixed; inset: 0; z-index: 999999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #3a2818 0%, #5a3d00 40%, #7a5530 100%);
+  opacity: 0; transition: opacity 0.4s ease;
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+}
+.splash-overlay.show { opacity: 1; }
+.splash-overlay.hide { opacity: 0; pointer-events: none; }
+.splash-top { position: absolute; top: 0; left: 0; right: 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+.splash-brand { font-family: 'ZCOOL KuaiLe', cursive; font-size: 18px; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+.splash-skip {
+  background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 16px;
+  border-radius: 20px; font-size: 13px; cursor: pointer; backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+.splash-skip:hover { background: rgba(255,255,255,0.25); }
+.splash-skip:disabled { opacity: 0.4; cursor: default; }
+.splash-card {
+  text-align: center; color: #fff; padding: 20px; cursor: pointer;
+  animation: splashFloat 2s ease-in-out infinite;
+}
+@keyframes splashFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.splash-emoji { font-size: 72px; line-height: 1.2; margin-bottom: 12px; display: block; }
+.splash-name { font-family: 'ZCOOL KuaiLe', cursive; font-size: 32px; color: #f5e6d0; margin-bottom: 8px; }
+.splash-desc { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 2px; }
+.splash-cta {
+  display: inline-block; margin-top: 16px; padding: 10px 32px;
+  background: linear-gradient(135deg, #f5c518, #e8a800); color: #3a2818;
+  border: none; border-radius: 24px; font-size: 15px; font-weight: 700;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(245,197,24,0.3);
+}
+.splash-ad-tag {
+  position: absolute; bottom: 20px; font-size: 11px; color: rgba(255,255,255,0.25);
+  letter-spacing: 2px;
+}
+.splash-countdown {
+  position: absolute; bottom: 50px; font-size: 12px; color: rgba(255,255,255,0.3);
+}
+</style>
+
+<script>
+// ===== 开屏广告 =====
+(function() {
+  if (Math.random() > 0.5) return; // 50% 概率触发
+
+  var ITEMS = [
+    { emoji: '🎬', name: '千猪电影票', desc: '全网低价电影票', url: 'https://tb.jiuxinban.com/CDcMsw' },
+  ];
+
+  var idx = parseInt(localStorage.getItem('_splash_idx') || '0');
+  var item = ITEMS[idx % ITEMS.length];
+  localStorage.setItem('_splash_idx', idx + 1);
+
+  var ov = document.createElement('div');
+  ov.className = 'splash-overlay';
+  ov.innerHTML =
+    '<div class="splash-top">' +
+      '<span class="splash-brand">📌 校园墙</span>' +
+      '<button class="splash-skip" id="splashSkipBtn">跳过 <span id="splashCount">5</span>s</button>' +
+    '</div>' +
+    '<div class="splash-card" id="splashCard">' +
+      '<span class="splash-emoji">' + item.emoji + '</span>' +
+      '<div class="splash-name">' + item.name + '</div>' +
+      '<div class="splash-desc">' + item.desc + '</div>' +
+      '<div class="splash-cta">立即查看 →</div>' +
+    '</div>' +
+    '<div class="splash-ad-tag">— 广告 —</div>' +
+    '<div class="splash-countdown">' + item.name + ' 提供</div>';
+
+  document.body.appendChild(ov);
+  // 触发入场动画
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+
+  // 开屏展示即算一次 CPS 浏览：隐藏 iframe 加载推广链接完成追踪
+  // 隐藏 iframe 加载推广链接，完成 CPS 追踪（用户无感知）
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:absolute;width:0;height:0;opacity:0;border:none;';
+  iframe.src = item.url;
+  document.body.appendChild(iframe);
+  // 5 秒后清理 iframe
+  setTimeout(function() { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 5000);
+
+  var count = 5;
+  var cdEl = document.getElementById('splashCount');
+  var skipBtn = document.getElementById('splashSkipBtn');
+  var timer = setInterval(function() {
+    count--;
+    if (cdEl) cdEl.textContent = count;
+    if (count <= 0) {
+      clearInterval(timer);
+      if (skipBtn) skipBtn.disabled = false;
+      if (skipBtn) skipBtn.textContent = '跳过';
+    }
+  }, 1000);
+
+  function closeSplash() {
+    ov.classList.add('hide');
+    setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 400);
+  }
+
+  if (skipBtn) {
+    skipBtn.addEventListener('click', function(e) { e.stopPropagation(); closeSplash(); });
+    skipBtn.disabled = true;
+  }
+
+  // 仅「立即查看」按钮跳转，其余区域（跳过、背景、卡片文字）都不跳
+  var cta = document.querySelector('.splash-cta');
+  if (cta) {
+    cta.addEventListener('click', function(e) {
+      e.stopPropagation();
+      window.open(item.url, '_blank');
+      closeSplash();
+    });
+  }
+})();
 </script>
 
 </body>
