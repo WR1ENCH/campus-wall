@@ -1593,7 +1593,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           返回
         </a>
-        <button id="visitorBtn" class="btn btn-ghost" style="padding:6px 14px;font-size:13px;position:relative;" onclick="openVisitorModal()">
+        <button id="visitorBtn" class="btn btn-ghost" style="display:none;padding:6px 14px;font-size:13px;position:relative;" onclick="openVisitorModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
@@ -2267,48 +2267,49 @@
       };
 
       var _viewedIsPlus = !!(window._currentUserIsPlus);
-       var _avatarFrameHtml = _viewedIsPlus
-         ? '<div class="plus-avatar-wrap plus-avatar-sm"><div class="post-author-avatar">' +
-             (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
-           '</div><div class="plus-avatar-tag"></div></div>'
-         : '<div class="post-author-avatar">' +
-             (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
-           '</div>';
 
-       posts.forEach(function(post) {
-         var card = document.createElement('div');
-         card.className = 'post-card';
-         card.addEventListener('click', function() {
-           alert('帖子详情：' + (post.content ? post.content.substring(0, 50) : '') + '...');
-         });
+      posts.forEach(function(post) {
+        var card = document.createElement('div');
+        card.className = 'post-card';
+        card.addEventListener('click', function() {
+          alert('帖子详情：' + (post.content ? post.content.substring(0, 50) : '') + '...');
+        });
 
-         var typeClass = typeMap[post.type] || 'default';
-         var time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-         var content = post.content && post.content.length > 120 ? post.content.substring(0, 120) + '...' : (post.content || '');
+        var typeClass = typeMap[post.type] || 'default';
+        var time = new Date(post.time).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        var content = post.content && post.content.length > 120 ? post.content.substring(0, 120) + '...' : (post.content || '');
 
-         card.innerHTML =
-           '<span class="post-type ' + typeClass + '">' + (post.type || '日常') + '</span>' +
-           '<div class="post-content">' + content + '</div>' +
-           '<div class="post-footer">' +
-             '<div class="post-author">' +
-               _avatarFrameHtml +
-               '<span class="post-author-name">' + (post.author || '匿名') + '</span>' +
-             '</div>' +
-             '<div class="post-stats">' +
-               '<span>' +
-                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
-                 (post.likes || 0) +
-               '</span>' +
-               '<span>' +
-                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-                 (post.commentsCount || 0) +
-               '</span>' +
-             '</div>' +
-           '</div>' +
-           '<div class="post-time">' + time + '</div>';
+        var avatarHtml = _viewedIsPlus
+          ? '<div class="plus-avatar-wrap plus-avatar-sm"><div class="post-author-avatar">' +
+              (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
+            '</div><div class="plus-avatar-tag"></div></div>'
+          : '<div class="post-author-avatar">' +
+              (post.avatar && post.avatar.startsWith('data:') ? '<img src="' + post.avatar + '">' : '') +
+            '</div>';
 
-         grid.appendChild(card);
-       });
+        card.innerHTML =
+          '<span class="post-type ' + typeClass + '">' + (post.type || '日常') + '</span>' +
+          '<div class="post-content">' + content + '</div>' +
+          '<div class="post-footer">' +
+            '<div class="post-author">' +
+              avatarHtml +
+              '<span class="post-author-name">' + (post.author || '匿名') + '</span>' +
+            '</div>' +
+            '<div class="post-stats">' +
+              '<span>' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
+                (post.likes || 0) +
+              '</span>' +
+              '<span>' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                (post.commentsCount || 0) +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="post-time">' + time + '</div>';
+
+        grid.appendChild(card);
+      });
     }
 
     // ===== Zhixue Bind =====
@@ -2934,6 +2935,7 @@
           currentLoggedInUser = data.data;
           if (currentLoggedInUser.id === userId) {
             document.getElementById('editProfileBtn').style.display = '';
+            document.getElementById('visitorBtn').style.display = '';
             renderCertSection();
           }
         }
