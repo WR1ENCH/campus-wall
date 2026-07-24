@@ -7509,7 +7509,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
       if (j.ok) { closeWhisperModal(); showToast('悄悄话已发送'); }
       else if (j.code === 'SENSITIVE_WORDS' || j.code === 'BULLYING_NAME') {
         alert(j.warningMsg || j.msg);
-      } else { showToast(j.msg || '发送失败'); }
+      else { closeWhisperModal(); showToast(j.msg || '发送失败'); }
     })
     .catch(function() { showToast('网络错误'); });
   }
