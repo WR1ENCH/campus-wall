@@ -55,7 +55,7 @@ try {
 // ===== 创建 Express 应用 =====
 const app = express();
 app.set('trust proxy', true);
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // ===== 中间件 =====
 const { inputSanitize, createCheckMaintenance } = require('./lib/middleware');
