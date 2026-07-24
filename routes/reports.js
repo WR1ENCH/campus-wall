@@ -15,7 +15,7 @@ function broadcastSSENotice() { require('../lib/sse').broadcastSSE('noticeUpdate
 const TYPE_LABELS = {
   post: '帖子', comment: '帖子评论', discussion: '讨论话题',
   discussion_comment: '讨论评论', qa_question: '问答问题',
-  qa_answer: '问答回答', featured: '校园墙精选', auction: '拍卖内容',
+  qa_answer: '问答回答', whisper: '悄悄话', featured: '校园墙精选', auction: '拍卖内容',
 };
 
 // 统一创建举报：生成 REPO- ID、存证据快照、发受理通知
@@ -121,7 +121,7 @@ module.exports = function (app) {
     let { type, targetId, postId, reason } = req.body;
     // 兼容旧前端：仅传 postId 时按帖子举报
     if (!type && postId) { type = 'post'; targetId = postId; }
-    const allowed = ['post', 'comment', 'discussion', 'discussion_comment', 'qa_question', 'qa_answer', 'featured', 'auction'];
+    const allowed = ['post', 'comment', 'discussion', 'discussion_comment', 'qa_question', 'qa_answer', 'whisper', 'featured', 'auction'];
     if (!allowed.includes(type)) return res.json({ ok: false, msg: '不支持的举报类型' });
     if (!targetId) return res.json({ ok: false, msg: '缺少内容ID' });
     if (!reason || !reason.trim()) return res.json({ ok: false, msg: '请选择举报原因' });
