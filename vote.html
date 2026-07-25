@@ -1,1 +1,944 @@
-@ours
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>投票详情 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-50: #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-300: #93c5fd;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-800: #1e40af;
+      --blue-900: #1e3a5f;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --green-500: #22c55e;
+      --green-50: #f0fdf4;
+      --red-500: #ef4444;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04);
+      --radius: 16px;
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--blue-50) 0%, #fff 40%, var(--blue-50) 100%);
+      color: var(--gray-700);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Top Bar ===== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px) saturate(1.3);
+      -webkit-backdrop-filter: blur(16px) saturate(1.3);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+    .back-btn:hover {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      transform: translateX(-1px);
+    }
+    .back-btn:active { transform: scale(0.97); }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .topbar-logo:hover { opacity: 0.8; }
+    .topbar-logo svg { color: var(--blue-600); }
+    .topbar-logo span {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--blue-900);
+    }
+
+    .vote-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+    }
+
+    /* ===== Main Container ===== */
+    .main {
+      max-width: 600px;
+      margin: 32px auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ===== Vote Header Card ===== */
+    .vote-header {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px 24px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+      animation: dropIn 0.5s var(--ease-spring) both;
+    }
+
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .vote-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.active {
+      background: var(--green-500);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-dot.ended { background: var(--gray-300); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.1); }
+    }
+
+    .status-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-label.active { color: var(--green-500); }
+    .status-label.ended { color: var(--gray-400); }
+
+    .vote-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--blue-900);
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .vote-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+    .vote-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .vote-meta-item svg {
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--blue-50);
+      color: var(--blue-600);
+      border: 1px solid var(--blue-200);
+    }
+
+    /* ===== Options List ===== */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-card {
+      position: relative;
+      background: white;
+      border-radius: var(--radius);
+      padding: 0;
+      box-shadow: var(--shadow-sm);
+      border: 2px solid var(--gray-200);
+      overflow: hidden;
+      transition: all 0.25s var(--ease-smooth);
+      cursor: pointer;
+      user-select: none;
+      animation: optionIn 0.4s var(--ease-spring) both;
+    }
+    .option-card:nth-child(1) { animation-delay: 0.05s; }
+    .option-card:nth-child(2) { animation-delay: 0.1s; }
+    .option-card:nth-child(3) { animation-delay: 0.15s; }
+    .option-card:nth-child(4) { animation-delay: 0.2s; }
+    .option-card:nth-child(5) { animation-delay: 0.25s; }
+    .option-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+    @keyframes optionIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .option-card:hover:not(.disabled):not(.voted) {
+      border-color: var(--blue-300);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+
+    .option-card.selected {
+      border-color: var(--blue-500);
+      background: var(--blue-50);
+    }
+
+    .option-card.disabled {
+      cursor: default;
+      opacity: 0.85;
+    }
+
+    .option-bar-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--blue-100), var(--blue-50));
+      transition: width 0.6s var(--ease-spring);
+      z-index: 0;
+    }
+
+    .option-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+    }
+
+    .option-check {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s var(--ease-smooth);
+    }
+
+    .option-card.selected .option-check {
+      border-color: var(--blue-500);
+      background: var(--blue-500);
+    }
+    .option-card.selected .option-check::after {
+      content: '';
+      width: 6px;
+      height: 4px;
+      border-left: 2px solid white;
+      border-bottom: 2px solid white;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+
+    .option-checkbox-mark {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--gray-300);
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s var(--ease-smooth);
+    }
+
+    .option-card.selected .option-checkbox-mark {
+      border-color: var(--blue-500);
+      background: var(--blue-500);
+    }
+    .option-card.selected .option-checkbox-mark::after {
+      content: '';
+      width: 6px;
+      height: 3px;
+      border-left: 2px solid white;
+      border-bottom: 2px solid white;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+
+    .option-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .option-text {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--gray-700);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .option-card.selected .option-text {
+      color: var(--blue-800);
+      font-weight: 600;
+    }
+
+    .option-percent {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-400);
+      margin-left: auto;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      min-width: 40px;
+      text-align: right;
+    }
+    .option-card.selected .option-percent {
+      color: var(--blue-600);
+    }
+
+    /* ===== Custom Option Input ===== */
+    .custom-option-wrapper {
+      background: white;
+      border-radius: var(--radius);
+      border: 2px dashed var(--gray-300);
+      overflow: hidden;
+      transition: all 0.25s var(--ease-smooth);
+    }
+    .custom-option-wrapper.active {
+      border-color: var(--blue-400);
+      background: var(--blue-50);
+      border-style: solid;
+    }
+    .custom-option-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+    }
+    .custom-option-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--gray-700);
+      background: transparent;
+    }
+    .custom-option-input::placeholder {
+      color: var(--gray-400);
+    }
+    .custom-option-label {
+      font-size: 12px;
+      color: var(--gray-400);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    /* ===== Submit Button ===== */
+    .submit-section {
+      margin-top: 24px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-smooth);
+      box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:hover:not(:disabled)::before { opacity: 1; }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(37,99,235,0.4);
+    }
+    .submit-btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
+    }
+    .submit-btn:disabled {
+      background: var(--gray-300);
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    /* ===== Voted Result Banner ===== */
+    .result-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 20px;
+      background: var(--green-50);
+      border: 1.5px solid rgba(34,197,94,0.2);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green-500);
+    }
+    .result-banner svg { flex-shrink: 0; }
+
+    /* ===== End Banner ===== */
+    .end-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 20px;
+      background: var(--gray-100);
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-500);
+    }
+
+    /* ===== Loading ===== */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 20px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--blue-100);
+      border-top-color: var(--blue-500);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 14px;
+      color: var(--gray-400);
+    }
+
+    /* ===== Error State ===== */
+    .error-wrap {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .error-icon {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .error-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+    .error-desc {
+      font-size: 14px;
+      color: var(--gray-400);
+      margin-bottom: 24px;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      animation: toastIn 0.3s var(--ease-spring);
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+    }
+    .toast.success {
+      background: rgba(34,197,94,0.95);
+      color: white;
+    }
+    .toast.error {
+      background: rgba(239,68,68,0.95);
+      color: white;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 600px) {
+      .main { margin: 20px auto; padding: 0 16px 60px; }
+      .vote-header { padding: 22px 18px 20px; margin-bottom: 16px; }
+      .vote-title { font-size: 19px; }
+      .option-inner { padding: 14px 14px; gap: 12px; }
+      .option-text { font-size: 14px; }
+      .option-percent { font-size: 12px; min-width: 36px; }
+      .submit-btn { padding: 14px 20px; font-size: 15px; border-radius: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      返回
+    </button>
+    <div class="topbar-logo" onclick="location.href='index.html'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>校园墙</span>
+    </div>
+    <div class="vote-count-badge" id="participantCount">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 1-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span id="participantLabel">--</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <span class="loading-text">加载投票中...</span>
+    </div>
+  </div>
+
+<script>
+// ===== Utilities =====
+var ESCAPED = {};
+function escapeHtml(s) {
+  if (!s) return '';
+  if (ESCAPED[s]) return ESCAPED[s];
+  return ESCAPED[s] = String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  var existing = document.getElementById('toastEl');
+  if (existing) existing.remove();
+  var el = document.createElement('div');
+  el.id = 'toastEl';
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(el.remove.bind(el), 300); }, 2200);
+}
+
+function formatDate(iso) {
+  if (!iso) return '--';
+  var d = new Date(iso);
+  var m = d.getMonth()+1;
+  var day = d.getDate();
+  var h = d.getHours();
+  var min = String(d.getMinutes()).padStart(2,'0');
+  return m + '/' + day + ' ' + String(h).padStart(2,'0') + ':' + min;
+}
+
+// ===== State =====
+var currentVote = null;
+var selectedOptions = []; // ['opt_abc', ...] or ['__custom__']
+var token = localStorage.getItem('campus_user_token');
+var userId = null;
+if (token) {
+  try {
+    var parts = token.split('.');
+    if (parts.length >= 2) {
+      var payload = JSON.parse(atob(parts[0].replace(/-/g,'+').replace(/_/g,'/')));
+      if (payload && payload.id) userId = payload.id;
+    }
+  } catch(e) {}
+}
+var hasVoted = false;
+
+// ===== Navigation =====
+function getVoteId() {
+  var params = new URLSearchParams(location.search);
+  return params.get('id');
+}
+
+function goBack() {
+  var ref = document.referrer;
+  if (ref.indexOf(window.location.hostname) !== -1 || ref.indexOf('/vote.html') === -1) {
+    history.back();
+  } else {
+    location.href = 'index.html';
+  }
+}
+
+// ===== Data Fetching =====
+async function loadVote() {
+  var voteId = getVoteId();
+  var container = document.getElementById('mainContent');
+  if (!voteId) {
+    showError('未找到投票 ID');
+    return;
+  }
+
+  try {
+    var headers = {};
+    if (token) headers['x-user-token'] = token;
+
+    // Fetch all votes, find ours
+    var resp = await fetch('/api/votes', { headers: headers });
+    var data = await resp.json();
+    if (!data.ok) {
+      showError('加载失败，请刷新重试');
+      return;
+    }
+
+    currentVote = data.data.find(function(v) { return v.id === voteId; });
+    if (!currentVote) {
+      showError('该投票不存在或已被删除');
+      return;
+    }
+
+    if (currentVote.deleted) {
+      showError('该投票已删除');
+      return;
+    }
+
+    renderPage();
+  } catch(e) {
+    console.error('loadVote error:', e);
+    showError('网络错误，请稍后重试。详情：' + (e.message || e));
+  }
+}
+
+function showError(msg) {
+  var container = document.getElementById('mainContent');
+  container.innerHTML = '<div class="error-wrap">' +
+    '<div class="error-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+    '<div class="error-title">出错了</div>' +
+    '<div class="error-desc">' + escapeHtml(msg) + '</div>' +
+    '<a href="index.html" style="color:var(--blue-500);font-size:14px;font-weight:600;text-decoration:none;">&larr; 返回首页</a>' +
+    '</div>';
+}
+
+// ===== Rendering =====
+function isEnded(vote) {
+  return vote.endTime && new Date(vote.endTime) < new Date();
+}
+
+function getTotalVotes(vote) {
+  if (vote.totalVotes !== undefined) return vote.totalVotes;
+  if (!vote.options) return 0;
+  return vote.options.reduce(function(s,o){ return s + (o.votes || 0); }, 0);
+}
+
+function renderPage() {
+  var container = document.getElementById('mainContent');
+  var vote = currentVote;
+  var ended = isEnded(vote);
+  var total = getTotalVotes(vote);
+  var uid = vote.userVoted || [];
+  hasVoted = uid.length > 0;
+  selectedOptions = hasVoted ? uid.slice() : [];
+
+  document.getElementById('participantLabel').textContent = total + ' 人参与';
+
+  var isMulti = vote.multiple === true || vote.multiple === 1 || vote.multiple === '1';
+  var allowCustom = vote.allowCustom === true || vote.allowCustom === 1 || vote.allowCustom === '1' || vote.allowCustom === 'true';
+
+  // Status
+  var statusClass = ended ? 'ended' : 'active';
+  var statusText = ended ? '已结束' : '进行中';
+
+  var typeLabel = isMulti ? '多选' : '单选';
+
+  var deadlineHtml = '';
+  if (vote.endTime) {
+    deadlineHtml = '<span class="vote-meta-item">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' +
+      formatDate(vote.endTime) + ' 截止' +
+      '</span>';
+  }
+
+  // Options HTML
+  var optionsHtml = '';
+  (vote.options || []).forEach(function(opt, idx) {
+    var percent = total > 0 ? Math.round((opt.votes / total) * 100) : 0;
+    var isSelected = hasVoted && selectedOptions.indexOf(opt.id) !== -1;
+    var inputType = isMulti ? 'check' : 'radio';
+
+    var checkHtml = '';
+    if (isMulti) {
+      checkHtml = isSelected
+        ? '<div class="option-checkbox-mark"></div>'
+        : '<div class="option-checkbox-mark"></div>';
+    } else {
+      checkHtml = isSelected
+        ? '<div class="option-check"></div>'
+        : '<div class="option-check"></div>';
+    }
+
+    var barStyle = '';
+    if (hasVoted || ended) {
+      barStyle = ' style="width:' + percent + '%;"';
+    }
+
+    optionsHtml += '<div class="option-card' + (isSelected ? ' selected' : '') + (hasVoted || ended ? ' disabled' : '') + '" ' +
+      'data-opt-id="' + opt.id + '"' +
+      (hasVoted || ended ? 'onclick="return false"' : 'onclick="selectOption(this, \'' + opt.id + '\', ' + isMulti + ')"') + '>' +
+      '<div class="option-bar-bg"' + barStyle + '></div>' +
+      '<div class="option-inner">' +
+        checkHtml +
+        '<div class="option-info">' +
+          '<div class="option-text">' + escapeHtml(opt.text) + '</div>' +
+        '</div>' +
+        (hasVoted || ended ? '<span class="option-percent">' + percent + '%</span>' : '') +
+      '</div>' +
+    '</div>';
+  });
+
+  // Custom option input
+  var customHtml = '';
+  if (allowCustom && !hasVoted && !ended) {
+    customHtml = '<div class="custom-option-wrapper' + (selectedOptions.indexOf('__custom__') !== -1 ? ' active' : '') + '" id="customWrapper">' +
+      '<div class="custom-option-inner">' +
+        '<span class="custom-option-label">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+          '自定义' +
+        '</span>' +
+        '<input type="text" class="custom-option-input" id="customInput" placeholder="输入你的选项..." maxlength="100" ' +
+          'onfocus="document.getElementById(\'customWrapper\').classList.add(\'active\')" ' +
+          'onblur="document.getElementById(\'customWrapper\').classList.remove(\'active\')" ' +
+          'onkeydown="if(event.key===\'Enter\'){event.preventDefault();doSubmit()}" />' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Submit button or result banner
+  var actionHtml = '';
+  if (hasVoted) {
+    actionHtml = '<div class="result-banner">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+      '你已参与此投票' +
+    '</div>';
+  } else if (ended) {
+    actionHtml = '<div class="end-banner">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16s-3.5-5-4-7.5c-.5-2.5-1-4-4-4"/></svg>' +
+      '此投票已结束' +
+    '</div>';
+  } else {
+    actionHtml = '<div class="submit-section">' +
+      '<button class="submit-btn" id="submitBtn" onclick="doSubmit()" disabled>' +
+        '确认投票' +
+      '</button>' +
+    '</div>';
+  }
+
+  container.innerHTML = '<div class="vote-header">' +
+    '<div class="vote-status-row">' +
+      '<span class="status-dot ' + statusClass + '"></span>' +
+      '<span class="status-label ' + statusClass + '">' + statusText + '</span>' +
+      '<span class="type-badge">' + typeLabel + '</span>' +
+    '</div>' +
+    '<div class="vote-title">' + escapeHtml(vote.title) + '</div>' +
+    '<div class="vote-meta">' +
+      '<span class="vote-meta-item">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+        escapeHtml(vote.author || '?') +
+      '</span>' +
+      '<span class="vote-meta-item">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        formatDate(vote.createdAt) +
+      '</span>' +
+      deadlineHtml +
+    '</div>' +
+  '</div>' +
+  '<div class="options-list">' + optionsHtml + customHtml + '</div>' +
+  actionHtml;
+}
+
+// ===== Interaction =====
+function selectOption(card, optId, isMulti) {
+  if (card.classList.contains('disabled')) return;
+
+  if (!isMulti) {
+    // Single select: clear all
+    document.querySelectorAll('.option-card').forEach(function(c){ c.classList.remove('selected'); });
+    selectedOptions = [optId];
+    card.classList.add('selected');
+  } else {
+    // Multi select: toggle
+    var ci = selectedOptions.indexOf(optId);
+    if (ci !== -1) {
+      selectedOptions.splice(ci, 1);
+      card.classList.remove('selected');
+    } else {
+      selectedOptions.push(optId);
+      card.classList.add('selected');
+    }
+  }
+
+  updateSubmitBtn();
+}
+
+function updateSubmitBtn() {
+  var btn = document.getElementById('submitBtn');
+  if (!btn) return;
+
+  // Check custom option
+  var hasCustom = selectedOptions.indexOf('__custom__') !== -1;
+  var hasOptions = selectedOptions.filter(function(id){ return id !== '__custom__'; }).length;
+  var customVal = hasCustom ? (document.getElementById('customInput') ? document.getElementById('customInput').value.trim() : '') : '';
+
+  var valid = hasOptions > 0 || (hasCustom && customVal.length > 0);
+  btn.disabled = !valid;
+}
+
+function doSubmit() {
+  if (selectedOptions.length === 0) {
+    showToast('请选择一个选项', 'error');
+    return;
+  }
+
+  var voteId = getVoteId();
+  var hasCustom = selectedOptions.indexOf('__custom__') !== -1;
+
+  var payload;
+  if (hasCustom) {
+    var customInput = document.getElementById('customInput');
+    var customText = customInput ? customInput.value.trim() : '';
+    if (!customText) {
+      showToast('请输入自定义选项内容', 'error');
+      return;
+    }
+    payload = { optionIds: [], customOption: customText };
+  } else {
+    payload = { optionIds: selectedOptions };
+  }
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+
+  fetch('/api/votes/' + voteId + '/vote', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-token': token || ''
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      showToast('投票成功！', 'success');
+      // Reload to show results
+      loadVote();
+    } else {
+      showToast(data.msg || '投票失败，请重试', 'error');
+      btn.disabled = false;
+      btn.textContent = '确认投票';
+    }
+  })
+  .catch(function() {
+    showToast('网络错误，请稍后重试', 'error');
+    btn.disabled = false;
+    btn.textContent = '确认投票';
+  });
+}
+// ===== SSE 实时推送：别人投票后自动刷新数据 =====
+try {
+  var evtSource = new EventSource('/api/stream');
+  evtSource.addEventListener('voteUpdate', function() {
+    if (currentVote && getVoteId() === currentVote.id) {
+      loadVote();
+    }
+  });
+  document.addEventListener('pagehide', function() { evtSource.close(); });
+} catch(e) {}
+
+// Init
+document.addEventListener('DOMContentLoaded', loadVote);
+updateSubmitBtn();
+</script>
+
+</body>
+</html>
