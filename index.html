@@ -6006,8 +6006,33 @@ async function showPostCaptchaModal() {
  get totalHeight() { return Math.max(...this.heightMap); }
  }
 
+// ===== 滚动状态检测（防止滑动时重绘闪烁） =====
+let isScrolling = false;
+let scrollTimeout = null;
+let pendingRender = null;
+window.addEventListener('scroll', () => {
+  isScrolling = true;
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    isScrolling = false;
+    if (pendingRender) {
+      const f = pendingRender;
+      pendingRender = null;
+      f();
+    }
+  }, 200);
+}, { passive: true });
+
  // ===== 渲染 =====
- function renderNotes(filter = '全部') {
+function renderNotes(filter = '全部') {
+  if (isScrolling) {
+    pendingRender = () => _doRenderNotes(filter);
+    return;
+  }
+  _doRenderNotes(filter);
+}
+
+function _doRenderNotes(filter = '全部') {
  const grid = document.getElementById('notesGrid');
  const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
 
