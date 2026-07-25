@@ -1711,10 +1711,10 @@ var _sliderCaptchaToken = null;
     }
   }
 
-  function escHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+function escHtml(str) {
+    if (str == null || str === '') return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
   // ===== 创建投票 =====
   window.checkAndCreateVote = function() {
@@ -2224,9 +2224,9 @@ var _sliderCaptchaToken = null;
       html += isEnded ? '已结束' : '进行中';
       html += '</span>';
       if (!isEnded) {
-        html += '<button class="vote-card-btn" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:11px;padding:3px 8px;" onclick="endVote(\'' + vote.id + '\')"><svg class="icon" width="1em" height="1em"><use href="#icon-stop"/></svg> 截止</button>';
+        html += '<button class="vote-card-btn" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();endVote(\'' + vote.id + '\')"><svg class="icon" width="1em" height="1em"><use href="#icon-stop"/></svg> 截止</button>';
+        html += '<button class="vote-card-btn" style="background:#dbeafe;color:#1e40af;border:1px solid #60a5fa;font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();openEditNoticeVote(\'' + vote.id + '\')"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 编辑</button>';
       }
-      html += '<button class="vote-card-btn" style="background:#dbeafe;color:#1e40af;border:1px solid #60a5fa;font-size:11px;padding:3px 8px;" onclick="openEditNoticeVote(\'' + vote.id + '\')"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 编辑</button>';
       html += '</div>';
 
       html += '<div class="vote-card-options">';
