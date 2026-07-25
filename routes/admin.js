@@ -897,12 +897,12 @@ app.post('/api/admin/notice-applications/:id/review', requireAdmin, (req, res) =
   targetUser.noticePublisherAddedAt = new Date().toISOString();
   targetUser._noticeAppNotification = {
     status: 'approved',
-    message: '你的通知发布申请已通过！你可以使用校园墙账号密码登录 notice.html 管理通知',
+    message: '你的通知发布申请已通过！请使用你的校园墙账号和密码登录 notice.html 发布通知',
     timestamp: new Date().toISOString()
   };
   writeUsers(users);
-
   app.status = 'approved';
+  app.accountId = targetUser.username || '';
   app.reviewedAt = new Date().toISOString();
   app.reviewedBy = req.admin.id;
   writeApps(apps);

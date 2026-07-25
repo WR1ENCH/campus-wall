@@ -577,7 +577,7 @@ body {
     <div id="loginForm">
       <div class="login-field">
         <label for="loginId">账号</label>
-        <input id="loginId" maxlength="20" placeholder="校园墙昵称或学生会账号">
+        <input id="loginId" maxlength="20" placeholder="校园墙账号或学生会账号">
       </div>
       <div class="login-field">
         <label for="loginPwd">密码</label>
@@ -703,7 +703,7 @@ body {
         </div>
       </div>
       <div class="form-group">
-        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-muted);">（选填，默认使用账号名称）</span></label>
+        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-muted);">（选填，默认使用当前登录的账号）</span></label>
         <input class="form-input" id="notifAuthor" maxlength="30" placeholder="例如：宣传部">
       </div>
       <div class="form-group">
@@ -1134,6 +1134,9 @@ var _sliderCaptchaToken = null;
   window.openPublishModal = function() {
     document.getElementById('publishOverlay').style.display = 'flex';
     document.getElementById('publishError').textContent = '';
+    if (currentUser) {
+      document.getElementById('notifAuthor').value = currentUser.name;
+    }
   };
 
   window.closePublishModal = function() {
