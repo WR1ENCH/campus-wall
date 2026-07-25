@@ -38,8 +38,16 @@ app.get('/api/student-council/me', (req, res) => {
   const session = verifySignedToken(token);
   if (!session) return res.json({ ok: false, msg: 'token无效' });
   const sc = readSC();
-  if (!sc) return res.json({ ok: false, msg: '学生会账号不存在' });
-  res.json({ ok: true, data: { name: sc.name } });
+  if (sc && sc.id === session.id) {
+    return res.json({ ok: true, data: { name: sc.name, type: 'sc' } });
+  }
+  // 通知发布者
+  const users = readUsers();
+  const user = users.find(u => u.id === session.id && u.noticePublisher);
+  if (user) {
+    return res.json({ ok: true, data: { name: user.username, type: 'user' } });
+  }
+  return res.json({ ok: false, msg: '登录已过期' });
 });
 
 // 学生会登录（支持原学生会账号 + 校园墙用户登录）
@@ -68,13 +76,13 @@ app.post('/api/student-council/login', (req, res) => {
 
   // 尝试校园墙用户登录（需 noticePublisher 权限）
   const users = readUsers();
-  const user = users.find(u => (u.nickname === id || u.id === id) && u.noticePublisher && u.status !== 'banned');
+  const user = users.find(u => u.username === id && u.noticePublisher && u.status !== 'banned');
   if (user) {
     if (!verifyPassword(password, user.password)) {
       return res.json({ ok: false, msg: '账号或密码错误' });
     }
     const token = signToken({ id: user.id, loginAt: Date.now() });
-    return res.json({ ok: true, data: { token, name: user.nickname, type: 'user' } });
+    return res.json({ ok: true, data: { token, name: user.username, type: 'user' } });
   }
 
   return res.json({ ok: false, msg: '账号或密码错误' });
