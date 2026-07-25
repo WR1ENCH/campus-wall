@@ -8,50 +8,77 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #f0ebe3;
-  --card: #ffffff;
-  --text: #2d2a24;
-  --text-sub: #8a8580;
-  --accent: #b8860b;
-  --accent-light: #daa520;
-  --border: #e0dad0;
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
-  --radius: 12px;
+  --bg: #F7F6F3;
+  --surface: #FFFFFF;
+  --text: #1a1a1a;
+  --text-sub: #8a8a8a;
+  --text-muted: #b0b0b0;
+  --accent: #2563EB;
+  --accent-hover: #1d4ed8;
+  --accent-light: #EFF6FF;
+  --border: #EAEAEA;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --max-w: 880px;
+  --font: 'SF Pro Display', 'Geist Sans', -apple-system, 'Helvetica Neue', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace;
+  --transition: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: none;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
-  line-height: 1.7;
+  font-family: var(--font);
+  line-height: 1.6;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes sliderFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sliderModalIn {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ===== Login Screen ===== */
 .login-screen {
   display: none;
   position: fixed; inset: 0; z-index: 100;
-  background: linear-gradient(135deg, #2d2a24, #4a443c);
+  background: var(--bg);
   align-items: center; justify-content: center;
 }
-
 .login-screen.show { display: flex; }
 
 .login-box {
-  background: var(--card); border-radius: 16px;
-  width: min(90vw, 400px); padding: 36px 32px 32px;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
-  animation: fadeUp 0.4s ease;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  background: var(--surface);
+  border-radius: 12px;
+  width: min(90vw, 400px);
+  padding: 40px 32px 32px;
+  border: 1px solid var(--border);
+  animation: fadeUp 0.5s var(--transition);
 }
 
 .login-box h2 {
-  text-align: center; font-size: 22px; font-weight: 700;
+  text-align: center; font-size: 20px; font-weight: 600;
   margin-bottom: 4px; color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .login-box .login-sub {
@@ -59,21 +86,24 @@ body {
   margin-bottom: 28px;
 }
 
-.login-field { margin-bottom: 16px; }
+.login-field { margin-bottom: 18px; }
 
 .login-field label {
-  display: block; font-size: 13px; font-weight: 600;
-  color: var(--text); margin-bottom: 6px;
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--text-sub); margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: 0.04em;
 }
 
 .login-field input {
-  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
-  border-radius: 8px; font-size: 14px; font-family: inherit;
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-family: var(--font);
   outline: none; transition: border-color 0.2s;
-  box-sizing: border-box;
+  background: var(--surface);
+  color: var(--text);
 }
-
-.login-field input:focus { border-color: var(--accent); }
+.login-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
 
 .login-error {
   color: #dc2626; font-size: 13px; text-align: center;
@@ -81,458 +111,437 @@ body {
 }
 
 .login-btn {
-  width: 100%; padding: 11px; border: none; border-radius: 8px;
+  width: 100%; padding: 11px; border: none;
+  border-radius: var(--radius-sm);
   background: var(--accent); color: #fff;
-  font-size: 15px; font-weight: 600; cursor: pointer;
-  font-family: inherit; transition: background 0.2s;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-family: var(--font); transition: all 0.2s;
+  letter-spacing: 0.02em;
 }
-
-.login-btn:hover { background: var(--accent-light); }
-.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.login-btn:hover { background: var(--accent-hover); }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ===== Main App ===== */
-.main-app {
-  display: none;
-}
-
+.main-app { display: none; }
 .main-app.show { display: block; }
 
 /* ===== Header ===== */
 .header {
-  background: linear-gradient(135deg, #2d2a24, #4a443c);
-  color: #f0ebe3;
-  padding: 40px 24px 36px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 24px 28px;
   text-align: center;
-  position: relative;
-  overflow: hidden;
 }
-
-.header::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-light), var(--accent), var(--accent-light));
+.header h1 {
+  font-size: 22px; font-weight: 600;
+  letter-spacing: -0.02em; margin-bottom: 4px;
+  color: var(--text);
 }
-
-.header h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 6px; }
-.header p { font-size: 14px; color: rgba(240,235,227,0.7); }
-.header .subtitle { font-size: 12px; color: rgba(240,235,227,0.5); margin-top: 8px; letter-spacing: 0.08em; }
+.header p { font-size: 13px; color: var(--text-muted); }
+.header .subtitle { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
 
 /* ===== Layout ===== */
-.container { max-width: 800px; margin: 0 auto; padding: 24px 16px 60px; }
+.container { max-width: var(--max-w); margin: 0 auto; padding: 24px 20px 60px; }
 
 /* ===== Publish Bar ===== */
 .publish-bar {
-  display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px;
+  display: flex; align-items: center; justify-content: flex-end;
+  margin-bottom: 24px; gap: 8px; flex-wrap: wrap;
 }
 
 .user-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px; background: var(--card); border-radius: 8px;
-  font-size: 13px; color: var(--text-sub); box-shadow: var(--shadow);
+  padding: 6px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text-sub);
+  margin-right: auto;
 }
 
 .user-badge .logout-link {
-  color: var(--accent); cursor: pointer; font-weight: 600;
-  margin-left: 4px;
+  color: var(--accent); cursor: pointer; font-weight: 500;
+  font-size: 12px;
 }
-.user-badge .logout-link:hover { text-decoration: underline; }
+.user-badge .logout-link:hover { opacity: 0.7; }
 
 .btn-publish {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 10px 20px; border: none; border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 18px; border: none;
+  border-radius: var(--radius-sm);
   background: var(--accent); color: #fff;
-  font-size: 14px; font-weight: 600; cursor: pointer;
-  font-family: inherit; transition: all 0.2s;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: var(--font); transition: all 0.2s;
 }
-
-.btn-publish:hover { background: var(--accent-light); transform: translateY(-1px); }
+.btn-publish:hover { background: var(--accent-hover); }
 .btn-publish:active { transform: scale(0.97); }
+
+.btn-publish.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-publish.secondary:hover { background: #f5f5f5; }
+
+.btn-publish.purple {
+  background: #7c3aed;
+}
+.btn-publish.purple:hover { background: #6d28d9; }
+
+.btn-publish.teal {
+  background: #0f766e;
+}
+.btn-publish.teal:hover { background: #0d6b63; }
+
+/* ===== Section Headers ===== */
+.section-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding-top: 24px;
+}
+.section-header:first-of-type { padding-top: 0; }
+.section-header h3 {
+  font-size: 15px; font-weight: 600; color: var(--text);
+  letter-spacing: -0.01em;
+}
+.section-header .section-line {
+  flex: 1; height: 1px; background: var(--border); margin-left: 16px;
+}
 
 /* ===== Notice Card ===== */
 .notice-card {
-  background: var(--card);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow);
-  border-left: 4px solid var(--accent-light);
-  transition: transform 0.2s;
+  margin-bottom: 14px;
+  transition: all 0.2s var(--transition);
+}
+.notice-card:hover { border-color: #d0d0d0; }
+
+.notice-card.pinned {
+  border-left: 3px solid var(--accent);
 }
 
-.notice-card:hover { transform: translateY(-1px); }
-
 .notice-card .notice-title {
-  font-size: 18px; font-weight: 600; color: var(--text);
-  margin-bottom: 10px; line-height: 1.4;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  margin-bottom: 8px; line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .notice-card .notice-content {
   font-size: 14px; color: var(--text);
-  line-height: 1.8;
+  line-height: 1.7;
   margin-bottom: 14px;
 }
 .notice-card .notice-content p { margin: 6px 0; }
 .notice-card .notice-content ul, .notice-card .notice-content ol { padding-left: 20px; margin: 6px 0; }
 .notice-card .notice-content li { margin: 2px 0; }
-.notice-card .notice-content code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 13px; font-family: monospace; }
+.notice-card .notice-content code {
+  background: #f3f4f6; padding: 2px 6px; border-radius: 4px;
+  font-size: 13px; font-family: var(--font-mono);
+}
 .notice-card .notice-content blockquote {
   margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--accent);
-  background: rgba(0,0,0,0.02); border-radius: 0 6px 6px 0; color: var(--text-sub);
+  background: rgba(0,0,0,0.02); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-sub);
 }
 .notice-card .notice-content a { color: var(--accent); }
 .notice-card .notice-content img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
 .notice-card .notice-content hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-.notice-card .notice-content h1, .notice-card .notice-content h2, .notice-card .notice-content h3 { margin: 12px 0 6px; font-weight: 600; color: var(--text); }
+.notice-card .notice-content h1,
+.notice-card .notice-content h2,
+.notice-card .notice-content h3 { margin: 12px 0 6px; font-weight: 600; color: var(--text); }
 
 .notice-card .notice-meta {
-  display: flex; gap: 16px; font-size: 12px; color: var(--text-sub);
+  display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);
   padding-top: 12px; border-top: 1px solid var(--border);
 }
 
 .empty-tip {
   text-align: center; padding: 60px 20px;
-  color: var(--text-sub); font-size: 15px;
+  color: var(--text-muted); font-size: 14px;
 }
 
 .loading {
-  text-align: center; padding: 40px; color: var(--text-sub);
+  text-align: center; padding: 40px;
+  color: var(--text-muted); font-size: 13px;
 }
 
-/* Markdown 预览 */
+/* ===== Markdown Preview ===== */
 .md-preview {
-  background: var(--card-bg); border: 1.5px solid var(--border);
-  border-radius: 8px; padding: 14px 16px; font-size: 14px;
-  line-height: 1.8; color: var(--text); min-height: 80px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px; font-size: 14px;
+  line-height: 1.7; color: var(--text); min-height: 80px;
   white-space: normal;
 }
-.md-preview strong { font-weight: 700; }
+.md-preview strong { font-weight: 600; }
 .md-preview em { font-style: italic; }
-.md-preview code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace; }
+.md-preview code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: var(--font-mono); }
 .md-preview a { color: var(--accent); }
 .md-preview blockquote {
   margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--accent);
-  background: rgba(0,0,0,0.02); border-radius: 0 6px 6px 0; color: var(--text-sub);
+  background: rgba(0,0,0,0.02); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-sub);
 }
 .md-preview ul, .md-preview ol { padding-left: 20px; margin: 8px 0; }
 .md-preview hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 .md-preview h1, .md-preview h2, .md-preview h3 { margin: 14px 0 8px; font-weight: 600; color: var(--text); }
 
-/* ===== Publish Modal ===== */
+/* ===== Modals ===== */
 .modal-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4); z-index: 200;
+  background: rgba(0,0,0,0.3); z-index: 200;
   align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
+  padding: 20px;
 }
-
-.modal { /* same as above but reusing */ }
-
 .modal-overlay.show { display: flex; }
 
 .modal-box {
-  background: var(--card); border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   width: min(92vw, 520px); max-height: 90vh;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
-  animation: modalIn 0.3s ease;
+  animation: modalIn 0.3s var(--transition);
   display: flex; flex-direction: column;
   overflow: hidden;
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-header h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.modal-close {
+  background: none; border: none; font-size: 20px; cursor: pointer;
+  color: var(--text-muted); padding: 0; line-height: 1;
+  width: 28px; height: 28px; display: flex; align-items: center;
+  justify-content: center; border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+.modal-close:hover { background: #f5f5f5; color: var(--text); }
+
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--text-sub); margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.modal-header h3 { font-size: 17px; font-weight: 600; }
-.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-sub); padding: 0; line-height: 1; }
-.modal-close:hover { color: var(--text); }
-.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; min-height: 0; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-.form-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
-.form-input:focus { border-color: var(--accent); }
-.form-textarea { min-height: 120px; resize: vertical; }
-.form-error { color: #dc2626; font-size: 13px; margin-top: 4px; }
-.form-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
-.btn-cancel { padding: 9px 18px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-sub); font-size: 14px; cursor: pointer; font-family: inherit; }
-.btn-submit { padding: 9px 20px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-.btn-submit:hover { background: var(--accent-light); }
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-/* 移动端：发布/取消按钮全宽，更易点击；弹窗全屏 */
-@media (max-width: 600px) {
-  .modal-overlay.show { align-items: stretch; padding: 0; }
-  .modal-overlay.show .modal-box {
-    width: 100vw !important; max-height: 100vh; height: 100vh;
-    border-radius: 0;
-  }
-  .form-actions { padding: 12px 16px; gap: 8px; }
-  .form-actions .btn-cancel,
-  .form-actions .btn-submit { flex: 1; text-align: center; padding: 11px 10px; font-size: 15px; }
-  .modal-header { padding: 14px 16px; }
-  .modal-header h3 { font-size: 16px; }
-  .modal-body { padding: 16px; }
-  /* 编辑弹窗底部按钮栏移动端适配 */
-  .edit-footer {
-    flex-wrap: wrap; gap: 8px; padding: 10px 14px;
-  }
-  .edit-footer > div:first-child {
-    order: 2; width: 100%; justify-content: center;
-  }
-  .edit-footer > div:last-child {
-    order: 1; width: 100%; justify-content: center;
-  }
-  .edit-footer button { font-size: 13px; padding: 8px 12px; }
+.form-input {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 14px; font-family: var(--font);
+  outline: none; transition: all 0.2s;
+  background: var(--surface); color: var(--text);
 }
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.form-textarea { min-height: 120px; resize: vertical; }
+
+.form-error { color: #dc2626; font-size: 13px; margin-top: 4px; }
+
+.form-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+}
+
+.btn-cancel {
+  padding: 8px 18px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: transparent;
+  color: var(--text-sub); font-size: 13px; cursor: pointer;
+  font-family: var(--font); transition: all 0.15s;
+}
+.btn-cancel:hover { background: #f5f5f5; }
+
+.btn-submit {
+  padding: 8px 20px; border: none;
+  border-radius: var(--radius-sm); background: var(--accent);
+  color: #fff; font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: var(--font); transition: all 0.15s;
+}
+.btn-submit:hover { background: var(--accent-hover); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ===== Toast ===== */
 .toast {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  padding: 10px 24px; border-radius: 8px; color: #fff;
-  font-size: 14px; font-weight: 500; z-index: 999;
-  animation: toastIn 0.3s ease;
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  padding: 10px 22px; border-radius: var(--radius-sm);
+  color: #fff; font-size: 13px; font-weight: 500; z-index: 999;
+  animation: toastIn 0.35s var(--transition);
   pointer-events: none;
+  white-space: nowrap;
 }
-.toast.success { background: #16a34a; }
+.toast.success { background: #059669; }
 .toast.error { background: #dc2626; }
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
+.toast.warning { background: #d97706; }
 
-/* ===== 投票卡片 ===== */
+/* ===== Vote Card ===== */
 .vote-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  border: 1.5px solid #bae6fd;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 14px;
 }
 .vote-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 14px; gap: 12px;
 }
 .vote-card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #0c4a6e;
-  line-height: 1.4;
+  font-size: 15px; font-weight: 600;
+  color: var(--text); line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 .vote-card-meta {
-  font-size: 12px;
-  color: #6b7280;
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-  flex-wrap: wrap;
+  font-size: 12px; color: var(--text-muted);
+  display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;
 }
 .vote-card-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: flex; flex-direction: column; gap: 8px;
 }
 .vote-option {
-  display: flex;
-  align-items: center;
+  display: flex; align-items: center;
   padding: 10px 12px;
-  background: #f0f9ff;
-  border-radius: 8px;
+  background: #fafafa;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  border: 1px solid transparent;
 }
-.vote-option:hover {
-  background: #e0f2fe;
-  border-color: #7dd3fc;
-}
-.vote-option.selected {
-  background: #bae6fd;
-  border-color: #0c4a6e;
-}
+.vote-option:hover { background: #f0f0f0; border-color: var(--border); }
+.vote-option.selected { background: var(--accent-light); border-color: var(--accent); }
 .vote-option input[type="checkbox"],
 .vote-option input[type="radio"] {
-  margin-right: 10px;
-  width: 16px;
-  height: 16px;
+  margin-right: 10px; width: 16px; height: 16px;
 }
-.vote-option-text {
-  flex: 1;
-  font-size: 14px;
-  color: #374151;
-}
-.vote-option-percent {
-  font-size: 13px;
-  color: #0c4a6e;
-  font-weight: 600;
-}
+.vote-option-text { flex: 1; font-size: 14px; color: var(--text); }
+.vote-option-percent { font-size: 13px; color: var(--accent); font-weight: 500; }
 .vote-option-bar {
-  height: 6px;
-  background: #e0f2fe;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-top: 6px;
+  height: 4px; background: #f0f0f0;
+  border-radius: 2px; overflow: hidden; margin-top: 6px;
 }
 .vote-option-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #0c4a6e, #22d3ee);
-  border-radius: 3px;
-  transition: width 0.5s ease;
+  height: 100%; background: var(--accent);
+  border-radius: 2px; transition: width 0.5s var(--transition);
 }
 .vote-custom-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-top: 1.5px dashed #cbd5e1;
-  margin-top: 6px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-top: 1px dashed var(--border); margin-top: 6px;
 }
-
 .vote-option-custom {
-  background: #f0f9ff;
-  border: 1.5px dashed #64748b !important;
+  background: #fafafa;
+  border: 1px dashed var(--border) !important;
   padding: 10px 12px;
 }
-
 .vote-option-custom input[type="text"]:focus {
-  outline: none;
-  border-color: #0284c7 !important;
+  outline: none; border-color: var(--accent) !important;
   background: #fff !important;
 }
 .vote-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 14px;
+  padding-top: 12px; border-top: 1px solid var(--border);
 }
 .vote-card-btn {
-  padding: 8px 20px;
-  background: #0c4a6e;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  padding: 6px 16px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: var(--font); transition: all 0.15s;
 }
-.vote-card-btn:hover { background: #075985; }
-.vote-card-btn:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
+.vote-card-btn:hover { background: var(--accent-hover); }
+.vote-card-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .vote-status {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 500;
-  flex-shrink: 0;
+  font-size: 11px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 500; flex-shrink: 0;
 }
-.vote-status-active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-.vote-status-ended {
-  background: #fef3c7;
-  color: #d97706;
-}
-.vote-participants {
-  font-size: 13px;
-  color: #6b7280;
-}
+.vote-status-active { background: #ECFDF5; color: #059669; }
+.vote-status-ended { background: #FEF3C7; color: #d97706; }
+.vote-participants { font-size: 12px; color: var(--text-muted); }
 
-@media (max-width: 600px) {
-  .header { padding: 28px 16px 24px; }
-  .header h1 { font-size: 22px; }
+/* ===== Discussion Items ===== */
+.discussion-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 8px;
+  transition: all 0.15s;
+}
+.discussion-item:hover { border-color: #d0d0d0; }
+
+/* ===== Slider Captcha ===== */
+.sliderContainer .block { transition: left 0.08s linear; }
+.sliderContainer_active .block { transition: left 0.03s linear; }
+.sliderContainer .slider { transition: left 0.08s linear, background 0.2s linear; }
+.sliderContainer_active .slider { transition: left 0.03s linear; }
+.sliderContainer .sliderMask { transition: width 0.08s linear; }
+.sliderContainer_active .sliderMask { transition: width 0.03s linear; }
+.sliderContainer_fail .block,
+.sliderContainer_fail .slider,
+.sliderContainer_fail .sliderMask {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.sliderContainer .slider { transition: background 0.2s linear; }
+.sliderContainer_active .slider { transition: none; }
+.sliderContainer .block { transition: none; }
+.sliderContainer_active .block { transition: none; }
+.sliderContainer .sliderMask { transition: none; }
+.sliderContainer_active .sliderMask { transition: none; }
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .header { padding: 24px 16px 20px; }
+  .header h1 { font-size: 19px; }
+  .container { padding: 16px 12px 40px; }
   .notice-card { padding: 18px; }
-  .notice-card .notice-title { font-size: 16px; }
-  .modal-box { width: 96vw; }
+  .notice-card .notice-title { font-size: 15px; }
+  .modal-box { width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; border: none; }
+  .modal-header { padding: 14px 16px; }
+  .modal-header h3 { font-size: 15px; }
   .modal-body { padding: 16px; }
+  .form-actions { padding: 12px 16px; gap: 8px; }
+  .form-actions .btn-cancel,
+  .form-actions .btn-submit { flex: 1; text-align: center; padding: 10px; font-size: 14px; }
+  .publish-bar { justify-content: stretch; }
+  .publish-bar .btn-publish { flex: 1; justify-content: center; }
   .login-box { padding: 28px 20px; }
+  .vote-card { padding: 16px; }
 }
-
-    /* 滑块验证码弹窗动画 */
-    @keyframes sliderFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes sliderModalIn {
-      from { opacity: 0; transform: scale(0.9) translateY(20px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    /* 滑块拼图块平滑跟随 */
-    .sliderContainer .block { 
-      transition: left 0.08s linear; 
-    }
-    .sliderContainer_active .block { 
-      transition: left 0.03s linear; 
-    }
-    /* 滑块按钮跟随 */
-    .sliderContainer .slider { 
-      transition: left 0.08s linear, background 0.2s linear; 
-    }
-    .sliderContainer_active .slider { 
-      transition: left 0.03s linear; 
-    }
-    /* 滑条遮罩跟随 */
-    .sliderContainer .sliderMask { 
-      transition: width 0.08s linear; 
-    }
-    .sliderContainer_active .sliderMask { 
-      transition: width 0.03s linear; 
-    }
-    /* 失败时回弹动画 */
-    .sliderContainer_fail .block,
-    .sliderContainer_fail .slider,
-    .sliderContainer_fail .sliderMask {
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    }
-
-    .sliderContainer .slider { transition: background 0.2s linear; }
-    .sliderContainer_active .slider { transition: none; }
-    .sliderContainer .block { transition: none; }
-    .sliderContainer_active .block { transition: none; }
-    .sliderContainer .sliderMask { transition: none; }
-    .sliderContainer_active .sliderMask { transition: none; }
-
-  </style>
+</style>
 <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
-
 </head>
 <body>
+
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
-  <symbol id="icon-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M21 14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2"/><path d="M5 14H3a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2l4-5h2v16H9l-4-5Z"/></symbol>
-  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><polyline points="20 6 9 17 4 12"/></symbol>
-  <symbol id="icon-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
-  <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
-  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
-  <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
-  <symbol id="icon-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
-  <symbol id="icon-vote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></symbol>
-  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
-  <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></symbol>
-  <symbol id="icon-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><circle cx="12" cy="12" r="6"/></symbol>
-  <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-  <symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M12 2v20M9 4h6"/><path d="M5 6h14l-2 5H7Z"/></symbol>
-  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-  <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
-  <symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
-  <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
-  <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
-  <symbol id="icon-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
-  <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
-  <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
-  <symbol id="icon-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
-  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+  <symbol id="icon-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2"/><path d="M5 14H3a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2l4-5h2v16H9l-4-5Z"/></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="icon-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+  <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="icon-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="icon-vote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></symbol>
+  <symbol id="icon-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/></symbol>
+  <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M9 4h6"/><path d="M5 6h14l-2 5H7Z"/></symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+  <symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="icon-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="icon-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
 </svg>
 <style>
 .icon { display: inline-block; vertical-align: middle; width: 1em; height: 1em; }
@@ -546,31 +555,10 @@ body {
     <div class="login-sub" id="loginSub">登录后即可发布通知</div>
     <div class="login-error" id="loginError"></div>
 
-    <!-- Init form (首次设置) -->
-    <div id="initForm" style="display:none;">
-      <div class="login-field">
-        <label for="initId">账号</label>
-        <input id="initId" maxlength="20" placeholder="3-20位字母、数字、下划线">
-      </div>
-      <div class="login-field">
-        <label for="initName">名称</label>
-        <input id="initName" maxlength="20" placeholder="例如：学生会宣传部">
-      </div>
-      <div class="login-field">
-        <label for="initPwd">密码</label>
-        <input id="initPwd" type="password" maxlength="50" placeholder="至少6位">
-      </div>
-      <div class="login-field">
-        <label for="initPwd2">确认密码</label>
-        <input id="initPwd2" type="password" maxlength="50" placeholder="再次输入密码">
-      </div>
-      <button class="login-btn" id="initBtn" onclick="doInit()"><svg class="icon" width="1em" height="1em"><use href="#icon-megaphone"/></svg> 创建账号</button>
-    </div>
-
     <!-- Login form -->
-    <div id="loginForm" style="display:none;">
+    <div id="loginForm">
       <div class="login-field">
-        <label for="loginId">昵称 / 账号</label>
+        <label for="loginId">账号</label>
         <input id="loginId" maxlength="20" placeholder="校园墙昵称或学生会账号">
       </div>
       <div class="login-field">
@@ -578,27 +566,27 @@ body {
         <input id="loginPwd" type="password" maxlength="50" placeholder="输入密码"
                onkeydown="if(event.key==='Enter') doLogin()">
       </div>
-      <!-- 验证码 -->
       <div class="login-field">
-        <label>验证码</label>
-        <div id="loginSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;border:1.5px solid var(--border);" onclick="showSliderCaptcha()">
-          <span style="color:#999;font-size:13px;"><svg class="icon" width="1em" height="1em"><use href="#icon-lock"/></svg> 点击完成人机验证</span>
-          <span id="loginSliderBadge" style="display:none;color:#22c55e;font-size:13px;"><svg class="icon" width="1em" height="1em"><use href="#icon-check"/></svg> 已验证</span>
+        <label>验证</label>
+        <div id="loginSliderStatus" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fafafa;border-radius:6px;cursor:pointer;border:1px solid var(--border);" onclick="showSliderCaptcha()">
+          <span style="color:var(--text-muted);font-size:13px;"><svg class="icon" width="1em" height="1em"><use href="#icon-lock"/></svg> 点击完成人机验证</span>
+          <span id="loginSliderBadge" style="display:none;color:#059669;font-size:13px;"><svg class="icon" width="1em" height="1em"><use href="#icon-check"/></svg> 已验证</span>
         </div>
       </div>
-      <!-- 滑块验证码弹窗 -->
-      <div class="overlay" id="sliderCaptchaOverlay" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);animation:sliderFadeIn 0.25s ease;z-index:99999;" onclick="if(event.target===this)this.style.display='none'">
-        <div class="dialog" style="background:#fff;padding:28px 24px 20px;border-radius:18px;animation:sliderModalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.2);">
-          <button class="close-btn" onclick="document.getElementById('sliderCaptchaOverlay').style.display='none'" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:24px;cursor:pointer;color:#999;line-height:1;">&times;</button>
-          <h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#333;">人机验证</h3>
-          <div id="sharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
-          <div style="font-size:12px;color:#999;margin-top:10px;">拖动滑块完成拼图验证</div>
-        </div>
-      </div>
-        <div style="font-size:11px;color:var(--text-sub);margin-top:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-bulb"/></svg> 点击图片刷新验证码</div>
+      <div class="login-field" style="font-size:11px;color:var(--text-muted);margin-top:-10px;margin-bottom:16px;">
+        <svg class="icon" width="1em" height="1em"><use href="#icon-bulb"/></svg> 点击图片刷新验证码
       </div>
       <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== Slider Captcha Overlay ===== -->
+<div class="modal-overlay" id="sliderCaptchaOverlay" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-width:360px;align-items:center;text-align:center;padding:28px 24px 20px;">
+    <h3 style="margin:0 0 12px;font-size:16px;font-weight:600;">人机验证</h3>
+    <div id="sharedSliderCaptcha" style="width:280px;margin:0 auto;"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:12px;">拖动滑块完成拼图验证</div>
   </div>
 </div>
 
@@ -612,45 +600,53 @@ body {
   <div class="container">
     <div class="publish-bar">
       <div class="user-badge" id="userBadge" style="display:none;">
-        <svg class="icon" width="1em" height="1em"><use href="#icon-user"/></svg> <span id="userName"></span>
+        <svg class="icon" width="1em" height="1em"><use href="#icon-user"/></svg>
+        <span id="userName"></span>
         <span class="logout-link" onclick="openSettingsModal()" style="margin-left:2px;"><svg class="icon" width="1em" height="1em"><use href="#icon-settings"/></svg></span>
         <span class="logout-link" onclick="doLogout()">退出</span>
       </div>
       <button class="btn-publish" onclick="checkAndPublish()"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 发布通知</button>
-      <button class="btn-publish" onclick="checkAndCreateDiscussion()" style="margin-left:8px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);"><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 发起话题</button>
-      <button class="btn-publish" onclick="checkAndCreateVote()" style="margin-left:8px;background:linear-gradient(135deg,#0c4a6e,#0369a1);"><svg class="icon" width="1em" height="1em"><use href="#icon-vote"/></svg> 发起投票</button>
+      <button class="btn-publish purple" onclick="checkAndCreateDiscussion()"><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 发起话题</button>
+      <button class="btn-publish teal" onclick="checkAndCreateVote()"><svg class="icon" width="1em" height="1em"><use href="#icon-vote"/></svg> 发起投票</button>
     </div>
+
+    <!-- Notices -->
     <div id="noticeList">
       <div class="loading">加载中&#x2026;</div>
     </div>
-    <!-- 讨论话题列表 -->
-    <div id="discussionSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="margin:0;font-size:15px;color:var(--text);"><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 讨论话题</h3>
-        <button class="btn-publish" onclick="checkAndCreateDiscussion()" style="font-size:12px;padding:5px 12px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);"><svg class="icon" width="1em" height="1em"><use href="#icon-plus"/></svg> 发起话题</button>
+
+    <!-- Discussion Section -->
+    <div id="discussionSection" style="margin-top:8px;">
+      <div class="section-header">
+        <h3><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 讨论话题</h3>
+        <div class="section-line"></div>
+        <button class="btn-publish purple" onclick="checkAndCreateDiscussion()" style="margin-left:12px;font-size:12px;padding:5px 12px;"><svg class="icon" width="1em" height="1em"><use href="#icon-plus"/></svg> 发起</button>
       </div>
       <div id="discussionList">
         <div class="loading">加载中&#x2026;</div>
       </div>
     </div>
 
-    <!-- 投票列表 -->
-    <div id="voteSection" style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="margin:0;font-size:15px;color:var(--text);"><svg class="icon" width="1em" height="1em"><use href="#icon-vote"/></svg> 投票</h3>
-        <button class="btn-publish" onclick="checkAndCreateVote()" style="font-size:12px;padding:5px 12px;background:linear-gradient(135deg,#0c4a6e,#0369a1);"><svg class="icon" width="1em" height="1em"><use href="#icon-plus"/></svg> 发起投票</button>
+    <!-- Vote Section -->
+    <div id="voteSection" style="margin-top:8px;">
+      <div class="section-header">
+        <h3><svg class="icon" width="1em" height="1em"><use href="#icon-vote"/></svg> 投票</h3>
+        <div class="section-line"></div>
+        <button class="btn-publish teal" onclick="checkAndCreateVote()" style="margin-left:12px;font-size:12px;padding:5px 12px;"><svg class="icon" width="1em" height="1em"><use href="#icon-plus"/></svg> 发起</button>
       </div>
       <div id="voteList">
         <div class="loading">加载中&#x2026;</div>
       </div>
     </div>
+  </div>
+</div>
 
 <!-- ===== Publish Modal ===== -->
 <div class="modal-overlay" id="publishOverlay" onclick="if(event.target===this)closePublishModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 发布通知</h3>
-      <button class="modal-close" onclick="closePublishModal()">&times;</button>
+      <button class="modal-close" onclick="closePublishModal()"><svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -658,9 +654,9 @@ body {
         <input class="form-input" id="notifTitle" maxlength="100" placeholder="通知标题">
       </div>
       <div class="form-group">
-        <label for="notifContent">内容 <span style="font-weight:400;color:var(--text-sub);">（支持 Markdown）</span></label>
-        <!-- Markdown 工具栏 -->
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:var(--bg-main);border:1.5px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;">
+        <label for="notifContent">内容 <span style="font-weight:400;color:var(--text-muted);">（支持 Markdown）</span></label>
+        <!-- Markdown Toolbar -->
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:#fafafa;border:1px solid var(--border);border-radius:6px 6px 0 0;border-bottom:none;">
           <button type="button" onclick="insertMd('notifContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
           <button type="button" onclick="insertMd('notifContent','__','__')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;text-decoration:underline;" title="下划线">U</button>
           <button type="button" onclick="insertMd('notifContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;" title="斜体">I</button>
@@ -670,7 +666,7 @@ body {
           <button type="button" onclick="insertMd('notifContent','^','^')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:11px;" title="上标">x²</button>
           <button type="button" onclick="insertMd('notifContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="无序列表">•</button>
           <button type="button" onclick="insertMd('notifContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="有序列表">1.</button>
-          <button type="button" onclick="insertMd('notifContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{__code__}</button>
+          <button type="button" onclick="insertMd('notifContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:var(--font-mono);" title="代码">{__code__}</button>
           <button type="button" onclick="insertMd('notifContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('notifContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接"><svg class="icon" width="1em" height="1em"><use href="#icon-link"/></svg></button>
           <button type="button" onclick="uploadImage('notifContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
@@ -681,24 +677,29 @@ body {
         <textarea class="form-input form-textarea" id="notifContent" maxlength="5000" placeholder="输入通知内容&#x2026;（支持 Markdown 格式）"></textarea>
         <div id="notifContentPreview" class="md-preview" style="display:none;"></div>
         <div style="margin-top:8px;">
-          <button type="button" onclick="importMdFile('notifContent')" style="padding:6px 14px;border:1.5px dashed var(--border);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:var(--text-sub);transition:all 0.2s;" title="从本地选择 Markdown 文件导入"><svg class="icon" width="1em" height="1em"><use href="#icon-file"/></svg> 从Markdown文件中导入</button>
+          <button type="button" onclick="importMdFile('notifContent')" style="padding:6px 14px;border:1px dashed var(--border);border-radius:6px;background:transparent;cursor:pointer;font-size:12px;color:var(--text-sub);transition:all 0.2s;" title="从本地选择 Markdown 文件导入"><svg class="icon" width="1em" height="1em"><use href="#icon-file"/></svg> 从Markdown文件中导入</button>
         </div>
       </div>
       <div class="form-group">
-        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填，默认使用账号名称）</span></label>
+        <label for="notifAuthor">发布人 <span style="font-weight:400;color:var(--text-muted);">（选填，默认使用账号名称）</span></label>
         <input class="form-input" id="notifAuthor" maxlength="30" placeholder="例如：宣传部">
       </div>
       <div class="form-group">
         <label>通知等级</label>
         <div style="display:flex;gap:10px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="levelT1Label" onclick="selectNotifLevel('T1')">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;transition:all 0.2s;" id="levelT1Label" onclick="selectNotifLevel('T1')">
             <input type="radio" name="notifLevel" value="T1" checked style="accent-color:var(--accent);">
             <span><svg class="icon" width="1em" height="1em"><use href="#icon-clipboard"/></svg> T1 · 普通</span>
           </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="levelT0Label" onclick="selectNotifLevel('T0')">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;transition:all 0.2s;" id="levelT0Label" onclick="selectNotifLevel('T0')">
             <input type="radio" name="notifLevel" value="T0">
             <span><svg class="icon" width="1em" height="1em"><use href="#icon-circle"/></svg> T0 · 重要</span>
           </label>
+        </div>
+        <div id="publishImagePreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+        <div style="margin-top:8px;">
+          <button type="button" onclick="document.getElementById('publishImageInput').click()" style="padding:6px 14px;border:1px dashed var(--border);border-radius:6px;background:transparent;cursor:pointer;font-size:12px;color:var(--text-sub);"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg> 添加图片</button>
+          <input type="file" id="publishImageInput" accept="image/*" multiple style="display:none" onchange="handlePublishImages(this)">
         </div>
       </div>
       <div class="form-error" id="publishError"></div>
@@ -712,13 +713,12 @@ body {
 
 <!-- ===== Settings Modal ===== -->
 <div class="modal-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsModal()">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
     <div class="modal-header">
       <h3><svg class="icon" width="1em" height="1em"><use href="#icon-settings"/></svg> 账号设置</h3>
-      <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+      <button class="modal-close" onclick="closeSettingsModal()"><svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg></button>
     </div>
     <div class="modal-body">
-      <!-- 修改昵称 -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
         <div class="form-group">
           <label for="settingsName">昵称</label>
@@ -727,7 +727,6 @@ body {
         <div class="form-error" id="nameError"></div>
         <button class="btn-submit" style="margin-top:8px;" onclick="doChangeName()"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 修改昵称</button>
       </div>
-      <!-- 修改密码 -->
       <div>
         <div class="form-group">
           <label for="settingsOldPwd">旧密码</label>
@@ -746,21 +745,19 @@ body {
 
 <!-- ===== Edit Modal ===== -->
 <div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
-  <div class="modal-box" onclick="event.stopPropagation()" style="border-radius:12px;overflow:hidden;max-width:560px;">
-    <!-- 标题栏 -->
-    <div style="background:#333;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;font-size:16px;font-weight:600;color:#fff;">编辑通知</h3>
-      <button onclick="closeEditModal()" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer;padding:0;line-height:1;">&times;</button>
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px;">
+    <div class="modal-header" style="background:var(--text);color:#fff;">
+      <h3 style="color:#fff;"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 编辑通知</h3>
+      <button class="modal-close" onclick="closeEditModal()" style="color:rgba(255,255,255,0.5);"><svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg></button>
     </div>
-    <!-- 表单内容 -->
-    <div class="modal-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
       <div class="form-group">
         <label for="editTitle">标题</label>
         <input class="form-input" id="editTitle" maxlength="100" placeholder="通知标题">
       </div>
       <div class="form-group">
-        <label for="editContent">内容 <span style="font-weight:400;color:var(--text-sub);">（支持 Markdown）</span></label>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:var(--bg-main);border:1.5px solid var(--border);border-radius:8px 8px 0 0;border-bottom:none;">
+        <label for="editContent">内容 <span style="font-weight:400;color:var(--text-muted);">（支持 Markdown）</span></label>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding:6px 8px;background:#fafafa;border:1px solid var(--border);border-radius:6px 6px 0 0;border-bottom:none;">
           <button type="button" onclick="insertMd('editContent','**','**')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
           <button type="button" onclick="insertMd('editContent','__','__')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;text-decoration:underline;" title="下划线">U</button>
           <button type="button" onclick="insertMd('editContent','*','*')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-style:italic;" title="斜体">I</button>
@@ -770,7 +767,7 @@ body {
           <button type="button" onclick="insertMd('editContent','^','^')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:11px;" title="上标">x²</button>
           <button type="button" onclick="insertMd('editContent','\n- ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="无序列表">•</button>
           <button type="button" onclick="insertMd('editContent','\n1. ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="有序列表">1.</button>
-          <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:monospace;" title="代码">{__code__}</button>
+          <button type="button" onclick="insertMd('editContent','`','`')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;font-family:var(--font-mono);" title="代码">{__code__}</button>
           <button type="button" onclick="insertMd('editContent','\n> ','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="引用">❝</button>
           <button type="button" onclick="insertMd('editContent','[','](url)')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="链接"><svg class="icon" width="1em" height="1em"><use href="#icon-link"/></svg></button>
           <button type="button" onclick="uploadImage('editContent')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="上传图片"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
@@ -778,24 +775,24 @@ body {
           <button type="button" onclick="insertMd('editContent','\n---\n','')" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:13px;" title="分割线">—</button>
           <button type="button" onclick="togglePreview('editContent')" id="editPreviewBtn" style="padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer;font-size:12px;margin-left:auto;" title="预览"><svg class="icon" width="1em" height="1em"><use href="#icon-eye"/></svg> 预览</button>
         </div>
-        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容…（支持 Markdown 格式）" style="min-height:120px;"></textarea>
+        <textarea class="form-input form-textarea" id="editContent" maxlength="5000" placeholder="输入通知内容&#x2026;（支持 Markdown 格式）" style="min-height:120px;"></textarea>
         <div id="editContentPreview" class="md-preview" style="display:none;"></div>
         <div style="margin-top:8px;">
-          <button type="button" onclick="importMdFile('editContent')" style="padding:6px 14px;border:1.5px dashed var(--border);border-radius:8px;background:transparent;cursor:pointer;font-size:12px;color:var(--text-sub);transition:all 0.2s;" title="从本地选择 Markdown 文件导入"><svg class="icon" width="1em" height="1em"><use href="#icon-file"/></svg> 从Markdown文件中导入</button>
+          <button type="button" onclick="importMdFile('editContent')" style="padding:6px 14px;border:1px dashed var(--border);border-radius:6px;background:transparent;cursor:pointer;font-size:12px;color:var(--text-sub);transition:all 0.2s;" title="从本地选择 Markdown 文件导入"><svg class="icon" width="1em" height="1em"><use href="#icon-file"/></svg> 从Markdown文件中导入</button>
         </div>
       </div>
       <div class="form-group">
-        <label for="editAuthor">发布人 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
+        <label for="editAuthor">发布人 <span style="font-weight:400;color:var(--text-muted);">（选填）</span></label>
         <input class="form-input" id="editAuthor" maxlength="30" placeholder="例如：宣传部">
       </div>
       <div class="form-group">
         <label>通知等级</label>
         <div style="display:flex;gap:10px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT1Label" onclick="selectEditLevel('T1')">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT1Label" onclick="selectEditLevel('T1')">
             <input type="radio" name="editLevel" value="T1" checked style="accent-color:var(--accent);">
             <span><svg class="icon" width="1em" height="1em"><use href="#icon-clipboard"/></svg> T1 · 普通</span>
           </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT0Label" onclick="selectEditLevel('T0')">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:1px solid var(--border);border-radius:6px;font-size:13px;flex:1;transition:all 0.2s;" id="editLevelT0Label" onclick="selectEditLevel('T0')">
             <input type="radio" name="editLevel" value="T0">
             <span><svg class="icon" width="1em" height="1em"><use href="#icon-circle"/></svg> T0 · 重要</span>
           </label>
@@ -803,27 +800,26 @@ body {
       </div>
       <div class="form-error" id="editError"></div>
     </div>
-    <!-- 底部按钮栏 -->
-    <div class="edit-footer" style="background:#f5f5f5;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e5e5e5;">
+    <div class="edit-footer" style="background:#fafafa;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);">
       <div style="display:flex;gap:8px;">
-        <button onclick="doSyncNotice()" id="syncBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-refresh"/></svg> 同步</button>
-        <button onclick="doPinNotice()" id="pinBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-pin"/></svg> 置顶</button>
-        <button onclick="doDeleteNotice()" id="deleteNoticeBtn" style="padding:8px 14px;border-radius:6px;border:1px solid #ffcdd2;background:#fff;cursor:pointer;font-size:13px;color:#c62828;display:flex;align-items:center;gap:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-trash"/></svg> 删除</button>
+        <button onclick="doSyncNotice()" id="syncBtn" style="padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;color:var(--text);"><svg class="icon" width="1em" height="1em"><use href="#icon-refresh"/></svg> 同步</button>
+        <button onclick="doPinNotice()" id="pinBtn" style="padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;color:var(--text);"><svg class="icon" width="1em" height="1em"><use href="#icon-pin"/></svg> 置顶</button>
+        <button onclick="doDeleteNotice()" id="deleteNoticeBtn" style="padding:7px 14px;border-radius:6px;border:1px solid #fecaca;background:#fff;cursor:pointer;font-size:13px;color:#dc2626;display:flex;align-items:center;gap:4px;"><svg class="icon" width="1em" height="1em"><use href="#icon-trash"/></svg> 删除</button>
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn-cancel" onclick="closeEditModal()" style="padding:8px 20px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:14px;">取消</button>
-        <button id="editSubmitBtn" onclick="doEditNotice()" style="padding:8px 24px;border-radius:6px;border:none;background:#333;color:#fff;cursor:pointer;font-size:14px;">确定</button>
+        <button class="btn-cancel" onclick="closeEditModal()">取消</button>
+        <button class="btn-submit" id="editSubmitBtn" onclick="doEditNotice()"><svg class="icon" width="1em" height="1em"><use href="#icon-edit"/></svg> 保存修改</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== 创建话题弹窗 ===== -->
+<!-- ===== Discussion Modal ===== -->
 <div class="modal-overlay" id="discussionOverlay" onclick="if(event.target===this)closeDiscussionModal()">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:480px;">
     <div class="modal-header">
       <h3><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 发起讨论话题</h3>
-      <button class="modal-close" onclick="closeDiscussionModal()">&times;</button>
+      <button class="modal-close" onclick="closeDiscussionModal()"><svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -831,25 +827,25 @@ body {
         <input class="form-input" id="discussionTitle" maxlength="50" placeholder="输入讨论话题标题">
       </div>
       <div class="form-group">
-        <label for="discussionExpires">截止时间 <span style="font-weight:400;color:var(--text-sub);">（选填）</span></label>
+        <label for="discussionExpires">截止时间 <span style="font-weight:400;color:var(--text-muted);">（选填）</span></label>
         <input class="form-input" id="discussionExpires" type="datetime-local">
-        <div style="font-size:11px;color:var(--text-sub);margin-top:4px;">留空则无截止时间</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">留空则无截止时间</div>
       </div>
       <div class="form-error" id="discussionError"></div>
     </div>
-    <div class="form-actions" style="padding:16px 20px;border-top:1px solid var(--border);">
+    <div class="form-actions">
       <button class="btn-cancel" onclick="closeDiscussionModal()">取消</button>
       <button class="btn-submit" id="discussionBtn" onclick="doCreateDiscussion()"><svg class="icon" width="1em" height="1em"><use href="#icon-message"/></svg> 发起话题</button>
     </div>
   </div>
 </div>
 
-<!-- ===== 创建投票弹窗 ===== -->
+<!-- ===== Vote Modal ===== -->
 <div class="modal-overlay" id="voteOverlay" onclick="if(event.target===this)closeVoteModal()">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:500px;">
     <div class="modal-header">
       <h3 id="voteModalTitle"><svg class="icon" width="1em" height="1em"><use href="#icon-vote"/></svg> 发起投票</h3>
-      <button class="modal-close" onclick="closeVoteModal()">&times;</button>
+      <button class="modal-close" onclick="closeVoteModal()"><svg class="icon" width="1em" height="1em"><use href="#icon-x"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -857,43 +853,43 @@ body {
         <input class="form-input" id="voteTitle" maxlength="100" placeholder="请输入投票标题">
       </div>
       <div class="form-group">
-        <label>投票选项 <span style="font-weight:400;color:var(--text-sub);">（至少2项）</span></label>
+        <label>投票选项 <span style="font-weight:400;color:var(--text-muted);">（至少2项）</span></label>
         <div id="noticeVoteOptions">
           <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
             <input type="text" class="notice-vote-opt-input" placeholder="选项 1" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
             <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
-            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
             <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
-            <button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:var(--bg);color:var(--accent);cursor:pointer;">+</button>
+            <button type="button" class="notice-vote-add" onclick="addNoticeVoteOpt(this)" style="padding:4px 10px;border:1px dashed var(--accent);border-radius:4px;background:transparent;color:var(--accent);cursor:pointer;">+</button>
           </div>
           <div class="notice-vote-opt-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
             <input type="text" class="notice-vote-opt-input" placeholder="选项 2" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
             <input type="file" accept="image/*" style="display:none;" onchange="handleNoticeVoteImg(this)">
-            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg);cursor:pointer;"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
+            <button type="button" onclick="this.previousElementSibling.click()" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;"><svg class="icon" width="1em" height="1em"><use href="#icon-image"/></svg></button>
             <span class="notice-vote-img-preview" style="display:none;width:28px;height:28px;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);"><img style="width:100%;height:100%;object-fit:cover;"></span>
-            <button type="button" onclick="removeNoticeVoteOpt(this)" style="padding:4px 10px;border:1px solid #ff6b6b;border-radius:4px;background:var(--bg);color:#ff6b6b;cursor:pointer;">−</button>
+            <button type="button" onclick="removeNoticeVoteOpt(this)" style="padding:4px 10px;border:1px solid #fca5a5;border-radius:4px;background:transparent;color:#dc2626;cursor:pointer;">−</button>
           </div>
         </div>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
           <input type="checkbox" id="voteMultiple">
-          <span>允许多选</span>
+          <span style="font-size:14px;color:var(--text);">允许多选</span>
         </label>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
           <input type="checkbox" id="voteAllowCustom">
-          <span>允许参与者添加自定义选项</span>
+          <span style="font-size:14px;color:var(--text);">允许参与者添加自定义选项</span>
         </label>
       </div>
       <div class="form-group">
-        <label for="voteEndTime">截止时间 <span style="font-weight:400;color:var(--text-sub);">（选填，留空无截止）</span></label>
+        <label for="voteEndTime">截止时间 <span style="font-weight:400;color:var(--text-muted);">（选填，留空无截止）</span></label>
         <input class="form-input" id="voteEndTime" type="datetime-local">
       </div>
       <div class="form-error" id="voteError"></div>
     </div>
-    <div class="form-actions" style="padding:16px 20px;border-top:1px solid var(--border);">
+    <div class="form-actions">
       <button class="btn-cancel" onclick="closeVoteModal()">取消</button>
       <button class="btn-submit" id="voteSubmitBtn" onclick="submitNoticeVote()"><svg class="icon" width="1em" height="1em"><use href="#icon-check"/></svg> 发布投票</button>
     </div>
@@ -901,7 +897,7 @@ body {
 </div>
 
 <!-- ===== #话题建议浮层 ===== -->
-<div id="notifSuggestBox" style="display:none;position:fixed;background:#fffbe6;border:2px solid #f0e090;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:9999;font-size:13px;"></div>
+<div id="notifSuggestBox" style="display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.08);max-height:180px;overflow-y:auto;z-index:9999;font-size:13px;"></div>
 
 <script>
   var ICONS = {
@@ -938,69 +934,22 @@ body {
 
   function refreshLoginCaptcha() {}
 
-  // ===== 初始化检测 =====
+    // ===== 初始化检测 =====
   async function checkInit() {
     try {
-      var res = await fetch('/api/student-council/check-init');
+      var res = await fetch("/api/student-council/check-init");
       var json = await res.json();
-      if (json.ok && json.data.needInit) {
-        // 显示首次设置
-        document.getElementById('loginTitle').innerHTML = '' + ICONS.megaphone + ' 设置通知系统账号';
-        document.getElementById('loginSub').textContent = '首次使用，请创建学生会账号';
-        document.getElementById('initForm').style.display = '';
-        document.getElementById('loginForm').style.display = 'none';
-      } else {
-        document.getElementById('initForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = '';
-      }
-      document.getElementById('loginScreen').classList.add('show');
+      document.getElementById("loginTitle").innerHTML = "" + ICONS.megaphone + " 通知系统登录";
+      document.getElementById("loginSub").textContent = "登录后即可发布通知";
+      document.getElementById("loginForm").style.display = "";
+      document.getElementById("loginScreen").classList.add("show");
     } catch(e) {
-      showToast('' + ICONS.x + ' 网络错误', 'error');
-      document.getElementById('initForm').style.display = 'none';
-      document.getElementById('loginForm').style.display = '';
-      document.getElementById('loginScreen').classList.add('show');
+      showToast("" + ICONS.x + " 网络错误", "error");
+      document.getElementById("loginForm").style.display = "";
+      document.getElementById("loginScreen").classList.add("show");
     }
   }
-
-  // ===== 首次设置 =====
-  window.doInit = async function() {
-    var id = document.getElementById('initId').value.trim();
-    var name = document.getElementById('initName').value.trim();
-    var pwd = document.getElementById('initPwd').value;
-    var pwd2 = document.getElementById('initPwd2').value;
-
-    var errEl = document.getElementById('loginError');
-    if (!id) { errEl.textContent = '\u8BF7\u586B\u5199\u8D26\u53F7'; return; }
-    if (!name) { errEl.textContent = '\u8BF7\u586B\u5199\u540D\u79F0'; return; }
-    if (pwd.length < 6) { errEl.textContent = '\u5BC6\u7801\u81F3\u5C116\u4F4D'; return; }
-    if (pwd !== pwd2) { errEl.textContent = '\u4E24\u6B21\u5BC6\u7801\u4E0D\u4E00\u81F4'; return; }
-
-    var btn = document.getElementById('initBtn');
-    btn.disabled = true; btn.textContent = '\u521B\u5EFA\u4E2D\u2026';
-    errEl.textContent = '';
-    try {
-      var res = await fetch('/api/student-council/init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id, name: name, password: pwd })
-      });
-      var json = await res.json();
-      if (json.ok) {
-        showToast('' + ICONS.check + ' ' + json.msg, 'success');
-        // 创建成功后自动切换到登录
-        document.getElementById('initForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = '';
-        document.getElementById('loginTitle').innerHTML = '' + ICONS.megaphone + ' 通知系统登录';
-        document.getElementById('loginSub').textContent = '登录后即可发布通知';
-        document.getElementById('loginError').textContent = '';
-      } else {
-        errEl.textContent = json.msg || '\u521B\u5EFA\u5931\u8D25';
-      }
-    } catch(e) { errEl.textContent = '\u7F51\u7EDC\u9519\u8BEF'; }
-    finally { btn.disabled = false; btn.innerHTML = '' + ICONS.megaphone + ' 创建账号'; }
-  };
-
-  var _sliderCaptchaToken = null;
+var _sliderCaptchaToken = null;
 
   window.showSliderCaptcha = function() {
     var overlay = document.getElementById('sliderCaptchaOverlay');
@@ -2332,8 +2281,14 @@ body {
   }
 })();
 </script>
+
+
+
+<script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
+
+<!-- ===== Hidden inputs ===== -->
 <input type="file" accept="image/*" style="display:none;" id="imageUploadInput" onchange="handleToolbarImage(this)">
 <input type="file" accept=".md,.markdown,text/markdown" style="display:none;" id="mdFileInput" onchange="handleMdFile(this)">
-<script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
+
 </body>
 </html>
