@@ -684,7 +684,8 @@ async function loadVote() {
 
     renderPage();
   } catch(e) {
-    showError('网络错误，请稍后重试');
+    console.error('loadVote error:', e);
+    showError('网络错误，请稍后重试。详情：' + (e.message || e));
   }
 }
 
@@ -710,6 +711,7 @@ function getTotalVotes(vote) {
 }
 
 function renderPage() {
+  var container = document.getElementById('mainContent');
   var vote = currentVote;
   var ended = isEnded(vote);
   var total = getTotalVotes(vote);
@@ -761,7 +763,7 @@ function renderPage() {
 
     optionsHtml += '<div class="option-card' + (isSelected ? ' selected' : '') + (hasVoted || ended ? ' disabled' : '') + '" ' +
       'data-opt-id="' + opt.id + '"' +
-      (hasVoted || ended ? 'onclick="return false"' : 'onclick="selectOption(this, \'' + opt.id + '\', ' + isMulti + ')') + '>' +
+      (hasVoted || ended ? 'onclick="return false"' : 'onclick="selectOption(this, \'' + opt.id + '\', ' + isMulti + ')"') + '>' +
       '<div class="option-bar-bg"' + barStyle + '></div>' +
       '<div class="option-inner">' +
         checkHtml +

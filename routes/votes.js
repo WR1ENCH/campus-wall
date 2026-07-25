@@ -67,6 +67,30 @@ module.exports = function(app) {
     }
     res.json({ ok: true, data });
   });
+
+  // 获取单个投票详情（vote.html 调用）
+  app.get('/api/votes/:id', (req, res) => {
+    const votes = readVotes();
+    const vote = votes.find(v => v.id === req.params.id);
+    if (!vote || vote.deleted) return res.json({ ok: false, msg: '投票不存在' });
+    const token = req.headers['x-user-token'];
+    let userId = null;
+    if (token) { const s = verifyUserToken(token); if (s) userId = s.id; }
+    const records = readVoteRecords();
+    const votedOptionIds = userId
+      ? records.filter(r => r.voteId === vote.id && r.userId === userId).map(r => r.optionId).filter(Boolean)
+      : [];
+    const totalVotes = (vote.options || []).reduce((sum, o) => sum + (o.votes || 0), 0);
+    res.json({
+      ok: true,
+      data: {
+        ...vote,
+        votedOptionIds,
+        totalVotes
+      }
+    });
+  });
+
   app.post('/api/votes', requireAdmin, (req, res) => {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
