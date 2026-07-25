@@ -3728,7 +3728,7 @@ backdrop-filter: blur(4px);
   <div class="user-name" id="sideNavUserName"></div>
   <div class="user-id" id="sideNavUserCredit"></div>
   </div>
-  <span id="sideNavVisitorBadge" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#DC4A3D;border:2px solid var(--surface);"></span>
+  <span id="sideNavUserVisitorBadge" style="display:none;position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#DC4A3D;border:2px solid var(--surface);"></span>
   </div>
  <div class="side-nav-list">
  <button class="side-nav-item" onclick="toggleSideNav(); window.scrollTo({top:0,behavior:'smooth'});">
@@ -4907,14 +4907,26 @@ backdrop-filter: blur(4px);
  document.getElementById('announcementOverlay').style.display = 'none';
  }
 
- // ===== 通知中心 =====
+// ===== 通知中心 =====
 var _notifUnreadCheck = function(id) { return !localStorage.getItem('notif_read_' + id); };
 var _notifMarkRead = function(id) { localStorage.setItem('notif_read_' + id, '1'); };
+var _unreadNotifCount = 0;
+var _unreadVisitorCount = 0;
 function updateNotifBadges(unread) {
-  var els = ['notifBadge','sideNavNotifBadge','hamburgerBadge','hamburgerBadge2'];
+  _unreadNotifCount = unread;
+  var els = ['notifBadge','sideNavNotifBadge'];
   els.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.style.display = unread > 0 ? '' : 'none';
+  });
+  updateHamburgerBadges();
+}
+function updateHamburgerBadges() {
+  var hasUnread = _unreadNotifCount > 0 || _unreadVisitorCount > 0;
+  var els = ['hamburgerBadge','hamburgerBadge2'];
+  els.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = hasUnread ? '' : 'none';
   });
 }
 
@@ -5026,16 +5038,19 @@ function openNotifModal() {
    }
  }
 
- function checkVisitorBadge() {
-   var token = localStorage.getItem('campus_user_token');
-   if (!token || !currentUser) return;
-   fetch('/api/user/profile-visits/unread-count', {
-     headers: { 'x-user-token': token }
-   }).then(function(resp) { return resp.json(); }).then(function(data) {
-     var badge = document.getElementById('sideNavVisitorBadge');
-     if (badge) badge.style.display = (data.ok && data.data.count > 0) ? '' : 'none';
-   }).catch(function() {});
- }
+function checkVisitorBadge() {
+  var token = localStorage.getItem('campus_user_token');
+  if (!token || !currentUser) return;
+  fetch('/api/user/profile-visits?page=1&limit=50', {
+    headers: { 'x-user-token': token }
+  }).then(function(resp) { return resp.json(); }).then(function(data) {
+    var hasVisitors = data.ok && data.data && data.data.total > 0;
+    _unreadVisitorCount = hasVisitors ? 1 : 0;
+    var badge = document.getElementById('sideNavVisitorBadge');
+    if (badge) badge.style.display = hasVisitors ? '' : 'none';
+    updateHamburgerBadges();
+  }).catch(function() {});
+}
 
  function recordProfileVisit(visitedUserId) {
    var token = localStorage.getItem('campus_user_token');
