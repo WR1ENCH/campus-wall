@@ -622,16 +622,6 @@ function formatDate(iso) {
 var currentVote = null;
 var selectedOptions = []; // ['opt_abc', ...] or ['__custom__']
 var token = localStorage.getItem('campus_user_token');
-var userId = null;
-if (token) {
-  try {
-    var parts = token.split('.');
-    if (parts.length >= 2) {
-      var payload = JSON.parse(atob(parts[0].replace(/-/g,'+').replace(/_/g,'/')));
-      if (payload && payload.id) userId = payload.id;
-    }
-  } catch(e) {}
-}
 var hasVoted = false;
 
 // ===== Navigation =====
