@@ -1064,171 +1064,78 @@ transition: top 0.3s ease, padding var(--ease-linear);
   to { opacity: 0; transform: translateY(16px) scale(0.97); }
   }
 
- /* 投票弹窗入场动画 */
- @keyframes voteIn {
- from { opacity: 0; transform: translateY(24px) scale(0.96); }
- to { opacity: 1; transform: translateY(0) scale(1); }
- }
+/* 投票弹窗入场动画 */
+@keyframes voteIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
- /* 投票标签样式 */
- .vote-tab {
- padding: 6px 12px;
- background: rgba(12, 74, 110, 0.1);
- border: none;
- border-radius: 6px;
- color: #0c4a6e;
- font-size: 13px;
- cursor: pointer;
- transition: all 0.2s;
- }
- .vote-tab:hover { background: rgba(12, 74, 110, 0.2); }
- .vote-tab.active {
- background: #0c4a6e;
- color: #fff;
- }
-
- /* 投票卡片 */
- .vote-card {
- background: #fff;
- border-radius: 12px;
- padding: 16px;
- margin-bottom: 12px;
- box-shadow: 0 2px 8px rgba(0,0,0,0.06);
- border: 1.5px solid #bae6fd;
- }
- .vote-card-header {
- display: flex;
- justify-content: space-between;
- align-items: flex-start;
- margin-bottom: 12px;
- }
- .vote-card-title {
- font-size: 16px;
- font-weight: 600;
- color: #0c4a6e;
- line-height: 1.4;
- }
- .vote-card-meta {
- font-size: 12px;
- color: #6b7280;
- display: flex;
- gap: 12px;
- margin-top: 8px;
- }
- .vote-card-options {
- display: flex;
- flex-direction: column;
- gap: 8px;
- }
- .vote-option {
- display: flex;
- align-items: center;
- padding: 10px 12px;
- background: #f0f9ff;
- border-radius: 8px;
- cursor: pointer;
- transition: all 0.2s;
- border: 1.5px solid transparent;
- }
- .vote-option:hover {
- background: #e0f2fe;
- border-color: #7dd3fc;
- }
- .vote-option.selected {
- background: #bae6fd;
- border-color: #0c4a6e;
- }
- .vote-option input[type="checkbox"],
- .vote-option input[type="radio"] {
- margin-right: 10px;
- width: 16px;
- height: 16px;
- }
- .vote-option-text {
- flex: 1;
- font-size: 14px;
- color: #374151;
- }
- .vote-option-percent {
- font-size: 13px;
- color: #0c4a6e;
- font-weight: 600;
- }
- .vote-option-bar {
- height: 6px;
- background: #e0f2fe;
- border-radius: 3px;
- overflow: hidden;
- margin-top: 6px;
- }
- .vote-option-bar-fill {
- height: 100%;
- background: linear-gradient(90deg, #0c4a6e, #22d3ee);
- border-radius: 3px;
- transition: width 0.5s ease;
- }
- .vote-custom-option {
- display: flex;
- align-items: center;
- gap: 8px;
- padding: 8px 0;
- border-top: 1.5px dashed #cbd5e1;
- margin-top: 6px;
- }
-
- .vote-option-custom {
- background: #f0f9ff;
- border: 1.5px dashed #64748b !important;
- padding: 10px 12px;
- }
-
- .vote-option-custom input[type="text"]:focus {
- outline: none;
- border-color: #0284c7 !important;
- background: #fff !important;
- }
- .vote-card-footer {
- display: flex;
- justify-content: space-between;
- align-items: center;
- margin-top: 14px;
- padding-top: 12px;
- border-top: 1px solid #e5e7eb;
- }
- .vote-card-btn {
- padding: 8px 20px;
- background: #0c4a6e;
- color: #fff;
- border: none;
- border-radius: 8px;
- font-size: 14px;
- font-weight: 600;
- cursor: pointer;
- transition: all 0.2s;
- }
- .vote-card-btn:hover { background: #075985; }
- .vote-card-btn:disabled {
- background: #9ca3af;
- cursor: not-allowed;
- }
- .vote-status {
- font-size: 12px;
- padding: 2px 8px;
- border-radius: 10px;
- font-weight: 600;
- }
- .vote-status-active {
- background: #dcfce7;
- color: #16a34a;
- }
- .vote-status-ended {
- background: #fef3c7;
- color: #d97706;
- }
- .vote-participants {
- font-size: 12px;
- color: #6b7280;
- }
+/* 投票卡片 */
+.vote-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1.5px solid #bae6fd;
+}
+.vote-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.vote-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0c4a6e;
+  line-height: 1.4;
+}
+.vote-card-meta {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.vote-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+.vote-card-btn {
+  padding: 8px 20px;
+  background: #0c4a6e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.vote-card-btn:hover { background: #075985; }
+.vote-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.vote-status-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.vote-status-ended {
+  background: #fef3c7;
+  color: #d97706;
+}
+.vote-participants {
+  font-size: 12px;
+  color: #6b7280;
+}
 
  /* ===== 发帖弹窗 ===== */
 .modal-overlay {
@@ -3548,34 +3455,18 @@ backdrop-filter: blur(4px);
  </div>
  </div>
 
- <!-- ===== 投票功能 主弹窗 ===== -->
- <div class="modal-overlay" id="voteOverlay" onclick="closeVoteOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
- <div onclick="event.stopPropagation()" style="background:#e0f7ff;border-radius:18px;width:min(94vw,720px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #7dd3fc;animation:voteIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
- <!-- 头部 -->
- <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #bae6fd;flex-shrink:0;">
- <div style="display:flex;gap:10px;align-items:center;">
- <span style="font-size:20px;font-weight:700;color:#0c4a6e;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 投票</span>
- <div style="display:flex;gap:6px;" id="voteTabBar">
- <button onclick="switchVoteTab('list')" class="vote-tab active" id="voteTabList">全部投票</button>
- <button onclick="switchVoteTab('my')" class="vote-tab" id="voteTabMy">我的投票</button>
- </div>
- </div>
- <button onclick="closeVoteModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
- </div>
-
- <!-- 投票列表页 -->
- <div id="votePageList" style="flex:1;overflow-y:auto;padding:16px 20px;">
- <div id="voteListContainer"></div>
- </div>
-
- <!-- 创建投票页 → 已移至管理后台 admin.html -->
-
- <!-- 我的投票页 -->
- <div id="votePageMy" style="flex:1;overflow-y:auto;padding:16px 20px;display:none;">
- <div id="voteMyContainer"></div>
- </div>
- </div>
- </div>
+<!-- ===== 投票功能 主弹窗 ===== -->
+<div class="modal-overlay" id="voteOverlay" onclick="closeVoteOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
+  <div onclick="event.stopPropagation()" style="background:#e0f7ff;border-radius:18px;width:min(94vw,720px);max-height:86vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.18);border:1.5px solid #7dd3fc;animation:voteIn 0.35s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1.5px solid #bae6fd;flex-shrink:0;">
+      <span style="font-size:20px;font-weight:700;color:#0c4a6e;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 投票</span>
+      <button onclick="closeVoteModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="votePageList" style="flex:1;overflow-y:auto;padding:16px 20px;">
+      <div id="voteListContainer"></div>
+    </div>
+  </div>
+</div>
 
  <!-- ===== 你问我答 主弹窗 ===== -->
  <div class="modal-overlay" id="qaOverlay" onclick="closeQAOverlay(event)" style="display:none;align-items:flex-start;padding-top:20px;">
@@ -3813,393 +3704,74 @@ backdrop-filter: blur(4px);
  </div>
  </div>
 
- <script>
- // ===== 投票功能 =====
- var votes = [];
- var voteUserVotes = {};
+<script>
+// ===== 投票功能 =====
+function openVoteModal() {
+  var overlay = document.getElementById('voteOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    loadVoteList();
+  }
+}
 
- function openVoteModal() {
- var overlay = document.getElementById('voteOverlay');
- if (overlay) {
- overlay.style.display = 'flex';
- switchVoteTab('list');
- }
- }
+function closeVoteModal() {
+  var overlay = document.getElementById('voteOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
 
- function closeVoteModal() {
- var overlay = document.getElementById('voteOverlay');
- if (overlay) {
- overlay.style.display = 'none';
- }
- }
+function closeVoteOverlay(e) {
+  if (e && e.target !== document.getElementById('voteOverlay')) return;
+  closeVoteModal();
+}
 
- function closeVoteOverlay(e) {
- if (e && e.target !== document.getElementById('voteOverlay')) return;
- closeVoteModal();
- }
+function loadVoteList() {
+  var container = document.getElementById('voteListContainer');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
 
- function switchVoteTab(tab) {
- var tabs = ['list', 'my'];
- tabs.forEach(function(t) {
- var el = document.getElementById('voteTab' + t.charAt(0).toUpperCase() + t.slice(1));
- if (el) el.classList.remove('active');
- var page = document.getElementById('votePage' + t.charAt(0).toUpperCase() + t.slice(1));
- if (page) page.style.display = 'none';
- });
- var activeTab = document.getElementById('voteTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
- if (activeTab) activeTab.classList.add('active');
- var activePage = document.getElementById('votePage' + tab.charAt(0).toUpperCase() + tab.slice(1));
- if (activePage) activePage.style.display = 'block';
+  fetch('/api/votes').then(function(r){ return r.json(); }).then(function(data) {
+    if (!data.ok || !data.data || data.data.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
+      return;
+    }
+    renderVoteList(data.data);
+  }).catch(function() {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
+  });
+}
 
- if (tab === 'list') {
- loadVoteList();
- } else if (tab === 'my') {
- loadMyVotes();
- }
- }
-
- function loadVoteList() {
- var container = document.getElementById('voteListContainer');
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
-
- var token = localStorage.getItem('campus_user_token');
- var headers = {};
- if (token) headers['x-user-token'] = token;
-
- fetch('/api/votes', {
- method: 'GET',
- headers: headers
- })
- .then(function(resp) { return resp.json(); })
- .then(function(data) {
- if (data.ok) {
- votes = data.data || [];
- // 填充已投票信息
- voteUserVotes = {};
- votes.forEach(function(v) {
- if (v.userVoted && v.userVoted.length > 0) {
- voteUserVotes[v.id] = v.userVoted;
- }
- });
- renderVoteList(votes);
- } else {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
- }
- })
- .catch(function() {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
- });
- }
-
- function loadMyVotes() {
- var container = document.getElementById('voteMyContainer');
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
-
- var token = localStorage.getItem('campus_user_token');
- var headers = {};
- if (token) headers['x-user-token'] = token;
-
- fetch('/api/votes', {
- method: 'GET',
- headers: headers
- })
- .then(function(resp) { return resp.json(); })
- .then(function(data) {
- if (data.ok) {
- var allVotes = data.data || [];
- // ponytail: “我的投票”按参与过滤（userVoted 非空），而非发起者过滤
- var myVotes = allVotes.filter(function(v) { return v.userVoted && v.userVoted.length > 0; });
- votes = allVotes;
- if (myVotes.length === 0) {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">你还没有参与任何投票</div>';
- } else {
- renderVoteList(myVotes, 'voteMyContainer');
- }
- } else {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
- }
- })
- .catch(function() {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
- });
- }
-
- function addVoteOption() {
- var container = document.getElementById('voteOptionsContainer');
- var options = container.querySelectorAll('.vote-option-input').length + 1;
- var div = document.createElement('div');
- div.style.display = 'flex';
- div.style.gap = '8px';
- div.style.marginBottom = '8px';
- div.innerHTML = '<input type="text" class="vote-option-input" placeholder="选项 ' + options + '" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
- '<button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button>';
- container.appendChild(div);
- }
-
- function removeVoteOption(el) {
- var container = document.getElementById('voteOptionsContainer');
- var options = container.querySelectorAll('.vote-option-input');
- if (options.length > 2) {
- el.parentElement.remove();
- }
- }
-
- function resetVoteForm() {
- document.getElementById('voteTitleInput').value = '';
- document.getElementById('voteMultiple').checked = false;
- document.getElementById('voteEndTime').value = '';
- var container = document.getElementById('voteOptionsContainer');
- container.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
- '<input type="text" class="vote-option-input" placeholder="选项 1" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
- '<button onclick="addVoteOption()" style="padding:0 12px;border:1.5px dashed #7dd3fc;border-radius:10px;color:#0c4a6e;font-size:14px;cursor:pointer;">+</button></div>' +
- '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
- '<input type="text" class="vote-option-input" placeholder="选项 2" style="flex:1;padding:10px 12px;border:1.5px solid #7dd3fc;border-radius:10px;font-size:14px;">' +
- '<button onclick="removeVoteOption(this)" style="padding:0 12px;border:1.5px solid #ff6b6b;border-radius:10px;color:#ff6b6b;font-size:14px;cursor:pointer;">-</button></div>';
- }
-
- function submitVote() {
- var title = document.getElementById('voteTitleInput').value.trim();
- var optionInputs = document.querySelectorAll('.vote-option-input');
- var optionTexts = [];
- optionInputs.forEach(function(input) {
- var text = input.value.trim();
- if (text) optionTexts.push(text);
- });
-
- if (!title) {
- alert('请输入投票标题');
- return;
- }
- if (optionTexts.length < 2) {
- alert('至少需要两个选项');
- return;
- }
-
- var token = localStorage.getItem('campus_user_token');
- if (!token) {
- alert('请先登录');
- return;
- }
-
- var payload = {
- title: title,
- options: optionTexts,
- multiple: document.getElementById('voteMultiple').checked,
- endTime: document.getElementById('voteEndTime').value || null
- };
-
- fetch('/api/votes', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'x-user-token': token
- },
- body: JSON.stringify(payload)
- })
- .then(function(resp) { return resp.json(); })
- .then(function(data) {
- if (data.ok) {
- alert('投票创建成功！');
- resetVoteForm();
- switchVoteTab('list');
- } else {
- alert(data.msg || '创建失败，请重试');
- }
- })
- .catch(function() {
- alert('网络错误，请稍后重试');
- });
- }
-
- function renderVoteList(voteList, containerId) {
- var useId = containerId || 'voteListContainer';
- var container = document.getElementById(useId);
- if (!container) return;
- if (!voteList || voteList.length === 0) {
- container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
- return;
- }
-
- var html = '';
+function renderVoteList(voteList) {
+  var container = document.getElementById('voteListContainer');
+  var html = '';
   voteList.forEach(function(vote) {
     if (!vote.options) vote.options = [];
     var isEnded = vote.endTime && new Date(vote.endTime) < new Date();
     var totalVotes = vote.totalVotes !== undefined
-    ? vote.totalVotes
-    : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
- var hasVoted = voteUserVotes[vote.id] && voteUserVotes[vote.id].length > 0;
- var userVotedOptions = hasVoted ? voteUserVotes[vote.id] : [];
+      ? vote.totalVotes
+      : vote.options.reduce(function(sum, opt) { return sum + (opt.votes || 0); }, 0);
+    var statusClass = isEnded ? 'vote-status-ended' : 'vote-status-active';
+    var statusText = isEnded ? '已结束' : '进行中';
 
- html += '<div class="vote-card">';
- html += '<div class="vote-card-header">';
- html += '<div>';
- html += '<div class="vote-card-title">' + escapeHtml(vote.title) + '</div>';
- html += '<div class="vote-card-meta">';
- html += '<span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ' + totalVotes + ' 人参与</span>';
- html += '<span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escapeHtml(vote.author) + '</span>';
- html += '<span>' + formatDate(vote.createdAt) + '</span>';
- if (vote.endTime) {
- html += '<span>⏰ ' + formatDate(vote.endTime) + ' 截止</span>';
- }
- html += '</div>';
- html += '</div>';
- html += '<span class="vote-status ' + (isEnded ? 'vote-status-ended' : 'vote-status-active') + '">';
- html += isEnded ? '已结束' : '进行中';
- html += '</span>';
- html += '</div>';
-
- html += '<div class="vote-card-options">';
- vote.options.forEach(function(opt) {
- var percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
- var isSelected = userVotedOptions.includes(opt.id);
- var inputType = vote.multiple ? 'checkbox' : 'radio';
- var disabled = isEnded || hasVoted;
-
- html += '<div class="vote-option' + (isSelected ? ' selected' : '') + '">';
- html += '<input type="' + inputType + '" name="vote_' + vote.id + '" value="' + opt.id + '" ' + (isSelected ? 'checked' : '') + (disabled ? 'disabled' : '') + ' onclick="handleVoteOptionClick(this, \'' + vote.id + '\', \'' + opt.id + '\', ' + vote.multiple + ')">';
- html += '<span class="vote-option-text">' + (opt.image ? '<img src="' + opt.image + '" style="width:24px;height:24px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">' : '') + escapeHtml(opt.text) + '</span>';
- html += '<span class="vote-option-percent">' + percent + '%</span>';
- html += '</div>';
- html += '<div class="vote-option-bar"><div class="vote-option-bar-fill" style="width:' + percent + '%"></div></div>';
- });
-
- // 自定义选项（如果投票开启允许自定义且用户尚未投票且投票未结束）
- if (vote.allowCustom && !isEnded && !hasVoted) {
- var customType = vote.multiple ? 'checkbox' : 'radio';
- html += '<div class="vote-option vote-option-custom">';
- html += '<input type="' + customType + '" name="vote_' + vote.id + '" id="customOpt_' + vote.id + '" onclick="handleCustomOptionClick(this, \'' + vote.id + '\', ' + vote.multiple + ')" style="width:16px;height:16px;cursor:pointer;">';
- html += '<span class="vote-option-text" style="display:flex;flex-direction:column;gap:6px;flex:1;">';
- html += '<span style="font-size:13px;color:#64748b;font-weight:500;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> 添加你的选项</span>';
- html += '<input type="text" id="customInput_' + vote.id + '" placeholder="输入自定义选项内容..." maxlength="100" onclick="event.stopPropagation()" style="width:100%;padding:6px 10px;border:1.5px dashed #94a3b8;border-radius:8px;font-size:14px;background:#f8fafc;box-sizing:border-box;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitVoteSelection(\'' + vote.id + '\')}">';
- html += '</span>';
- html += '</div>';
- html += '<div class="vote-option-bar" style="visibility:hidden;"><div></div></div>';
- }
-
- html += '</div>';
-
- html += '<div class="vote-card-footer">';
- html += '<span class="vote-participants">';
- if (hasVoted) {
- html += '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> 你已参与投票';
- } else if (isEnded) {
- html += '投票已结束';
- } else {
- html += '点击选项进行投票';
- }
- html += '</span>';
- if (!isEnded && !hasVoted) {
- html += '<button class="vote-card-btn" onclick="submitVoteSelection(\'' + vote.id + '\')">确认投票</button>';
- }
- html += '</div>';
- html += '</div>';
- });
-
- container.innerHTML = html;
- }
-
- function handleVoteOptionClick(input, voteId, optId, isMultiple) {
- // 取消自定义选项
- var customCheckbox = document.getElementById('customOpt_' + voteId);
- if (customCheckbox) customCheckbox.checked = false;
-
- if (!voteUserVotes[voteId]) {
- voteUserVotes[voteId] = [];
- }
- // ponytail: 多选下点击已有选项时，自定义标记 __custom__ 残留在数组里 →
- // submitVoteSelection 误判 selected[0]==='__custom__' 报“请输入自定义选项内容”。
- var ci = voteUserVotes[voteId].indexOf('__custom__');
- if (ci !== -1) voteUserVotes[voteId].splice(ci, 1);
-
- if (isMultiple) {
- // 多选：支持勾选和取消勾选
- if (input.checked) {
- if (voteUserVotes[voteId].indexOf(optId) === -1) {
- voteUserVotes[voteId].push(optId);
- }
- } else {
- var idx = voteUserVotes[voteId].indexOf(optId);
- if (idx !== -1) {
- voteUserVotes[voteId].splice(idx, 1);
- }
- }
- } else {
- // 单选：浏览器已自动互斥，只需保存当前选项
- voteUserVotes[voteId] = [optId];
- }
- }
-
- function handleCustomOptionClick(checkbox, voteId, isMultiple) {
- // 单选模式下：浏览器已自动取消其他 radio
- // 多选模式下：点击自定义选项复选框时，需要切换状态
- if (!voteUserVotes[voteId]) voteUserVotes[voteId] = [];
-
- if (isMultiple) {
- if (checkbox.checked) {
- // 勾选：清空其他选项，只保留自定义标记
- var otherInputs = document.querySelectorAll('input[name="vote_' + voteId + '"]');
- otherInputs.forEach(function(inp) {
- if (inp.id !== 'customOpt_' + voteId) inp.checked = false;
- });
- voteUserVotes[voteId] = ['__custom__'];
- } else {
- // 取消勾选
- var idx = voteUserVotes[voteId].indexOf('__custom__');
- if (idx !== -1) voteUserVotes[voteId].splice(idx, 1);
- }
- } else {
- // 单选模式：选中自定义选项
- voteUserVotes[voteId] = ['__custom__'];
- }
- }
-
- function submitVoteSelection(voteId) {
- var selected = voteUserVotes[voteId];
- if (!selected || selected.length === 0) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请选择或输入投票选项', 'error');
- return;
- }
-
- var token = localStorage.getItem('campus_user_token');
- if (!token) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请先登录', 'error');
- return;
- }
-
- // 检测是否选择了自定义选项
- var customOption = null;
- var optionIds = selected;
- if (selected[0] === '__custom__') {
- var inputEl = document.getElementById('customInput_' + voteId);
- customOption = inputEl ? inputEl.value.trim() : '';
- if (!customOption) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 请输入自定义选项内容', 'error');
- return;
- }
- optionIds = []; // 自定义选项不走 optionIds，后端用 customOption 生成
- }
-
- fetch('/api/votes/' + voteId + '/vote', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'x-user-token': token
- },
- body: JSON.stringify(customOption ? { optionIds: optionIds, customOption: customOption } : { optionIds: optionIds })
- })
- .then(function(resp) { return resp.json(); })
- .then(function(data) {
- if (data.ok) {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 投票成功！', 'success');
- loadVoteList();
- } else {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ' + (data.msg || '投票失败，请重试'), 'error');
- }
- })
- .catch(function() {
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> 网络错误，请稍后重试', 'error');
- });
- }
+    html += '<a href="vote.html?id=' + vote.id + '" class="vote-card" style="display:block;text-decoration:none;color:inherit;">';
+    html += '<div class="vote-card-header">';
+    html += '<div>';
+    html += '<div class="vote-card-title">' + escapeHtml(vote.title) + '</div>';
+    html += '<div class="vote-card-meta">';
+    html += '<span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ' + totalVotes + ' 人参与</span>';
+    html += '<span><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escapeHtml(vote.author) + '</span>';
+    html += '<span>' + formatDate(vote.createdAt) + '</span>';
+    if (vote.endTime) html += '<span>⏰ ' + formatDate(vote.endTime) + ' 截止</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<span class="vote-status ' + statusClass + '">' + statusText + '</span>';
+    html += '</div>';
+    html += '<div class="vote-card-footer">';
+    html += '<span class="vote-participants">点击前往投票页面</span>';
+    html += '<span class="vote-card-btn">前往投票</span>';
+    html += '</div>';
+    html += '</a>';
+  });
+  container.innerHTML = html;
+}
 
  function getCurrentUserName() {
  var user = JSON.parse(localStorage.getItem('user') || 'null');
