@@ -623,6 +623,7 @@ var currentVote = null;
 var selectedOptions = []; // ['opt_abc', ...] or ['__custom__']
 var token = localStorage.getItem('campus_user_token');
 var userId = null;
+var container = null;
 if (token) {
   try {
     var parts = token.split('.');
@@ -633,7 +634,6 @@ if (token) {
   } catch(e) {}
 }
 var hasVoted = false;
-
 // ===== Navigation =====
 function getVoteId() {
   var params = new URLSearchParams(location.search);
@@ -652,7 +652,7 @@ function goBack() {
 // ===== Data Fetching =====
 async function loadVote() {
   var voteId = getVoteId();
-  var container = document.getElementById('mainContent');
+  container = document.getElementById('mainContent');
   if (!voteId) {
     showError('未找到投票 ID');
     return;
@@ -688,7 +688,7 @@ async function loadVote() {
 }
 
 function showError(msg) {
-  var container = document.getElementById('mainContent');
+  if (!container) container = document.getElementById('mainContent');
   container.innerHTML = '<div class="error-wrap">' +
     '<div class="error-icon">&#x1F4CE;</div>' +
     '<div class="error-title">出错了</div>' +
