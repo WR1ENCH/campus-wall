@@ -498,7 +498,8 @@
       padding: 80px 20px;
     }
     .error-icon {
-      font-size: 48px;
+      display: flex;
+      justify-content: center;
       margin-bottom: 16px;
       opacity: 0.5;
     }
@@ -690,7 +691,7 @@ async function loadVote() {
 function showError(msg) {
   var container = document.getElementById('mainContent');
   container.innerHTML = '<div class="error-wrap">' +
-    '<div class="error-icon">&#x1F4CE;</div>' +
+    '<div class="error-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
     '<div class="error-title">出错了</div>' +
     '<div class="error-desc">' + escapeHtml(msg) + '</div>' +
     '<a href="index.html" style="color:var(--blue-500);font-size:14px;font-weight:600;text-decoration:none;">&larr; 返回首页</a>' +
