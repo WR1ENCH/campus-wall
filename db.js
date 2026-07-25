@@ -474,11 +474,12 @@ function migrate() {
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'mbti'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
     { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
-    { name: 'discussions', columns: ['official'] },
+    { name: 'discussions', columns: ['official', 'expiresAt', 'deleted'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
     { name: 'punishments', columns: ['credibilityDeducted'] },
      { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
      { name: 'qa_questions', columns: ['pinned'] },
+    { name: 'notices', columns: ['deletedAt', 'syncedAt', 'updatedAt', 'pinned', 'images'] },
   ];
   for (const t of tableMigrations) {
     let existingCols = [];
@@ -566,11 +567,6 @@ function migrate() {
 
 // ---- helpers ----
 function tryParse(v) {
-  if (typeof v === 'number') {
-    if (v === 1) return true;
-    if (v === 0) return false;
-    return v;
-  }
   if (typeof v !== 'string') return v;
   if (v === 'true' || v === '1') return true;
   if (v === 'false' || v === '0') return false;
