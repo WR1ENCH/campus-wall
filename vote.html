@@ -964,7 +964,8 @@ try {
 } catch(e) {}
 
 // Init
-document.addEventListener('DOMContentLoaded', loadVote);
+  // 记录页面访问（登录日志）
+  fetch('/api/page-visit', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'x-user-token': token } : {}) }).catch(() => {});
 updateSubmitBtn();
 </script>
 
