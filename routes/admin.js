@@ -1024,6 +1024,7 @@ app.post('/api/admin/maintenance/toggle', requireAdmin, (req, res) => {
     autoStart: current.autoStart || null,
     autoEnd: current.autoEnd || null,
     noticeBypass: current.noticeBypass || false,
+    domain: current.domain || 'localhost',
     updatedAt: new Date().toISOString(),
     updatedBy: req.admin.name || req.admin.id
   };
@@ -1062,6 +1063,17 @@ app.post('/api/admin/maintenance/bot-testing', requireAdmin, checkAdminRateLimit
   res.json({ ok: true, msg: botTesting ? 'Bot-Testing 已开启（验证码已禁用）' : 'Bot-Testing 已关闭（验证码已恢复）', data: current });
 });
 
+// 管理员：保存绑定域名
+app.post('/api/admin/maintenance/domain', requireAdmin, (req, res) => {
+  const { domain } = req.body;
+  const current = readMaintenance() || { enabled: false };
+  const cleanDomain = domain ? String(domain).trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '') : 'localhost';
+  current.domain = cleanDomain || 'localhost';
+  current.updatedAt = new Date().toISOString();
+  current.updatedBy = req.admin.name || req.admin.id;
+  writeMaintenance(current);
+  res.json({ ok: true, msg: '域名已保存：' + current.domain, data: current });
+});
 app.post('/api/admin/maintenance/test-key/create', requireAdmin, (req, res) => {
   try {
     const result = maintenance.createTestKey();

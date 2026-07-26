@@ -893,8 +893,30 @@
             <span class="toggle-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:28px;transition:0.3s;"></span>
           </label>
         </div>
+         <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
         <div style="background:#fef3c7;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;line-height:1.6;">
           ⚠️ <strong>注意：</strong>开启维护模式后，所有非管理员的访客访问校园墙页面时会被自动重定向到维护页面。管理员登录后台不受影响。
+        </div>
+      </div>
+
+      <!-- 绑定域名 -->
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);border:1px solid var(--border);max-width:600px;margin-top:20px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+          <div style="font-size:48px;">🌐</div>
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--text);">绑定域名</div>
+            <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">设置站点绑定的域名，用于站点访问控制</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;">
+          <div style="flex:1;">
+            <label style="font-size:13px;color:var(--text-sub);font-weight:500;display:block;margin-bottom:6px;">域名</label>
+            <input type="text" id="siteDomain" placeholder="localhost" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;color:var(--text);background:white;">
+          </div>
+          <button class="btn-cancel" style="background:var(--accent);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;align-self:flex-end;" onclick="saveDomain()">保存</button>
+        </div>
+        <div style="background:#e0f2fe;border-radius:8px;padding:14px 16px;font-size:13px;color:#0369a1;line-height:1.6;">
+          💡 <strong>提示：</strong>标准格式为 <code style="background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:4px;font-family:monospace;">xxx.xxx</code>，无需协议和参数。留空则默认为 localhost。
         </div>
       </div>
 
@@ -4170,8 +4192,9 @@
       document.getElementById('maintenanceAutoEnd').value = d && d.autoEnd ? d.autoEnd : '';
       // 放行通知页面
       document.getElementById('noticeBypassToggle').checked = d && (d.noticeBypass === true || d.noticeBypass === 'true');
-      // Bot-Testing 模式
       document.getElementById('botTestingToggle').checked = d && (d.botTesting === true || d.botTesting === 'true');
+      // 绑定域名
+      document.getElementById('siteDomain').value = d && d.domain ? d.domain : 'localhost';
       // 倒计时
       updateCountdown(d);
     } catch (e) {
@@ -4267,6 +4290,23 @@
     } catch (e) {
       showToast(e.message || '操作失败', 'error');
       document.getElementById('botTestingToggle').checked = !checked;
+    }
+  }
+
+  async function saveDomain() {
+    const domain = document.getElementById('siteDomain').value.trim();
+    try {
+      const res = await fetch('/api/admin/maintenance/domain', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.msg);
+      showToast(json.msg, 'success');
+      document.getElementById('siteDomain').value = json.data.domain || 'localhost';
+    } catch (e) {
+      showToast(e.message || '保存失败', 'error');
     }
   }
 
