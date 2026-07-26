@@ -619,6 +619,29 @@ function formatDate(iso) {
   return m + '/' + day + ' ' + String(h).padStart(2,'0') + ':' + min;
 }
 
+// ===== 浏览器指纹 —— 防同一设备重复投票 =====
+// 综合 userAgent、屏幕、语言、时区等不易伪造属性生成哈希，不依赖 HTTPS
+var cachedFingerprint = null;
+function getBrowserFingerprint() {
+  if (cachedFingerprint) return cachedFingerprint;
+  var parts = [
+    navigator.userAgent,
+    screen.width, screen.height, screen.colorDepth,
+    navigator.language, navigator.platform,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || 'unknown'
+  ];
+  var str = parts.join('|||');
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    var chr = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  cachedFingerprint = 'fp_' + Math.abs(hash).toString(36);
+  return cachedFingerprint;
+}
+
 // ===== State =====
 var currentVote = null;
 var selectedOptions = []; // ['opt_abc', ...] or ['__custom__']
@@ -906,7 +929,8 @@ function doSubmit() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-user-token': token || ''
+      'x-user-token': token || '',
+      'x-browser-fingerprint': getBrowserFingerprint()
     },
     body: JSON.stringify(payload)
   })
