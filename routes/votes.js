@@ -9,6 +9,7 @@ const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
+const { voteIpTimestamps, VOTE_IP_WINDOW_MS, VOTE_IP_SAME_SUBNET_MAX, VOTE_IP_TOTAL_UNIQUE_MAX, voteFingerprints } = require('../lib/state');
 
 function readVotes() { return db.readVotes(); }
 function writeVotes(votes) { db.writeVotes(votes); broadcastSSE('voteUpdate', { t: Date.now() }); }
@@ -46,6 +47,42 @@ function _resolveAdminOrSC(req) {
   if (sc && sc.id === session.id) return session;
   const users = readUsers();
   if (users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned')) return session;
+  return null;
+}
+
+// ===== Referer/Origin 校验 —— 防 CSRF 跨站投票 =====
+function requireOrigin(req, res, next) {
+  const origin = req.headers['origin'];
+  const referer = req.headers['referer'] || req.headers['referrer'];
+  const host = req.headers['host'];
+
+  // Origin 存在时（浏览器跨域请求自动带），必须匹配本站
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.host === host) return next();
+    } catch (_) {}
+    return res.json({ ok: false, msg: '非法请求来源', code: 'FORBIDDEN_ORIGIN' });
+  }
+
+  // 无 Origin 但有 Referer 时，验证 Referer 域名
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      if (refererUrl.host === host) return next();
+    } catch (_) {}
+    return res.json({ ok: false, msg: '非法请求来源', code: 'FORBIDDEN_ORIGIN' });
+  }
+
+  // 无 Origin 也无 Referer —— 可能是 API 客户端/微信小程序，放行
+  next();
+}
+
+// ===== 提取 IPv4 /24 子网前缀 =====
+function getSubnet24(ip) {
+  if (!ip || ip === '-') return null;
+  const parts = ip.split('.');
+  if (parts.length === 4) return parts.slice(0, 3).join('.');
   return null;
 }
 
@@ -126,7 +163,7 @@ module.exports = function(app) {
     writeVotes(votes);
     res.json({ ok: true });
   });
-  app.post('/api/votes/:id/vote', (req, res) => {
+  app.post('/api/votes/:id/vote', requireOrigin, (req, res) => {
     // 支持匿名投票：有 token 走登录用户流程，无 token 走 IP 去重流程
     const token = req.headers['x-user-token'];
     const session = token ? verifyUserToken(token) : null;
@@ -168,6 +205,45 @@ module.exports = function(app) {
       }
     }
 
+    // 浏览器指纹去重 —— 同一浏览器不得重复投票（防脚本换 User-Agent 或清缓存重投）
+    {
+      const fp = req.headers['x-browser-fingerprint'];
+      if (fp && typeof fp === 'string' && fp.length >= 8 && fp.length <= 128) {
+        const fpMap = voteFingerprints.get(vote.id);
+        if (fpMap && fpMap.has(fp)) {
+          return res.json({ ok: false, msg: '你已经投过票了', code: 'ALREADY_VOTED' });
+        }
+        // 首次投票，记录指纹（延迟到投票成功后真正写入）
+      }
+    }
+
+    // IP 时间窗口检测 —— 防代理池轮换刷票
+    {
+      const now = Date.now();
+      const entries = voteIpTimestamps.get(vote.id) || [];
+      const recent = entries.filter(e => now - e.time < VOTE_IP_WINDOW_MS);
+      const subnet24 = getSubnet24(ip);
+
+      // 同一 /24 子网在窗口内超限
+      if (subnet24) {
+        const sameSubnetCount = recent.filter(e => e.subnet24 === subnet24).length + 1;
+        if (sameSubnetCount > VOTE_IP_SAME_SUBNET_MAX) {
+          return res.json({ ok: false, msg: '当前投票参与人数较多，请稍后再试', code: 'VOTE_RATE_LIMITED' });
+        }
+      }
+
+      // 独立 IP 总数超限
+      const uniqueIps = new Set(recent.map(e => e.ip));
+      uniqueIps.add(ip);
+      if (uniqueIps.size > VOTE_IP_TOTAL_UNIQUE_MAX) {
+        return res.json({ ok: false, msg: '当前投票参与人数较多，请稍后再试', code: 'VOTE_RATE_LIMITED' });
+      }
+
+      // 通过 → 将该 IP 记入窗口（先于数据库写入，防止并发窗口内超限）
+      recent.push({ ip, subnet24, time: now });
+      voteIpTimestamps.set(vote.id, recent);
+    }
+
     // 自定义选项：新建并入栈，记录指向其 id，使 GET 返回的 userVoted 可高亮
     let customOptId = null;
     if (vote.allowCustom && customText) {
@@ -196,6 +272,15 @@ module.exports = function(app) {
     }
     writeVoteRecords(records);
     writeVotes(votes);
+    // 投票成功 → 记录浏览器指纹（若前端提供了且通过了验证）
+    {
+      const fp = req.headers['x-browser-fingerprint'];
+      if (fp && typeof fp === 'string' && fp.length >= 8 && fp.length <= 128) {
+        let fpMap = voteFingerprints.get(vote.id);
+        if (!fpMap) { fpMap = new Map(); voteFingerprints.set(vote.id, fpMap); }
+        fpMap.set(fp, Date.now());
+      }
+    }
     res.json({ ok: true });
   });
   app.put('/api/votes/:id', (req, res) => {
