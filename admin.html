@@ -875,8 +875,8 @@
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;">
           <div>
-            <div style="font-size:14px;font-weight:500;color:var(--text);">放行通知页面</div>
-            <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">开启后 notice.html 在维护期间仍可访问</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);">放行通知与投票页面</div>
+            <div style="font-size:12px;color:var(--text-sub);margin-top:2px;">开启后 notice.html 和 vote.html 在维护期间仍可访问</div>
           </div>
           <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
             <input type="checkbox" id="noticeBypassToggle" onchange="toggleNoticeBypass()" style="opacity:0;width:0;height:0;">
@@ -4246,7 +4246,7 @@
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.msg);
-      showToast(checked ? '已放行 notice.html' : '已取消放行 notice.html', 'success');
+      showToast(checked ? '已放行 notice.html & vote.html' : '已取消放行 notice.html & vote.html', 'success');
     } catch (e) {
       showToast(e.message || '操作失败', 'error');
       document.getElementById('noticeBypassToggle').checked = !checked;
