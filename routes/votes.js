@@ -74,12 +74,21 @@ module.exports = function(app) {
     const vote = votes.find(v => v.id === req.params.id);
     if (!vote || vote.deleted) return res.json({ ok: false, msg: '投票不存在' });
     const token = req.headers['x-user-token'];
+    const ip = getClientIP(req);
     let userId = null;
     if (token) { const s = verifyUserToken(token); if (s) userId = s.id; }
     const records = readVoteRecords();
-    const votedOptionIds = userId
-      ? records.filter(r => r.voteId === vote.id && r.userId === userId).map(r => r.optionId).filter(Boolean)
-      : [];
+    const ipRecords = readVoteIpRecords();
+    let votedOptionIds;
+    if (userId) {
+      votedOptionIds = records.filter(r => r.voteId === vote.id && r.userId === userId).map(r => r.optionId).filter(Boolean);
+    } else {
+      // 匿名用户：通过 IP 判断是否已投
+      const ipVote = ipRecords.find(r => r.voteId === vote.id && r.ip === ip);
+      votedOptionIds = ipVote
+        ? records.filter(r => r.voteId === vote.id && r.userId === ip).map(r => r.optionId).filter(Boolean)
+        : [];
+    }
     const totalVotes = (vote.options || []).reduce((sum, o) => sum + (o.votes || 0), 0);
     res.json({
       ok: true,
@@ -118,22 +127,25 @@ module.exports = function(app) {
     res.json({ ok: true });
   });
   app.post('/api/votes/:id/vote', (req, res) => {
+    // 支持匿名投票：有 token 走登录用户流程，无 token 走 IP 去重流程
     const token = req.headers['x-user-token'];
-    if (!token) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
-    const session = verifyUserToken(token);
-    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
-    // 信用分检测
-    if (credibility.isFeatureBlocked(session.id, 'vote')) {
-      return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+    const session = token ? verifyUserToken(token) : null;
+    const ip = getClientIP(req);
+
+    if (session) {
+      // 信用分检测
+      if (credibility.isFeatureBlocked(session.id, 'vote')) {
+        return res.json({ ok: false, msg: '你的信用分不足，无法使用此功能', code: 'CREDIBILITY_BLOCKED' });
+      }
+      // 处罚限制检测
+      if (isFeatureBlocked(session.id, 'vote')) {
+        return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
+      }
     }
 
-    // 处罚限制检测
-    if (isFeatureBlocked(session.id, 'vote')) {
-      return res.json({ ok: false, code: 'PUNISHED', msg: '账号功能受限' });
-    }
     // ponytail: 前端 submitVoteSelection 发送 { optionIds:[...], customOption? }，
     // 旧代码读 { optionId, customText } 字段名不匹配 → 选项票数不增、自定义选项不创建，
-    // 但 vote_record 已写入 → 再投即报“你已经投过票了”。此处对齐字段名并支持多选。
+    // 但 vote_record 已写入 → 再投即报"你已经投过票了"。此处对齐字段名并支持多选。
     const { optionIds, customOption } = req.body;
     const ids = Array.isArray(optionIds) ? optionIds.filter(Boolean) : [];
     const customText = typeof customOption === 'string' ? customOption.trim() : '';
@@ -142,8 +154,19 @@ module.exports = function(app) {
     const vote = votes.find(v => v.id === req.params.id);
     if (!vote) return res.json({ ok: false, msg: '投票不存在' });
     if (vote.deleted) return res.json({ ok: false, msg: '投票已删除' });
+
+    // 去重检测：登录用户按 userId，匿名用户按 IP
     const records = readVoteRecords();
-    if (records.find(r => r.voteId === vote.id && r.userId === session.id)) return res.json({ ok: false, msg: '你已经投过票了' });
+    const ipRecords = readVoteIpRecords();
+    if (session) {
+      if (records.find(r => r.voteId === vote.id && r.userId === session.id)) {
+        return res.json({ ok: false, msg: '你已经投过票了' });
+      }
+    } else {
+      if (ipRecords.find(r => r.voteId === vote.id && r.ip === ip)) {
+        return res.json({ ok: false, msg: '你已经投过票了' });
+      }
+    }
 
     // 自定义选项：新建并入栈，记录指向其 id，使 GET 返回的 userVoted 可高亮
     let customOptId = null;
@@ -162,9 +185,15 @@ module.exports = function(app) {
     if (recordedIds.length === 0) return res.json({ ok: false, msg: '请选择投票选项' });
 
     const now = new Date().toISOString();
+    const voterId = session ? session.id : ip;
     recordedIds.forEach(id => {
-      records.push({ id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, optionId: id, userId: session.id, createdAt: now });
+      records.push({ id: 'vr_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, optionId: id, userId: voterId, createdAt: now });
     });
+    // 匿名用户额外记录 IP 去重
+    if (!session) {
+      ipRecords.push({ id: 'vip_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), voteId: vote.id, ip: ip, createdAt: now });
+      writeVoteIpRecords(ipRecords);
+    }
     writeVoteRecords(records);
     writeVotes(votes);
     res.json({ ok: true });
