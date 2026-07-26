@@ -3728,6 +3728,21 @@ function loadVoteList() {
   var container = document.getElementById('voteListContainer');
   container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载中...</div>';
 
+  // 事件委托：点击投票卡片直接跳转
+  if (!container._voteDelegateAttached) {
+    container.addEventListener('click', function(e) {
+      var card = e.target.closest('.vote-card');
+      if (card) {
+        var voteId = card.getAttribute('data-vote-id');
+        if (voteId) {
+          console.log('Vote card clicked, id:', voteId);
+          goToVote(voteId);
+        }
+      }
+    });
+    container._voteDelegateAttached = true;
+  }
+
   fetch('/api/votes').then(function(r){ return r.json(); }).then(function(data) {
     if (!data.ok || !data.data || data.data.length === 0) {
       container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无投票</div>';
@@ -3737,6 +3752,13 @@ function loadVoteList() {
   }).catch(function() {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">加载失败，请刷新重试</div>';
   });
+}
+
+function goToVote(voteId) {
+  console.log('goToVote called with id:', voteId);
+  try { closeVoteModal(); } catch(e) { console.error(e); }
+  // 使用 top.location 跳出 iframe 外壳，让浏览器地址栏也更新
+  window.top.location.href = '/vote.html?id=' + encodeURIComponent(voteId);
 }
 
 function renderVoteList(voteList) {
@@ -3751,7 +3773,7 @@ function renderVoteList(voteList) {
     var statusClass = isEnded ? 'vote-status-ended' : 'vote-status-active';
     var statusText = isEnded ? '已结束' : '进行中';
 
-    html += '<a href="vote.html?id=' + vote.id + '" class="vote-card" style="display:block;text-decoration:none;color:inherit;">';
+    html += '<div class="vote-card" data-vote-id="' + vote.id + '" style="cursor:pointer;background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:1.5px solid #bae6fd;">';
     html += '<div class="vote-card-header">';
     html += '<div>';
     html += '<div class="vote-card-title">' + escapeHtml(vote.title) + '</div>';
@@ -3768,7 +3790,7 @@ function renderVoteList(voteList) {
     html += '<span class="vote-participants">点击前往投票页面</span>';
     html += '<span class="vote-card-btn">前往投票</span>';
     html += '</div>';
-    html += '</a>';
+    html += '</div>';
   });
   container.innerHTML = html;
 }

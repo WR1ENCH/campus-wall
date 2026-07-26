@@ -653,7 +653,6 @@ function goBack() {
 // ===== Data Fetching =====
 async function loadVote() {
   var voteId = getVoteId();
-  var container = document.getElementById('mainContent');
   if (!voteId) {
     showError('未找到投票 ID');
     return;
@@ -663,23 +662,25 @@ async function loadVote() {
     var headers = {};
     if (token) headers['x-user-token'] = token;
 
-    // Fetch all votes, find ours
-    var resp = await fetch('/api/votes', { headers: headers });
+    // Fetch single vote detail by ID
+    var resp = await fetch('/api/votes/' + encodeURIComponent(voteId), { headers: headers });
     var data = await resp.json();
-    if (!data.ok) {
-      showError('加载失败，请刷新重试');
+    if (!data.ok || !data.data) {
+      showError(data.msg || '该投票不存在或已被删除');
       return;
     }
 
-    currentVote = data.data.find(function(v) { return v.id === voteId; });
-    if (!currentVote) {
-      showError('该投票不存在或已被删除');
-      return;
-    }
+    currentVote = data.data;
 
-    if (currentVote.deleted) {
-      showError('该投票已删除');
-      return;
+    // Normalize: detail endpoint returns votedOptionIds; renderPage expects userVoted[]
+    if (currentVote.votedOptionIds) {
+      currentVote.userVoted = currentVote.votedOptionIds;
+    } else {
+      currentVote.userVoted = [];
+    }
+    // totalVotes is provided by detail endpoint; ensure it's set
+    if (currentVote.totalVotes === undefined && currentVote.options) {
+      currentVote.totalVotes = currentVote.options.reduce(function(s, o) { return s + (o.votes || 0); }, 0);
     }
 
     renderPage();
