@@ -2293,9 +2293,59 @@ backdrop-filter: blur(4px);
  border: none; color: rgba(255,255,255,0.8); cursor: pointer;
  font-family: inherit; transition: background 0.15s;
  }
- .user-logout-sm:hover { background: rgba(255,255,255,0.25); }
+  .user-logout-sm:hover { background: rgba(255,255,255,0.25); }
 
- /* ===== 帖子详情弹窗（风格同登录窗口）===== */
+  /* ===== 注册引导流程 ===== */
+  .onb-step {
+    animation: onbFadeIn 0.5s ease forwards;
+  }
+  @keyframes onbFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .onb-step-disappear {
+    animation: onbDisappearUp 0.7s ease forwards;
+  }
+  @keyframes onbDisappearUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-40px) scale(0.8); }
+  }
+  .onb-wheel-btn {
+    width: 36px; height: 30px; border: 1px solid #e5dccf; border-radius: 8px;
+    background: #fef9e7; color: #5a3d00; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .onb-wheel-btn:hover { background: #f5edd6; border-color: #d4b892; }
+  .onb-wheel-btn:active { background: #ede0c4; }
+  .onb-wheel-display {
+    width: 72px; padding: 10px 0; text-align: center; font-size: 20px; font-weight: 700;
+    color: #3a2210; background: #fef9e7; border-radius: 10px; border: 2px solid #ede5dc;
+    transition: border-color 0.3s;
+  }
+  @keyframes onbBounceIn {
+    0% { transform: translateX(-120%); opacity: 0; }
+    60% { transform: translateX(8%); opacity: 1; }
+    80% { transform: translateX(-3%); }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes onbBounceOut {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-120%); opacity: 0; }
+  }
+  @keyframes onbSlideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes onbFadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .onb-slide-down {
+    animation: onbSlideDown 0.5s ease forwards;
+  }
+
+  /* ===== 帖子详情弹窗（风格同登录窗口）===== */
  .note-detail-overlay {
  display: none; position: fixed; inset: 0; z-index: 999;
  background: rgba(0,0,0,0.55);
@@ -3058,7 +3108,7 @@ backdrop-filter: blur(4px);
   </div>
 
   <!-- ===== 用户登录弹窗 ===== -->
- <div class="user-login-overlay" id="userLoginOverlay" onclick="if(event.target===this)hideLoginModal()">
+ <div class="user-login-overlay" id="userLoginOverlay" onclick="if(event.target===this&&document.getElementById('registrationOnboarding').style.display!=='block')hideLoginModal()">
  <div class="user-login-box">
  <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="#3a2a1a" stroke-width="2" style="vertical-align:-2px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> 欢迎来到校园墙</h3>
  <!-- 登录/注册/智学登录切换 -->
@@ -3095,13 +3145,7 @@ backdrop-filter: blur(4px);
   onkeydown="if(event.key==='Enter') doUserRegister()">
   <div class="pwd-match-hint" id="pwdMatchHint"></div>
   </div>
-  <div class="user-login-field">
-  <label class="user-login-label" for="regNicknameInput">昵称</label>
-  <input class="user-login-input" id="regNicknameInput"
-  placeholder="在墙上显示的名字，2-12字" maxlength="12"
-  onkeydown="if(event.key==='Enter') doUserRegister()">
-  </div>
- <!-- 人机验证 -->
+  <!-- 人机验证 -->
  <div class="user-login-field">
  <label class="user-login-label">人机验证</label>
  <div id="registerSliderStatus" style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(200,168,120,0.08);border-radius:14px;cursor:pointer;" onclick="showSliderCaptcha('register')">
@@ -3111,8 +3155,155 @@ backdrop-filter: blur(4px);
  </div>
  </div>
 
- <!-- 登录表单 -->
- <div id="loginForm">
+  <!-- ===== 注册后引导流程 ===== -->
+  <div id="registrationOnboarding" style="display:none;text-align:center;padding:10px 0;">
+    <!-- Step 1: 绿色圆圈+打钩 SVG 动画 -->
+    <div class="onb-step" id="onbStepCheckmark" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;">
+      <svg id="onbCheckmarkSvg" width="100" height="100" viewBox="0 0 100 100" style="overflow:visible;">
+        <defs>
+          <linearGradient id="checkmarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#22c55e"/>
+            <stop offset="100%" stop-color="#16a34a"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#checkmarkGrad)" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" id="onbCheckCircle"/>
+        <polyline points="32,50 44,62 68,38" fill="none" stroke="url(#checkmarkGrad)" stroke-width="5"
+          stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60" id="onbCheckMark"/>
+      </svg>
+      <p style="color:#16a34a;font-size:15px;margin-top:12px;opacity:0;" id="onbCheckText">注册成功！</p>
+    </div>
+
+    <!-- Step 2: 霓虹 Hello! SVG 书写动画 -->
+    <div class="onb-step" id="onbStepHello" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:200px;">
+      <svg width="360" height="110" viewBox="0 0 360 110" style="overflow:visible;">
+        <defs>
+          <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f472b6"/>
+            <stop offset="30%" stop-color="#8b5cf6"/>
+            <stop offset="60%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#06b6d4"/>
+          </linearGradient>
+          <linearGradient id="neonFillGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f9a8d4"/>
+            <stop offset="50%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#67e8f9"/>
+          </linearGradient>
+          <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <text x="180" y="70" text-anchor="middle" font-size="72" font-weight="900"
+          font-family="'Arial Black', Impact, sans-serif" fill="none"
+          stroke="url(#neonGrad)" stroke-width="3.5"
+          stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)"
+          stroke-dasharray="600" stroke-dashoffset="600" id="onbHelloText">Hello!</text>
+      </svg>
+    </div>
+
+    <!-- Step 3: 昵称输入 -->
+    <div class="onb-step" id="onbStepNickname" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:220px;">
+      <div style="font-size:15px;color:#5a3d00;margin-bottom:16px;font-weight:600;">给自己取一个名字吧</div>
+      <div style="position:relative;width:100%;max-width:280px;display:flex;align-items:center;gap:8px;">
+        <input id="onbNicknameInput" type="text" placeholder="输入昵称，2-12个字符" maxlength="12"
+          style="flex:1;padding:10px 14px;border:2px solid #d4b892;border-radius:12px;font-size:15px;outline:none;background:#fef9e7;color:#3a2210;transition:border-color 0.3s;"
+          autocomplete="off" oninput="onbCheckNickname()">
+        <span id="onbNicknameIcon" style="width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"></span>
+      </div>
+      <div id="onbNicknameHint" style="font-size:12px;color:#999;margin-top:6px;min-height:18px;"></div>
+      <div id="onbNextBtnWrap" style="overflow:hidden;margin-top:20px;height:44px;display:flex;align-items:center;justify-content:center;">
+        <button id="onbNextBtn" onclick="onbGoBirthday()"
+          style="display:none;padding:10px 36px;border:none;border-radius:999px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transform:translateX(-120%);transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;opacity:0;">
+          下一步 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: 生日选择 -->
+    <div class="onb-step" id="onbStepBirthday" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:260px;">
+      <div style="font-size:15px;color:#5a3d00;margin-bottom:14px;font-weight:600;">选择出生日期</div>
+      <div style="display:flex;gap:10px;justify-content:center;width:100%;max-width:300px;">
+        <!-- 年 -->
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:13px;color:#b8a898;margin-bottom:6px;">年</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <button class="onb-wheel-btn" onclick="onbWheelUp('year')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+            <div id="onbYearDisplay" class="onb-wheel-display">2005</div>
+            <button class="onb-wheel-btn" onclick="onbWheelDown('year')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+          </div>
+        </div>
+        <!-- 月 -->
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:13px;color:#b8a898;margin-bottom:6px;">月</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <button class="onb-wheel-btn" onclick="onbWheelUp('month')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+            <div id="onbMonthDisplay" class="onb-wheel-display">1</div>
+            <button class="onb-wheel-btn" onclick="onbWheelDown('month')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+          </div>
+        </div>
+        <!-- 日 -->
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:13px;color:#b8a898;margin-bottom:6px;">日</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <button class="onb-wheel-btn" onclick="onbWheelUp('day')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+            <div id="onbDayDisplay" class="onb-wheel-display">15</div>
+            <button class="onb-wheel-btn" onclick="onbWheelDown('day')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div id="onbBirthdayHint" style="font-size:12px;color:#999;margin-top:10px;"></div>
+      <button id="onbBirthdayNext" onclick="onbGoAvatar()"
+        style="margin-top:16px;padding:10px 36px;border:none;border-radius:999px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s,transform 0.3s;opacity:0;">
+        下一步 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 5: 头像上传 -->
+    <div class="onb-step" id="onbStepAvatar" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:240px;">
+      <div style="font-size:15px;color:#5a3d00;margin-bottom:14px;font-weight:600;">选择一个头像</div>
+      <div id="onbAvatarPreview" style="width:100px;height:100px;border-radius:50%;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:36px;color:#ccc;overflow:hidden;border:3px dashed #d4b892;cursor:pointer;transition:border-color 0.3s;"
+        onclick="document.getElementById('onbAvatarInput').click()" title="点击选择头像">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <input id="onbAvatarInput" type="file" accept="image/*" style="display:none" onchange="onbAvatarSelected(event)">
+      <div id="onbAvatarHint" style="font-size:12px;color:#999;margin-top:10px;">点击上方区域选择头像</div>
+      <button id="onbAvatarSkip" onclick="onbGoFinal()"
+        style="margin-top:16px;padding:8px 24px;border:none;border-radius:999px;background:transparent;color:#b8a898;font-size:13px;cursor:pointer;transition:color 0.3s;"
+        onmouseover="this.style.color='#5a3d00'" onmouseout="this.style.color='#b8a898'">跳过，稍后设置</button>
+      <button id="onbAvatarConfirm" onclick="onbGoFinal()"
+        style="margin-top:10px;padding:10px 36px;border:none;border-radius:999px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s;opacity:0;">
+        完成 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 6: 最终动画 -->
+    <div class="onb-step" id="onbStepFinal" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:200px;">
+      <svg id="onbFinalCheckmarkSvg" width="80" height="80" viewBox="0 0 100 100" style="overflow:visible;">
+        <defs>
+          <linearGradient id="finalCheckmarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#22c55e"/>
+            <stop offset="100%" stop-color="#16a34a"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#finalCheckmarkGrad)" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" id="onbFinalCircle"/>
+        <polyline points="32,50 44,62 68,38" fill="none" stroke="url(#finalCheckmarkGrad)" stroke-width="5"
+          stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="60" stroke-dashoffset="60" id="onbFinalMark"/>
+      </svg>
+      <p id="onbFinalText" style="color:#5a3d00;font-size:18px;font-weight:600;margin-top:16px;opacity:0;font-family:'Ma Shan Zheng',cursive;">
+        尽情开始你的校园墙之旅吧
+      </p>
+    </div>
+  </div>
+
+  <!-- 登录表单 -->
+  <div id="loginForm">
  <div class="user-login-field">
  <label class="user-login-label" for="loginUsernameInput">账号</label>
  <input class="user-login-input" id="loginUsernameInput"
@@ -4048,10 +4239,33 @@ function renderVoteList(voteList) {
  document.getElementById('userLoginError').textContent = '';
  switchLoginTab('login');
  document.getElementById('loginReadonlyTip').style.display = fromCompose ? 'block' : 'none';
+ // 恢复登录/注册表单可见
+ document.getElementById('registerForm').style.display = 'none';
+ document.getElementById('loginForm').style.display = 'block';
+ document.getElementById('zhixueLoginForm').style.display = 'none';
+ document.querySelector('.login-tab-bar').style.display = 'flex';
+ document.querySelector('.user-agreement-row').style.display = 'flex';
+ document.querySelector('.user-login-actions').style.display = 'flex';
+ document.getElementById('userLoginError').style.display = 'block';
+ document.getElementById('registrationOnboarding').style.display = 'none';
  }
 
  function hideLoginModal() {
  document.getElementById('userLoginOverlay').classList.remove('show');
+ // 重置引导流程
+ document.getElementById('registrationOnboarding').style.display = 'none';
+ document.querySelectorAll('.onb-step').forEach(function(s) { s.style.display = 'none'; });
+ document.getElementById('onbNextBtn').style.display = 'none';
+ document.getElementById('onbBirthdayNext').style.display = 'none';
+ document.getElementById('onbAvatarConfirm').style.display = 'none';
+ // 重置SVG动画
+ var c1 = document.getElementById('onbCheckCircle'); if(c1) { c1.style.transition = 'none'; c1.style.strokeDashoffset = '264'; }
+ var m1 = document.getElementById('onbCheckMark'); if(m1) { m1.style.transition = 'none'; m1.style.strokeDashoffset = '60'; }
+ var c2 = document.getElementById('onbFinalCircle'); if(c2) { c2.style.transition = 'none'; c2.style.strokeDashoffset = '264'; }
+ var m2 = document.getElementById('onbFinalMark'); if(m2) { m2.style.transition = 'none'; m2.style.strokeDashoffset = '60'; }
+  var ht = document.getElementById('onbHelloText'); if(ht) { ht.style.transition = 'none'; ht.style.strokeDashoffset = '600'; ht.setAttribute('fill', 'none'); }
+ var ct = document.getElementById('onbCheckText'); if(ct) ct.style.opacity = '0';
+ var ft = document.getElementById('onbFinalText'); if(ft) ft.style.opacity = '0';
  }
 
  // ===== 信任此浏览器 =====
@@ -4381,55 +4595,348 @@ function renderVoteList(voteList) {
  }
  }
 
- async function doUserRegister() {
-  // 检查是否同意用户协议
-  const agreeRow = document.getElementById('agreeRow');
-  agreeRow.classList.remove('error');
-  if (!document.getElementById('agreeCheckbox').checked) {
-    document.getElementById('userLoginError').textContent = '请先阅读并同意《用户协议》';
-    agreeRow.classList.add('error');
-    return;
+  async function doUserRegister() {
+   // 检查是否同意用户协议
+   const agreeRow = document.getElementById('agreeRow');
+   agreeRow.classList.remove('error');
+   if (!document.getElementById('agreeCheckbox').checked) {
+     document.getElementById('userLoginError').textContent = '请先阅读并同意《用户协议》';
+     agreeRow.classList.add('error');
+     return;
+   }
+   const username = document.getElementById('regUsernameInput').value.trim();
+   const password = document.getElementById('regPasswordInput').value;
+   const pwdConfirm = document.getElementById('regPwdConfirmInput').value;
+   if (!username || !password || !pwdConfirm) {
+   document.getElementById('userLoginError').textContent = '请填写所有必填项';
+   return;
+   }
+   if (password !== pwdConfirm) {
+   document.getElementById('userLoginError').textContent = '两次输入的密码不一致';
+   return;
+   }
+  if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
+  if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
+  try {
+  const res = await fetch('/api/user/register', {
+  method: 'POST',
+  headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+  body: JSON.stringify({ username, password, nickname: '', captchaId: _sliderCaptchaToken, captchaText: '1' })
+  });
+  const json = await res.json();
+   if (json.ok) {
+   const { token, id, username: u, nickname: n, avatar } = json.data;
+    localStorage.setItem(USER_KEY, JSON.stringify({ id, username: u, nickname: n, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: null, isPlus: false }));
+   localStorage.setItem('campus_user_token', token);
+   // 清除注册表单，进入引导流程
+   document.getElementById('registerForm').style.display = 'none';
+   document.getElementById('loginForm').style.display = 'none';
+   document.getElementById('zhixueLoginForm').style.display = 'none';
+   document.querySelector('.login-tab-bar').style.display = 'none';
+   document.querySelector('.user-agreement-row').style.display = 'none';
+   document.querySelector('.user-login-actions').style.display = 'none';
+   document.getElementById('userLoginError').style.display = 'none';
+   document.getElementById('loginReadonlyTip').style.display = 'none';
+   document.getElementById('registrationOnboarding').style.display = 'block';
+   onbStart();
+   } else {
+  document.getElementById('userLoginError').textContent = json.msg || '注册失败';
   }
-  const username = document.getElementById('regUsernameInput').value.trim();
-  const password = document.getElementById('regPasswordInput').value;
-  const pwdConfirm = document.getElementById('regPwdConfirmInput').value;
-  const nickname = document.getElementById('regNicknameInput').value.trim();
-  if (nickname.includes(' ')) {
-    document.getElementById('userLoginError').textContent = '昵称不能包含空格';
-    return;
+  } catch {
+  document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
   }
-  if (!username || !password || !nickname || !pwdConfirm) {
-  document.getElementById('userLoginError').textContent = '请填写所有必填项';
-  return;
   }
-  if (password !== pwdConfirm) {
-  document.getElementById('userLoginError').textContent = '两次输入的密码不一致';
-  return;
+
+  // ===== 注册引导流程（Onboarding）=====
+  let onbToken = null;
+  function onbStart() {
+    const stored = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+    onbToken = stored.token;
+    // 播放 Step 1: 绿色圆圈+打钩
+    onbPlayCheckmark();
   }
- if (!_sliderCaptchaToken && !_botTesting) { document.getElementById('userLoginError').textContent = '请先完成人机验证'; return; }
- if (hasSpecialChars(username)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 账号包含特殊字符，请重新输入'); return; }
- if (hasSpecialChars(nickname)) { showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 昵称包含特殊字符，请重新输入'); return; }
- try {
- const res = await fetch('/api/user/register', {
- method: 'POST',
- headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
- body: JSON.stringify({ username, password, nickname, captchaId: _sliderCaptchaToken, captchaText: '1' })
- });
- const json = await res.json();
-  if (json.ok) {
-  const { token, id, username: u, nickname: n, avatar } = json.data;
-   localStorage.setItem(USER_KEY, JSON.stringify({ id, username: u, nickname: n, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: null, isPlus: false }));
-  localStorage.setItem('campus_user_token', token);
-  window.top.location.reload(true);
-  } else {
- document.getElementById('userLoginError').textContent = json.msg || '注册失败';
- // 验证码错误时自动刷新
- 
- }
- } catch {
- document.getElementById('userLoginError').textContent = '网络错误，请稍后重试';
- }
- }
+
+  function onbPlayCheckmark() {
+    document.getElementById('onbStepCheckmark').style.display = 'flex';
+    const circle = document.getElementById('onbCheckCircle');
+    const mark = document.getElementById('onbCheckMark');
+    const text = document.getElementById('onbCheckText');
+    circle.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+    circle.style.strokeDashoffset = '0';
+    setTimeout(() => {
+      mark.style.transition = 'stroke-dashoffset 0.5s ease-in-out';
+      mark.style.strokeDashoffset = '0';
+    }, 800);
+    setTimeout(() => {
+      text.style.transition = 'opacity 0.4s ease';
+      text.style.opacity = '1';
+    }, 1400);
+    // 1.8s 后消失
+    setTimeout(() => {
+      const el = document.getElementById('onbStepCheckmark');
+      el.classList.add('onb-step-disappear');
+      setTimeout(() => {
+        el.style.display = 'none';
+        el.classList.remove('onb-step-disappear');
+        // 重置SVG供下次使用
+        circle.style.transition = 'none';
+        circle.style.strokeDashoffset = '264';
+        mark.style.transition = 'none';
+        mark.style.strokeDashoffset = '60';
+        text.style.opacity = '0';
+        onbShowNickname();
+      }, 700);
+    }, 2200);
+  }
+
+  function onbPlayHello() {
+    document.getElementById('onbStepHello').style.display = 'flex';
+    const textEl = document.getElementById('onbHelloText');
+    // Phase 1: 描边动画 — 模拟书写轨迹 (2s)
+    textEl.style.transition = 'stroke-dashoffset 2s ease-in-out';
+    textEl.style.strokeDashoffset = '0';
+    // Phase 2: 描边完成后填充颜色 — 霓虹点亮 (0.4s)
+    setTimeout(() => {
+      textEl.style.transition = 'fill 0.4s ease-in';
+      textEl.setAttribute('fill', 'url(#neonFillGrad)');
+    }, 2000);
+    // 3s 后进入昵称
+    setTimeout(() => {
+      const el = document.getElementById('onbStepHello');
+      el.classList.add('onb-step-disappear');
+      setTimeout(() => {
+        el.style.display = 'none';
+        el.classList.remove('onb-step-disappear');
+        textEl.style.transition = 'none';
+        textEl.style.strokeDashoffset = '600';
+        textEl.setAttribute('fill', 'none');
+        onbShowNickname();
+      }, 700);
+    }, 3000);
+  }
+
+  function onbShowNickname() {
+    document.getElementById('onbStepNickname').style.display = 'flex';
+    document.getElementById('onbNicknameInput').classList.add('onb-slide-down');
+    setTimeout(() => document.getElementById('onbNicknameInput').focus(), 400);
+  }
+
+  let onbNicknameTimer = null;
+  async function onbCheckNickname() {
+    const input = document.getElementById('onbNicknameInput');
+    const icon = document.getElementById('onbNicknameIcon');
+    const hint = document.getElementById('onbNicknameHint');
+    const btn = document.getElementById('onbNextBtn');
+    const val = input.value.trim();
+
+    if (!val) {
+      icon.innerHTML = '';
+      hint.textContent = '';
+      onbHideNextBtn(btn);
+      input.style.borderColor = '#d4b892';
+      return;
+    }
+    if (val.length < 2 || val.length > 12) {
+      icon.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+      hint.textContent = '昵称需要 2-12 个字符';
+      hint.style.color = '#ef4444';
+      input.style.borderColor = '#ef4444';
+      onbHideNextBtn(btn);
+      return;
+    }
+    // 显示加载
+    icon.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8a898" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="30" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>';
+    hint.textContent = '检查中...';
+    hint.style.color = '#b8a898';
+    onbHideNextBtn(btn);
+
+    clearTimeout(onbNicknameTimer);
+    onbNicknameTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/user/check-nickname?nickname=' + encodeURIComponent(val));
+        const json = await res.json();
+        if (json.ok && json.data && json.data.available) {
+          icon.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>';
+          hint.textContent = '昵称可用！';
+          hint.style.color = '#22c55e';
+          input.style.borderColor = '#22c55e';
+          onbShowNextBtn(btn);
+        } else {
+          icon.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+          hint.textContent = json.data && json.data.reason ? json.data.reason : '昵称不可用';
+          hint.style.color = '#ef4444';
+          input.style.borderColor = '#ef4444';
+          onbHideNextBtn(btn);
+        }
+      } catch(e) {
+        icon.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        hint.textContent = '检查失败，请重试';
+        hint.style.color = '#ef4444';
+        onbHideNextBtn(btn);
+      }
+    }, 400);
+  }
+
+  function onbShowNextBtn(btn) {
+    btn.style.display = 'inline-flex';
+    btn.style.animation = 'onbBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    btn.style.opacity = '1';
+  }
+
+  function onbHideNextBtn(btn) {
+    if (btn.style.display !== 'none') {
+      btn.style.animation = 'onbBounceOut 0.3s ease forwards';
+      setTimeout(() => { btn.style.display = 'none'; }, 300);
+    }
+  }
+
+  async function onbGoBirthday() {
+    const nickname = document.getElementById('onbNicknameInput').value.trim();
+    // 保存昵称到后端
+    try {
+      await fetch('/api/user/me', {
+        method: 'PATCH',
+        headers: Object.assign({ 'Content-Type': 'application/json', 'x-user-token': onbToken }, authHeaders()),
+        body: JSON.stringify({ nickname })
+      });
+    } catch(e) {}
+    // 更新本地
+    const stored = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+    stored.nickname = nickname;
+    localStorage.setItem(USER_KEY, JSON.stringify(stored));
+    currentUser = stored;
+
+    document.getElementById('onbStepNickname').style.display = 'none';
+    document.getElementById('onbStepBirthday').style.display = 'flex';
+    // 弹入下一步按钮
+    setTimeout(() => {
+      const btn = document.getElementById('onbBirthdayNext');
+      btn.style.display = 'inline-flex';
+      btn.style.animation = 'onbBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      btn.style.opacity = '1';
+      document.getElementById('onbBirthdayHint').textContent = '点击"下一步"继续';
+      document.getElementById('onbBirthdayHint').style.color = '#b8a898';
+    }, 300);
+  }
+
+  function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+  function clampDay(year, month) {
+    const dayDisp = document.getElementById('onbDayDisplay');
+    const maxDay = getDaysInMonth(year, month);
+    let d = parseInt(dayDisp.textContent);
+    if (d > maxDay) dayDisp.textContent = maxDay;
+  }
+  function onbWheelUp(type) {
+    const display = document.getElementById('onb' + type.charAt(0).toUpperCase() + type.slice(1) + 'Display');
+    let val = parseInt(display.textContent);
+    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : 31;
+    const min = type === 'year' ? 1950 : 1;
+    val = val >= max ? min : val + 1;
+    display.textContent = val;
+    if (type !== 'day') clampDay(
+      parseInt(document.getElementById('onbYearDisplay').textContent),
+      parseInt(document.getElementById('onbMonthDisplay').textContent)
+    );
+    display.style.borderColor = '#5a3d00';
+    setTimeout(() => display.style.borderColor = '#ede5dc', 300);
+  }
+
+  function onbWheelDown(type) {
+    const display = document.getElementById('onb' + type.charAt(0).toUpperCase() + type.slice(1) + 'Display');
+    let val = parseInt(display.textContent);
+    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : 31;
+    const min = type === 'year' ? 1950 : 1;
+    val = val <= min ? max : val - 1;
+    display.textContent = val;
+    if (type !== 'day') clampDay(
+      parseInt(document.getElementById('onbYearDisplay').textContent),
+      parseInt(document.getElementById('onbMonthDisplay').textContent)
+    );
+    display.style.borderColor = '#5a3d00';
+    setTimeout(() => display.style.borderColor = '#ede5dc', 300);
+  }
+
+  async function onbGoAvatar() {
+    const year = document.getElementById('onbYearDisplay').textContent;
+    const month = document.getElementById('onbMonthDisplay').textContent.padStart(2, '0');
+    const day = document.getElementById('onbDayDisplay').textContent.padStart(2, '0');
+    const birthday = year + '-' + month + '-' + day;
+
+    // 保存生日到后端
+    try {
+      await fetch('/api/user/me', {
+        method: 'PATCH',
+        headers: Object.assign({ 'Content-Type': 'application/json', 'x-user-token': onbToken }, authHeaders()),
+        body: JSON.stringify({ birthday })
+      });
+    } catch(e) {}
+
+    document.getElementById('onbStepBirthday').style.display = 'none';
+    document.getElementById('onbStepAvatar').style.display = 'flex';
+    // Avatar step auto-shows confirm after choosing
+  }
+
+  function onbAvatarSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      const preview = document.getElementById('onbAvatarPreview');
+      preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+      preview.style.border = '3px solid #22c55e';
+      document.getElementById('onbAvatarHint').textContent = '头像已选择，点击"完成"继续';
+      document.getElementById('onbAvatarHint').style.color = '#22c55e';
+      // 保存头像
+      const btn = document.getElementById('onbAvatarConfirm');
+      btn.style.display = 'inline-flex';
+      btn.style.animation = 'onbBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+      btn.style.opacity = '1';
+      btn.onclick = function() { onbSaveAvatar(dataUrl); };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function onbSaveAvatar(dataUrl) {
+    try {
+      await fetch('/api/user/me', {
+        method: 'PATCH',
+        headers: Object.assign({ 'Content-Type': 'application/json', 'x-user-token': onbToken }, authHeaders()),
+        body: JSON.stringify({ avatar: dataUrl })
+      });
+    } catch(e) {}
+    onbGoFinal();
+  }
+
+  function onbGoFinal() {
+    document.getElementById('onbStepAvatar').style.display = 'none';
+    document.getElementById('onbStepFinal').style.display = 'flex';
+    // 更新当前用户
+    const stored = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
+    currentUser = stored;
+    updateUserBar();
+
+    // 播放最终勾号动画
+    const circle = document.getElementById('onbFinalCircle');
+    const mark = document.getElementById('onbFinalMark');
+    const text = document.getElementById('onbFinalText');
+    circle.style.transition = 'stroke-dashoffset 0.8s ease-in-out';
+    circle.style.strokeDashoffset = '0';
+    setTimeout(() => {
+      mark.style.transition = 'stroke-dashoffset 0.5s ease-in-out';
+      mark.style.strokeDashoffset = '0';
+    }, 800);
+    setTimeout(() => {
+      text.style.transition = 'opacity 0.8s ease';
+      text.style.opacity = '1';
+    }, 1500);
+    // 5s 后关闭
+    setTimeout(() => {
+      hideLoginModal();
+    }, 5000);
+  }
 
  function doUserSkip() {
  currentUser = null;

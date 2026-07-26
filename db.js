@@ -530,6 +530,15 @@ function migrate() {
       }
     }
   }
+  // 生日字段迁移
+  if (!existingUserCols.includes('birthday')) {
+    try {
+      db.exec(`ALTER TABLE "users" ADD COLUMN "birthday" TEXT`);
+      console.log('[db.js] ✅ 已添加列 users.birthday');
+    } catch (e) {
+      console.warn('[db.js] ⚠️ 添加列 users.birthday 失败:', e.message);
+    }
+  }
   // credibility_logs 表
   db.exec(`CREATE TABLE IF NOT EXISTS "credibility_logs" (
     "id" TEXT PRIMARY KEY,

@@ -135,10 +135,34 @@ module.exports = function(app) {
     const existing = users.find(u => u.username === username);
     res.json({ ok: true, data: { available: !existing } });
   });
+  app.get('/api/user/check-nickname', (req, res) => {
+    const { nickname } = req.query;
+    if (!nickname) return res.json({ ok: false, msg: '请提供昵称' });
+    if (nickname.includes(' ')) {
+      return res.json({ ok: true, data: { available: false, reason: '昵称不能包含空格' } });
+    }
+    if (nickname.length < 2 || nickname.length > 12) {
+      return res.json({ ok: true, data: { available: false, reason: '昵称需 2-12 个字符' } });
+    }
+    const sensitiveFound = checkSensitive(nickname);
+    if (sensitiveFound.length > 0) {
+      return res.json({ ok: true, data: { available: false, reason: '昵称包含违禁词语' } });
+    }
+    const bullyingFound = checkBullyingNames(nickname);
+    if (bullyingFound.length > 0) {
+      return res.json({ ok: true, data: { available: false, reason: '请使用不侵犯他人权益的昵称' } });
+    }
+    const users = readUsers();
+    const existing = users.find(u => u.nickname && u.nickname.toLowerCase() === nickname.toLowerCase());
+    if (existing) {
+      return res.json({ ok: true, data: { available: false, reason: '昵称已被使用' } });
+    }
+    res.json({ ok: true, data: { available: true } });
+  });
   app.post('/api/user/register', (req, res) => {
     const { username, password, nickname, captchaId, captchaText } = req.body;
-    if (!username || !password || !nickname) {
-      return res.json({ ok: false, msg: '账号、密码、昵称均为必填项' });
+    if (!username || !password) {
+      return res.json({ ok: false, msg: '账号、密码均为必填项' });
     }
     // 滑块验证码校验（Bot-Testing 模式下跳过）
     if (!maintenance.isBotTesting()) {
@@ -153,19 +177,9 @@ module.exports = function(app) {
     if (password.length < 6) {
       return res.json({ ok: false, msg: '密码至少 6 位' });
     }
-    if (nickname.includes(' ')) {
-      return res.json({ ok: false, msg: '昵称不能包含空格' });
-    }
-    if (nickname.length < 2 || nickname.length > 12) {
-      return res.json({ ok: false, msg: '昵称需 2-12 个字符' });
-    }
-
     const users = readUsers();
     if (users.find(u => u.username === username)) {
       return res.json({ ok: false, msg: '账号已被注册' });
-    }
-    if (users.find(u => u.nickname && u.nickname.toLowerCase() === nickname.toLowerCase())) {
-      return res.json({ ok: false, msg: '昵称已被使用' });
     }
   
     const ip = getClientIP(req);
@@ -173,8 +187,9 @@ module.exports = function(app) {
       id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       username,
       password: hashPassword(password),
-      nickname,
+      nickname: nickname || '',
       avatar: null,
+      birthday: null,
       regIp: ip,
       createdAt: new Date().toISOString(),
       status: 'active',
@@ -712,7 +727,7 @@ module.exports = function(app) {
     const user = users[userIndex];
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   
-    const { nickname, avatar, mbti } = req.body;
+    const { nickname, avatar, mbti, birthday } = req.body;
     let updated = false;
 
     // 更新昵称
@@ -729,13 +744,16 @@ module.exports = function(app) {
         if (bullyingFound.length > 0) {
           return res.json({ ok: false, msg: '昵称包含受保护姓名，请尊重他人', code: 'BULLYING_NAME' });
         }
-        const plus = isUserPlus(user.id);
-        const monthlyCount = nicknameChanges.getMonthlyCount(user.id);
+        // 首次设置昵称免费
         let cost = 0;
-        if (plus) {
-          cost = monthlyCount >= 1 ? 99 : 0;
-        } else {
-          cost = 199;
+        if (user.nickname) {
+          const plus = isUserPlus(user.id);
+          const monthlyCount = nicknameChanges.getMonthlyCount(user.id);
+          if (plus) {
+            cost = monthlyCount >= 1 ? 99 : 0;
+          } else {
+            cost = 199;
+          }
         }
         if (cost > 0) {
           if ((user.credit || 0) < cost) {
@@ -755,6 +773,24 @@ module.exports = function(app) {
         nicknameChanges.recordChange(user.id);
         user.nickname = nickname;
         updated = true;
+      }
+    }
+
+    // 更新生日
+    if (birthday !== undefined) {
+      if (birthday === '' || birthday === null) {
+        user.birthday = null;
+        updated = true;
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
+        const d = new Date(birthday + 'T00:00:00');
+        const parts = birthday.split('-');
+        if (isNaN(d.getTime()) || d.getFullYear() !== parseInt(parts[0]) || (d.getMonth()+1) !== parseInt(parts[1]) || d.getDate() !== parseInt(parts[2])) {
+          return res.json({ ok: false, msg: '生日日期不合法，请重新选择' });
+        }
+        user.birthday = birthday;
+        updated = true;
+      } else {
+        return res.json({ ok: false, msg: '生日格式错误，请选择日期' });
       }
     }
 
@@ -805,7 +841,7 @@ module.exports = function(app) {
 
     users[userIndex] = user;
     writeUsers(users);
-    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null, credit: user.credit || 0 } });
+    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null, birthday: user.birthday || null, credit: user.credit || 0 } });
   });
   app.post('/api/user/bind-admin', (req, res) => {
     const token = req.headers['x-user-token'];
