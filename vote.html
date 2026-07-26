@@ -786,7 +786,8 @@ function renderPage() {
           '自定义' +
         '</span>' +
         '<input type="text" class="custom-option-input" id="customInput" placeholder="输入你的选项..." maxlength="100" ' +
-          'onfocus="document.getElementById(\'customWrapper\').classList.add(\'active\')" ' +
+          'onfocus="document.getElementById(\'customWrapper\').classList.add(\'active\');if(selectedOptions.indexOf(\'__custom__\')===-1){selectedOptions.push(\'__custom__\')};updateSubmitBtn()" ' +
+          'oninput="updateSubmitBtn()" ' +
           'onblur="document.getElementById(\'customWrapper\').classList.remove(\'active\')" ' +
           'onkeydown="if(event.key===\'Enter\'){event.preventDefault();doSubmit()}" />' +
       '</div>' +
@@ -834,6 +835,8 @@ function renderPage() {
   '</div>' +
   '<div class="options-list">' + optionsHtml + customHtml + '</div>' +
   actionHtml;
+
+  updateSubmitBtn();
 }
 
 // ===== Interaction =====
