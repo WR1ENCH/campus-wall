@@ -19,7 +19,33 @@ function ensureTable() {
     "createdAt" TEXT NOT NULL,
     UNIQUE(userId, date, taskType)
   )`);
-  // Fix any tasks with NULL id (from older server versions)
+  // Migrate id column from INTEGER to TEXT (legacy schema fix)
+  try {
+    const cols = db.allSql("PRAGMA table_info(daily_tasks)").filter(c => c.name === 'id');
+    if (cols.length && cols[0].type.toUpperCase() !== 'TEXT') {
+      db.runSql('ALTER TABLE daily_tasks RENAME TO daily_tasks_old');
+      db.runSql(`CREATE TABLE "daily_tasks" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL,
+        "date" TEXT NOT NULL,
+        "taskType" TEXT NOT NULL,
+        "taskTitle" TEXT NOT NULL,
+        "taskDescription" TEXT NOT NULL,
+        "taskIcon" TEXT,
+        "targetCount" INTEGER DEFAULT 1,
+        "currentCount" INTEGER DEFAULT 0,
+        "reward" INTEGER DEFAULT 0,
+        "completed" INTEGER DEFAULT 0,
+        "claimed" INTEGER DEFAULT 0,
+        "createdAt" TEXT NOT NULL,
+        UNIQUE(userId, date, taskType)
+      )`);
+      db.runSql(`INSERT INTO daily_tasks (id, userId, date, taskType, taskTitle, taskDescription, taskIcon, targetCount, currentCount, reward, completed, claimed, createdAt)
+        SELECT 'DT-' || printf('%08x', ABS(rowid % 2147483647)) || '-' || strftime('%s','now'), userId, date, taskType, taskTitle, taskDescription, taskIcon, targetCount, currentCount, reward, completed, claimed, createdAt FROM daily_tasks_old`);
+      db.runSql('DROP TABLE daily_tasks_old');
+    }
+  } catch (e) { /* migration failed, table may be fresh */ }
+   // Fix any tasks with NULL id (from older server versions)
   try {
     const nullIds = db.allSql('SELECT rowid FROM daily_tasks WHERE id IS NULL');
     for (const row of nullIds) {
