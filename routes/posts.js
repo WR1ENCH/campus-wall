@@ -124,6 +124,8 @@ app.get('/api/posts', (req, res) => {
     const session = verifyUserToken(token);
     if (session) currentUserId = session.id;
   }
+  // 更新「浏览发现」任务进度
+  if (currentUserId) updateTaskProgress(currentUserId, 'browse');
   activePosts = activePosts.filter(p => {
     if (p.visibility === 'self_only') {
       return p.userId && currentUserId && p.userId === currentUserId;
