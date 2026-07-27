@@ -2228,7 +2228,7 @@ async function completeNewbieTask(taskId) {
               var btn = document.getElementById('mbtiBtn');
               if (btn) btn.style.display = 'none';
               if (window.currentLoggedInUser) window.currentLoggedInUser.mbti = type;
-            }
+              })
           })
           .catch(function(){
             showToast('保存失败，请重试');
