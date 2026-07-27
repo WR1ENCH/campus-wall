@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var token = localStorage.getItem('token');
+  var token = localStorage.getItem('campus_user_token');
   var root = document.getElementById('tcRoot');
   if (!root) return;
 
@@ -33,20 +33,30 @@
     coin: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="#d4a029"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#fff">¢</text></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
     gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 010-5A4.8 8 0 0112 8a4.8 8 0 014.5-5 2.5 2.5 0 010 5"/></svg>',
+    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+    trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 1012 0V2Z"/></svg>',
   };
-
-  // --- Wheel Config ---
-  var SEGMENTS = [
-    { label: '5', credit: 5, weight: 25, color: '#f5c518' },
-    { label: '10', credit: 10, weight: 20, color: '#e8a530' },
-    { label: '20', credit: 20, weight: 15, color: '#d4a029' },
-    { label: '30', credit: 30, weight: 10, color: '#c49025' },
-    { label: '50', credit: 50, weight: 5, color: '#b07d1e' },
-    { label: '80', credit: 80, weight: 3, color: '#8b6514' },
-    { label: '100', credit: 100, weight: 2, color: '#6b4c0e' },
-    { label: '再来', credit: 0, weight: 20, color: '#5a3d00' },
-  ];
-  var TOTAL_WEIGHT = SEGMENTS.reduce(function (s, p) { return s + p.weight; }, 0);
+  // --- Task / Achievement emoji → SVG map ---
+  var TASK_ICONS = {
+    '\u270D\uFE0F': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+    '\uD83D\uDCAC': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>',
+    '\uD83D\uDCA1': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>',
+    '\u2764\uFE0F': '<svg viewBox="0 0 24 24" fill="#e74c3c" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+    '\uD83E\uDD2B': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+    '\uD83D\uDC40': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    '\uD83D\uDCF1': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+    '\uD83D\uDD0D': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    '\uD83D\uDD14': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
+    '\u2B50': '<svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    '\uD83C\uDF1F': '<svg viewBox="0 0 24 24" fill="#f5c518" stroke="#f5c518" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><circle cx="12" cy="12" r="2" fill="#fff"/></svg>',
+    '\uD83C\uDFC5': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8m-4-4v4m-2-8a4 4 0 118 0c0 2-2 3-2 5h-4c0-2-2-3-2-5z"/><circle cx="12" cy="5" r="3"/></svg>',
+    '\uD83C\uDFAF': '<svg viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+    '\uD83D\uDC51': '<svg viewBox="0 0 24 24" fill="#f5c518" stroke="#d4a029" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17l10-12 10 12H2z"/><circle cx="12" cy="14" r="2" fill="#fff" stroke="#d4a029"/><path d="M5 17l7-8.5L19 17"/></svg>',
+    '\uD83E\uDD8B': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 6 4 8 4 12c0 4 3.5 8 8 10 4.5-2 8-6 8-10 0-4-4-6-8-10z"/><path d="M12 2v20"/><path d="M4 12h16"/></svg>',
+    '\uD83D\uDD2D': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3l-4.5 4.5"/><circle cx="10" cy="10" r="6"/><path d="M3 21l4.5-4.5"/><line x1="17.5" y1="8.5" x2="21" y2="5"/></svg>',
+    '\uD83D\uDEE1\uFE0F': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  };
+  function resolveIcon(emoji) { return TASK_ICONS[emoji] || emoji; }
 
   // --- State ---
   var state = {
@@ -54,12 +64,7 @@
     streak: 0,
     checkedToday: false,
     tasks: [],
-    canSpin: false,
-    completedCount: 0,
-    totalNeeded: 3,
-    spinHistory: [],
     achievements: [],
-    isSpinning: false,
   };
 
   // --- Render Page Shell ---
@@ -72,7 +77,6 @@
       '</header>' +
       '<section class="tc-section" id="tcCheckinSection"></section>' +
       '<section class="tc-section" id="tcTasksSection"></section>' +
-      '<section class="tc-section tc-wheel-section" id="tcWheelSection"></section>' +
       '<section class="tc-section" id="tcAchieveSection"></section>';
   }
 
@@ -185,7 +189,7 @@
     if (!state.tasks.length) {
       sec.innerHTML =
         '<div class="tc-section-header"><span class="tc-section-title">每日任务</span></div>' +
-        '<div class="tc-empty"><div class="tc-empty-icon">📋</div>今日任务加载中...</div>';
+        '<div class="tc-empty"><div class="tc-empty-icon">' + ICONS.clipboard + '</div>今日任务加载中...</div>';
       return;
     }
 
@@ -209,7 +213,7 @@
 
       html +=
         '<div class="' + cardCls + '" style="animation-delay:' + (idx * 0.06) + 's">' +
-          '<div class="tc-task-icon">' + (t.taskIcon || '📋') + '</div>' +
+          '<div class="tc-task-icon">' + resolveIcon(t.taskIcon || '') + '</div>' +
           '<div class="tc-task-body">' +
             '<div class="tc-task-name">' + t.taskTitle + '</div>' +
             '<div class="tc-task-desc">' + t.taskDescription + '</div>' +
@@ -252,155 +256,13 @@
       });
     });
   }
-
-  // --- Lucky Wheel ---
-  function renderWheelSection() {
-    var sec = $('tcWheelSection');
-    var html =
-      '<div class="tc-section-header"><span class="tc-section-title">幸运转盘</span></div>' +
-      '<div class="tc-wheel-wrap">' +
-        '<div class="tc-wheel-outer">' +
-          '<div class="tc-wheel-inner">' +
-            '<canvas class="tc-wheel-canvas" id="tcWheelCanvas" width="244" height="244"></canvas>' +
-          '</div>' +
-        '</div>' +
-        '<div class="tc-wheel-pointer"></div>' +
-        '<div class="tc-wheel-center' + (!state.canSpin ? ' disabled' : '') + '" id="tcSpinBtn">' +
-          (state.canSpin ? '抽奖' : '完成任务') +
-        '</div>' +
-      '</div>' +
-      '<div class="tc-wheel-info" id="tcWheelInfo">' +
-        '已完成 <strong>' + state.completedCount + '</strong>/' + state.totalNeeded + ' 个任务' +
-        (state.canSpin ? ' · 可以抽奖！' : '') +
-      '</div>' +
-      renderSpinHistory() +
-      '</div>';
-
-    sec.innerHTML = html;
-    drawWheel();
-
-    // Bind spin
-    var spinBtn = $('tcSpinBtn');
-    if (spinBtn && state.canSpin) {
-      spinBtn.addEventListener('click', doSpin);
-    }
-  }
-
-  function renderSpinHistory() {
-    if (!state.spinHistory.length) return '';
-    var html = '<div class="tc-spin-history"><div class="tc-spin-history-title">最近记录</div>';
-    state.spinHistory.slice(0, 5).forEach(function (s) {
-      html +=
-        '<div class="tc-spin-item">' +
-          '<span class="tc-spin-item-reward">' + (s.rewardType === 'spin_again' ? '再来一次' : '+' + s.reward + '积分') + '</span>' +
-          '<span class="tc-spin-item-date">' + fmtDate(s.createdAt) + '</span>' +
-        '</div>';
-    });
-    html += '</div>';
-    return html;
-  }
-
-  function drawWheel() {
-    var canvas = $('tcWheelCanvas');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var w = canvas.width, h = canvas.height;
-    var cx = w / 2, cy = h / 2, r = w / 2 - 4;
-    var startAngle = -Math.PI / 2; // Start from top
-
-    ctx.clearRect(0, 0, w, h);
-
-    SEGMENTS.forEach(function (seg, i) {
-      var sliceAngle = (seg.weight / TOTAL_WEIGHT) * 2 * Math.PI;
-      var endAngle = startAngle + sliceAngle;
-
-      // Draw segment
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, startAngle, endAngle);
-      ctx.closePath();
-      ctx.fillStyle = seg.color;
-      ctx.fill();
-
-      // Draw separator line
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + r * Math.cos(startAngle), cy + r * Math.sin(startAngle));
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Draw text
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(startAngle + sliceAngle / 2);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px "Noto Sans SC", sans-serif';
-      ctx.fillText(seg.label, r - 12, 4);
-      ctx.restore();
-
-      startAngle = endAngle;
-    });
-  }
-
-  function doSpin() {
-    if (state.isSpinning) return;
-    state.isSpinning = true;
-    var spinBtn = $('tcSpinBtn');
-    if (spinBtn) {
-      spinBtn.classList.add('disabled');
-      spinBtn.textContent = '...';
-    }
-
-    authFetch('/api/user/lucky-wheel/spin', { method: 'POST' }).then(function (res) {
-      state.isSpinning = false;
-      if (!res.ok) {
-        showToast(res.msg || '抽奖失败');
-        if (spinBtn) { spinBtn.classList.remove('disabled'); spinBtn.textContent = '抽奖'; }
-        return;
-      }
-
-      // Find winning segment index
-      var winIdx = SEGMENTS.findIndex(function (s) { return s.label === res.segment.label.replace('积分', ''); });
-      if (winIdx === -1) winIdx = 0;
-
-      // Calculate target angle
-      var sliceAngle = 360 / SEGMENTS.length;
-      var targetAngle = 360 * 5 + (360 - winIdx * sliceAngle - sliceAngle / 2); // 5 full rotations + offset
-
-      var canvas = $('tcWheelCanvas');
-      if (canvas) {
-        canvas.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-        canvas.style.transformOrigin = 'center center';
-        canvas.style.transform = 'rotate(' + targetAngle + 'deg)';
-      }
-
-      setTimeout(function () {
-        if (res.rewardType === 'spin_again') {
-          showToast('🎉 再来一次！');
-        } else {
-          showToast('🎉 恭喜获得 ' + res.reward + ' 积分');
-          spawnConfetti();
-        }
-        // Reset spin state after animation
-        setTimeout(function () {
-          loadAll();
-        }, 800);
-      }, 4200);
-    }).catch(function () {
-      state.isSpinning = false;
-      if (spinBtn) { spinBtn.classList.remove('disabled'); spinBtn.textContent = '抽奖'; }
-    });
-  }
-
   // --- Achievements ---
   function renderAchieveSection() {
     var sec = $('tcAchieveSection');
     if (!state.achievements.length) {
       sec.innerHTML =
         '<div class="tc-section-header"><span class="tc-section-title">成就</span></div>' +
-        '<div class="tc-empty"><div class="tc-empty-icon">🏆</div>暂无成就数据</div>';
+        '<div class="tc-empty"><div class="tc-empty-icon">' + ICONS.trophy + '</div>暂无成就数据</div>';
       return;
     }
 
@@ -417,7 +279,7 @@
       var cls = 'tc-achievement-card ' + (a.unlocked ? 'unlocked' : 'locked');
       html +=
         '<div class="' + cls + '" style="animation-delay:' + (idx * 0.05) + 's">' +
-          '<span class="tc-achievement-icon">' + a.icon + '</span>' +
+          '<span class="tc-achievement-icon">' + resolveIcon(a.icon) + '</span>' +
           '<div class="tc-achievement-name">' + a.name + '</div>' +
           '<div class="tc-achievement-desc">' + a.description + '</div>' +
           (a.unlocked && a.unlockedAt ?
@@ -430,7 +292,6 @@
     sec.innerHTML = html;
   }
 
-  // --- Toast ---
   var toastTimer = null;
   function showToast(msg) {
     var old = document.querySelector('.tc-toast');
@@ -447,36 +308,11 @@
       setTimeout(function () { el.remove(); }, 300);
     }, 2500);
   }
-
-  // --- Confetti ---
-  function spawnConfetti() {
-    var container = document.createElement('div');
-    container.className = 'tc-confetti-container';
-    document.body.appendChild(container);
-
-    var colors = ['#f5c518', '#d4a029', '#34a853', '#e74c3c', '#7c4dff', '#ff9800'];
-    for (var i = 0; i < 30; i++) {
-      var piece = document.createElement('div');
-      piece.className = 'tc-confetti-piece';
-      piece.style.left = (Math.random() * 100) + '%';
-      piece.style.top = (Math.random() * 30) + '%';
-      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.animationDelay = (Math.random() * 0.5) + 's';
-      piece.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
-      piece.style.width = (6 + Math.random() * 6) + 'px';
-      piece.style.height = (6 + Math.random() * 6) + 'px';
-      container.appendChild(piece);
-    }
-
-    setTimeout(function () { container.remove(); }, 2500);
-  }
-
-  // --- Coin Fly Animation ---
   function spawnCoinFly(fromEl) {
     var rect = fromEl.getBoundingClientRect();
     var coin = document.createElement('div');
     coin.className = 'tc-coin-fly';
-    coin.textContent = '🪙';
+    coin.innerHTML = ICONS.coin;
     coin.style.left = rect.left + rect.width / 2 - 10 + 'px';
     coin.style.top = rect.top + 'px';
     document.body.appendChild(coin);
@@ -506,23 +342,6 @@
     });
   }
 
-  function loadWheelInfo() {
-    return authFetch('/api/user/lucky-wheel/can-spin').then(function (res) {
-      if (res.ok && res.data) {
-        state.canSpin = res.data.canSpin;
-        state.completedCount = res.data.completedCount;
-        state.totalNeeded = res.data.totalNeeded;
-      }
-    });
-  }
-
-  function loadSpinHistory() {
-    return authFetch('/api/user/lucky-wheel/history').then(function (res) {
-      if (res.ok) {
-        state.spinHistory = res.data || [];
-      }
-    });
-  }
 
   function loadAchievements() {
     return authFetch('/api/user/achievements').then(function (res) {
@@ -536,16 +355,14 @@
     Promise.all([
       loadCheckin(),
       loadTasks(),
-      loadWheelInfo(),
-      loadSpinHistory(),
       loadAchievements(),
     ]).then(function () {
       renderCheckinSection();
       renderTasksSection();
-      renderWheelSection();
       renderAchieveSection();
     });
   }
+
 
   // --- Init ---
   renderShell();
