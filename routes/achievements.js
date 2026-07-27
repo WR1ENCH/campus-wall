@@ -74,6 +74,14 @@ function checkAndUnlockAchievements(userId) {
     'SELECT COUNT(*) as cnt FROM daily_tasks WHERE userId = ? AND claimed = 1',
     [userId]
   )[0]?.cnt || 0;
+  const postsCreated = db.allSql(
+    'SELECT COUNT(*) as cnt FROM posts WHERE userId = ? AND IFNULL(deleted,0) = 0',
+    [userId]
+  )[0]?.cnt || 0;
+  const whispersSent = db.allSql(
+    'SELECT COUNT(*) as cnt FROM whispers WHERE senderId = ?',
+    [userId]
+  )[0]?.cnt || 0;
 
   // 连续完成全部任务的天数（简化：看最近7天是否全部完成）
   let fullTaskDays = 0;
@@ -103,6 +111,9 @@ function checkAndUnlockAchievements(userId) {
       case 'month_pioneer': progress = streak; break;
       case 'campus_guardian': progress = streak; break;
       case 'year_legend': progress = streak; break;
+      case 'content_creator': progress = postsCreated; break;
+      case 'social_butterfly': progress = whispersSent; break;
+      case 'explorer': progress = 0; break;
       default: progress = 0; break;
     }
 

@@ -6,6 +6,7 @@ const { isFeatureBlocked, emitUserNotice } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const db = require('../db');
 const { isUserPlus } = require('../lib/subscription');
+const { updateTaskProgress } = require('./daily-tasks');
 
 const WHISPER_MAX_LENGTH = 50;
 
@@ -98,6 +99,8 @@ module.exports = function(app) {
 
     emitUserNotice(receiverId, '💬 收到一条悄悄话',
       '有人给你发了一条悄悄话，快去查看吧', 'T1');
+
+    updateTaskProgress(session.id, 'whisper');
 
     res.json({ ok: true, data: { id: whisperId } });
   });

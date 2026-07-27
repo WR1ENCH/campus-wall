@@ -6,6 +6,7 @@ const uniqueId = require('../lib/uniqueId');
 const db = require('../db');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
+const { updateTaskProgress } = require('./daily-tasks');
 const { isFeatureBlocked } = require('../lib/penalty');
 const credibility = require('../lib/credibility');
 const maintenance = require('../maintenance');
@@ -601,6 +602,8 @@ if (!content || !content.trim()) {
     }
   }
 
+  if (realUserId) updateTaskProgress(realUserId, 'post');
+
   res.json({
     ok: true,
     data: newPost,
@@ -682,6 +685,8 @@ app.post('/api/posts/:id/like', (req, res) => {
         'T1');
     }
   }
+
+  if (token) updateTaskProgress(likerId, 'like');
 
   res.json({ ok: true, data: { liked: wasLiked, likes: post.likes } });
 });
@@ -804,6 +809,8 @@ app.post('/api/posts/:id/comments', (req, res) => {
   }
 
   writePosts(posts);
+  updateTaskProgress(userId, 'comment');
+
   res.json({
     ok: true,
     data: newComment,

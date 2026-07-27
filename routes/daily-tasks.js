@@ -4,20 +4,31 @@ const { getBeijingDate } = require('./checkin');
 
 function ensureTable() {
   db.runSql(`CREATE TABLE IF NOT EXISTS "daily_tasks" (
-    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "id" TEXT PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "date" TEXT NOT NULL,
     "taskType" TEXT NOT NULL,
-    "taskTitle" TEXT,
-    "taskDescription" TEXT,
+    "taskTitle" TEXT NOT NULL,
+    "taskDescription" TEXT NOT NULL,
     "taskIcon" TEXT,
     "targetCount" INTEGER DEFAULT 1,
     "currentCount" INTEGER DEFAULT 0,
     "reward" INTEGER DEFAULT 0,
     "completed" INTEGER DEFAULT 0,
     "claimed" INTEGER DEFAULT 0,
-    "createdAt" TEXT
+    "createdAt" TEXT NOT NULL,
+    UNIQUE(userId, date, taskType)
   )`);
+  // Fix any tasks with NULL id (from older server versions)
+  try {
+    const nullIds = db.allSql('SELECT rowid FROM daily_tasks WHERE id IS NULL');
+    for (const row of nullIds) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let newId = 'DT-';
+      for (let i = 0; i < 20; i++) newId += chars[Math.floor(Math.random() * chars.length)];
+      db.runSql('UPDATE daily_tasks SET id = ? WHERE rowid = ?', [newId, row.rowid]);
+    }
+  } catch (e) { /* ignore if table doesn't exist yet */ }
 }
 ensureTable();
 
