@@ -3911,6 +3911,11 @@ backdrop-filter: blur(4px);
   <span class="nav-label">PLUS++ 订阅</span>
   <span id="sideNavPlusBadge" style="margin-left:auto;font-size:10px;font-weight:700;color:#5a3d00;background:rgba(245,197,24,0.2);padding:2px 9px;border-radius:10px;border:1px solid rgba(245,197,24,0.3);">⭐PLUS</span>
   </button>
+ <button class="side-nav-item" onclick="toggleSideNav(); window.open('task-center.html','_blank');">
+ <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
+ <span class="nav-label">任务中心</span>
+ <span id="sideNavTaskBadge" style="display:none;margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:#ef4444;padding:1px 7px;border-radius:10px;min-width:16px;text-align:center;"></span>
+ </button>
   <div class="side-nav-divider"></div>
   <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
@@ -9605,6 +9610,27 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  if (logoutBtn) logoutBtn.style.display = 'none';
  if (userSection) userSection.style.display = 'none';
  }
+ }
+ // 任务中心红点徽章
+ function updateTaskBadge() {
+   var token = localStorage.getItem('campus_user_token') || localStorage.getItem('token');
+   if (!token) return;
+   fetch('/api/user/daily-tasks', { headers: { 'x-user-token': token } })
+     .then(function(r) { return r.json(); })
+     .then(function(res) {
+       if (!res.ok) return;
+       var tasks = res.tasks || [];
+       var unclaimed = tasks.filter(function(t) { return t.completed && !t.claimed; }).length;
+       var badge = document.getElementById('sideNavTaskBadge');
+       if (badge) {
+         if (unclaimed > 0) {
+           badge.textContent = unclaimed;
+           badge.style.display = 'inline';
+         } else {
+           badge.style.display = 'none';
+         }
+       }
+     }).catch(function() {});
  }
 
  function toggleSideNav() {
