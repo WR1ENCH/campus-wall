@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -590,6 +591,23 @@
   </div>
 
 <script>
+// ===== 新手任务系统 =====
+async function completeNewbieTask(taskId) {
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/user/newbie-task/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ taskId })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      showToast('任务完成！获得 ' + json.data.reward + ' Credit', 'success');
+    }
+  } catch(e) { /* silent */ }
+}
+
 // ===== Utilities =====
 var ESCAPED = {};
 function escapeHtml(s) {
@@ -937,7 +955,7 @@ function doSubmit() {
   .then(function(r){ return r.json(); })
   .then(function(data) {
     if (data.ok) {
-      showToast('投票成功！', 'success');
+      completeNewbieTask('cast_vote');
       // Reload to show results
       loadVote();
     } else {

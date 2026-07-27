@@ -564,6 +564,14 @@ function migrate() {
   }
 
   // 修复 users 表中误存为科学记数法的 uid（如 1.23e+15 → 1230000000000000）
+  // 创建 newbie_task_progress 表（新手任务进度）
+  db.exec(`CREATE TABLE IF NOT EXISTS "newbie_task_progress" (
+    "userId" TEXT PRIMARY KEY,
+    "tasks" TEXT DEFAULT '{}',
+    "stageRewardsClaimed" TEXT DEFAULT '[]',
+    "completedAt" TEXT,
+    "createdAt" TEXT NOT NULL
+  )`);
   try {
     const uidFix = db.prepare(`SELECT rowid, uid FROM "users" WHERE uid LIKE '%e%'`).all();
     for (const u of uidFix) {
@@ -1024,8 +1032,26 @@ function softDeletePost(id, deletedAt, deletedBy) {
 }
 
 function insertUser(user) {
+
   insertRow('users', user);
 }
+
+// ===== 新手任务进度 =====
+function readNewbieTaskProgress() { return all('newbie_task_progress'); }
+function writeNewbieTaskProgress(data) { dropAndInsert('newbie_task_progress', data); }
+function getNewbieTaskProgress(userId) {
+  return all('newbie_task_progress').find(p => p.userId === userId) || null;
+}
+function insertNewbieTaskProgress(progress) { insertRow('newbie_task_progress', progress); }
+function updateNewbieTaskProgress(userId, updates) {
+  const d = getDb();
+  const cols = Object.keys(updates);
+  const setClause = cols.map(c => `"${c}" = ?`).join(',');
+  const vals = cols.map(c => toSqlValue(updates[c]));
+  d.prepare(`UPDATE "newbie_task_progress" SET ${setClause} WHERE userId = ?`).run(...vals, userId);
+  invalidateCache('newbie_task_progress');
+}
+
 
 function updateUser(id, updates) {
   updateRow('users', id, updates);
@@ -1157,4 +1183,6 @@ module.exports = {
   addIdInput,
   // Profile Visits
   addProfileVisit, getProfileVisits, getUnreadVisitCount, getYesterdayVisitsGrouped, markVisitRead, markAllVisitsRead,
+  // 新手任务进度
+  readNewbieTaskProgress, writeNewbieTaskProgress, getNewbieTaskProgress, insertNewbieTaskProgress, updateNewbieTaskProgress,
 };
