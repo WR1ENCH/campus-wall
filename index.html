@@ -10236,11 +10236,17 @@ async function completeNewbieTask(taskId) {
     });
     const json = await res.json();
     if (json.ok) {
+      // 判断是否为首次完成（localStorage 中尚未标记）
+      const firstTime = !(currentUser.newbieTasks && currentUser.newbieTasks[taskId]);
       if (!currentUser.newbieTasks) currentUser.newbieTasks = {};
       currentUser.newbieTasks[taskId] = true;
       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
       showToast('任务完成！获得 ' + json.data.reward + ' Credit', 'success');
-      if (document.getElementById('newbieTaskOverlay').classList.contains('show')) {
+      if (firstTime) {
+        // 首次完成 → 延迟弹出面板
+        setTimeout(function() { openNewbieTask(); }, 1200);
+      } else if (document.getElementById('newbieTaskOverlay').classList.contains('show')) {
+        // 面板已打开则刷新
         renderNewbieTaskPanel();
       }
     }
@@ -10341,7 +10347,18 @@ async function checkAndShowNewbieTask() {
   if (!currentUser) return;
   const token = localStorage.getItem('campus_user_token');
   if (!token) return;
-  
+
+  // 从其他页面重定向回来 → 强制打开面板
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('newbie-task') === '1') {
+    // 清除 URL 参数，防止刷新重复弹出
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    openNewbieTask();
+    return;
+  }
+
   try {
     const res = await fetch('/api/user/newbie-task/progress', {
       headers: { 'x-user-token': token }

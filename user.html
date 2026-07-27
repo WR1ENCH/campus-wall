@@ -1923,6 +1923,10 @@ async function completeNewbieTask(taskId) {
     const json = await res.json();
     if (json.ok) {
       showToast('任务完成！获得 ' + json.data.reward + ' Credit');
+      sessionStorage.setItem('newbie_task_trigger', taskId);
+      setTimeout(function() {
+        window.location.href = '/?newbie-task=1';
+      }, 1200);
     }
   } catch(e) { /* silent */ }
 }

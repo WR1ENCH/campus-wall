@@ -604,6 +604,11 @@ async function completeNewbieTask(taskId) {
     const json = await res.json();
     if (json.ok) {
       showToast('任务完成！获得 ' + json.data.reward + ' Credit', 'success');
+      // 延迟后重定向回首页，触发新手任务面板
+      sessionStorage.setItem('newbie_task_trigger', taskId);
+      setTimeout(function() {
+        window.location.href = '/?newbie-task=1';
+      }, 1200);
     }
   } catch(e) { /* silent */ }
 }
