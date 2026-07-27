@@ -6,6 +6,7 @@ const uniqueId = require('../lib/uniqueId');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 const { isFeatureBlocked } = require('../lib/penalty');
+const { updateTaskProgress } = require('./daily-tasks');
 const credibility = require('../lib/credibility');
 const { isUserPlus } = require('../lib/subscription');
 
@@ -318,6 +319,8 @@ app.post('/api/qa/questions/:id/answers', (req, res) => {
   };
   answers.push(a);
   writeQAAnswers(answers);
+  updateTaskProgress(session.id, 'answer');
+
   res.json({ ok: true, data: a });
 });
 

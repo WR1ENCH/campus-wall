@@ -3,6 +3,7 @@ const { verifyUserToken } = require('../lib/crypto');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
+const { updateTaskProgress } = require('./daily-tasks');
 
 // 访客记录速率限制（同用户对同目标每5分钟最多1次）
 const visitRateLimit = new Map();
@@ -41,6 +42,8 @@ module.exports = function(app) {
 
     // 可选：SSE 广播
     broadcastSSE('profileVisit', { visitedUserId });
+
+    updateTaskProgress(session.id, 'visit');
 
     res.json({ ok: true });
   });

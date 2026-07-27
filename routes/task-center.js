@@ -25,6 +25,7 @@ module.exports = function(app) {
 
   app.post('/api/user/checkin', authMiddleware, (req, res) => {
     const result = processCheckin(req.userId, false);
+    if (result.ok) checkAndUnlockAchievements(req.userId);
     res.json(result);
   });
 
@@ -58,6 +59,7 @@ module.exports = function(app) {
       const userIdx = users.findIndex(u => u.id === req.userId);
       users[userIdx].repair_card_count = (users[userIdx].repair_card_count || 0) - 1;
       db.writeUsers(users);
+      checkAndUnlockAchievements(req.userId);
     }
     
     res.json(result);
@@ -72,6 +74,7 @@ module.exports = function(app) {
 
   app.post('/api/user/daily-tasks/:id/claim', authMiddleware, (req, res) => {
     const result = claimTaskReward(req.userId, req.params.id);
+    if (result.ok) checkAndUnlockAchievements(req.userId);
     res.json(result);
   });
 
