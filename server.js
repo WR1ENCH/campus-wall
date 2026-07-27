@@ -138,6 +138,7 @@ const PAGE_MAP = {
   '/ecosystem.html': 'pages/ecosystem.html',
   '/safety.html': 'pages/safety.html',
   '/plus.html': 'pages/plus.html',
+  '/task-center.html': 'pages/task-center.html',
 };
 
 app.use((req, res, next) => {
@@ -173,6 +174,7 @@ require('./routes/pickup')(app);
 require('./routes/student-council')(app);
 require('./routes/whispers')(app);
 require('./routes/subscription')(app);
+require('./routes/task-center')(app);
 require('./routes/maintenance')(app);
 require('./routes/visits')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
