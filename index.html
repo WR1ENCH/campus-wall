@@ -1217,6 +1217,82 @@ align-items: center; justify-content: center;
 backdrop-filter: blur(4px);
 }
  .modal-overlay.show { display: flex; }
+
+/* 新手任务面板 */
+.newbie-task-panel {
+  width: 92%; max-width: 420px; max-height: 85vh;
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: modalIn 0.3s ease;
+}
+.newbie-task-header {
+  padding: 20px 20px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white; text-align: center;
+}
+.newbie-task-header h3 { font-size: 18px; margin-bottom: 4px; }
+.newbie-task-header p { font-size: 12px; opacity: 0.85; }
+.newbie-task-body {
+  padding: 16px 20px; overflow-y: auto; flex: 1;
+}
+/* 总进度条 */
+.newbie-overall-progress {
+  margin-bottom: 16px; padding: 12px;
+  background: #f8f9fa; border-radius: 12px;
+}
+.newbie-progress-bar {
+  height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;
+  margin: 8px 0;
+}
+.newbie-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px; transition: width 0.5s ease;
+}
+/* 阶段奖励标记 */
+.newbie-stage-markers {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  position: relative;
+}
+.newbie-stage-marker {
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 10px; color: #6c757d; cursor: pointer;
+  padding: 4px 6px; border-radius: 6px;
+  transition: all 0.2s;
+}
+.newbie-stage-marker.claimable {
+  background: #fff3cd; color: #856404;
+  animation: pulse 1.5s infinite;
+}
+.newbie-stage-marker.claimed {
+  background: #d4edda; color: #155724;
+}
+/* 任务列表 */
+.newbie-task-item {
+  display: flex; align-items: center; padding: 10px 12px;
+  margin-bottom: 8px; background: #f8f9fa; border-radius: 10px;
+  transition: all 0.2s;
+}
+.newbie-task-item.completed {
+  background: #d4edda; opacity: 0.7;
+}
+.newbie-task-item .task-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 12px; font-size: 16px;
+  background: #e9ecef;
+}
+.newbie-task-item .task-info { flex: 1; }
+.newbie-task-item .task-name { font-size: 13px; font-weight: 500; }
+.newbie-task-item .task-reward { font-size: 11px; color: #6c757d; }
+.newbie-task-item .task-status {
+  font-size: 18px; color: #28a745;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
  #modalOverlay { align-items: flex-end; padding: 0; }
 
     /* 滑块验证码弹窗动画 */
@@ -4974,8 +5050,6 @@ function renderVoteList(voteList) {
  const barEl = document.getElementById('userInfoBar');
  const entranceEl = document.getElementById('loginEntrance');
  const topBar = document.getElementById('topBar');
- if (currentUser) {
- var avatarSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
  document.getElementById('topUserAvatar').innerHTML = currentUser.avatar && currentUser.avatar !== '🙈' ? currentUser.avatar : avatarSvg;
  document.getElementById('topUserName').textContent = currentUser.nickname;
  document.getElementById('topUserAccount').textContent = '@' + (currentUser.username || '');
@@ -5056,6 +5130,11 @@ function renderVoteList(voteList) {
   if (currentUser) {
   checkPunishment();
   }
+
+  // 检查新手任务
+  if (currentUser) {
+    checkAndShowNewbieTask();
+  }
   }
 
  // ===== 公告 =====
@@ -5112,15 +5191,7 @@ function openNotifModal() {
  var overlay = document.getElementById('notifOverlay');
  overlay.style.display = 'flex';
  loadNotifications();
- // 更新「查看通知」任务进度
- var token = localStorage.getItem('campus_user_token');
- if (token) {
- fetch('/api/user/daily-tasks/progress', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json', 'x-user-token': token },
- body: JSON.stringify({ type: 'notification' })
- });
- }
+  completeNewbieTask('view_notifications');
  }
 
  function closeNotifModal() {
@@ -5947,8 +6018,8 @@ function checkUserPlusStatus() {
     body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit, pinned })
  });
  const json = await res.json();
- if (json.ok) {
- return json.data;
+  completeNewbieTask('create_post');
+  return json.data;
  }
  if (json.needCaptcha) {
  // 发帖频率过高 → 弹出验证码弹窗
@@ -5968,7 +6039,6 @@ function checkUserPlusStatus() {
   resolve(null);
   });
  });
- }
   if (json.warning) {
   // 有敏感词 → 弹窗让用户选择
   return new Promise((resolve) => {
@@ -6117,14 +6187,12 @@ async function showPostCaptchaModal() {
  try {
  const res = await fetch(API + '/api/posts/' + id + '/like', { method: 'POST' });
  const json = await res.json();
- if (json.ok) return json.data;
- } catch (e) {
+    completeNewbieTask('like_post');
+    return json.data;
  console.error('点赞失败:', e);
  }
  return null;
  }
-
- // ===== 墙面排布算法 =====
  class WallPacker {
  constructor(width) {
  this.width = width;
@@ -6410,6 +6478,7 @@ function _doRenderNotes(filter = '全部') {
  post.comments = (post.comments || 0) + 1;
  post.commentsCount = (post.commentsCount || 0) + 1;
  }
+  completeNewbieTask('comment_post');
  renderNotes(currentFilter);
  } else {
  showToast(json.msg || '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 评论失败');
@@ -7738,10 +7807,9 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-user-token': token },
       body: JSON.stringify({ receiverId: _whisperSelectedUserId, content: content })
-    })
     .then(function(r) { return r.json(); })
     .then(function(j) {
-      if (j.ok) { closeWhisperModal(); showToast('悄悄话已发送'); }
+      if (j.ok) { completeNewbieTask('send_whisper'); closeWhisperModal(); showToast('悄悄话已发送'); }
       else if (j.code === 'SENSITIVE_WORDS' || j.code === 'BULLYING_NAME') {
         alert(j.warningMsg || j.msg);
       } else { closeWhisperModal(); showToast(j.msg || '发送失败'); }
@@ -7874,6 +7942,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  overlay.style.animation = 'none';
  void overlay.offsetHeight;
  overlay.style.animation = 'qaOverlayIn 0.3s ease';
+  completeNewbieTask('view_auction');
  switchPickupTab('bid');
  loadPickupSlots();
  }
@@ -8425,6 +8494,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  overlay.style.animation = 'none';
  void overlay.offsetHeight; // 强制回流以重置动画
  overlay.style.animation = 'qaOverlayIn 0.3s ease';
+  completeNewbieTask('view_qa');
  switchQATab('list');
  }
   function closeQAModal() {
@@ -9417,6 +9487,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  input.value = '';
  replyToId = null;
  showToast('发送成功');
+  completeNewbieTask('join_discussion');
  await loadDiscussionComments(currentDiscussionId);
  await loadDiscussions();
  return;
@@ -9717,10 +9788,10 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
           d.uids.forEach(function(u) { html += renderSearchItem(u, u.id, 'UID'); });
         }
         if (d.names.length) {
-          html += '<div class="search-category">匹配姓名</div>';
           d.names.forEach(function(u) { html += renderSearchItem(u, u.nickname, '姓名'); });
         }
         resultsEl.innerHTML = html;
+        completeNewbieTask('do_search');
       })
       .catch(function() {
         resultsEl.innerHTML = '<div class="search-no-results">网络错误，请重试</div>';
@@ -10128,7 +10199,176 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
       });
     }
   });
+
+// ===== 新手任务系统 =====
+const NEWBIE_TASKS = [
+  { id: 'visit_own_profile', name: '访问用户主页', reward: 20, type: 'self_profile' },
+  { id: 'mbti_test', name: '进行MBTI测评', reward: 30, type: 'mbti' },
+  { id: 'view_notifications', name: '查看通知', reward: 15, type: 'notifications' },
+  { id: 'create_post', name: '发帖', reward: 30, type: 'post' },
+  { id: 'like_post', name: '点赞别人的帖子', reward: 15, type: 'like' },
+  { id: 'comment_post', name: '评论别人帖子', reward: 20, type: 'comment' },
+  { id: 'join_discussion', name: '参与一次话题讨论', reward: 25, type: 'discussion' },
+  { id: 'view_qa', name: '查看你问我答窗口', reward: 15, type: 'qa' },
+  { id: 'view_auction', name: '查看校园墙拍卖窗口', reward: 15, type: 'auction' },
+  { id: 'cast_vote', name: '完成一次投票', reward: 25, type: 'vote' },
+  { id: 'send_whisper', name: '发送一次悄悄话', reward: 20, type: 'whisper' },
+  { id: 'do_search', name: '完成一次搜索', reward: 15, type: 'search' },
+  { id: 'visit_other_profile', name: '查看一次别人的用户主页', reward: 20, type: 'other_profile' },
+];
+
+const STAGE_REWARDS = [
+  { stage: 1, threshold: 3, name: '初识校园', reward: { type: 'credit', amount: 50, desc: '50 Credit' } },
+  { stage: 2, threshold: 7, name: '渐入佳境', reward: { type: 'credit', amount: 100, desc: '100 Credit' } },
+  { stage: 3, threshold: 10, name: '探索达人', reward: { type: 'credit', amount: 150, desc: '150 Credit' } },
+  { stage: 4, threshold: 13, name: '校园达人', reward: { type: 'plus', days: 3, desc: '3天PLUS++资格' } },
+];
+
+async function completeNewbieTask(taskId) {
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/user/newbie-task/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ taskId })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      if (!currentUser.newbieTasks) currentUser.newbieTasks = {};
+      currentUser.newbieTasks[taskId] = true;
+      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+      showToast('任务完成！获得 ' + json.data.reward + ' Credit', 'success');
+      if (document.getElementById('newbieTaskOverlay').classList.contains('show')) {
+        renderNewbieTaskPanel();
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+async function openNewbieTask() {
+  const overlay = document.getElementById('newbieTaskOverlay');
+  overlay.style.display = 'flex';
+  overlay.classList.add('show');
+  await renderNewbieTaskPanel();
+}
+
+function closeNewbieTask(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('newbieTaskOverlay').classList.remove('show');
+  setTimeout(() => {
+    document.getElementById('newbieTaskOverlay').style.display = 'none';
+  }, 300);
+}
+
+async function renderNewbieTaskPanel() {
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  
+  const res = await fetch('/api/user/newbie-task/progress', {
+    headers: { 'x-user-token': token }
+  });
+  const json = await res.json();
+  if (!json.ok) return;
+  
+  const data = json.data;
+  const body = document.getElementById('newbieTaskBody');
+  
+  const total = data.totalTasks;
+  const completed = data.completedTasks;
+  const percent = Math.round((completed / total) * 100);
+  
+  let html = '<div class="newbie-overall-progress">';
+  html += '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6c757d;">';
+  html += '<span>总进度</span><span>' + completed + '/' + total + ' (' + percent + '%)</span></div>';
+  html += '<div class="newbie-progress-bar"><div class="newbie-progress-fill" style="width:' + percent + '%"></div></div>';
+  html += '<div class="newbie-stage-markers">';
+  
+  STAGE_REWARDS.forEach((stage, idx) => {
+    const claimed = data.stageRewardsClaimed.includes(idx + 1);
+    const canClaim = completed >= stage.threshold && !claimed;
+    const cssClass = claimed ? 'claimed' : (canClaim ? 'claimable' : '');
+    const icon = claimed ? '✓' : (canClaim ? '🎁' : '🔒');
+    html += '<div class="newbie-stage-marker ' + cssClass + '" ' +
+            (canClaim ? 'onclick="claimStageReward(' + (idx + 1) + ')"' : '') +
+            ' title="' + stage.reward.desc + '">' +
+            '<div>' + icon + '</div><div>' + stage.name + '</div>' +
+            '<div style="font-size:9px;">' + stage.threshold + '个</div></div>';
+  });
+  
+  html += '</div></div>';
+  
+  const TASK_ICONS = {
+    visit_own_profile: '🏠', mbti_test: '🧠', view_notifications: '🔔',
+    create_post: '✏️', like_post: '❤️', comment_post: '💬',
+    join_discussion: '🗣️', view_qa: '❓', view_auction: '🔨',
+    cast_vote: '🗳️', send_whisper: '💌', do_search: '🔍',
+    visit_other_profile: '👀'
+  };
+  
+  NEWBIE_TASKS.forEach(function(task) {
+    const isCompleted = data.tasks[task.id];
+    html += '<div class="newbie-task-item ' + (isCompleted ? 'completed' : '') + '">' +
+            '<div class="task-icon">' + (TASK_ICONS[task.id] || '📌') + '</div>' +
+            '<div class="task-info"><div class="task-name">' + task.name + '</div>' +
+            '<div class="task-reward">+' + task.reward + ' Credit</div></div>' +
+            '<div class="task-status">' + (isCompleted ? '✓' : '') + '</div></div>';
+  });
+  
+  body.innerHTML = html;
+}
+
+async function claimStageReward(stage) {
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  
+  const res = await fetch('/api/user/newbie-task/claim-stage-reward', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+    body: JSON.stringify({ stage: stage })
+  });
+  const json = await res.json();
+  if (json.ok) {
+    showToast('奖励已领取：' + json.data.reward.desc, 'success');
+    await renderNewbieTaskPanel();
+  } else {
+    showToast(json.msg || '领取失败', 'error');
+  }
+}
+
+async function checkAndShowNewbieTask() {
+  if (!currentUser) return;
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  
+  try {
+    const res = await fetch('/api/user/newbie-task/progress', {
+      headers: { 'x-user-token': token }
+    });
+    const json = await res.json();
+    if (!json.ok) return;
+    if (json.data.completed) return;
+    openNewbieTask();
+  } catch(e) { /* silent */ }
+}
+
 </script>
+
+<!-- ===== 新手任务面板 ===== -->
+<div class="modal-overlay" id="newbieTaskOverlay" onclick="closeNewbieTask(event)" style="display:none">
+  <div class="newbie-task-panel" onclick="event.stopPropagation()">
+    <div class="newbie-task-header">
+      <h3>新手任务</h3>
+      <p>完成任务，赢取丰厚奖励！</p>
+    </div>
+    <div class="newbie-task-body" id="newbieTaskBody">
+      <!-- 动态渲染 -->
+    </div>
+    <div style="padding: 12px 20px; border-top: 1px solid #eee; text-align: center;">
+      <button onclick="closeNewbieTask()" style="padding: 8px 24px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">稍后再看</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

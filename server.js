@@ -177,6 +177,7 @@ require('./routes/subscription')(app);
 require('./routes/task-center')(app);
 require('./routes/maintenance')(app);
 require('./routes/visits')(app);
+require('./routes/newbie-task')(app);
 require('./routes/system')(app, { sseClients, cachedGitSha, cachedCommitMsg });
 
 // ===== 启动 =====

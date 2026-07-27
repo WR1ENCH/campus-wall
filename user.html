@@ -1910,6 +1910,23 @@
 
   <script src="mbti-questions.js"></script>
   <script>
+// ===== 新手任务系统 =====
+async function completeNewbieTask(taskId) {
+  const token = localStorage.getItem('campus_user_token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/user/newbie-task/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ taskId })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      showToast('任务完成！获得 ' + json.data.reward + ' Credit');
+    }
+  } catch(e) { /* silent */ }
+}
+
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
     if (!userId) {
@@ -2200,14 +2217,13 @@
         var chosen = type.charAt(i);
         html += '<div class="mbti-dim-bar"><span class="dim-letter">' + (chosen === parts[0] ? '<b>' + parts[0] + '</b>' : parts[0]) + ' ' + a + '</span><span class="dim-count">|</span><span class="dim-letter">' + (chosen === parts[1] ? '<b>' + parts[1] + '</b>' : parts[1]) + ' ' + b + '</span></div>';
       }
-      document.getElementById('mbtiResultDims').innerHTML = html;
       document.getElementById('mbtiResultOverlay').classList.add('show');
       var token = localStorage.getItem('campus_user_token');
       if (token) {
         fetch('/api/user/me', { method: 'PATCH', headers: { 'x-user-token': token, 'Content-Type': 'application/json' }, body: JSON.stringify({ mbti: type }) })
           .then(function(r){ return r.json(); })
           .then(function(j){
-            if (j.ok) {
+              completeNewbieTask('mbti_test');
               updateMbtiBadge(type);
               var btn = document.getElementById('mbtiBtn');
               if (btn) btn.style.display = 'none';
@@ -3202,7 +3218,6 @@
         renderUser(user);
         calculateStats(posts);
         if (!currentLoggedInUser || currentLoggedInUser.id !== userId) {
-          renderCertSection(user);
         }
       }
       if (posts) {
@@ -3217,8 +3232,16 @@
         fetch('/api/user/profile-visit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-user-token': visitToken },
+
           body: JSON.stringify({ visitedUserId: userId })
         }).catch(function(){}); // 静默失败，不影响页面渲染
+      }
+
+      // 新手任务：访问主页
+      if (currentLoggedInUser && currentLoggedInUser.id === userId) {
+        completeNewbieTask('visit_own_profile');
+      } else if (currentLoggedInUser) {
+        completeNewbieTask('visit_other_profile');
       }
       // 从通知跳转自动打开访客弹窗
       var urlParams = new URLSearchParams(window.location.search);

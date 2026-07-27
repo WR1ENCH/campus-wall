@@ -141,9 +141,10 @@ module.exports = function(app) {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
-    votes.push({ id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    const newVote1 = { id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false };
+    votes.push(newVote1);
     writeVotes(votes);
-    res.json({ ok: true });
+    res.json({ ok: true, data: newVote1 });
   });
   app.post('/api/notice/votes', (req, res) => {
     const session = _resolveAdminOrSC(req);
@@ -151,17 +152,19 @@ module.exports = function(app) {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2 || options.length > 20) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
-    votes.push({ id: uniqueId.generateId('VOTE'), userId: session.id, author: '', avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    const newVote2 = { id: uniqueId.generateId('VOTE'), userId: session.id, author: '', avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false };
+    votes.push(newVote2);
     writeVotes(votes);
-    res.json({ ok: true });
+    res.json({ ok: true, data: newVote2 });
   });
   app.post('/api/admin/votes', requireAdmin, (req, res) => {
     const { title, options, multiple, allowCustom, endTime } = req.body;
     if (!title || !options || !Array.isArray(options) || options.length < 2) return res.json({ ok: false, msg: '请填写完整信息' });
     const votes = readVotes();
-    votes.push({ id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false });
+    const newVote3 = { id: uniqueId.generateId('VOTE'), userId: req.admin.id, author: req.admin.name, avatar: '', title: title.trim(), options: options.map((o, i) => ({ id: 'opt_' + i + '_' + Math.random().toString(36).slice(2, 6), text: typeof o === 'string' ? o.trim() : (o.text || '').trim(), image: typeof o === 'string' ? null : (o.image || null), votes: 0 })), multiple: !!multiple, allowCustom: !!allowCustom, endTime: endTime || null, createdAt: new Date().toISOString(), deleted: false };
+    votes.push(newVote3);
     writeVotes(votes);
-    res.json({ ok: true });
+    res.json({ ok: true, data: newVote3 });
   });
   app.post('/api/votes/:id/vote', requireOrigin, (req, res) => {
     // 支持匿名投票：有 token 走登录用户流程，无 token 走 IP 去重流程
