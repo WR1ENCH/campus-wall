@@ -72,6 +72,14 @@ module.exports = function(app) {
     res.json(result);
   });
 
+  app.post('/api/user/daily-tasks/progress', authMiddleware, (req, res) => {
+    const { type } = req.body;
+    if (!type) return res.json({ ok: false, msg: '缺少任务类型' });
+    updateTaskProgress(req.userId, type);
+    const result = getDailyTasks(req.userId);
+    res.json(result);
+  });
+
   app.post('/api/user/daily-tasks/:id/claim', authMiddleware, (req, res) => {
     const result = claimTaskReward(req.userId, req.params.id);
     if (result.ok) checkAndUnlockAchievements(req.userId);

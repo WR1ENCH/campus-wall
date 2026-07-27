@@ -5112,6 +5112,15 @@ function openNotifModal() {
  var overlay = document.getElementById('notifOverlay');
  overlay.style.display = 'flex';
  loadNotifications();
+ // 更新「查看通知」任务进度
+ var token = localStorage.getItem('campus_user_token');
+ if (token) {
+ fetch('/api/user/daily-tasks/progress', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+ body: JSON.stringify({ type: 'notification' })
+ });
+ }
  }
 
  function closeNotifModal() {
