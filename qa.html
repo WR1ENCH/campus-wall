@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>问答回答 · 校园墙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-50: #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-300: #93c5fd;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-800: #1e40af;
+      --blue-900: #1e3a5f;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --green-50: #f0fdf4;
+      --green-500: #22c55e;
+      --red-50: #fef2f2;
+      --red-500: #ef4444;
+      --gold-50: #fffbeb;
+      --gold-100: #fef3c7;
+      --gold-500: #f59e0b;
+      --gold-600: #d97706;
+      --gold-700: #b45309;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04);
+      --radius: 16px;
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--blue-50) 0%, #fff 40%, var(--blue-50) 100%);
+      color: var(--gray-700);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Top Bar ===== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px) saturate(1.3);
+      -webkit-backdrop-filter: blur(16px) saturate(1.3);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+    .back-btn:hover {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      transform: translateX(-1px);
+    }
+    .back-btn:active { transform: scale(0.97); }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .topbar-logo:hover { opacity: 0.8; }
+    .topbar-logo svg { color: var(--blue-600); }
+    .topbar-logo span {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--blue-900);
+    }
+
+    .answer-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+    }
+
+    /* ===== Main Container ===== */
+    .main {
+      max-width: 600px;
+      margin: 32px auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ===== Question Card ===== */
+    .qa-header {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px 24px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+      animation: dropIn 0.5s var(--ease-spring) both;
+    }
+
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .qa-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.open {
+      background: var(--green-500);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .status-dot.accepted { background: var(--blue-500); }
+    .status-dot.expired { background: var(--gray-300); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.1); }
+    }
+
+    .status-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-label.open { color: var(--green-500); }
+    .status-label.accepted { color: var(--blue-600); }
+    .status-label.expired { color: var(--gray-400); }
+
+    .pinned-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--blue-50);
+      color: var(--blue-600);
+      border: 1px solid var(--blue-200);
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--gold-50);
+      color: var(--gold-600);
+      border: 1px solid var(--gold-100);
+    }
+
+    .qa-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--blue-900);
+      line-height: 1.4;
+      margin-bottom: 12px;
+      word-break: break-word;
+    }
+
+    .qa-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 16px;
+    }
+    .qa-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .qa-meta-item svg {
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .qa-content {
+      font-size: 14px;
+      color: var(--gray-600);
+      word-break: break-word;
+      white-space: pre-wrap;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .qa-images {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .qa-images img {
+      height: 120px;
+      border-radius: 10px;
+      cursor: pointer;
+      object-fit: cover;
+      transition: transform 0.2s var(--ease-smooth);
+    }
+    .qa-images img:hover { transform: scale(1.03); }
+
+    .qa-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .bounty-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--gold-100);
+      color: var(--gold-700);
+    }
+    .deadline-text {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    .qa-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      color: var(--gray-500);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+    .action-btn:hover {
+      border-color: var(--blue-300);
+      color: var(--blue-600);
+      background: var(--blue-50);
+    }
+    .action-btn.danger {
+      color: var(--red-500);
+      border-color: #fecaca;
+    }
+    .action-btn.danger:hover {
+      background: var(--red-50);
+      border-color: var(--red-500);
+    }
+
+    /* ===== Section Title ===== */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue-900);
+      margin-bottom: 16px;
+    }
+    .section-title svg { opacity: 0.6; }
+
+    /* ===== Answer Cards ===== */
+    .answer-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--gray-200);
+      animation: optionIn 0.4s var(--ease-spring) both;
+    }
+    .answer-card.accepted {
+      border-color: rgba(34,197,94,0.3);
+      background: linear-gradient(135deg, #f0fdf4, white);
+    }
+    .answer-card:nth-child(1) { animation-delay: 0.05s; }
+    .answer-card:nth-child(2) { animation-delay: 0.1s; }
+    .answer-card:nth-child(3) { animation-delay: 0.15s; }
+    .answer-card:nth-child(4) { animation-delay: 0.2s; }
+    .answer-card:nth-child(5) { animation-delay: 0.25s; }
+    .answer-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+    @keyframes optionIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .accepted-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--green-50);
+      color: var(--green-500);
+      margin-bottom: 10px;
+    }
+    .reward-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--gold-50);
+      color: var(--gold-600);
+      margin-bottom: 10px;
+    }
+
+    .answer-author {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .answer-avatar {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .answer-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .answer-meta {
+      font-size: 12px;
+      color: var(--gray-500);
+      font-weight: 500;
+    }
+    .answer-meta .time { color: var(--gray-400); font-weight: 400; }
+    .answer-meta .id { font-size: 10px; color: var(--gray-300); font-family: monospace; }
+
+    .answer-content {
+      font-size: 14px;
+      color: var(--gray-700);
+      word-break: break-word;
+      white-space: pre-wrap;
+      margin-top: 6px;
+      line-height: 1.7;
+    }
+
+    .answer-images {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .answer-images img {
+      height: 80px;
+      border-radius: 8px;
+      cursor: pointer;
+      object-fit: cover;
+      transition: transform 0.2s var(--ease-smooth);
+    }
+    .answer-images img:hover { transform: scale(1.03); }
+
+    .answer-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: none;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+      background: var(--gray-100);
+      color: var(--gray-500);
+    }
+    .like-btn.liked {
+      background: var(--gold-100);
+      color: var(--gold-700);
+    }
+    .like-btn:hover { transform: scale(1.05); }
+
+    .accept-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: none;
+      background: var(--blue-50);
+      color: var(--blue-700);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+    .accept-btn:hover { background: var(--blue-100); }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--gray-400);
+      font-size: 14px;
+    }
+
+    /* ===== Answer Form ===== */
+    .answer-form {
+      background: var(--green-50);
+      border: 1.5px solid rgba(34,197,94,0.2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .answer-form-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2a6846;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .answer-form textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(34,197,94,0.2);
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+      outline: none;
+      resize: vertical;
+      color: var(--gray-700);
+      transition: border-color 0.2s;
+    }
+    .answer-form textarea:focus { border-color: var(--green-500); }
+    .answer-form .char-count {
+      text-align: right;
+      font-size: 11px;
+      color: var(--gray-400);
+      margin: 4px 0 8px;
+    }
+
+    .img-upload-area {
+      margin-bottom: 12px;
+    }
+    .img-upload-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2a6846;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .img-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .img-thumb {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .img-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .img-del {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .img-add {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      border: 1.5px dashed var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--gray-400);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .img-add:hover { border-color: var(--green-500); color: var(--green-500); }
+
+    .submit-btn {
+      padding: 10px 24px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--green-500), #16a34a);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-smooth);
+      box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+    }
+    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34,197,94,0.4); }
+    .submit-btn:active { transform: scale(0.98); }
+
+    .answer-form-actions {
+      text-align: right;
+    }
+
+    /* ===== Reward Section ===== */
+    .reward-section {
+      background: linear-gradient(135deg, var(--gold-50), #fffdf5);
+      border: 1.5px solid var(--gold-100);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .reward-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold-700);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .reward-info {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--gold-600);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .reward-info span { font-weight: 600; }
+
+    .reward-answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(217,119,6,0.1);
+    }
+    .reward-answer-row:last-child { border-bottom: none; }
+    .reward-answer-avatar { font-size: 22px; flex-shrink: 0; }
+    .reward-answer-info { flex: 1; min-width: 0; }
+    .reward-answer-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+    .reward-answer-name .already { color: var(--green-500); font-size: 11px; font-weight: 400; }
+    .reward-answer-preview {
+      font-size: 12px;
+      color: var(--gray-400);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 260px;
+    }
+    .reward-input {
+      width: 72px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1.5px solid var(--gold-100);
+      font-size: 13px;
+      text-align: center;
+      outline: none;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .reward-input:focus { border-color: var(--gold-500); }
+
+    .reward-submit-btn {
+      padding: 10px 24px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-600));
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-smooth);
+      box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+    }
+    .reward-submit-btn:hover { transform: translateY(-1px); }
+    .reward-submit-btn:active { transform: scale(0.98); }
+
+    .reward-actions {
+      text-align: right;
+      margin-top: 16px;
+    }
+
+    /* ===== Report Modal ===== */
+    .report-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .report-overlay.show { display: flex; }
+    .report-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-lg);
+      animation: dropIn 0.3s var(--ease-spring);
+    }
+    .report-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+    .report-hint {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+    .report-select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      outline: none;
+      font-family: inherit;
+      color: var(--gray-700);
+      background: white;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .report-select:focus { border-color: var(--blue-400); }
+    .report-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      color: var(--gray-700);
+      background: white;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .report-textarea:focus { border-color: var(--blue-400); }
+    .report-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .report-cancel-btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      color: var(--gray-500);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .report-cancel-btn:hover { background: var(--gray-50); }
+    .report-submit-btn {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      background: var(--red-500);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .report-submit-btn:hover { opacity: 0.9; }
+
+    /* ===== Image Preview ===== */
+    .img-preview-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 300;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+    .img-preview-overlay.show { display: flex; }
+    .img-preview-overlay img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    /* ===== Loading ===== */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 20px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--blue-100);
+      border-top-color: var(--blue-500);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 14px;
+      color: var(--gray-400);
+    }
+
+    /* ===== Error State ===== */
+    .error-wrap {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .error-icon { opacity: 0.5; margin-bottom: 16px; display: flex; justify-content: center; }
+    .error-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+    .error-desc {
+      font-size: 14px;
+      color: var(--gray-400);
+      margin-bottom: 24px;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      animation: toastIn 0.3s var(--ease-spring);
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+    }
+    .toast.success { background: rgba(34,197,94,0.95); color: white; }
+    .toast.error { background: rgba(239,68,68,0.95); color: white; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 600px) {
+      .main { margin: 20px auto; padding: 0 16px 60px; }
+      .qa-header { padding: 22px 18px 20px; margin-bottom: 16px; }
+      .qa-title { font-size: 19px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      返回
+    </button>
+    <div class="topbar-logo" onclick="location.href='index.html'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>校园墙</span>
+    </div>
+    <div class="answer-count-badge" id="answerCountBadge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span id="answerCountLabel">--</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <span class="loading-text">加载问答回答中...</span>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div class="report-overlay" id="reportOverlay" onclick="if(event.target===this)closeReport()">
+    <div class="report-box">
+      <div class="report-title" id="reportTitle"></div>
+      <div class="report-hint" id="reportHint"></div>
+      <select class="report-select" id="reportReasonSelect" onchange="_reportReason=this.value;document.getElementById('reportOtherArea').style.display=this.value==='其他'?'block':'none';">
+        <option value="垃圾信息">垃圾信息 / 广告</option>
+        <option value="不当内容">不当内容 / 违规</option>
+        <option value="侮辱欺凌">侮辱 / 欺凌 / 人身攻击</option>
+        <option value="虚假信息">虚假信息 / 谣言</option>
+        <option value="其他">其他（请填写具体原因）</option>
+      </select>
+      <div id="reportOtherArea" style="display:none;margin-bottom:12px;">
+        <textarea class="report-textarea" id="reportOtherInput" placeholder="请详细描述举报原因..." oninput="_reportOtherText=this.value"></textarea>
+      </div>
+      <div class="report-btns">
+        <button class="report-cancel-btn" onclick="closeReport()">取消</button>
+        <button class="report-submit-btn" onclick="doSubmitReport()">提交举报</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Preview -->
+  <div class="img-preview-overlay" id="imgPreviewOverlay" onclick="this.classList.remove('show')">
+    <img id="imgPreviewSrc" src="">
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toastEl" style="display:none;"></div>
+
+<script>
+// ===== Utilities =====
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function showToast(msg, type) {
+  var el = document.getElementById('toastEl');
+  el.innerHTML = msg;
+  el.className = 'toast ' + (type || 'success');
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(function() { el.style.display = 'none'; }, 2500);
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function formatTimeAgo(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  var now = new Date();
+  var diff = (now - d) / 1000;
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+  if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+  return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatQAId(id) {
+  return '<span style="font-size:10px;color:#bbb;font-family:monospace;">' + escapeHtml(id) + '</span>';
+}
+
+// ===== State =====
+var token = localStorage.getItem('campus_user_token');
+var userId = null;
+var currentUser = null;
+var currentQuestion = null;
+var _reportType = '';
+var _reportTargetId = '';
+var _reportReason = '垃圾信息';
+var _reportOtherText = '';
+var qaImages = [];
+
+// Parse user from token
+try {
+  if (token) {
+    var parts = token.split('.');
+    if (parts.length === 2) {
+      var payload = JSON.parse(atob(parts[0]));
+      userId = payload.id || payload.uid;
+      currentUser = {
+        id: userId,
+        token: token,
+        nickname: payload.nickname || '',
+        avatar: payload.avatar || '',
+        isPlus: payload.isPlus || false,
+        credit: payload.credit || 0
+      };
+    }
+  }
+} catch(e) {}
+
+// ===== Navigation =====
+function getQuestionId() {
+  return new URLSearchParams(window.location.search).get('id');
+}
+
+function goBack() {
+  if (window.history.length > 1) { window.history.back(); }
+  else { window.location.href = 'index.html'; }
+}
+
+// ===== Data Fetching =====
+async function loadQuestion() {
+  var qid = getQuestionId();
+  if (!qid) {
+    showError('缺少参数', '未指定问题 ID');
+    return;
+  }
+  try {
+    var headers = {};
+    if (token) headers['x-user-token'] = token;
+    var res = await fetch('/api/qa/questions/' + qid, { headers: headers });
+    var json = await res.json();
+    if (!json.ok) {
+      showError('加载失败', json.msg || '该问题不存在或已被删除');
+      return;
+    }
+    currentQuestion = json.data;
+    renderPage();
+  } catch(e) {
+    showError('网络错误', '请检查网络连接后重试');
+  }
+}
+
+function showError(title, desc) {
+  document.getElementById('mainContent').innerHTML =
+    '<div class="error-wrap">' +
+      '<div class="error-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>' +
+      '<div class="error-title">' + escapeHtml(title) + '</div>' +
+      '<div class="error-desc">' + escapeHtml(desc) + '</div>' +
+      '<button class="action-btn" onclick="goBack()">← 返回</button>' +
+    '</div>';
+}
+
+// ===== Rendering =====
+function renderPage() {
+  var q = currentQuestion;
+  var isOwner = currentUser && currentUser.id === q.userId;
+
+  // Update topbar badge
+  document.getElementById('answerCountLabel').textContent = (q.answers ? q.answers.length : 0) + ' 条回答';
+  document.title = escapeHtml(q.title) + ' · 问答回答';
+
+  var statusMap = {
+    open: { label: '进行中', cls: 'open' },
+    accepted: { label: '已采纳', cls: 'accepted' },
+    expired: { label: '已到期', cls: 'expired' }
+  };
+  var st = statusMap[q.status] || statusMap.open;
+
+  var html = '';
+
+  // ===== Question Card =====
+  html += '<div class="qa-header">';
+
+  // Status row
+  html += '<div class="qa-status-row">';
+  html += '<span class="status-dot ' + st.cls + '"></span>';
+  html += '<span class="status-label ' + st.cls + '">' + st.label + '</span>';
+  if (q.pinned) {
+    html += '<span class="pinned-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 置顶</span>';
+  }
+  html += '</div>';
+
+  // Title
+  html += '<div class="qa-title">' + escapeHtml(q.title) + '</div>';
+
+  // Meta row
+  html += '<div class="qa-meta">';
+  html += '<span class="qa-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escapeHtml(q.author) + '</span>';
+  html += '<span class="qa-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ' + formatDate(q.createdAt) + '</span>';
+  html += '<span class="qa-meta-item">' + formatQAId(q.id) + '</span>';
+  html += '</div>';
+
+  // Content
+  if (q.content) {
+    html += '<div class="qa-content">' + escapeHtml(q.content) + '</div>';
+  }
+
+  // Images
+  if (q.images && q.images.length) {
+    html += '<div class="qa-images">';
+    q.images.forEach(function(img) {
+      html += '<img src="' + escapeHtml(img) + '" onclick="showImagePreview(\'' + escapeHtml(img) + '\')">';
+    });
+    html += '</div>';
+  }
+
+  // Badges row
+  html += '<div class="qa-badges">';
+  if (q.bounty > 0) {
+    html += '<span class="bounty-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> 悬赏 ' + q.bounty + ' Credits</span>';
+  }
+  if (q.deadline) {
+    html += '<span class="deadline-text">⏰ 截止 ' + formatDate(q.deadline) + '</span>';
+  }
+  html += '</div>';
+
+  // Actions row
+  html += '<div class="qa-actions">';
+  if (currentUser) {
+    html += '<button class="action-btn" onclick="openReport(\'qa_question\',\'' + q.id + '\',\'问答问题\',\'' + escapeHtml(q.author).replace(/'/g,"\\'") + '\')">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> 举报</button>';
+  }
+  if (isOwner) {
+    html += '<button class="action-btn danger" onclick="deleteQuestion()">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> 删除</button>';
+  }
+  html += '</div>';
+
+  html += '</div>'; // end qa-header
+
+  // ===== Answers Section =====
+  var answers = q.answers || [];
+  html += '<div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ' + answers.length + ' 条回答</div>';
+
+  if (answers.length) {
+    answers.forEach(function(a) { html += renderAnswer(a); });
+  } else {
+    html += '<div class="empty-state">暂无回答，快来抢答吧！ 💬</div>';
+  }
+
+  // ===== Answer Form =====
+  var alreadyAnswered = currentUser && answers.find(function(a) { return a.userId === currentUser.id; });
+  if (currentUser && q.status === 'open' && !isOwner && !alreadyAnswered) {
+    html += '<div class="answer-form">';
+    html += '<div class="answer-form-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 写下你的回答</div>';
+    html += '<textarea id="answerInput" rows="4" maxlength="2000" placeholder="分享你的回答..." oninput="document.getElementById(\'answerCharCount\').textContent=this.value.length"></textarea>';
+    html += '<div class="char-count"><span id="answerCharCount">0</span>/2000</div>';
+    html += '<div class="img-upload-area">';
+    html += '<div class="img-upload-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 附图（最多3张）</div>';
+    html += '<div class="img-list" id="answerImgList"><label class="img-add" for="answerImgInput">+</label></div>';
+    html += '<input id="answerImgInput" type="file" accept="image/*" style="display:none;" onchange="addImage(this)">';
+    html += '</div>';
+    html += '<div class="answer-form-actions"><button class="submit-btn" onclick="submitAnswer()">提交回答</button></div>';
+    html += '</div>';
+  }
+
+  // ===== Reward Section (Owner Only) =====
+  if (isOwner && q.bounty > 0 && (q.remainingBounty || 0) > 0 && answers.length) {
+    html += renderRewardSection(q, answers);
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function renderAnswer(a) {
+  var isOwner = currentUser && currentQuestion && currentUser.id === currentQuestion.userId;
+  var isMe = currentUser && currentUser.id === a.userId;
+  var liked = currentUser && a.likedBy && a.likedBy.indexOf(currentUser.id) !== -1;
+
+  var html = '<div class="answer-card' + (a.accepted ? ' accepted' : '') + '" id="ans-' + a.id + '">';
+
+  // Accepted / reward badge
+  if (a.accepted) {
+    html += '<div class="accepted-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 已采纳</div>';
+  } else if ((a.reward || 0) > 0) {
+    html += '<div class="reward-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> 已获得 ' + a.reward + ' Credits</div>';
+  }
+
+  // Author row
+  html += '<div class="answer-author">';
+  html += '<span class="answer-avatar">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
+  html += '<div class="answer-info">';
+  html += '<div class="answer-meta">' + escapeHtml(a.author) + ' · <span class="time">' + formatTimeAgo(a.createdAt) + '</span> <span class="id">' + a.id + '</span></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Content
+  html += '<div class="answer-content">' + escapeHtml(a.content) + '</div>';
+
+  // Images
+  if (a.images && a.images.length) {
+    html += '<div class="answer-images">';
+    a.images.forEach(function(img) {
+      html += '<img src="' + escapeHtml(img) + '" onclick="showImagePreview(\'' + escapeHtml(img) + '\')">';
+    });
+    html += '</div>';
+  }
+
+  // Actions
+  html += '<div class="answer-actions">';
+
+  if (currentUser && !isMe) {
+    html += '<button class="like-btn' + (liked ? ' liked' : '') + '" id="like-btn-' + a.id + '" onclick="likeAnswer(\'' + a.id + '\')">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (liked ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    html += ' <span id="like-count-' + a.id + '">' + (a.likes || 0) + '</span></button>';
+  } else if (!currentUser || isMe) {
+    html += '<span class="like-btn" style="cursor:default;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> ' + (a.likes || 0) + '</span>';
+  }
+
+  if (currentUser && !isMe) {
+    html += '<button class="action-btn" onclick="openReport(\'qa_answer\',\'' + a.id + '\',\'问答回答\',\'' + escapeHtml(a.author).replace(/'/g,"\\'") + '\')">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></button>';
+  }
+
+  if (isOwner && currentQuestion.status === 'open' && !a.accepted) {
+    html += '<button class="accept-btn" onclick="acceptAnswer(\'' + a.id + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 采纳此答案</button>';
+  }
+
+  if (isMe) {
+    html += '<button class="action-btn danger" style="margin-left:auto;" onclick="deleteAnswer(\'' + a.id + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+  }
+
+  html += '</div>'; // answer-actions
+  html += '</div>'; // answer-card
+  return html;
+}
+
+function renderRewardSection(q, answers) {
+  var remaining = q.remainingBounty || 0;
+  var html = '<div class="reward-section">';
+  html += '<div class="reward-section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/></svg> 悬赏发放</div>';
+  html += '<div class="reward-info">总悬赏 <span>' + q.bounty + '</span> · 剩余 <span id="rewardRemain">' + remaining + '</span></div>';
+
+  answers.forEach(function(a, i) {
+    var got = a.reward || 0;
+    html += '<div class="reward-answer-row">';
+    html += '<span class="reward-answer-avatar">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
+    html += '<div class="reward-answer-info">';
+    html += '<div class="reward-answer-name">' + escapeHtml(a.author) + (got > 0 ? ' <span class="already">(已获 ' + got + ')</span>' : '') + '</div>';
+    html += '<div class="reward-answer-preview">' + escapeHtml((a.content || '').slice(0, 60)) + '</div>';
+    html += '</div>';
+    html += '<input class="reward-input" id="rewardInput' + i + '" type="number" min="0" max="' + remaining + '" value="0" step="1" oninput="updateRewardTotal()">';
+    html += '</div>';
+  });
+
+  html += '<div class="reward-actions"><button class="reward-submit-btn" onclick="submitReward()">发放奖励</button></div>';
+  html += '</div>';
+  return html;
+}
+
+// ===== CRUD Operations =====
+async function submitAnswer() {
+  var content = document.getElementById('answerInput').value.trim();
+  if (!content || content.length < 2) { showToast('⚠️ 回答至少2个字', 'error'); return; }
+  try {
+    var res = await fetch('/api/qa/questions/' + currentQuestion.id + '/answers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ content: content, images: qaImages })
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 回答已提交！');
+      qaImages = [];
+      loadQuestion();
+    } else {
+      showToast('⚠️ ' + (json.msg || '提交失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+async function likeAnswer(aid) {
+  if (!currentUser) { showToast('⚠️ 请先登录', 'error'); return; }
+  try {
+    var res = await fetch('/api/qa/answers/' + aid + '/like', {
+      method: 'POST',
+      headers: { 'x-user-token': token }
+    });
+    var json = await res.json();
+    if (json.ok) {
+      var btn = document.getElementById('like-btn-' + aid);
+      var cnt = document.getElementById('like-count-' + aid);
+      if (btn) {
+        btn.className = 'like-btn' + (json.liked ? ' liked' : '');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="' + (json.liked ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> <span id="like-count-' + aid + '">' + json.likes + '</span>';
+      }
+    }
+  } catch(e) {}
+}
+
+async function acceptAnswer(aid) {
+  if (!confirm('确定采纳这条回答？剩余未发放的悬赏将全部奖励给对方，操作不可撤销。')) return;
+  try {
+    var res = await fetch('/api/qa/questions/' + currentQuestion.id + '/accept/' + aid, {
+      method: 'POST',
+      headers: { 'x-user-token': token }
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 已采纳，悬赏已发放！');
+      loadQuestion();
+    } else {
+      showToast('⚠️ ' + (json.msg || '操作失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+async function deleteQuestion() {
+  if (!confirm('确定删除此问题？如有悬赏，Credits将退还。')) return;
+  try {
+    var res = await fetch('/api/qa/questions/' + currentQuestion.id, {
+      method: 'DELETE',
+      headers: { 'x-user-token': token }
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 已删除');
+      setTimeout(function() { window.location.href = 'index.html'; }, 800);
+    } else {
+      showToast('⚠️ ' + (json.msg || '删除失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+async function deleteAnswer(aid) {
+  if (!confirm('确定删除此回答？')) return;
+  try {
+    var res = await fetch('/api/qa/answers/' + aid, {
+      method: 'DELETE',
+      headers: { 'x-user-token': token }
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 已删除');
+      loadQuestion();
+    } else {
+      showToast('⚠️ ' + (json.msg || '删除失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+// ===== Reward Distribution =====
+function updateRewardTotal() {
+  var maxRemain = currentQuestion.remainingBounty || 0;
+  var total = 0;
+  var inputs = document.querySelectorAll('[id^="rewardInput"]');
+  inputs.forEach(function(inp) {
+    var v = parseInt(inp.value) || 0;
+    if (v < 0) { inp.value = 0; return; }
+    total += parseInt(inp.value) || 0;
+  });
+  var el = document.getElementById('rewardRemain');
+  if (el) {
+    el.textContent = Math.max(0, maxRemain - total);
+    el.style.color = total > maxRemain ? 'var(--red-500)' : 'var(--gold-600)';
+  }
+}
+
+async function submitReward() {
+  var answers = currentQuestion.answers || [];
+  var rewards = [];
+  var inputs = document.querySelectorAll('[id^="rewardInput"]');
+  inputs.forEach(function(inp) {
+    var amount = parseInt(inp.value) || 0;
+    if (amount > 0) {
+      var idx = parseInt(inp.id.replace('rewardInput', ''));
+      if (idx >= 0 && idx < answers.length) {
+        rewards.push({ answerId: answers[idx].id, amount: amount });
+      }
+    }
+  });
+  if (rewards.length === 0) { showToast('⚠️ 请至少输入一个发放金额', 'error'); return; }
+
+  var total = rewards.reduce(function(s, r) { return s + r.amount; }, 0);
+  var remainVal = currentQuestion.remainingBounty || 0;
+  if (total > remainVal) { showToast('⚠️ 发放总额超出剩余悬赏', 'error'); return; }
+
+  try {
+    var res = await fetch('/api/qa/questions/' + currentQuestion.id + '/reward', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ rewards: rewards })
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 已发放 ' + json.data.distributed + ' Credits！');
+      loadQuestion();
+    } else {
+      showToast('⚠️ ' + (json.msg || '发放失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+// ===== Report System =====
+function openReport(type, targetId, typeLabel, authorName) {
+  if (!currentUser) { showToast('⚠️ 请先登录', 'error'); return; }
+  _reportType = type;
+  _reportTargetId = targetId;
+  _reportReason = '垃圾信息';
+  _reportOtherText = '';
+
+  document.getElementById('reportTitle').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 举报' + escapeHtml(typeLabel);
+  document.getElementById('reportHint').textContent = '你正在举报' + (authorName ? ' ' + authorName + ' 的' : '') + typeLabel + '，请选择举报原因：';
+  document.getElementById('reportReasonSelect').value = '垃圾信息';
+  document.getElementById('reportOtherArea').style.display = 'none';
+  document.getElementById('reportOtherInput').value = '';
+  document.getElementById('reportOverlay').classList.add('show');
+}
+
+function closeReport() {
+  document.getElementById('reportOverlay').classList.remove('show');
+}
+
+async function doSubmitReport() {
+  if (!_reportTargetId) { closeReport(); return; }
+  var reason = _reportReason;
+  var otherText = '';
+  if (reason === '其他') {
+    otherText = document.getElementById('reportOtherInput').value.trim();
+    if (!otherText) { showToast('⚠️ 请填写举报原因', 'error'); return; }
+    reason = otherText;
+  }
+  try {
+    var res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+      body: JSON.stringify({ type: _reportType, targetId: _reportTargetId, reason: reason, otherText: otherText })
+    });
+    var json = await res.json();
+    if (json.ok) {
+      showToast('✅ 举报已提交，感谢反馈！');
+      closeReport();
+    } else {
+      showToast('⚠️ ' + (json.msg || '举报失败'), 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ 网络错误', 'error');
+  }
+}
+
+// ===== Image Handling =====
+function addImage(input) {
+  if (qaImages.length >= 3) { showToast('⚠️ 最多3张图片', 'error'); input.value = ''; return; }
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('⚠️ 图片不超过10MB', 'error'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    qaImages.push(e.target.result);
+    renderImageList();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function removeImage(idx) {
+  qaImages.splice(idx, 1);
+  renderImageList();
+}
+
+function renderImageList() {
+  var el = document.getElementById('answerImgList');
+  if (!el) return;
+  var html = '';
+  qaImages.forEach(function(src, i) {
+    html += '<div class="img-thumb"><img src="' + src + '"><button class="img-del" onclick="removeImage(' + i + ')">×</button></div>';
+  });
+  if (qaImages.length < 3) html += '<label class="img-add" for="answerImgInput">+</label>';
+  html += '<input id="answerImgInput" type="file" accept="image/*" style="display:none;" onchange="addImage(this)">';
+  el.innerHTML = html;
+}
+
+function showImagePreview(src) {
+  document.getElementById('imgPreviewSrc').src = src;
+  document.getElementById('imgPreviewOverlay').classList.add('show');
+}
+
+// ===== Init =====
+loadQuestion();
+</script>
+
+</body>
+</html>

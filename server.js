@@ -139,6 +139,7 @@ const PAGE_MAP = {
   '/safety.html': 'pages/safety.html',
   '/plus.html': 'pages/plus.html',
   '/task-center.html': 'pages/task-center.html',
+  '/qa.html': 'pages/qa.html',
 };
 
 app.use((req, res, next) => {
