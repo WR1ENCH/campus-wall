@@ -40,7 +40,6 @@ function changeCredit(userId, amount, reason) {
 
 function settleExpiredQuestions() {
   const questions = readQAQuestions();
-  const answers = readQAAnswers();
   const now = new Date();
   let changed = false;
   for (const q of questions) {
@@ -49,30 +48,11 @@ function settleExpiredQuestions() {
     if (new Date(q.deadline) > now) continue;
     q.status = 'expired';
     changed = true;
-    const qAnswers = answers.filter(a => a.questionId === q.id && !a.deleted);
-    const totalLikes = qAnswers.reduce((s, a) => s + (a.likes || 0), 0);
     const bounty = q.bounty || 0;
-    if (bounty > 0 && qAnswers.length > 0) {
-      if (totalLikes === 0) {
-        const share = Math.floor(bounty / qAnswers.length);
-        for (const a of qAnswers) {
-          if (share > 0) changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数均分悬赏');
-        }
-      } else {
-        let distributed = 0;
-        for (const a of qAnswers) {
-          const share = Math.floor(bounty * (a.likes || 0) / totalLikes);
-          if (share > 0) {
-            changeCredit(a.userId, share, '问题「' + q.title.slice(0, 10) + '...」赞数分配悬赏');
-            distributed += share;
-          }
-        }
-        const remainder = bounty - distributed;
-        if (remainder > 0) {
-          const top = qAnswers.sort((a, b) => (b.likes || 0) - (a.likes || 0))[0];
-          changeCredit(top.userId, remainder, '问题悬赏余数奖励');
-        }
-      }
+    const distributedCredits = q.distributedCredits || 0;
+    const remain = Math.max(0, bounty - distributedCredits);
+    if (remain > 0) {
+      changeCredit(q.userId, remain, '问题「' + q.title.slice(0, 10) + '...」过期退还剩余悬赏');
     }
   }
   if (changed) writeQAQuestions(questions);

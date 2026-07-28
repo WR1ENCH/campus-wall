@@ -1997,7 +1997,8 @@ app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
   const idx = questions.findIndex(q => q.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
   if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
-    changeCredit(questions[idx].userId, questions[idx].bounty, '管理员删除问题退还悬赏');
+    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
+    if (remain > 0) changeCredit(questions[idx].userId, remain, '管理员删除问题退还剩余悬赏');
   }
   questions[idx].deleted = true;
   writeQAQuestions(questions);
