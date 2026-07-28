@@ -1073,7 +1073,7 @@ function renderPage() {
 
   // Meta row
   html += '<div class="qa-meta">';
-  html += '<span class="qa-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + escapeHtml(q.author) + '</span>';
+  html += '<span class="qa-meta-item">' + (q.avatar && q.avatar.startsWith('data:') ? '<img src="' + escapeHtml(q.avatar) + '" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;" onerror="this.style.display=\'none\'">' : '<span style="font-size:16px;">' + (q.avatar && q.avatar.length <= 4 ? q.avatar : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>') + ' ' + escapeHtml(q.author) + '</span>';
   html += '<span class="qa-meta-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ' + formatDate(q.createdAt) + '</span>';
   html += '<span class="qa-meta-item">' + formatQAId(q.id) + '</span>';
   html += '</div>';
@@ -1166,7 +1166,7 @@ function renderAnswer(a) {
 
   // Author row
   html += '<div class="answer-author">';
-  html += '<span class="answer-avatar">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
+  html += '<span class="answer-avatar">' + (a.avatar && a.avatar.startsWith('data:') ? '<img src="' + escapeHtml(a.avatar) + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : '<span style="font-size:16px;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>') + '</span>';
   html += '<div class="answer-info">';
   html += '<div class="answer-meta">' + escapeHtml(a.author) + ' · <span class="time">' + formatTimeAgo(a.createdAt) + '</span> <span class="id">' + a.id + '</span></div>';
   html += '</div>';
@@ -1222,7 +1222,7 @@ function renderRewardSection(q, answers) {
   answers.forEach(function(a, i) {
     var got = a.reward || 0;
     html += '<div class="reward-answer-row">';
-    html += '<span class="reward-answer-avatar">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>';
+    html += '<span class="reward-answer-avatar">' + (a.avatar && a.avatar.startsWith('data:') ? '<img src="' + escapeHtml(a.avatar) + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display=\'none\'">' : '<span style="font-size:16px;">' + (a.avatar && a.avatar.length <= 4 ? a.avatar : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>') + '</span>') + '</span>';
     html += '<div class="reward-answer-info">';
     html += '<div class="reward-answer-name">' + escapeHtml(a.author) + (got > 0 ? ' <span class="already">(已获 ' + got + ')</span>' : '') + '</div>';
     html += '<div class="reward-answer-preview">' + escapeHtml((a.content || '').slice(0, 60)) + '</div>';
