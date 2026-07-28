@@ -6079,6 +6079,10 @@ function checkUserPlusStatus() {
       document.body.appendChild(overlay);
     });
   }
+  if (json.code === 'INSUFFICIENT_CREDIT') {
+    showCreditInsufficientModal(json.msg || '执行此操作需要消耗 Credits');
+    return null;
+  }
   } catch (e) {
   console.error('发帖失败:', e);
   }
@@ -7556,6 +7560,29 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  document.body.appendChild(overlay);
  }
 
+// Credit不足统一弹窗
+function showCreditInsufficientModal(reason) {
+  var overlay = document.getElementById('creditInsufficientOverlay');
+  var modal = document.getElementById('creditInsufficientModal');
+  document.getElementById('creditInsufficientReason').textContent = reason || '执行此操作需要消耗 Credits';
+  document.getElementById('creditInsufficientBalance').textContent = currentUser ? (currentUser.credit || 0) : 0;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      modal.style.transform = 'scale(1)';
+      modal.style.opacity = '1';
+    });
+  });
+}
+
+function closeCreditInsufficientModal() {
+  var overlay = document.getElementById('creditInsufficientOverlay');
+  var modal = document.getElementById('creditInsufficientModal');
+  modal.style.transform = 'scale(0.9)';
+  modal.style.opacity = '0';
+  setTimeout(function() { overlay.style.display = 'none'; }, 300);
+}
+
   // 敏感词警告弹屏
   function showSensitiveWarning(onEdit, onContinue) {
   const overlay = document.createElement('div');
@@ -7822,6 +7849,10 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
       if (j.ok) { completeNewbieTask('send_whisper'); closeWhisperModal(); showToast('悄悄话已发送'); }
       else if (j.code === 'SENSITIVE_WORDS' || j.code === 'BULLYING_NAME') {
         alert(j.warningMsg || j.msg);
+      }
+      else if (j.code === 'INSUFFICIENT_CREDIT') {
+        closeWhisperModal();
+        showCreditInsufficientModal(j.msg || '本周悄悄话额度已用完，需要 200 Credits 才能发送');
       } else { closeWhisperModal(); showToast(j.msg || '发送失败'); }
     })
     .catch(function() { showToast('网络错误'); });
@@ -8320,10 +8351,14 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  selectPickupSlot(slot);
  // 刷新左侧徽标
  loadPickupSlots();
- } else {
- document.getElementById('pickupBidError').textContent = json.msg;
- document.getElementById('pickupBidError').style.display = '';
- }
+} else {
+  if (json.msg && json.msg.indexOf('不足') !== -1) {
+    showCreditInsufficientModal(json.msg);
+  } else {
+    document.getElementById('pickupBidError').textContent = json.msg;
+    document.getElementById('pickupBidError').style.display = '';
+  }
+}
  } catch {
  document.getElementById('pickupBidError').textContent = '网络错误，请重试';
  document.getElementById('pickupBidError').style.display = '';
@@ -8879,9 +8914,13 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  );
  } else if (json.bullying) {
  showBullyingWarning(() => {});
- } else {
- showErr(json.msg || '发布失败');
- }
+} else {
+  if (json.msg && json.msg.indexOf('Credit') !== -1 && json.msg.indexOf('不足') !== -1) {
+    showCreditInsufficientModal(json.msg);
+  } else {
+    showErr(json.msg || '发布失败');
+  }
+}
  } catch { showErr('网络错误，请稍后重试'); }
  }
 
@@ -10402,6 +10441,20 @@ async function checkAndShowNewbieTask() {
     </div>
     <div style="padding: 12px 20px; border-top: 1px solid #eee; text-align: center;">
       <button onclick="closeNewbieTask()" style="padding: 8px 24px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">稍后再看</button>
+    </div>
+  </div>
+</div>
+
+<!-- Credit不足统一弹窗 -->
+<div id="creditInsufficientOverlay" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+  <div id="creditInsufficientModal" style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);transform:scale(0.9);opacity:0;transition:transform 0.3s ease,opacity 0.3s ease;">
+    <div style="font-size:40px;margin-bottom:12px;color:#e8a800;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 0 1 0 4H8"/><path d="M12 18V6"/></svg></div>
+    <h3 style="margin:0 0 8px;font-size:17px;color:#333;">Credit 不足</h3>
+    <p id="creditInsufficientReason" style="margin:0 0 6px;font-size:14px;color:#666;line-height:1.6;"></p>
+    <p style="margin:0 0 20px;font-size:13px;color:#999;">当前余额: <b id="creditInsufficientBalance" style="color:#e8a800;">0</b> Credits</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeCreditInsufficientModal()" style="padding:10px 24px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:14px;cursor:pointer;">知道了</button>
+      <button onclick="closeCreditInsufficientModal();window.open('credit.html','_blank');" style="padding:10px 24px;border-radius:10px;border:none;background:#f5c518;color:#7a5700;font-weight:700;font-size:14px;cursor:pointer;">去充值</button>
     </div>
   </div>
 </div>
