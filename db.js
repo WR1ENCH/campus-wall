@@ -466,6 +466,20 @@ function migrate() {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pv_visited_created ON profile_visits(visitedUserId, createdAt DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pv_visited_read ON profile_visits(visitedUserId, read)`);
 
+  // ===== 主页留言 =====
+  db.exec(`CREATE TABLE IF NOT EXISTS "wall_messages" (
+    "id" TEXT PRIMARY KEY,
+    "targetUserId" TEXT NOT NULL,
+    "senderId" TEXT NOT NULL,
+    "senderName" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TEXT NOT NULL,
+    "read" INTEGER DEFAULT 0
+  )`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_target_created ON wall_messages(targetUserId, createdAt DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_sender_created ON wall_messages(senderId, createdAt DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_target_read ON wall_messages(targetUserId, read)`);
+
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous', 'visibility', 'allowComments', 'visibleTo', 'invisibleTo'] },
@@ -1132,6 +1146,34 @@ function markAllVisitsRead(userId) {
   db.prepare(`UPDATE profile_visits SET read = 1 WHERE visitedUserId = ? AND read = 0`).run(userId);
 }
 
+// ===== 主页留言 =====
+function getWallMessages(targetUserId, page = 1, limit = 20) {
+  const offset = (page - 1) * limit;
+  const total = db.prepare(`SELECT COUNT(*) as count FROM wall_messages WHERE targetUserId = ?`).get(targetUserId).count;
+  const rows = db.prepare(`
+    SELECT wm.*, u.nickname as senderNickname, u.avatar as senderAvatar
+    FROM wall_messages wm
+    LEFT JOIN users u ON u.id = wm.senderId
+    WHERE wm.targetUserId = ?
+    ORDER BY wm.createdAt DESC LIMIT ? OFFSET ?
+  `).all(targetUserId, limit, offset);
+  const unreadCount = db.prepare(`SELECT COUNT(*) as count FROM wall_messages WHERE targetUserId = ? AND read = 0`).get(targetUserId).count;
+  return { messages: rows, total, unreadCount };
+}
+function getWallMessagesBySender(senderId, page = 1, limit = 20) {
+  const offset = (page - 1) * limit;
+  const total = db.prepare(`SELECT COUNT(*) as count FROM wall_messages WHERE senderId = ?`).get(senderId).count;
+  const rows = db.prepare(`SELECT * FROM wall_messages WHERE senderId = ? ORDER BY createdAt DESC LIMIT ? OFFSET ?`).all(senderId, limit, offset);
+  return { messages: rows, total };
+}
+function addWallMessage(msg) { insertRow('wall_messages', msg); }
+function markWallMessagesRead(targetUserId) { db.prepare(`UPDATE wall_messages SET read = 1 WHERE targetUserId = ? AND read = 0`).run(targetUserId); }
+function getUnreadWallMessageCount(userId) { return db.prepare(`SELECT COUNT(*) as count FROM wall_messages WHERE targetUserId = ? AND read = 0`).get(userId).count; }
+function getTodayWallMessageCount(senderId) {
+  const today = new Date().toISOString().slice(0, 10);
+  return db.prepare(`SELECT COUNT(*) as count FROM wall_messages WHERE senderId = ? AND createdAt LIKE ?`).get(senderId, today + '%').count;
+}
+
 // ===== 导出 =====
 module.exports = {
   readPosts, writePosts,
@@ -1183,6 +1225,8 @@ module.exports = {
   addIdInput,
   // Profile Visits
   addProfileVisit, getProfileVisits, getUnreadVisitCount, getYesterdayVisitsGrouped, markVisitRead, markAllVisitsRead,
+  // 主页留言
+  getWallMessages, getWallMessagesBySender, addWallMessage, markWallMessagesRead, getUnreadWallMessageCount, getTodayWallMessageCount,
   // 新手任务进度
   readNewbieTaskProgress, writeNewbieTaskProgress, getNewbieTaskProgress, insertNewbieTaskProgress, updateNewbieTaskProgress,
 };
