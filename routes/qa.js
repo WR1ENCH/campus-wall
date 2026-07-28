@@ -365,6 +365,7 @@ app.post('/api/qa/questions/:id/accept/:aid', (req, res) => {
   a.accepted = true;
   q.acceptedAnswerId = a.id;
   q.status = 'accepted';
+  q.pinned = 0;
   writeQAAnswers(answers);
   writeQAQuestions(questions);
   res.json({ ok: true, data: { acceptedAnswerId: a.id, rewarded: remaining } });
