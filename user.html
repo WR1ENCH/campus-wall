@@ -1996,13 +1996,9 @@ async function completeNewbieTask(taskId) {
     if (json.ok) {
       showToast('任务完成！获得 ' + json.data.reward + ' Credit');
       sessionStorage.setItem('newbie_task_trigger', taskId);
-      setTimeout(function() {
-        window.location.href = '/?newbie-task=1';
-      }, 1200);
     }
   } catch(e) { /* silent */ }
 }
-
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
     if (!userId) {
@@ -3352,6 +3348,8 @@ async function completeNewbieTask(taskId) {
 
     function closeWallMessageModal() {
       document.getElementById('wallMessageModal').classList.remove('show');
+      var btn = document.getElementById('wmSubmitBtn');
+      if (btn) { btn.disabled = false; btn.textContent = '发送留言'; }
     }
 
     document.getElementById('wmContent').addEventListener('input', function() {
