@@ -331,9 +331,11 @@
       border: 1.5px solid var(--gray-200);
       animation: optionIn 0.4s var(--ease-spring) both;
     }
-    .answer-card.accepted {
-      border-color: rgba(34,197,94,0.3);
+.answer-card.accepted {
+      border-color: #4caf50;
       background: linear-gradient(135deg, #f0fdf4, white);
+      border-left: 4px solid #4caf50;
+      position: relative;
     }
     .answer-card:nth-child(1) { animation-delay: 0.05s; }
     .answer-card:nth-child(2) { animation-delay: 0.1s; }
@@ -347,16 +349,17 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .accepted-badge {
+.accepted-badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 13px;
       font-weight: 700;
-      background: var(--green-50);
-      color: var(--green-500);
+      background: linear-gradient(135deg, #fff7ed, #fffbeb);
+      color: #b45309;
+      border: 1px solid #fcd34d;
       margin-bottom: 10px;
     }
     .reward-badge {
@@ -1049,7 +1052,7 @@ function renderPage() {
 
   var statusMap = {
     open: { label: '进行中', cls: 'open' },
-    accepted: { label: '已采纳', cls: 'accepted' },
+    accepted: { label: '已结束', cls: 'accepted' },
     expired: { label: '已到期', cls: 'expired' }
   };
   var st = statusMap[q.status] || statusMap.open;
@@ -1101,6 +1104,10 @@ function renderPage() {
     html += '<span class="deadline-text">⏰ 截止 ' + formatDate(q.deadline) + '</span>';
   }
   html += '</div>';
+  // Accepted banner
+  if (q.status === 'accepted') {
+    html += '<div style="background:#f0fdf4;border:1px solid #4caf50;border-radius:10px;padding:10px 14px;margin-top:12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#2e7d32;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 该问题已有采纳回答</div>';
+  }
 
   // Actions row
   html += '<div class="qa-actions">';
