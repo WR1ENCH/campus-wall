@@ -2231,8 +2231,11 @@ async function completeNewbieTask(taskId) {
               updateMbtiBadge(type);
               var btn = document.getElementById('mbtiBtn');
               if (btn) btn.style.display = 'none';
+              completeNewbieTask('mbti_test');
+              updateMbtiBadge(type);
+              var btn = document.getElementById('mbtiBtn');
+              if (btn) btn.style.display = 'none';
               if (window.currentLoggedInUser) window.currentLoggedInUser.mbti = type;
-              })
           })
           .catch(function(){
             showToast('保存失败，请重试');
