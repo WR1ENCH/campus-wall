@@ -174,6 +174,7 @@ require('./routes/notices')(app);
 require('./routes/pickup')(app);
 require('./routes/student-council')(app);
 require('./routes/whispers')(app);
+require('./routes/wall-messages')(app);
 require('./routes/subscription')(app);
 require('./routes/task-center')(app);
 require('./routes/maintenance')(app);

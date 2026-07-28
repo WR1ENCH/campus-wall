@@ -1578,6 +1578,44 @@
         font-size: 20px;
       }
     }
+
+    /* ===== Wall Message Modal ===== */
+    .wm-modal textarea {
+      width: 100%;
+      min-height: 100px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--text-primary);
+      box-sizing: border-box;
+    }
+    .wm-modal textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-light);
+    }
+    .wm-modal .wm-counter {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+    .wm-modal .wm-quota {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      background: var(--accent-light);
+      border-radius: 6px;
+    }
+    .wm-modal .wm-quota b {
+      color: var(--accent);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -1664,6 +1702,13 @@
             <button id="mbtiBtn" class="btn btn-plus" onclick="openMbtiTest()" style="display:none;border-color:rgba(107,76,154,0.3);color:#6b4c9a;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
               <span id="mbtiBtnLabel">MBTI性格测试</span>
+            </button>
+            <button id="wallMsgBtn" class="btn btn-ghost" style="display:none;padding:6px 14px;font-size:13px;" onclick="openWallMessageModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              留言
             </button>
           </div>
           </div>
@@ -1908,6 +1953,33 @@
     </div>
   </div>
 
+  <!-- ===== Wall Message Modal ===== -->
+  <div id="wallMessageModal" class="modal-overlay">
+    <div class="modal wm-modal" style="max-width:420px;">
+      <div class="modal-header">
+        <span class="modal-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px;">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          给 TA 留言
+        </span>
+        <button class="modal-close" onclick="closeWallMessageModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="wm-quota" id="wmQuotaInfo">加载中...</div>
+        <textarea id="wmContent" placeholder="留下你想说的话（最多100字）" maxlength="100"></textarea>
+        <div class="wm-counter"><span id="wmCharCount">0</span>/<span id="wmMaxChars">100</span></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeWallMessageModal()">取消</button>
+          <button class="btn btn-primary" id="wmSubmitBtn" onclick="submitWallMessage()">发送留言</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="mbti-questions.js"></script>
   <script>
 // ===== 新手任务系统 =====
@@ -2057,6 +2129,11 @@ async function completeNewbieTask(taskId) {
         if (_isSelfMbti) {
           mbtiBtn.style.display = 'inline-flex';
         }
+      }
+      // 留言按钮：仅在他人主页且已登录时显示
+      var wallMsgBtn = document.getElementById('wallMsgBtn');
+      if (wallMsgBtn && currentLoggedInUser && currentLoggedInUser.id !== userId) {
+        wallMsgBtn.style.display = 'inline-flex';
       }
 
       const uidEl = document.getElementById('profileUid');
@@ -3103,27 +3180,56 @@ async function completeNewbieTask(taskId) {
       document.getElementById('visitorModal').classList.add('show');
 
       try {
-        var [listResp, subResp] = await Promise.all([
+        // First: check access
+        var accessResp = await fetch('/api/user/profile-visits/check-access', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-user-token': token }
+        });
+        var accessData = await accessResp.json();
+        if (!accessData.ok || !accessData.data.canView) {
+          // Show payment card
+          document.getElementById('visitorLoading').style.display = 'none';
+          var cost = accessData.data ? accessData.data.cost : 69;
+          document.getElementById('visitorList').style.display = '';
+          document.getElementById('visitorList').innerHTML =
+            '<div style="text-align:center;padding:30px 20px;">' +
+            '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:12px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' +
+            '<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;">查看访客列表需要 ' + cost + ' Credits</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">解锁后当日可查看访客列表和留言</div>' +
+            '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">' +
+            '<button class="btn btn-primary" onclick="unlockVisitorList()" style="padding:8px 20px;">确认支付</button>' +
+            '<a href="credit.html" class="btn btn-outline" style="text-decoration:none;padding:8px 20px;">充值</a>' +
+            '<a href="plus.html" class="btn btn-ghost" style="text-decoration:none;padding:8px 20px;">订阅PLUS++</a>' +
+            '</div></div>';
+          return;
+        }
+
+        // Has access: fetch list, wall messages, and subscription in parallel
+        var [listResp, msgResp, subResp] = await Promise.all([
           fetch('/api/user/profile-visits?page=1&limit=50', { headers: { 'x-user-token': token } }),
+          fetch('/api/wall-messages?targetUserId=' + encodeURIComponent(userId) + '&page=1&limit=50', { headers: { 'x-user-token': token } }),
           fetch('/api/user/subscription/status', { headers: { 'x-user-token': token } })
         ]);
         var listData = await listResp.json();
+        var msgData = await msgResp.json();
         var subData = await subResp.json();
         var isPlus = !!(subData.ok && subData.data && subData.data.isPlus);
         _visitorData = listData.ok ? listData.data : null;
+        var wallMessages = (msgData.ok && msgData.data && msgData.data.messages) ? msgData.data.messages : [];
 
         document.getElementById('visitorLoading').style.display = 'none';
         if (!_visitorData || _visitorData.visits.length === 0) {
           document.getElementById('visitorEmpty').style.display = '';
           return;
         }
-        renderVisitorList(_visitorData, isPlus);
+        renderVisitorList(_visitorData, isPlus, wallMessages);
       } catch (e) {
         document.getElementById('visitorLoading').textContent = '加载失败，请重试';
       }
     }
 
-    function renderVisitorList(data, isPlus) {
+    function renderVisitorList(data, isPlus, wallMessages) {
+      wallMessages = wallMessages || [];
       var container = document.getElementById('visitorList');
       container.style.display = '';
       var html = '<div style="padding:0 0 12px;font-size:13px;color:var(--text-muted);">共 ' + data.total + ' 位访客</div>';
@@ -3134,8 +3240,11 @@ async function completeNewbieTask(taskId) {
         var avatar = isPlus && v.visitorAvatar ? v.visitorAvatar : '';
         var time = formatRelativeTime(v.createdAt);
         var isNew = !v.read;
+        var visitorMsgs = wallMessages.filter(function(m) { return m.senderId === v.visitorUserId; });
+        var latestMsg = visitorMsgs.length > 0 ? visitorMsgs[0] : null;
 
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">';
+        html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
+        html += '<div style="display:flex;align-items:center;gap:10px;">';
         if (avatar) {
           html += '<img src="' + avatar + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
           if (!isPlus) html += 'filter:blur(4px);';
@@ -3151,6 +3260,14 @@ async function completeNewbieTask(taskId) {
         html += '</div>';
         if (isNew && isPlus) {
           html += '<span style="width:6px;height:6px;border-radius:50%;background:#DC4A3D;flex-shrink:0;"></span>';
+        }
+        if (latestMsg) {
+          html += '<span style="font-size:11px;color:var(--accent);white-space:nowrap;">💬 留言</span>';
+        }
+        html += '</div>';
+        if (latestMsg) {
+          var preview = latestMsg.content.length > 30 ? latestMsg.content.substring(0, 30) + '...' : latestMsg.content;
+          html += '<div style="padding:4px 0 0 42px;font-size:12px;color:var(--text-muted);font-style:italic;">💬 ' + preview + '</div>';
         }
         html += '</div>';
       }
@@ -3188,16 +3305,109 @@ async function completeNewbieTask(taskId) {
       }
     }
 
+    function unlockVisitorList() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token) return;
+      fetch('/api/user/profile-visits/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token }
+      }).then(function(r){ return r.json(); }).then(function(j) {
+        if (j.ok) openVisitorModal();
+        else showToast(j.msg || '解锁失败');
+      }).catch(function(){ showToast('网络错误'); });
+    }
+
+    // ===== 主页留言 =====
+    function openWallMessageModal() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token) return showToast('请先登录');
+      var modal = document.getElementById('wallMessageModal');
+      var textarea = document.getElementById('wmContent');
+      var quotaInfo = document.getElementById('wmQuotaInfo');
+      var charCount = document.getElementById('wmCharCount');
+      var maxChars = document.getElementById('wmMaxChars');
+      var submitBtn = document.getElementById('wmSubmitBtn');
+      textarea.value = '';
+      charCount.textContent = '0';
+      submitBtn.disabled = false;
+      submitBtn.textContent = '发送留言';
+      modal.classList.add('show');
+      fetch('/api/wall-messages/quota', { headers: { 'x-user-token': token } })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if (!j.ok) { quotaInfo.textContent = '加载失败'; return; }
+          var d = j.data;
+          maxChars.textContent = d.maxChars;
+          textarea.maxLength = d.maxChars;
+          textarea.placeholder = '留下你想说的话（最多' + d.maxChars + '字）';
+          if (d.isPlus) {
+            quotaInfo.innerHTML = '<b>PLUS++</b> 无限留言';
+          } else {
+            var remain = d.remaining < 0 ? '∞' : d.remaining;
+            quotaInfo.innerHTML = '今日剩余 <b>' + remain + '/' + d.dailyLimit + '</b> 次免费' + (d.remaining <= 0 ? '（超出扣 ' + d.costPerExtra + ' Credits）' : '');
+          }
+        })
+        .catch(function(){ quotaInfo.textContent = '配额加载失败'; });
+    }
+
+    function closeWallMessageModal() {
+      document.getElementById('wallMessageModal').classList.remove('show');
+    }
+
+    document.getElementById('wmContent').addEventListener('input', function() {
+      document.getElementById('wmCharCount').textContent = this.value.length;
+    });
+
+    function submitWallMessage() {
+      var token = localStorage.getItem('campus_user_token');
+      if (!token) return showToast('请先登录');
+      var content = document.getElementById('wmContent').value.trim();
+      if (!content) return showToast('请输入留言内容');
+      var submitBtn = document.getElementById('wmSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '发送中...';
+      fetch('/api/wall-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-token': token },
+        body: JSON.stringify({ receiverId: userId, content: content })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(j) {
+        if (j.ok) {
+          showToast('留言发送成功');
+          closeWallMessageModal();
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '发送留言';
+          if (j.code === 'SENSITIVE_WORDS') showToast('内容包含敏感词，请修改后重试');
+          else if (j.code === 'WALL_MSG_QUOTA_EXCEEDED') showToast('今日免费次数已用完');
+          else if (j.code === 'INSUFFICIENT_CREDIT') showToast('Credit不足');
+          else if (j.code === 'CREDIBILITY_BLOCKED') showToast('信用分不足，无法留言');
+          else showToast(j.msg || '发送失败');
+        }
+      })
+      .catch(function(){
+        submitBtn.disabled = false;
+        submitBtn.textContent = '发送留言';
+        showToast('网络错误，请重试');
+      });
+    }
+
     async function checkVisitorBadge() {
       var token = localStorage.getItem('campus_user_token');
       if (!token || !currentLoggedInUser || currentLoggedInUser.id !== userId) return;
       try {
-        var resp = await fetch('/api/user/profile-visits/unread-count', {
-          headers: { 'x-user-token': token }
-        });
-        var data = await resp.json();
+        var [visitResp, msgResp] = await Promise.all([
+          fetch('/api/user/profile-visits/unread-count', { headers: { 'x-user-token': token } }),
+          fetch('/api/wall-messages/unread-count', { headers: { 'x-user-token': token } })
+        ]);
+        var visitData = await visitResp.json();
+        var msgData = await msgResp.json();
+        var visitCount = (visitData.ok && visitData.data) ? visitData.data.count : 0;
+        var msgCount = (msgData.ok && msgData.data) ? msgData.data.count : 0;
+        var total = visitCount + msgCount;
         var badge = document.getElementById('visitorBadge');
-        if (badge) badge.style.display = (data.ok && data.data.count > 0) ? '' : 'none';
+        if (badge) badge.style.display = total > 0 ? '' : 'none';
       } catch(e) {}
     }
 

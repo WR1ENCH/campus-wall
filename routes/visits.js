@@ -4,6 +4,8 @@ const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
 const { updateTaskProgress } = require('./daily-tasks');
+const { isUserPlus } = require('../lib/subscription');
+const { wallMessageDayPass } = require('../lib/state');
 
 // 访客记录速率限制（同用户对同目标每5分钟最多1次）
 const visitRateLimit = new Map();
@@ -115,6 +117,39 @@ module.exports = function(app) {
 
     res.json({ ok: true });
   });
+
+  // ===== 访客列表访问权限检查 =====
+  app.post('/api/user/profile-visits/check-access', (req, res) => {
+    const token = req.headers['x-user-token'];
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    if (isUserPlus(session.id)) return res.json({ ok: true, data: { canView: true } });
+    const today = new Date().toISOString().slice(0, 10);
+    if (wallMessageDayPass.get(session.id) === today) return res.json({ ok: true, data: { canView: true } });
+    return res.json({ ok: true, data: { canView: false, cost: 69 } });
+  });
+
+  // ===== 付费解锁当天访客列表+留言 =====
+  app.post('/api/user/profile-visits/unlock', (req, res) => {
+    const token = req.headers['x-user-token'];
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '请先登录', code: 'NOT_LOGIN' });
+    if (isUserPlus(session.id)) return res.json({ ok: true });
+    const today = new Date().toISOString().slice(0, 10);
+    if (wallMessageDayPass.get(session.id) === today) return res.json({ ok: true });
+    const users = db.readUsers();
+    const user = users.find(u => u.id === session.id);
+    if (!user) return res.json({ ok: false, msg: '用户不存在' });
+    if ((user.credit || 0) < 69) return res.json({ ok: false, msg: 'Credit不足', code: 'INSUFFICIENT_CREDIT' });
+    user.credit = (user.credit || 0) - 69;
+    db.writeUsers(users);
+    const logs = db.readCreditLogs();
+    logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), userId: session.id, amount: -69, reason: '解锁当日访客列表+留言查看', createdAt: new Date().toISOString() });
+    db.writeCreditLogs(logs);
+    wallMessageDayPass.set(session.id, today);
+    res.json({ ok: true });
+  });
+
 
   // ===== 每日访客汇总通知（北京时间 12:00 触发） =====
   setInterval(() => {
