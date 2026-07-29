@@ -5270,7 +5270,8 @@ function openVisitorModal() {
       var msgData = results[1];
       var subData = results[2];
       var isPlus = !!(subData.ok && subData.data && subData.data.isPlus);
-      _visitorData = listData.ok ? listData.data : null;
+      // 能到达此处说明check-access已通过（PLUS或已购买日通行证），可以展示真实信息
+      var canReveal = true;
       var wallMessages = (msgData.ok && msgData.data && msgData.data.messages) ? msgData.data.messages : [];
 
       document.getElementById('visitorLoading').style.display = 'none';
@@ -5278,7 +5279,7 @@ function openVisitorModal() {
         document.getElementById('visitorEmpty').style.display = '';
         return;
       }
-      renderVisitorList(_visitorData, isPlus, wallMessages);
+      renderVisitorList(_visitorData, canReveal, isPlus, wallMessages);
     }).catch(function() {
       document.getElementById('visitorLoading').textContent = '加载失败，请重试';
     });
@@ -5288,7 +5289,7 @@ function openVisitorModal() {
 }
 
 
-function renderVisitorList(data, isPlus, wallMessages) {
+function renderVisitorList(data, canReveal, isPlus, wallMessages) {
   wallMessages = wallMessages || [];
   var container = document.getElementById('visitorList');
   container.style.display = '';
@@ -5296,8 +5297,8 @@ function renderVisitorList(data, isPlus, wallMessages) {
 
   for (var i = 0; i < data.visits.length; i++) {
     var v = data.visits[i];
-    var name = isPlus ? (v.visitorNickname || '未知用户') : '匿名访客';
-    var avatar = isPlus && v.visitorAvatar ? v.visitorAvatar : '';
+    var name = canReveal ? (v.visitorNickname || '未知用户') : '匿名访客';
+    var avatar = canReveal && v.visitorAvatar ? v.visitorAvatar : '';
     var time = formatVisitorTime(v.createdAt);
     var isNew = !v.read;
     var visitorMsgs = wallMessages.filter(function(m) { return m.senderId === v.visitorUserId; });
@@ -5307,14 +5308,14 @@ function renderVisitorList(data, isPlus, wallMessages) {
     html += '<div style="display:flex;align-items:center;gap:10px;">';
     if (avatar) {
       html += '<img src="' + avatar + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
-      if (!isPlus) html += 'filter:blur(4px);';
+      if (!canReveal) html += 'filter:blur(4px);';
       html += '">';
     } else {
-      html += '<div style="width:32px;height:32px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px;color:#9ca3af;flex-shrink:0;">' + (isPlus ? (v.visitorNickname ? v.visitorNickname.charAt(0) : '?') : '?') + '</div>';
+      html += '<div style="width:32px;height:32px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px;color:#9ca3af;flex-shrink:0;">' + (canReveal ? (v.visitorNickname ? v.visitorNickname.charAt(0) : '?') : '?') + '</div>';
     }
     html += '<div style="flex:1;min-width:0;">';
     html += '<div style="font-size:14px;font-weight:500;color:#1f2937;';
-    if (!isPlus) html += 'filter:blur(4px);';
+    if (!canReveal) html += 'filter:blur(4px);';
     html += '">' + name + '</div>';
     html += '<div style="font-size:12px;color:#9ca3af;">' + time + '</div>';
     html += '</div>';
@@ -5332,7 +5333,7 @@ function renderVisitorList(data, isPlus, wallMessages) {
     html += '</div>';
   }
 
-  if (!isPlus) {
+  if (!canReveal) {
     html += '<div style="text-align:center;padding:20px 16px 8px;font-size:14px;font-weight:700;color:#1f2937;">订阅PLUS++以查看访客</div>';
     html += '<div style="text-align:center;padding:0 16px 16px;"><a href="plus.html" style="display:inline-block;padding:8px 20px;background:#3a2a1a;color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;">了解PLUS++</a></div>';
   }
