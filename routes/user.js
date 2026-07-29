@@ -9,7 +9,7 @@ const db = require('../db');
 const nodeCrypto = require('crypto');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
-const { isUserPlus } = require('../lib/subscription');
+const { isUserPlus, getUserMonthlyPinCount } = require('../lib/subscription');
 const nicknameChanges = require('../nicknameChanges');
 const maintenance = require('../maintenance');
 const credibility = require('../lib/credibility');
@@ -571,7 +571,7 @@ module.exports = function(app) {
     const user = users.find(u => u.id === session.id);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null } });
+    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0 } });
   });
   app.get('/api/user/credit-logs', (req, res) => {
     const token = req.headers['x-user-token'];

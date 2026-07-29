@@ -107,7 +107,7 @@
  --z-sticky: 200;
  --z-modal: 500;
  --z-overlay: 999;
- --z-toast: 9999;
+--z-toast: 100000;
  }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2934,7 +2934,7 @@ backdrop-filter: blur(4px);
  <div class="post-note-count"><span id="noteCount">0</span>/50</div>
  </div>
  <!-- #话题自动补全下拉 -->
- <div id="discussionSuggest" style="display:none;position:fixed;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:10002;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:200px;"></div>
+<div id="discussionSuggest" style="display:none;position:fixed;background:#fffbe6;border:1px solid #e8c84a;border-radius:4px;max-height:150px;overflow-y:auto;z-index:10001;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);min-width:200px;"></div>
  <!-- 类型标签 -->
  <div class="post-tags">
  <button class="post-tag t-daily active" data-tag="日常" type="button" onclick="selectTag(this)" title="日常"></button>
@@ -4416,8 +4416,8 @@ function renderVoteList(voteList) {
  });
  const json = await res.json();
   if (json.ok) {
-  const { token, id, username, nickname, avatar, credit, zhixueStatus } = json.data;
-  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null };
+  const { token, id, username, nickname, avatar, credit, zhixueStatus, pinCount } = json.data;
+  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null, pinCount: pinCount || 0 };
   // 获取 PLUS 订阅状态
   try {
     const plusRes = await checkUserPlusStatus();
@@ -5121,6 +5121,7 @@ function updateUserBar() {
  currentUser = null;
       } else {
       // 刷新用户数据（含 credit、签到状态、认证状态）
+      currentUser.pinCount = json.data.pinCount || 0;
       currentUser.credit = json.data.credit || 0;
       currentUser.checkinToday = json.data.checkinToday;
       currentUser.checkinStreak = json.data.checkinStreak || 0;
@@ -6140,10 +6141,9 @@ function checkUserPlusStatus() {
  method: 'POST',
  headers: { 'Content-Type': 'application/json', ...(token ? { 'x-user-token': token } : {}) },
     body: JSON.stringify({ type, content, avatar, author, userId, sensitiveForce, images: postImages, syncDiscussionId: _selectedDiscussionId, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit, pinned })
- });
+  });
  const json = await res.json();
   completeNewbieTask('create_post');
-  return json.data;
  if (json.needCaptcha) {
  // 发帖频率过高 → 弹出验证码弹窗
     pendingPostData = { type, content, sensitiveForce, images: postImages.slice(), isAnonymous, visibility, allowComments, visibleTo, invisibleTo, pinned };
@@ -6184,10 +6184,13 @@ function checkUserPlusStatus() {
   );
   });
   }
+  if (json.ok) {
+    return json.data;
+  }
   if (json.code === 'ANON_QUOTA_EXCEEDED') {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
       overlay._resolve = resolve;
       overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:noteAppear 0.3s ease;"><div style="font-size:40px;margin-bottom:8px;color:#f59e0b;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div style="font-size:16px;font-weight:600;margin-bottom:6px;color:#333;">匿名发帖次数已用完</div><div style="font-size:14px;color:#666;margin-bottom:20px;line-height:1.5;">' + (json.msg || '今日匿名发帖次数已用完') + '，是否消耗 <strong>50 credit</strong> 继续发布？</div><div style="display:flex;gap:10px;justify-content:center;"><button onclick="var o=this.closest(\'div[style]\');var r=o._resolve;o.remove();r(null)" style="padding:8px 20px;border:1px solid #ddd;border-radius:10px;background:#f5f5f5;cursor:pointer;font-size:14px;font-family:inherit;">返回编辑</button><button onclick="var o=this.closest(\'div[style]\');var r=o._resolve;o.remove();(async()=>{const res=await createPost(type,content,false,isAnonymous,visibility,allowComments,visibleTo,invisibleTo,true);r(res);})()" style="padding:8px 20px;border:none;border-radius:10px;background:#222;color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">消耗 50 credit 发布</button></div></div>';
       document.body.appendChild(overlay);
@@ -6196,7 +6199,7 @@ function checkUserPlusStatus() {
   if (json.code === 'DAILY_POST_LIMIT') {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
       overlay._resolve = resolve;
       overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:noteAppear 0.3s ease;"><div style="font-size:40px;margin-bottom:8px;color:#f59e0b;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div><div style="font-size:16px;font-weight:600;margin-bottom:6px;color:#333;">今日发帖次数已用完</div><div style="font-size:14px;color:#666;margin-bottom:20px;line-height:1.5;">' + (json.msg || '今日免费发帖次数已用完') + '，是否消耗 <strong>' + (json.cost || 39) + ' credit</strong> 继续发布？</div><div style="display:flex;gap:10px;justify-content:center;"><button onclick="var o=this.closest(\'div[style]\');var r=o._resolve;o.remove();r(null)" style="padding:8px 20px;border:1px solid #ddd;border-radius:10px;background:#f5f5f5;cursor:pointer;font-size:14px;font-family:inherit;">返回编辑</button><button onclick="var o=this.closest(\'div[style]\');var r=o._resolve;o.remove();(async()=>{const res=await createPost(type,content,sensitiveForce,isAnonymous,visibility,allowComments,visibleTo,invisibleTo,true);r(res);})()" style="padding:8px 20px;border:none;border-radius:10px;background:#222;color:#fff;cursor:pointer;font-size:14px;font-family:inherit;">消耗 ' + (json.cost || 39) + ' credit 发布</button></div></div>';
       document.body.appendChild(overlay);
@@ -6211,9 +6214,7 @@ function checkUserPlusStatus() {
   }
   return null;
   }
-
 async function showPostCaptchaModal() {
-  document.getElementById('postCaptchaOverlay').classList.add('show');
   if (_humanVerified) {
     try {
       var r = await fetch('/api/slider-captcha/grant', { method: 'POST' });
@@ -6422,6 +6423,7 @@ function renderNotes(filter = '全部') {
 function _doRenderNotes(filter = '全部') {
  const grid = document.getElementById('notesGrid');
  const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
+
 
  if (filtered.length === 0) {
  grid.innerHTML = '<div class="empty-state"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> 这面墙上还没有这种便利贴，来贴第一张吧！</div>';
@@ -6645,7 +6647,6 @@ function _doRenderNotes(filter = '全部') {
       setTimeout(function() { var inp = document.getElementById('visibilityUserSearch'); if (inp) inp.focus(); }, 100);
     }
   }
-
   function updatePostPinHint() {
     var chk = document.getElementById('pinPost');
     if (!chk) return;
@@ -6653,7 +6654,11 @@ function _doRenderNotes(filter = '全部') {
     var isPlus = currentUser && currentUser.isPlus;
     var feeHint = document.getElementById('postPinFeeHint');
     var plusHint = document.getElementById('postPinPlusHint');
+    var remainingSpan = document.getElementById('postPinRemaining');
     if (isPlus) {
+      if (remainingSpan) {
+        remainingSpan.textContent = (currentUser && currentUser.pinCount !== undefined) ? currentUser.pinCount : 0;
+      }
       if (feeHint) feeHint.style.display = 'none';
       if (plusHint) plusHint.style.display = pinned ? 'block' : 'none';
     } else {
@@ -6753,7 +6758,7 @@ function _doRenderNotes(filter = '全部') {
     }
   });
 
-  function openModal() {
+  async function openModal() {
  if (!currentUser) {
  showLoginModal(true);
  return;
@@ -6777,6 +6782,15 @@ function _doRenderNotes(filter = '全部') {
   if (blacklistChk) blacklistChk.checked = false;
    const allowCommentsChk = document.getElementById('allowComments');
    if (allowCommentsChk) allowCommentsChk.checked = true;
+   // 刷新置顶次数
+   try {
+     const _meRes = await fetch('/api/user/me', { headers: authHeaders() });
+     const _meJson = await _meRes.json();
+     if (_meJson.ok && _meJson.data) {
+       currentUser.pinCount = _meJson.data.pinCount || 0;
+       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+     }
+   } catch(_e) { /* ignore */ }
    const pinChk = document.getElementById('pinPost');
    if (pinChk) {
      pinChk.checked = false;
@@ -7632,12 +7646,13 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
   newPost.time = '刚刚';
   newPost.rotate = rand(-4, 4);
   newPost.zIndex = randInt(1, 5);
-  posts.unshift(newPost);
-  input.value = '';
-  postImages = [];
-  _selectedDiscussionId = null;
-  renderPostImages();
-  closeModal();
+  // Update local pin count after successful pinned post
+  if (newPost.pinned && currentUser) {
+    currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
+    localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+  }
+  // 放弃本地插入：用服务端权威数据刷新，避免 SSE fetchPosts 覆盖本地数组
+  await fetchPosts();
   renderNotes(currentFilter);
   showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
   } else if (_returnToEdit) {
@@ -7709,7 +7724,7 @@ function closeCreditInsufficientModal() {
   // 敏感词警告弹屏
   function showSensitiveWarning(onEdit, onContinue) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
   overlay.innerHTML = `
   <div class="dialog-anim" style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
   <h3 style="margin:0 0 12px;font-size:18px;color:#d32f2f;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 内容审核提醒</h3>
@@ -7740,7 +7755,7 @@ function closeCreditInsufficientModal() {
   // 反霸凌警告弹屏（仅返回编辑，不可强制发送）
   function showBullyingWarning(onEdit) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
   overlay.innerHTML = `
   <div class="dialog-anim" style="background:white;border-radius:16px;padding:32px 28px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
  <h3 style="margin:0 0 12px;font-size:18px;color:#c62828;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 反欺凌机制已触发</h3>
