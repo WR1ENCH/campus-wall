@@ -5202,6 +5202,30 @@ function updateNotifBadges(unread) {
   var els = ['notifBadge','sideNavNotifBadge'];
   els.forEach(function(id) {
     var el = document.getElementById(id);
+    if (el) el.style.display = unread > 0 ? '' : 'none';
+  });
+  updateHamburgerBadges();
+}
+function updateHamburgerBadges() {
+  var hasUnread = _unreadNotifCount > 0 || _unreadVisitorCount > 0;
+  var els = ['hamburgerBadge','hamburgerBadge2'];
+  els.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = hasUnread ? '' : 'none';
+  });
+}
+
+function openNotifModal() {
+ var overlay = document.getElementById('notifOverlay');
+ overlay.style.display = 'flex';
+ loadNotifications();
+  completeNewbieTask('view_notifications');
+ }
+
+ function closeNotifModal() {
+ document.getElementById('notifOverlay').style.display = 'none';
+ }
+
 function openVisitorModal() {
   var token = localStorage.getItem('campus_user_token');
   if (!token || !currentUser) { showToast('请先登录'); return; }
@@ -5322,6 +5346,11 @@ function renderVisitorList(data, isPlus, wallMessages) {
    if (mins < 1) return '刚刚';
    if (mins < 60) return mins + '分钟前';
    var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + '小时前';
+  var days = Math.floor(hrs / 24);
+  if (days < 30) return days + '天前';
+  return new Date(dateStr).toLocaleDateString('zh-CN');
+ }
 function checkVisitorBadge() {
   var token = localStorage.getItem('campus_user_token');
   if (!token || !currentUser) return;
