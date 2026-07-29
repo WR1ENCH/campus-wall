@@ -3223,7 +3223,8 @@ async function completeNewbieTask(taskId) {
         var msgData = await msgResp.json();
         var subData = await subResp.json();
         var isPlus = !!(subData.ok && subData.data && subData.data.isPlus);
-        _visitorData = listData.ok ? listData.data : null;
+        // 能到达此处说明check-access已通过（PLUS或已购买日通行证），可以展示真实信息
+        var canReveal = true;
         var wallMessages = (msgData.ok && msgData.data && msgData.data.messages) ? msgData.data.messages : [];
 
         document.getElementById('visitorLoading').style.display = 'none';
@@ -3231,13 +3232,13 @@ async function completeNewbieTask(taskId) {
           document.getElementById('visitorEmpty').style.display = '';
           return;
         }
-        renderVisitorList(_visitorData, isPlus, wallMessages);
+        renderVisitorList(_visitorData, canReveal, isPlus, wallMessages);
       } catch (e) {
         document.getElementById('visitorLoading').textContent = '加载失败，请重试';
       }
     }
 
-    function renderVisitorList(data, isPlus, wallMessages) {
+    function renderVisitorList(data, canReveal, isPlus, wallMessages) {
       wallMessages = wallMessages || [];
       var container = document.getElementById('visitorList');
       container.style.display = '';
@@ -3245,8 +3246,8 @@ async function completeNewbieTask(taskId) {
 
       for (var i = 0; i < data.visits.length; i++) {
         var v = data.visits[i];
-        var name = isPlus ? (v.visitorNickname || '未知用户') : '匿名访客';
-        var avatar = isPlus && v.visitorAvatar ? v.visitorAvatar : '';
+        var name = canReveal ? (v.visitorNickname || '未知用户') : '匿名访客';
+        var avatar = canReveal && v.visitorAvatar ? v.visitorAvatar : '';
         var time = formatRelativeTime(v.createdAt);
         var isNew = !v.read;
         var visitorMsgs = wallMessages.filter(function(m) { return m.senderId === v.visitorUserId; });
@@ -3256,14 +3257,14 @@ async function completeNewbieTask(taskId) {
         html += '<div style="display:flex;align-items:center;gap:10px;">';
         if (avatar) {
           html += '<img src="' + avatar + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;';
-          if (!isPlus) html += 'filter:blur(4px);';
+          if (!canReveal) html += 'filter:blur(4px);';
           html += '">';
         } else {
-          html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-muted);flex-shrink:0;">' + (isPlus ? (v.visitorNickname ? v.visitorNickname.charAt(0) : '?') : '?') + '</div>';
+          html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-muted);flex-shrink:0;">' + (canReveal ? (v.visitorNickname ? v.visitorNickname.charAt(0) : '?') : '?') + '</div>';
         }
         html += '<div style="flex:1;min-width:0;">';
         html += '<div style="font-size:14px;font-weight:500;color:var(--text);';
-        if (!isPlus) html += 'filter:blur(4px);';
+        if (!canReveal) html += 'filter:blur(4px);';
         html += '">' + name + '</div>';
         html += '<div style="font-size:12px;color:var(--text-muted);">' + time + '</div>';
         html += '</div>';
@@ -3281,7 +3282,7 @@ async function completeNewbieTask(taskId) {
         html += '</div>';
       }
 
-      if (!isPlus) {
+      if (!canReveal) {
         html += '<div style="text-align:center;padding:20px 0 8px;font-size:14px;font-weight:700;color:var(--text);">订阅PLUS++以查看访客</div>';
         html += '<div style="text-align:center;padding:0 0 4px;"><a href="plus.html" class="btn btn-primary" style="text-decoration:none;">了解PLUS++</a></div>';
       }
