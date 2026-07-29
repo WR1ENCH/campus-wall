@@ -5226,6 +5226,10 @@ function openNotifModal() {
  document.getElementById('notifOverlay').style.display = 'none';
  }
 
+function closeVisitorModal() {
+  document.getElementById('visitorModal').style.display = 'none';
+}
+
 function openVisitorModal() {
   var token = localStorage.getItem('campus_user_token');
   if (!token || !currentUser) { showToast('请先登录'); return; }

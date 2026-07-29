@@ -1979,6 +1979,19 @@
       </div>
     </div>
   </div>
+<!-- Credit不足弹窗 -->
+<div id="wmCreditInsufficientOverlay" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);">
+  <div id="wmCreditInsufficientModal" style="background:#fff;border-radius:16px;padding:32px 28px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <h3 style="margin:0 0 8px;font-size:17px;color:#333;">Credit 不足</h3>
+    <p style="margin:0 0 6px;font-size:14px;color:#666;line-height:1.6;">发送留言需要消耗 Credits</p>
+    <p style="margin:0 0 20px;font-size:13px;color:#999;">当前余额: <b id="wmCreditBalance" style="color:#e8a800;">0</b> Credits</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="closeWmCreditInsufficient()" style="padding:10px 24px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:14px;cursor:pointer;">知道了</button>
+      <button onclick="closeWmCreditInsufficient();window.open('credit.html','_blank');" style="padding:10px 24px;border-radius:10px;border:none;background:#f5c518;color:#7a5700;font-weight:700;font-size:14px;cursor:pointer;">去充值</button>
+      <button onclick="closeWmCreditInsufficient();window.open('plus.html','_blank');" style="padding:10px 24px;border-radius:10px;border:none;background:#3a2a1a;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">订阅PLUS++</button>
+    </div>
+  </div>
+</div>
 
   <script src="mbti-questions.js"></script>
   <script>
@@ -3351,6 +3364,18 @@ async function completeNewbieTask(taskId) {
       var btn = document.getElementById('wmSubmitBtn');
       if (btn) { btn.disabled = false; btn.textContent = '发送留言'; }
     }
+    function closeWmCreditInsufficient() {
+      var overlay = document.getElementById('wmCreditInsufficientOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function showWmCreditInsufficientModal(balance) {
+      var overlay = document.getElementById('wmCreditInsufficientOverlay');
+      if (!overlay) return;
+      document.getElementById('wmCreditBalance').textContent = balance || 0;
+      overlay.style.display = 'flex';
+    }
+
 
     document.getElementById('wmContent').addEventListener('input', function() {
       document.getElementById('wmCharCount').textContent = this.value.length;
@@ -3379,7 +3404,9 @@ async function completeNewbieTask(taskId) {
           submitBtn.textContent = '发送留言';
           if (j.code === 'SENSITIVE_WORDS') showToast('内容包含敏感词，请修改后重试');
           else if (j.code === 'WALL_MSG_QUOTA_EXCEEDED') showToast('今日免费次数已用完');
-          else if (j.code === 'INSUFFICIENT_CREDIT') showToast('Credit不足');
+          else if (j.code === 'INSUFFICIENT_CREDIT') {
+            showWmCreditInsufficientModal(currentLoggedInUser ? (currentLoggedInUser.credit || 0) : 0);
+          }
           else if (j.code === 'CREDIBILITY_BLOCKED') showToast('信用分不足，无法留言');
           else showToast(j.msg || '发送失败');
         }
