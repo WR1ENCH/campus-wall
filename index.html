@@ -2816,6 +2816,10 @@ backdrop-filter: blur(4px);
  #notifContent::-webkit-scrollbar { width: 5px; }
  #notifContent::-webkit-scrollbar-track { background: transparent; }
  #notifContent::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+/* Red dot indicators for Credit/PLUS++ */
+.side-nav-red-dot { width:6px; height:6px; border-radius:50%; background:#ef4444; margin-left:4px; flex-shrink:0; }
+.action-bar-red-dot { position:absolute; top:2px; right:2px; width:6px; height:6px; border-radius:50%; background:#ef4444; flex-shrink:0; pointer-events:none; }
+.action-btn-relative { position:relative; }
  </style>
 </head>
 <body>
@@ -2882,8 +2886,8 @@ backdrop-filter: blur(4px);
   </div>
   <div class="action-btns">
   <button class="hamburger-btn" id="hamburgerBtn2" onclick="toggleSideNav()" style="display:flex;flex-shrink:0;margin-right:auto;"><span></span><span id="hamburgerBadge2" class="hamburger-badge" style="display:none"></span></button>
-   <button class="compose-btn" style="background:var(--brand-gold);color:var(--brand-brown);" onclick="window.open('credit.html','_blank')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg> <span class="btn-label">Credits</span> <span id="actionBarCredit" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span></button>
-   <button class="compose-btn" style="background:linear-gradient(135deg,#f5c518,#e0a800);color:#5a3d00;border:1.5px solid #d4a800;" onclick="window.open('plus.html','_blank')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span class="btn-label">PLUS++</span></button>
+   <button class="compose-btn action-btn-relative" style="background:var(--brand-gold);color:var(--brand-brown);" onclick="markCreditVisited(); window.open('credit.html','_blank')"><span id='actionBarCreditDot' class='action-bar-red-dot' style='display:none;'></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg> <span class="btn-label">Credits</span> <span id="actionBarCredit" style="font-weight:700;font-variant-numeric:tabular-nums;">0</span></button>
+   <button class="compose-btn action-btn-relative" style="background:linear-gradient(135deg,#f5c518,#e0a800);color:#5a3d00;border:1.5px solid #d4a800;" onclick="markPlusVisited(); window.open('plus.html','_blank')"><span id='actionBarPlusDot' class='action-bar-red-dot' style='display:none;'></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span class="btn-label">PLUS++</span></button>
    <button class="compose-btn" onclick="openModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span class="btn-label">贴一张</span></button>
   <button class="compose-btn" style="background:var(--note-blue);color:#1a3a6b;" type="button" onclick="openDiscussionModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="btn-label">讨论区</span></button>
   <button class="compose-btn" style="background:#fff7e0;color:#7a5700;border:1.5px solid #e8c84a;" type="button" onclick="openQAModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="btn-label">你问我答</span></button>
@@ -4004,15 +4008,17 @@ backdrop-filter: blur(4px);
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>
   <span class="nav-label">安全中心</span>
   </button>
-  <button class="side-nav-item" onclick="toggleSideNav(); window.open('credit.html','_blank');">
+  <button class="side-nav-item" onclick="toggleSideNav(); markCreditVisited(); window.open('credit.html','_blank');">
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M14.5 9.5a2 2 0 0 0-2-1.5h-1a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3h-1a2 2 0 0 1-2-1.5"/></svg></span>
   <span class="nav-label">我的Credits</span>
   <span id="sideNavCredit" style="margin-left:auto;font-size:12px;font-weight:700;color:#8b6f5e;background:rgba(139,111,94,0.12);padding:2px 9px;border-radius:10px;font-variant-numeric:tabular-nums;">0</span>
+<span id="sideNavCreditDot" class="side-nav-red-dot" style="display:none;"></span>
   </button>
-  <button class="side-nav-item" onclick="toggleSideNav(); window.open('plus.html','_blank');" style="--nav-accent:#f5c518;">
+  <button class="side-nav-item" onclick="toggleSideNav(); markPlusVisited(); window.open('plus.html','_blank');" style="--nav-accent:#f5c518;">
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
   <span class="nav-label">PLUS++ 订阅</span>
-  <span id="sideNavPlusBadge" style="margin-left:auto;font-size:10px;font-weight:700;color:#5a3d00;background:rgba(245,197,24,0.2);padding:2px 9px;border-radius:10px;border:1px solid rgba(245,197,24,0.3);">⭐PLUS</span>
+<span id="sideNavPlusBadge" style="margin-left:auto;font-size:10px;font-weight:700;color:#5a3d00;background:rgba(245,197,24,0.2);padding:2px 9px;border-radius:10px;border:1px solid rgba(245,197,24,0.3);">⭐PLUS</span>
+<span id="sideNavPlusDot" class="side-nav-red-dot" style="display:none;"></span>
   </button>
  <button class="side-nav-item" onclick="toggleSideNav(); window.open('task-center.html','_blank');">
  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
@@ -4427,6 +4433,7 @@ function renderVoteList(voteList) {
   }
   localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
   localStorage.setItem('campus_user_token', token);
+ if (typeof updateTaskBadge === 'function') updateTaskBadge();
   updateSideNavAuth();
   updateUserBar();
  checkAnnouncement();
@@ -5150,6 +5157,7 @@ function updateUserBar() {
     }
     }
     updateUserBar();
+  if (typeof updateTaskBadge === 'function') updateTaskBadge();
   if (typeof updateSideNavAuth === 'function') updateSideNavAuth();
   checkAnnouncement();
   await checkNotifBadge();
@@ -9898,20 +9906,35 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  if (userSection) userSection.style.display = 'none';
  }
  }
+ // Red dot: credit & plus
+ if (typeof updateCreditDot === 'function') updateCreditDot();
+ if (typeof updatePlusDot === 'function') updatePlusDot();
  // 任务中心红点徽章
  function updateTaskBadge() {
    var token = localStorage.getItem('campus_user_token') || localStorage.getItem('token');
    if (!token) return;
+   var badge = document.getElementById('sideNavTaskBadge');
+   // Check checkin from localStorage first (instant)
+   var userStr = localStorage.getItem('campus_wall_user');
+   var incompleteCount = 0;
+   if (userStr) {
+     try {
+       var u = JSON.parse(userStr);
+       if (!u.checkinToday) incompleteCount++;
+     } catch(e) {}
+   }
+   // Then check daily tasks from API (authoritative)
    fetch('/api/user/daily-tasks', { headers: { 'x-user-token': token } })
      .then(function(r) { return r.json(); })
      .then(function(res) {
        if (!res.ok) return;
        var tasks = res.tasks || [];
-       var unclaimed = tasks.filter(function(t) { return t.completed && !t.claimed; }).length;
-       var badge = document.getElementById('sideNavTaskBadge');
+       var activeCount = tasks.filter(function(t) { return !t.completed; }).length;
+       var unclaimedCount = tasks.filter(function(t) { return t.completed && !t.claimed; }).length;
+       incompleteCount += activeCount + unclaimedCount;
        if (badge) {
-         if (unclaimed > 0) {
-           badge.textContent = unclaimed;
+         if (incompleteCount > 0) {
+           badge.textContent = incompleteCount;
            badge.style.display = 'inline';
          } else {
            badge.style.display = 'none';
@@ -9919,6 +9942,45 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
        }
      }).catch(function() {});
  }
+
+ // === Red Dot: Credit & Plus ===
+ function isNewDay(lastDateStr) {
+   if (!lastDateStr) return true;
+   return lastDateStr !== new Date().toISOString().slice(0, 10);
+ }
+ function updateCreditDot() {
+   var dot = document.getElementById('sideNavCreditDot');
+   var dot2 = document.getElementById('actionBarCreditDot');
+   if (!dot && !dot2) return;
+   var last = localStorage.getItem('red_dot_credit_last_visit');
+   var show = isNewDay(last);
+   if (dot) dot.style.display = show ? '' : 'none';
+   if (dot2) dot2.style.display = show ? '' : 'none';
+ }
+ function markCreditVisited() {
+   localStorage.setItem('red_dot_credit_last_visit', new Date().toISOString().slice(0, 10));
+   var dot = document.getElementById('sideNavCreditDot');
+   var dot2 = document.getElementById('actionBarCreditDot');
+   if (dot) dot.style.display = 'none';
+   if (dot2) dot2.style.display = 'none';
+ }
+ function updatePlusDot() {
+   var dot = document.getElementById('sideNavPlusDot');
+   var dot2 = document.getElementById('actionBarPlusDot');
+   if (!dot && !dot2) return;
+   var last = localStorage.getItem('red_dot_plus_last_visit');
+   var show = isNewDay(last);
+   if (dot) dot.style.display = show ? '' : 'none';
+   if (dot2) dot2.style.display = show ? '' : 'none';
+ }
+ function markPlusVisited() {
+   localStorage.setItem('red_dot_plus_last_visit', new Date().toISOString().slice(0, 10));
+   var dot = document.getElementById('sideNavPlusDot');
+   var dot2 = document.getElementById('actionBarPlusDot');
+   if (dot) dot.style.display = 'none';
+   if (dot2) dot2.style.display = 'none';
+ }
+
 
  function toggleSideNav() {
  var nav = document.getElementById('sideNav');
@@ -9931,6 +9993,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  hamburger.classList.remove('active');
  document.body.style.overflow = '';
  } else {
+ if (typeof updateTaskBadge === 'function') updateTaskBadge();
  updateSideNavAuth();
  nav.classList.add('active');
  overlay.classList.add('active');
@@ -10039,6 +10102,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
  if (!window.matchMedia('(max-width: 768px)').matches) return;
  var hamburger = document.getElementById('hamburgerBtn');
  if (hamburger) hamburger.style.display = 'flex';
+ if (typeof updateTaskBadge === 'function') updateTaskBadge();
  updateSideNavAuth();
  window.addEventListener('storage', updateSideNavAuth);
  })();
