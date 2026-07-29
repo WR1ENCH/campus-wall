@@ -4939,7 +4939,10 @@ function renderVoteList(voteList) {
   function onbWheelUp(type) {
     const display = document.getElementById('onb' + type.charAt(0).toUpperCase() + type.slice(1) + 'Display');
     let val = parseInt(display.textContent);
-    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : 31;
+    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : getDaysInMonth(
+      parseInt(document.getElementById('onbYearDisplay').textContent),
+      parseInt(document.getElementById('onbMonthDisplay').textContent)
+    );
     const min = type === 'year' ? 1950 : 1;
     val = val >= max ? min : val + 1;
     display.textContent = val;
@@ -4954,7 +4957,10 @@ function renderVoteList(voteList) {
   function onbWheelDown(type) {
     const display = document.getElementById('onb' + type.charAt(0).toUpperCase() + type.slice(1) + 'Display');
     let val = parseInt(display.textContent);
-    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : 31;
+    const max = type === 'year' ? new Date().getFullYear() : type === 'month' ? 12 : getDaysInMonth(
+      parseInt(document.getElementById('onbYearDisplay').textContent),
+      parseInt(document.getElementById('onbMonthDisplay').textContent)
+    );
     const min = type === 'year' ? 1950 : 1;
     val = val <= min ? max : val - 1;
     display.textContent = val;
@@ -5072,6 +5078,8 @@ function renderVoteList(voteList) {
  updateUserBar();
  showToast('已退出登录');
  }
+
+const avatarSvg = '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
 
 function updateUserBar() {
   const barEl = document.getElementById('userInfoBar');
