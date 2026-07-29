@@ -571,7 +571,7 @@ module.exports = function(app) {
     const user = users.find(u => u.id === session.id);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0 } });
+    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed } });
   });
   app.get('/api/user/credit-logs', (req, res) => {
     const token = req.headers['x-user-token'];
@@ -630,6 +630,13 @@ module.exports = function(app) {
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === session.id);
     if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+    // 首冲福利：首次兑换卡密 → 双倍
+    let bonusApplied = false;
+    if (!users[userIndex].firstRechargeBonusClaimed) {
+      card.value *= 2;
+      users[userIndex].firstRechargeBonusClaimed = 1;
+      bonusApplied = true;
+    }
     users[userIndex].credit = (users[userIndex].credit || 0) + card.value;
     writeUsers(users);
   
@@ -639,12 +646,12 @@ module.exports = function(app) {
       id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       userId: session.id,
       amount: card.value,
-      reason: '卡密兑换：' + cleanCode,
+      reason: bonusApplied ? '卡密兑换（首冲双倍）：' + cleanCode : '卡密兑换：' + cleanCode,
       createdAt: new Date().toISOString()
     });
     writeCreditLogs(logs);
   
-    res.json({ ok: true, data: { value: card.value, balance: users[userIndex].credit } });
+    res.json({ ok: true, data: { value: card.value, balance: users[userIndex].credit, bonus: bonusApplied } });
   });
   app.patch('/api/user/me', (req, res) => {
     const token = req.headers['x-user-token'];

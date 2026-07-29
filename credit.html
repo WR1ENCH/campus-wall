@@ -502,6 +502,27 @@
         font-size: 40px;
       }
     }
+  /* ===== 首冲福利横幅 ===== */
+  .first-bonus-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--gold-light);
+    border: 1px solid rgba(245,197,24,0.3);
+    border-radius: var(--radius);
+    color: var(--gold-deep);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .first-bonus-banner svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--gold);
+  }
   </style>
 </head>
 <body>
@@ -589,7 +610,8 @@
           if (logJson.ok) logs = logJson.data || [];
         } catch {}
 
-        renderCredit(balance, logs);
+        var hasFirstBonus = !user.firstRechargeBonusClaimed;
+        renderCredit(balance, logs, hasFirstBonus);
       } catch (e) {
         content.innerHTML =
           '<div class="section-card">' +
@@ -601,7 +623,7 @@
       }
     }
 
-    function renderCredit(balance, logs) {
+    function renderCredit(balance, logs, hasFirstBonus) {
       var content = document.getElementById('creditContent');
 
       var logsHtml = '';
@@ -623,6 +645,14 @@
           '</div>';
         }).join('');
       }
+      // 首冲福利横幅
+      var bonusHtml = '';
+      if (hasFirstBonus) {
+        bonusHtml = '<div class="first-bonus-banner">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+          '<span>🎉 首冲福利：首次兑换卡密可获得双倍 Credit！</span>' +
+        '</div>';
+      }
 
       content.innerHTML =
         '<div class="hero-card">' +
@@ -641,6 +671,7 @@
             '<input type="text" id="redeemInput" class="redeem-input" placeholder="输入卡密（如 CW-XXXX-XXXX-XXXX）" maxlength="30" onkeydown="if(event.key===\'Enter\')doRedeem()">' +
             '<button class="redeem-btn" id="redeemBtn" onclick="doRedeem()">兑换</button>' +
           '</div>' +
+          bonusHtml +
           '<div class="redeem-result" id="redeemResult"></div>' +
         '</div>' +
         '<div class="section-card">' +

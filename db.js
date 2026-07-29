@@ -553,6 +553,15 @@ function migrate() {
       console.warn('[db.js] ⚠️ 添加列 users.birthday 失败:', e.message);
     }
   }
+  // 首冲福利标记字段
+  if (!existingUserCols.includes('firstRechargeBonusClaimed')) {
+    try {
+      db.exec(`ALTER TABLE "users" ADD COLUMN "firstRechargeBonusClaimed" INTEGER DEFAULT 0`);
+      console.log('[db.js] ✅ 已添加列 users.firstRechargeBonusClaimed');
+    } catch (e) {
+      console.warn('[db.js] ⚠️ 添加列 users.firstRechargeBonusClaimed 失败:', e.message);
+    }
+  }
   // credibility_logs 表
   db.exec(`CREATE TABLE IF NOT EXISTS "credibility_logs" (
     "id" TEXT PRIMARY KEY,
