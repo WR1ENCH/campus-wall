@@ -642,7 +642,7 @@ function dropAndInsert(table, rows) {
   const tx = d.transaction(() => {
     d.exec(`DELETE FROM "${table}"`);
     if (!rows || rows.length === 0) return;
-    const cols = Object.keys(rows[0]);
+    const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
     const ph = cols.map(() => '?').join(',');
     const ins = d.prepare(`INSERT INTO "${table}" (${cols.map(c => '"' + c + '"').join(',')}) VALUES (${ph})`);
     for (const row of rows) {
