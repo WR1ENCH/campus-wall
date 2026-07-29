@@ -757,5 +757,12 @@
 
     loadCredit();
   </script>
+
+  <script>
+    // Mark credit page visited to clear red dot
+    (function() {
+      localStorage.setItem('red_dot_credit_last_visit', new Date().toISOString().slice(0, 10));
+    })();
+  </script>
 </body>
 </html>
