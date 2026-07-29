@@ -1112,7 +1112,7 @@ transition: top 0.3s ease, padding var(--ease-linear);
    }
    .post-pinned-badge {
    position: absolute;
-   top: -8px;
+   top: 12px;
    right: 8px;
    display: inline-flex;
    align-items: center;
@@ -6436,6 +6436,11 @@ function renderNotes(filter = '全部') {
 function _doRenderNotes(filter = '全部') {
  const grid = document.getElementById('notesGrid');
  const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
+  // 置顶帖优先，然后按时间降序
+  filtered.sort((a, b) => {
+    if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+    return new Date(b.time) - new Date(a.time);
+  });
 
 
  if (filtered.length === 0) {
@@ -7668,6 +7673,7 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
   await fetchPosts();
   renderNotes(currentFilter);
   showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
+  closeModal();
   } else if (_returnToEdit) {
   _returnToEdit = false;
   } else {
