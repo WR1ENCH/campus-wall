@@ -280,10 +280,6 @@ app.post('/api/posts', (req, res) => {
     if (!session) return res.json({ ok: false, msg: '登录已过期，请重新登录', code: 'TOKEN_EXPIRED' });
     realUserId = session.id;
     realAuthor = session.nickname || '匿名';
-    // 从用户数据中获取头像
-    const allUsers = readUsers();
-    const user = allUsers.find(u => u.id === session.id);
-    realAvatar = (user && user.avatar) || '🙈';
   }
 
   const { type, content, captchaId, captchaText, sensitiveForce, images, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, payWithCredit, pinned } = req.body;
@@ -294,6 +290,20 @@ app.post('/api/posts', (req, res) => {
     realAuthor = '匿名';
     realAvatar = '🙈';
     anonymousFlag = true;
+  }
+
+  // --- 提前缓存批量读取，避免重复全表扫描 ---
+  let allUsers = null;
+  let allPosts = null;
+  let userIsPlus = false;
+  if (realUserId) {
+    allUsers = readUsers();
+    const currentUser = allUsers.find(u => u.id === realUserId);
+    if (!anonymousFlag) {
+      realAvatar = (currentUser && currentUser.avatar) || '🙈';
+    }
+    allPosts = readPosts();
+    userIsPlus = isUserPlus(realUserId);
   }
 
   // 信用分检测
@@ -315,21 +325,18 @@ app.post('/api/posts', (req, res) => {
   // 每日发帖次数限额（PLUS 无限制，非PLUS 5次/天，超出需39 credit）
   if (realUserId) {
     const today = new Date().toISOString().slice(0, 10);
-    const allPosts = readPosts();
     const uid = String(realUserId);
     const todayPosts = allPosts.filter(p => String(p.userId) === uid && p.time && String(p.time).startsWith(today));
-    const dailyLimit = isUserPlus(realUserId) ? Infinity : 5;
+    const dailyLimit = userIsPlus ? Infinity : 5;
     if (todayPosts.length >= dailyLimit) {
       if (!payWithCredit) {
         return res.json({ ok: false, code: 'DAILY_POST_LIMIT', msg: '今日免费发帖次数已用完（' + dailyLimit + '/' + dailyLimit + '），每次需消耗 39 credit', cost: 39 });
       }
-      const users = readUsers();
-      const user = users.find(u => u.id === realUserId);
+      const user = allUsers.find(u => u.id === realUserId);
       if (!user || (user.credit || 0) < 39) {
         return res.json({ ok: false, msg: 'credit 不足，无法发帖', code: 'INSUFFICIENT_CREDIT' });
       }
       user.credit = (user.credit || 0) - 39;
-      writeUsers(users);
       const logs = readCreditLogs();
       logs.push({
         id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -345,21 +352,18 @@ app.post('/api/posts', (req, res) => {
   // 匿名发帖配额检测（PLUS 20次/天免费，非PLUS 2次/天免费，超出需50credit）
   if (anonymousFlag && realUserId) {
     const today = new Date().toISOString().slice(0, 10);
-    const allPosts = readPosts();
     const uid = String(realUserId);
     const todayAnonPosts = allPosts.filter(p => String(p.userId) === uid && p.isAnonymous && p.time && String(p.time).startsWith(today));
-    const anonLimit = isUserPlus(realUserId) ? 20 : 2;
+    const anonLimit = userIsPlus ? 20 : 2;
     if (todayAnonPosts.length >= anonLimit) {
       if (!payWithCredit) {
         return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（' + anonLimit + '/' + anonLimit + '），每次需消耗 50 credit', cost: 50 });
       }
-      const users = readUsers();
-      const user = users.find(u => u.id === realUserId);
+      const user = allUsers.find(u => u.id === realUserId);
       if (!user || (user.credit || 0) < 50) {
         return res.json({ ok: false, msg: 'credit 不足，无法匿名发帖', code: 'INSUFFICIENT_CREDIT' });
       }
       user.credit = (user.credit || 0) - 50;
-      writeUsers(users);
       const logs = readCreditLogs();
       logs.push({
         id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -374,17 +378,15 @@ app.post('/api/posts', (req, res) => {
 
   // 置顶处理：检查并扣除置顶费用/次数
   if (pinned && realUserId) {
-    if (isUserPlus(realUserId)) {
+    if (userIsPlus) {
       const used = getUserMonthlyPinCount(realUserId);
       if (used >= 40) {
         // PLUS 用户超过 40 次/月 → 按非 PLUS 处理（扣 100 credit）
-        const users = readUsers();
-        const user = users.find(u => u.id === realUserId);
+        const user = allUsers.find(u => u.id === realUserId);
         if (!user || (user.credit || 0) < 100) {
           return res.json({ ok: false, msg: 'credit 不足，无法置顶（需 100 credit）', code: 'INSUFFICIENT_CREDIT' });
         }
         user.credit = (user.credit || 0) - 100;
-        writeUsers(users);
         const logs = readCreditLogs();
         logs.push({
           id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -398,13 +400,11 @@ app.post('/api/posts', (req, res) => {
         incrementUserPinCount(realUserId);
       }
     } else {
-      const users = readUsers();
-      const user = users.find(u => u.id === realUserId);
+      const user = allUsers.find(u => u.id === realUserId);
       if (!user || (user.credit || 0) < 100) {
         return res.json({ ok: false, msg: 'credit 不足，无法置顶（需 100 credit）', code: 'INSUFFICIENT_CREDIT' });
       }
       user.credit = (user.credit || 0) - 100;
-      writeUsers(users);
       const logs = readCreditLogs();
       logs.push({
         id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -417,24 +417,25 @@ app.post('/api/posts', (req, res) => {
     }
   }
 
-// 发帖频率检测（5分钟内最多3篇，超出需验证码）
-if (realUserId) {
-  const now = Date.now();
-  const timestamps = postRateLimit.get(realUserId) || [];
-  const recentPosts = timestamps.filter(ts => now - ts < 300000);
-  if (recentPosts.length >= 3 && !maintenance.isBotTesting()) {
-    const entry = captchaStore.get(captchaId);
-    if (!entry || !entry.verified) {
-      return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
+  // 发帖频率检测（5分钟内最多3篇，超出需验证码）
+  if (realUserId) {
+    const now = Date.now();
+    const timestamps = postRateLimit.get(realUserId) || [];
+    const recentPosts = timestamps.filter(ts => now - ts < 300000);
+    if (recentPosts.length >= 3 && !maintenance.isBotTesting()) {
+      const entry = captchaStore.get(captchaId);
+      if (!entry || !entry.verified) {
+        return res.json({ ok: false, needCaptcha: true, msg: '发帖频率过高，请先验证' });
+      }
+      // 验证码通过，清除限制，重新计时
+      postRateLimit.delete(realUserId);
+      captchaStore.delete(captchaId);
     }
-    // 验证码通过，清除限制，重新计时
-    postRateLimit.delete(realUserId);
-    captchaStore.delete(captchaId);
+    // 记录本次发帖
+    postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 保留最近20条
   }
-  // 记录本次发帖
-  postRateLimit.set(realUserId, [...recentPosts.slice(-19), now]); // 保留最近20条
-}
-if (!content || !content.trim()) {
+
+  if (!content || !content.trim()) {
     return res.json({ ok: false, msg: '内容不能为空' });
   }
   if (content.length > CONTENT_MAX_LENGTH) {
@@ -467,7 +468,8 @@ if (!content || !content.trim()) {
     });
   }
 
-  const posts = readPosts();
+  // 如果还没读过 posts（匿名用户场景），现在读
+  if (!allPosts) allPosts = readPosts();
 
   // 验证图片（base64 data URL，每张≤10MB，最多4张）
   var validImages = [];
@@ -516,9 +518,7 @@ if (!content || !content.trim()) {
     newPost.pinnedAt = Date.now();
   }
 
-  posts.unshift(newPost);
-  writePosts(posts);
-
+  // --- 收集所有 mutation，在写入 posts 前完成 discussionId 等计算 ---
   // 自动话题识别：内容以 # 开头时，提取话题名并关联/创建讨论区
   var finalSyncDiscussionId = req.body.syncDiscussionId;
   if (!finalSyncDiscussionId && content.trim().startsWith('#')) {
@@ -542,8 +542,12 @@ if (!content || !content.trim()) {
       }
       finalSyncDiscussionId = _disc.id;
       newPost.discussionId = _disc.id;
-      writePosts(posts);
     }
+  }
+
+  // 通过 syncDiscussionId 自动补全的场景
+  if (finalSyncDiscussionId && !newPost.discussionId) {
+    newPost.discussionId = finalSyncDiscussionId;
   }
 
   // 敏感词命中：自动生成举报记录挂到后台
@@ -567,16 +571,16 @@ if (!content || !content.trim()) {
     writeReports(reports);
   }
 
-  // 更新注册用户的发贴数
-  if (realUserId && realAuthor) {
-    incUserPostCount(realAuthor);
+  // 更新注册用户的发贴数（操作缓存的 allUsers，共享引用避免覆盖 credit 扣减）
+  if (realUserId && realAuthor && allUsers) {
+    const user = allUsers.find(u => u.nickname === realAuthor);
+    if (user) {
+      user.postCount = (user.postCount || 0) + 1;
+    }
   }
 
-  // 通过 syncDiscussionId 自动补全的场景：确保 post.discussionId 已设置
-  if (finalSyncDiscussionId && !newPost.discussionId) {
-    newPost.discussionId = finalSyncDiscussionId;
-    writePosts(posts);
-  }
+  // ===== 统一持久化：先写 users 再写 posts（不同表，顺序无关） =====
+  if (allUsers) writeUsers(allUsers);
 
   // 同步到讨论区（如果用户指定了话题或自动识别了话题）
   if (finalSyncDiscussionId && realUserId) {
@@ -603,6 +607,10 @@ if (!content || !content.trim()) {
       writeDiscussions(discussions);
     }
   }
+
+  // ===== 单次写入 posts =====
+  allPosts.unshift(newPost);
+  writePosts(allPosts);
 
   if (realUserId) updateTaskProgress(realUserId, 'post');
 
