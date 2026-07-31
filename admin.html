@@ -6939,6 +6939,7 @@
         document.getElementById('smtpPort').value = json.data.port || 587;
         document.getElementById('smtpUser').value = json.data.user || '';
         document.getElementById('smtpPass').value = '';
+        document.getElementById('smtpPass').placeholder = json.data.pass ? '已保存密码，留空则不修改' : '留空则不修改';
         document.getElementById('smtpFromName').value = json.data.fromName || '';
         document.getElementById('smtpStatus').textContent = json.data.host ? '当前已有配置' : '尚未配置 SMTP';
         document.getElementById('smtpStatus').style.color = json.data.host ? '#22c55e' : '#b8a898';
@@ -6982,7 +6983,6 @@
       if (json.ok) {
         document.getElementById('smtpStatus').textContent = '✅ 配置已保存';
         document.getElementById('smtpStatus').style.color = '#22c55e';
-        document.getElementById('smtpPass').value = '';
       } else {
         document.getElementById('smtpStatus').textContent = '❌ ' + (json.msg || '保存失败');
         document.getElementById('smtpStatus').style.color = '#ef4444';
