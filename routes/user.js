@@ -463,7 +463,7 @@ module.exports = function(app) {
     }
     entry.lastUsedAt = Date.now();
     writeTrustTokens(tokens);
-    res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user), isPlus: isUserPlus(user.id) } });
+    res.json({ ok: true, data: { token: makeUserToken(user), id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, email: user.email || null, emailVerified: user.emailVerified === 1, credit: user.credit || 0, zhixueStatus: getDisplayZhixueStatus(user), isPlus: isUserPlus(user.id) } });
   });
   app.post('/api/user/revoke-trust', (req, res) => {
     const { trustToken } = req.body;
@@ -648,7 +648,7 @@ module.exports = function(app) {
     const user = users.find(u => u.id === session.id);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed } });
+    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, email: user.email || null, emailVerified: user.emailVerified === 1, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed } });
   });
   app.get('/api/user/credit-logs', (req, res) => {
     const token = req.headers['x-user-token'];
