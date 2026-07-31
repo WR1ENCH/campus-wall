@@ -1524,7 +1524,7 @@
           var typeColors = { '吐槽': '#f59e0b', '求助': '#3b82f6', '分享': '#10b981', '表白': '#ec4899', '失物': '#8b5cf6' };
           callback({
             text: d.content || '',
-            hasImages: d.images && d.images.length > 0,
+            hasImages: !!d.imageCount,
             typeLabel: d.type || '帖子',
             typeColor: typeColors[d.type] || '#6b7280',
             author: d.author || ''
