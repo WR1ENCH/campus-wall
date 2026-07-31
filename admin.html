@@ -23,6 +23,7 @@
       --text-sub: #6b7280;
       --accent: #3d6ce8;
       --accent-hover: #2d5cd8;
+      --primary: #3d6ce8;
       --danger: #ef4444;
       --danger-hover: #dc2626;
       --success: #22c55e;
@@ -767,6 +768,15 @@
       <div class="nav-item" onclick="showPage('creditadmin', this)">
         <span class="nav-icon">🪙</span>
         <span>Credit 管理</span>
+      </div>
+    </div>
+
+    <!-- 系统设置 -->
+    <div class="nav-section">
+      <div class="nav-label">系统设置</div>
+      <div class="nav-item" onclick="showPage('smtp', this)">
+        <span class="nav-icon">📧</span>
+        <span>邮箱配置</span>
       </div>
     </div>
 
@@ -1802,6 +1812,45 @@
         </div>
       </div>
     </div>
+
+<!-- ===== SMTP 邮箱配置 ===== -->
+<div class="page" id="page-smtp" style="display:none;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+    <div style="font-size:20px;font-weight:700;color:var(--text-main);">📧 SMTP 邮箱配置</div>
+  </div>
+  <div style="font-size:13px;color:var(--text-sub);margin-bottom:20px;">配置后用户可在注册引导中验证邮箱，也可用于找回密码等场景</div>
+  <div style="background:var(--card-bg);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);max-width:500px;">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;">SMTP 服务器 <span style="color:var(--danger);">*</span></label>
+        <input id="smtpHost" type="text" placeholder="smtp.example.com" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text-main);">
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;">端口 <span style="color:var(--danger);">*</span></label>
+          <input id="smtpPort" type="number" placeholder="587" value="587" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text-main);">
+        </div>
+        <div style="flex:1;">
+          <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;">发件人名称</label>
+          <input id="smtpFromName" type="text" placeholder="校园墙" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text-main);">
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;">用户名 <span style="color:var(--danger);">*</span></label>
+        <input id="smtpUser" type="text" placeholder="your@email.com" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text-main);">
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;">密码</label>
+        <input id="smtpPass" type="password" placeholder="留空则不修改" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text-main);">
+      </div>
+      <div id="smtpStatus" style="font-size:13px;min-height:20px;"></div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="saveSmtpConfig()" style="padding:10px 24px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">配置保存</button>
+        <button id="smtpTestBtn" onclick="testSmtpConnection()" style="padding:10px 24px;border:none;border-radius:8px;background:transparent;color:var(--text-sub);font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--border);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-sub)'">测试连接</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ===== 已删除内容管理 ===== -->
 <div class="page" id="page-deleted" style="display:none;">
@@ -4120,7 +4169,7 @@
     if (targetPage) targetPage.style.display = 'block';
     if (navItem) navItem.classList.add('active');
     currentPageId = id;
-    const titles = { dashboard: '数据总览', maintenance: '维护模式', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', punishments: '处罚管理', appeals: '申诉处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', pluscards: 'PLUS卡密管理', subscriptions: '订阅管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', votes: '投票管理' };
+    const titles = { dashboard: '数据总览', maintenance: '维护模式', posts: '帖子管理', users: '用户列表', admins: '管理员管理', reports: '举报处理', punishments: '处罚管理', appeals: '申诉处理', comments: '评论管理', discussions: '讨论管理', qa: '问答管理', loginlogs: '登录日志', zhixue: '同学认证审核', announcement: '公告管理', creditcards: '卡密管理', pluscards: 'PLUS卡密管理', subscriptions: '订阅管理', creditadmin: 'Credit 管理', feedbacks: '反馈处理', bullying: '平台霸凌举报', sensitivewords: '违禁词管理', pickup: '拍卖审核', votes: '投票管理', smtp: '邮箱配置' };
     document.getElementById('pageTitle').textContent = titles[id] || id;
     if (id === 'admins' && currentAdmin.role === 'super') loadAdmins();
     if (id === 'users') loadUsers();
@@ -4147,6 +4196,7 @@
     if (id === 'noticePublishers') { loadPublishers(); }
     if (id === 'votes') { loadAdminVotes(); }
     if (id === 'maintenance') { loadMaintenanceStatus(); }
+    if (id === 'smtp') loadSmtpConfig();
   }
 
   // ===== 维护模式 =====
@@ -6878,6 +6928,117 @@
     });
   };
 
+
+  // ===== SMTP 邮箱配置 =====
+  async function loadSmtpConfig() {
+    try {
+      const res = await fetch('/api/admin/smtp-config', { headers: authHeaders() });
+      const json = await res.json();
+      if (json.ok && json.data) {
+        document.getElementById('smtpHost').value = json.data.host || '';
+        document.getElementById('smtpPort').value = json.data.port || 587;
+        document.getElementById('smtpUser').value = json.data.user || '';
+        document.getElementById('smtpPass').value = '';
+        document.getElementById('smtpFromName').value = json.data.fromName || '';
+        document.getElementById('smtpStatus').textContent = json.data.host ? '当前已有配置' : '尚未配置 SMTP';
+        document.getElementById('smtpStatus').style.color = json.data.host ? '#22c55e' : '#b8a898';
+      }
+    } catch (e) {
+      document.getElementById('smtpStatus').textContent = '加载失败';
+      document.getElementById('smtpStatus').style.color = '#ef4444';
+    }
+  }
+
+  async function saveSmtpConfig() {
+    const host = document.getElementById('smtpHost').value.trim();
+    const port = document.getElementById('smtpPort').value.trim();
+    const user = document.getElementById('smtpUser').value.trim();
+    const pass = document.getElementById('smtpPass').value;
+    const fromName = document.getElementById('smtpFromName').value.trim() || '校园墙';
+
+    if (!host) {
+      document.getElementById('smtpStatus').textContent = '请输入 SMTP 服务器地址';
+      document.getElementById('smtpStatus').style.color = '#ef4444';
+      return;
+    }
+    if (!user) {
+      document.getElementById('smtpStatus').textContent = '请输入用户名';
+      document.getElementById('smtpStatus').style.color = '#ef4444';
+      return;
+    }
+
+    document.getElementById('smtpStatus').textContent = '保存中...';
+    document.getElementById('smtpStatus').style.color = '#b8a898';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch('/api/admin/smtp-config', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host, port, user, pass, fromName }),
+        signal: controller.signal
+      });
+      const json = await res.json();
+      if (json.ok) {
+        document.getElementById('smtpStatus').textContent = '✅ 配置已保存';
+        document.getElementById('smtpStatus').style.color = '#22c55e';
+        document.getElementById('smtpPass').value = '';
+      } else {
+        document.getElementById('smtpStatus').textContent = '❌ ' + (json.msg || '保存失败');
+        document.getElementById('smtpStatus').style.color = '#ef4444';
+      }
+    } catch (e) {
+      document.getElementById('smtpStatus').textContent = e.name === 'AbortError' ? '❌ 保存超时，请检查网络后重试' : '❌ 网络错误';
+      document.getElementById('smtpStatus').style.color = '#ef4444';
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function testSmtpConnection() {
+    const host = document.getElementById('smtpHost').value.trim();
+    const port = document.getElementById('smtpPort').value.trim();
+    const user = document.getElementById('smtpUser').value.trim();
+    const pass = document.getElementById('smtpPass').value;
+    const statusEl = document.getElementById('smtpStatus');
+    const btn = document.getElementById('smtpTestBtn');
+
+    if (!host || !user) {
+      statusEl.textContent = '请先填写服务器和用户名';
+      statusEl.style.color = '#ef4444';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '测试中...';
+    statusEl.textContent = '正在测试连接...';
+    statusEl.style.color = '#b8a898';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch('/api/admin/smtp-config/test', {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host, port, user, pass }),
+        signal: controller.signal
+      });
+      const json = await res.json();
+      if (json.ok) {
+        statusEl.textContent = '✅ ' + (json.msg || '连接成功');
+        statusEl.style.color = '#22c55e';
+      } else {
+        statusEl.textContent = '❌ ' + (json.msg || '连接失败');
+        statusEl.style.color = '#ef4444';
+      }
+    } catch (e) {
+      statusEl.textContent = e.name === 'AbortError' ? '❌ 连接超时' : '❌ 网络错误';
+      statusEl.style.color = '#ef4444';
+    } finally {
+      clearTimeout(timer);
+      btn.disabled = false;
+      btn.textContent = '测试连接';
+    }
+  }
   // ===== 启动 =====
   checkSession();
 </script>

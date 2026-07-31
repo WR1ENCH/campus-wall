@@ -152,7 +152,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, {
+  setHeaders(res, path) {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 
 // ===== SSE 实时推送 =====
 const { sseClients } = require('./lib/sse');
