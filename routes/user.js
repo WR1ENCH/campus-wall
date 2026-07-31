@@ -3,7 +3,8 @@ const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verif
 const { generateId } = require('../lib/uniqueId');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
-const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX } = require('../lib/state');
+const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX, inviteCheckLimit, INVITE_CHECK_MIN_MS, INVITE_CHECK_HOUR_MAX, INVITE_CHECK_HOUR_MS } = require('../lib/state');
+const invite = require('../lib/invite');
 const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
 const nodeCrypto = require('crypto');
@@ -89,6 +90,75 @@ function luhnModN(code) {
   return chars[expected] === code[code.length - 1];
 }
 
+// ===== 邀请奖励子流程 =====
+// 在注册成功之后调用；任一反作弊门不过或超限 → 跳过奖励并写 blocked audit。
+// 返回 true 表示已发奖（对应响应 invitedByRewarded=true），false 表示未发。
+function applyInviteReward(inviter, newUser, req, regIp) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const ip = regIp || getClientIP(req);
+    const dHash = invite.deviceHash(req);
+    const auditId = 'INVA_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // 发奖前重读 users，确保用最新的计数判断反作弊门 / 上限（避免跨请求读到陈旧计数）
+    const users = readUsers();
+    const inv = users.find(u => u.id === inviter.id);
+    const invi = users.find(u => u.id === newUser.id);
+    if (!inv || !invi) { console.error('[invite] reward failed: user not found in re-read'); return false; }
+    const auditBase = {
+      inviteeUserId: newUser.id,
+      inviterUserId: inviter.id,
+      inviterCode: newUser.invitedBy,
+      ip,
+      deviceHash: dHash,
+      credibilityAtRegister: inv.credibility_score != null ? inv.credibility_score : null,
+      createdAt: new Date().toISOString()
+    };
+    const blocked = (reason) => {
+      db.insertInviteAudit({ id: 'INVA_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...auditBase, status: 'blocked', reason });
+    };
+
+    // Step A：反作弊门
+    if (invite.isSelfReferral(inv, newUser.id)) { blocked('self_referral'); return false; }
+    if (inv.status === 'banned') { blocked('inviter_banned'); return false; }
+    if (inv.credibility_score != null && inv.credibility_score < 80) { blocked('low_credibility'); return false; }
+    if (inv.regIp && inv.regIp === ip) { blocked('same_ip'); return false; }
+    // 同设备多账号：查当日已有 rewarded audit 中是否出现相同 deviceHash（且指向同一邀请人）
+    const audits = db.readInviteAudit();
+    const sameDeviceToday = audits.some(a =>
+      a.inviterUserId === inviter.id &&
+      a.deviceHash === dHash &&
+      a.status === 'rewarded' &&
+      a.createdAt && a.createdAt.slice(0, 10) === today
+    );
+    if (sameDeviceToday) { blocked('same_device'); return false; }
+
+    // Step B：日/累计上限（基于最新计数）
+    if (inv.inviteRewardedDate !== today) {
+      inv.inviteRewardedToday = 0;
+      inv.inviteRewardedDate = today;
+    }
+    if ((inv.inviteRewardedToday || 0) >= invite.DAILY_REWARD_LIMIT) { blocked('daily_limit'); return false; }
+    if ((inv.inviteRewardTotal || 0) >= invite.TOTAL_REWARD_LIMIT) { blocked('total_limit'); return false; }
+
+    // Step C：发奖 —— 就地改 inv + invi（已重读），最后一次写
+    inv.credit = (inv.credit || 0) + 100;
+    inv.inviteRewardedToday = (inv.inviteRewardedToday || 0) + 1;
+    inv.inviteRewardTotal = (inv.inviteRewardTotal || 0) + 1;
+    invi.credit = (invi.credit || 0) + 100;
+    writeUsers(users);
+    // 写 credit_logs（一次性追加两条，避免多次全表重写丢记录）；id 沿用现有 cl_ 前缀
+    const logs = readCreditLogs();
+    logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), userId: inv.id, amount: 100, reason: `邀请奖励：用户 ${invi.nickname || invi.username || ''} 加入`, createdAt: new Date().toISOString() });
+    logs.push({ id: 'cl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), userId: invi.id, amount: 100, reason: `邀请注册奖励（邀请人：${inv.nickname || inv.username || ''}）`, createdAt: new Date().toISOString() });
+    writeCreditLogs(logs);
+    db.insertInviteAudit({ id: auditId, ...auditBase, status: 'rewarded', reason: null });
+    return true;
+  } catch (e) {
+    console.error('[invite] reward failed', e);
+    return false;
+  }
+}
+
 const QR_CODE_TTL = 5 * 60 * 1000;
 
 function persistQrCodes() {
@@ -160,7 +230,7 @@ module.exports = function(app) {
     res.json({ ok: true, data: { available: true } });
   });
   app.post('/api/user/register', (req, res) => {
-    const { username, password, nickname, captchaId, captchaText } = req.body;
+    const { username, password, nickname, captchaId, captchaText, inviteCode } = req.body;
     if (!username || !password) {
       return res.json({ ok: false, msg: '账号、密码均为必填项' });
     }
@@ -183,6 +253,31 @@ module.exports = function(app) {
     }
   
     const ip = getClientIP(req);
+    // 邀请码处理：形状无效/找不到邀请人都不阻塞注册（当空处理），仅写 audit 留痕
+    let inviter = null;
+    let invitedByRewarded = false;
+    const cleanInviteCode = inviteCode ? String(inviteCode).trim().toUpperCase() : '';
+    if (cleanInviteCode) {
+      const auditBase = {
+        inviteeUserId: null,
+        inviterUserId: null,
+        inviterCode: cleanInviteCode,
+        ip,
+        deviceHash: invite.deviceHash(req),
+        credibilityAtRegister: null,
+        createdAt: new Date().toISOString()
+      };
+      const blockedAudit = (reason, inviteeId) => {
+        db.insertInviteAudit({ id: 'INVA_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...auditBase, inviteeUserId: inviteeId || null, status: 'blocked', reason });
+      };
+      if (!invite.validateInviteCodeShape(cleanInviteCode)) {
+        blockedAudit('invalid_shape', null);
+      } else {
+        inviter = users.find(u => u.inviteCode === cleanInviteCode) || null;
+        if (!inviter) blockedAudit('no_matching_inviter', null);
+      }
+    }
+
     const newUser = {
       id: 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       username,
@@ -198,11 +293,28 @@ module.exports = function(app) {
       bindAdminRole: null,
       credibility_score: 90,
       credibility_exchanged_total: 0,
-      credibility_last_refresh: new Date().toISOString()
+      credibility_last_refresh: new Date().toISOString(),
+      invitedBy: inviter ? cleanInviteCode : null,
+      invitedByUserId: inviter ? inviter.id : null,
+      inviteRewardTotal: 0,
+      inviteRewardedToday: 0,
+      inviteRewardedDate: null
     };
+    // 生成该用户自己的可分享邀请码（唯一 + Luhn 校验位）；生成失败（组合空间耗尽等异常）时返回干净失败，避免请求挂起
+    try {
+      newUser.inviteCode = invite.generateInviteCode(users.map(u => u.inviteCode).filter(Boolean));
+    } catch (e) {
+      console.error('[invite] generate invite code failed', e);
+      return res.json({ ok: false, msg: '注册失败，请稍后再试' });
+    }
     users.push(newUser);
     writeUsers(users);
     if (!maintenance.isBotTesting()) captchaStore.delete(captchaId);
+
+    // 邀请双方奖励：在响应前执行，使 invitedByRewarded 准确；异常被 applyInviteReward 内部 try/catch 吞掉，不阻塞注册
+    if (inviter) {
+      invitedByRewarded = applyInviteReward(inviter, newUser, req, ip);
+    }
   
     res.json({
       ok: true,
@@ -212,9 +324,37 @@ module.exports = function(app) {
         username: newUser.username,
         nickname: newUser.nickname,
         avatar: newUser.avatar,
+        inviteCode: newUser.inviteCode,
+        invitedByRewarded,
         zhixueStatus: null // 新用户未认证
       }
     });
+  });
+  app.get('/api/user/check-invite-code', (req, res) => {
+    // 公开端点，限流防遍历枚举：单 IP 5 秒 1 次 / 每小时 60 次
+    const ip = getClientIP(req);
+    const now = Date.now();
+    const hits = (inviteCheckLimit.get(ip) || []).filter(ts => now - ts < INVITE_CHECK_HOUR_MS);
+    if (hits.length >= INVITE_CHECK_HOUR_MAX) {
+      return res.json({ ok: true, data: { valid: false } });
+    }
+    const last = hits.length ? hits[hits.length - 1] : 0;
+    if (now - last < INVITE_CHECK_MIN_MS) {
+      return res.json({ ok: true, data: { valid: false } });
+    }
+    hits.push(now);
+    inviteCheckLimit.set(ip, hits);
+    const code = (req.query.code || '').trim().toUpperCase();
+    if (!invite.validateInviteCodeShape(code)) {
+      return res.json({ ok: true, data: { valid: false } });
+    }
+    const inviter = readUsers().find(u => u.inviteCode === code);
+    if (!inviter) {
+      return res.json({ ok: true, data: { valid: false } });
+    }
+    // 不返回完整昵称以防探测
+    const ownerHint = inviter.nickname ? inviter.nickname.slice(0, 1) + '***' : null;
+    res.json({ ok: true, data: { valid: true, ownerHint } });
   });
   app.post('/api/user/login', rateLimitLogin('username'), (req, res) => {
     const { username, password, captchaId, captchaText } = req.body;
@@ -571,7 +711,7 @@ module.exports = function(app) {
     const user = users.find(u => u.id === session.id);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed } });
+    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed, inviteCode: user.inviteCode || null } });
   });
   app.get('/api/user/credit-logs', (req, res) => {
     const token = req.headers['x-user-token'];

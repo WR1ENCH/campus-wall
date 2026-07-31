@@ -3252,6 +3252,17 @@ backdrop-filter: blur(4px);
   onkeydown="if(event.key==='Enter') doUserRegister()">
   <div class="pwd-match-hint" id="pwdMatchHint"></div>
   </div>
+  <div class="user-login-field">
+  <label class="user-login-label" for="regInviteCodeInput">邀请码（选填）</label>
+  <div style="position:relative;">
+  <input class="user-login-input" id="regInviteCodeInput"
+  placeholder="8 位字母数字" maxlength="8" autocapitalize="characters"
+  style="padding-right:36px;text-transform:uppercase;letter-spacing:1px;"
+  oninput="checkInviteCodeLive()" onkeydown="if(event.key==='Enter') doUserRegister()">
+  <span id="regInviteIcon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;display:flex;align-items:center;justify-content:center;"></span>
+  </div>
+  <div id="regInviteHint" style="font-size:12px;color:#8a7a6a;margin-top:4px;min-height:16px;"></div>
+  </div>
   <!-- 人机验证 -->
  <div class="user-login-field">
  <label class="user-login-label">人机验证</label>
@@ -4710,6 +4721,62 @@ function renderVoteList(voteList) {
  }
  }
 
+  // ===== 邀请码实时校验 =====
+  // INVITE_CHARS 必须与 routes/user.js:74-90（卡密体系）一致；localLuhnModN 同步。
+  const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function localLuhnModN(code) {
+    const chars = INVITE_CHARS;
+    const n = chars.length;
+    let factor = 2;
+    let sum = 0;
+    for (let i = code.length - 2; i >= 0; i--) {
+      const val = chars.indexOf(code[i]);
+      if (val === -1) return false;
+      const add = val * factor;
+      sum += Math.floor(add / n) + (add % n);
+      factor = factor === 2 ? 1 : 2;
+    }
+    const expected = (n - (sum % n)) % n;
+    return chars[expected] === code[code.length - 1];
+  }
+  let inviteCheckTimer = null;
+  function setInviteLive(ok, hint, green) {
+    const icon = document.getElementById('regInviteIcon');
+    const hintEl = document.getElementById('regInviteHint');
+    if (!icon || !hintEl) return;
+    if (!ok) {
+      icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      hintEl.style.color = '#ef4444';
+    } else if (green) {
+      icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+      hintEl.style.color = '#22c55e';
+    } else {
+      icon.innerHTML = '';
+      hintEl.style.color = '#8a7a6a';
+    }
+    hintEl.textContent = hint || '';
+  }
+  function checkInviteCodeLive() {
+    const input = document.getElementById('regInviteCodeInput');
+    if (!input) return;
+    const val = input.value.trim().toUpperCase();
+    if (!val) { setInviteLive(false, '', false); return; }
+    if (val.length < 8 || !/^[A-Z2-9]{8}$/.test(val)) { setInviteLive(false, '邀请码格式不正确', false); return; }
+    if (!localLuhnModN(val)) { setInviteLive(false, '邀请码格式不正确', false); return; }
+    // Luhn 通过 → debounce 后请求后端确认有效
+    clearTimeout(inviteCheckTimer);
+    inviteCheckTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/user/check-invite-code?code=' + encodeURIComponent(val));
+        const json = await res.json();
+        const ok = !!(json && json.data && json.data.valid);
+        if (ok) setInviteLive(true, '邀请码有效，注册后双方各得 100 Credit', true);
+        else setInviteLive(false, '邀请码无效', false);
+      } catch { setInviteLive(false, '邀请码无效', false); }
+    }, 350);
+  }
+
+
   async function doUserRegister() {
    // 检查是否同意用户协议
    const agreeRow = document.getElementById('agreeRow');
@@ -4736,10 +4803,11 @@ function renderVoteList(voteList) {
   const res = await fetch('/api/user/register', {
   method: 'POST',
   headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-  body: JSON.stringify({ username, password, nickname: '', captchaId: _sliderCaptchaToken, captchaText: '1' })
+  body: JSON.stringify({ username, password, nickname: '', captchaId: _sliderCaptchaToken, captchaText: '1', inviteCode: (document.getElementById('regInviteCodeInput') ? document.getElementById('regInviteCodeInput').value.trim().toUpperCase() : '') })
   });
   const json = await res.json();
    if (json.ok) {
+   onbInviteData = { inviteCode: json.data.inviteCode || null, invitedByRewarded: !!json.data.invitedByRewarded, invitedBy: !!(document.getElementById('regInviteCodeInput') && document.getElementById('regInviteCodeInput').value.trim()) };
    const { token, id, username: u, nickname: n, avatar } = json.data;
     localStorage.setItem(USER_KEY, JSON.stringify({ id, username: u, nickname: n, avatar, token, credit: json.data.credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: null, isPlus: false }));
    localStorage.setItem('campus_user_token', token);
@@ -4764,6 +4832,7 @@ function renderVoteList(voteList) {
 
   // ===== 注册引导流程（Onboarding）=====
   let onbToken = null;
+  let onbInviteData = null; // 注册响应中的邀请码/奖励信息，用于引导末尾弹窗
   function onbStart() {
     const stored = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
     onbToken = stored.token;
@@ -5053,10 +5122,58 @@ function renderVoteList(voteList) {
       text.style.transition = 'opacity 0.8s ease';
       text.style.opacity = '1';
     }, 1500);
+
+    // 邀请码弹窗：仅对未填写邀请码的用户展示自己的可分享邀请码
+    if (onbInviteData && !onbInviteData.invitedBy && onbInviteData.inviteCode) {
+      showInviteCodePopup(onbInviteData.inviteCode);
+      return;
+    }
+    // 填了邀请码的用户：奖励已发放时给一条轻提示（不弹专属邀请码窗）
+    if (onbInviteData && onbInviteData.invitedBy && onbInviteData.invitedByRewarded) {
+      showToast('已为您和邀请人各发放 100 Credit');
+    }
     // 5s 后关闭
     setTimeout(() => {
       hideLoginModal();
     }, 5000);
+  }
+
+  // ===== 邀请码分享弹窗（引导末尾，仅未填邀请码用户）=====
+  function showInviteCodePopup(inviteCode) {
+    const overlay = document.createElement('div');
+    overlay.id = 'inviteCodePopup';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(20,14,8,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML =
+      '<div style="background:#ede5dc;color:#3a2a1a;border-radius:18px;max-width:360px;width:100%;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,0.35);text-align:center;">' +
+      '<div style="font-size:18px;font-weight:700;margin-bottom:6px;">您的专属邀请码</div>' +
+      '<div style="font-size:13px;color:#7a6a5a;margin-bottom:16px;">分享此码给好友，好友注册时填写后双方各得 100 Credit</div>' +
+      '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">' +
+      '<code style="font-family:\'Courier New\',monospace;font-size:20px;letter-spacing:2px;color:#3a2a1a;font-weight:bold;">' + escHtml(inviteCode) + '</code>' +
+      '<button onclick="copyInviteCode(\'' + escHtml(inviteCode) + '\', this)" style="display:inline-flex;align-items:center;gap:4px;background:#3a2a1a;color:#f3ead9;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制</button>' +
+      '</div>' +
+      '<div style="font-size:12px;color:#7a6a5a;text-align:left;background:rgba(200,168,120,0.12);border-radius:10px;padding:10px 12px;margin-bottom:18px;"><strong><em>反作弊说明：禁止小号自邀、同一设备/IP 多账号互邀；受处罚、信用分低于 80 或超过当日/累计上限时奖励不予发放；本平台将通过注册 IP、设备指纹、信用分门槛、邀请人状态进行综合校验，违规账号将面临信用分扣除与封禁处理。</em></strong></div>' +
+      '<button onclick="closeInviteCodePopup()" style="width:100%;background:#3a2a1a;color:#f3ead9;border:none;border-radius:10px;padding:11px 0;font-size:14px;font-weight:600;cursor:pointer;">我知道了</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+  function closeInviteCodePopup() {
+    const el = document.getElementById('inviteCodePopup');
+    if (el) el.remove();
+    hideLoginModal();
+  }
+  function copyInviteCode(code, btn) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>已复制';
+      }).catch(() => { showToast('复制失败，请手动复制'); });
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>已复制'; } catch (e) {}
+      ta.remove();
+    }
   }
 
  function doUserSkip() {
