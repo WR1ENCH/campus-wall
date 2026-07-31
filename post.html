@@ -1063,7 +1063,7 @@
   }
 
   function showPostImage(idx) {
-    const src = postData && Array.isArray(postData.images) ? postData.images[idx] : null;
+    const src = postData && postData.imageCount ? '/api/posts/' + postData.id + '/image/' + idx : null;
     if (!src) return;
     const div = document.createElement('div');
     div.className = 'image-overlay';
@@ -1236,11 +1236,7 @@
       badges += '<span class="verify-badge">' + (post.authorZhixueCertType === 'manual' ? '已实名' : '已认证') + '</span>';
     }
 
-    const imagesHtml = (post.images && post.images.length)
-      ? '<div class="post-images">' + post.images.map((img, i) =>
-          '<img src="' + img + '" alt="图片" onclick="showPostImage(' + i + ')" onerror="this.style.display=\'none\'">'
-        ).join('') + '</div>'
-      : '';
+    const imagesHtml = post.imageCount ? '<div class="post-images">' + Array.from({ length: post.imageCount }, (_, i) => '<img src="/api/posts/' + post.id + '/image/' + i + '" alt="图片" onclick="showPostImage(' + i + ')" onerror="this.style.display=\'none\'">').join('') + '</div>' : '';
 
     const html = selfOnlyBanner + `
       <div class="note-card ${cfg.color}${post.authorIsPlus ? ' plus-gold' : ''}" style="background:${colors.bg};color:${colors.text};">
