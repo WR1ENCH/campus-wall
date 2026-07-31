@@ -6297,7 +6297,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  posts.forEach(p => {
  if (p.rotate === undefined) p.rotate = rand(-4, 4);
  if (p.zIndex === undefined) p.zIndex = randInt(1, 5);
- p.time = formatTime(p.time);
+ p.timeText = formatTime(p.time);
  });
  }
  } catch (e) {
@@ -6683,7 +6683,7 @@ function _doRenderNotes(filter = '全部') {
  ${post.userId && !isPostAnonymous(post) ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
    <span style="${isPostAnonymous(post) ? 'cursor:default;' : ''}">${post.author}</span>${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}  ${post.authorIsPlus ? '<span class="plus-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++</span>' : ''}${post.authorMbti ? '<span class="mbti-pill mbti-' + post.authorMbti.toLowerCase() + '">' + post.authorMbti + '人</span>' : ''}
  ${post.userId && !isPostAnonymous(post) ? '</a>' : ''}
-  <span class="note-time">· ${post.time}</span>
+  <span class="note-time">· ${post.timeText}</span>
  </div>
  <div style="display:flex;gap:4px;align-items:center;">
  <button class="note-action ${post.liked ? 'liked' : ''}"
@@ -7031,6 +7031,7 @@ function _doRenderNotes(filter = '全部') {
     const json = await res.json();
     if (json.ok) {
       post = json.data;
+      post.timeText = formatTime(post.time);
     } else if (json.code === 'SELF_ONLY') {
       showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容仅自己可见');
       return;
@@ -7082,7 +7083,7 @@ var src = postImageUrl(post, i); return '<img src="' + src + '" onclick="showQAI
  avatarEmoji.style.display = '';
  }
  document.getElementById('detailAuthor').textContent = post.author;
- document.getElementById('detailTime').textContent = '· ' + post.time;
+ document.getElementById('detailTime').textContent = '· ' + post.timeText;
  // 管理员认证标识
  const adminBadge = document.getElementById('detailAdminBadge');
  if (post.authorAdminRole === 'super') {
