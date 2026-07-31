@@ -698,7 +698,10 @@ function readUsers() {
     ...u,
     nickname: u.nickname == null ? '' : String(u.nickname),
     username: u.username == null ? '' : String(u.username),
-    id: u.id == null ? '' : String(u.id)
+    id: u.id == null ? '' : String(u.id),
+    // ponytail: emailVerified 历史写入可能存成字符串（如 "1.0"），统一转数值，
+    // 保证下游严格比较 emailVerified === 1 在各调用点（/api/user/me、admin 面板等）一致生效
+    emailVerified: u.emailVerified == null ? 0 : Number(u.emailVerified)
   }));
 }
 function writeUsers(data) { dropAndInsert('users', data); }
