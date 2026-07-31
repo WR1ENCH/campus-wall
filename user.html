@@ -220,6 +220,22 @@
       width: 14px;
       height: 14px;
     }
+    .profile-uid .invite-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .profile-uid .invite-chip svg {
+      width: 12px;
+      height: 12px;
+    }
 
     .profile-stats {
       display: flex;
@@ -1676,6 +1692,10 @@
           <div class="profile-uid" id="profileUid">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span>UID: --</span>
+            <span class="invite-chip" id="profileInviteChip" style="display:none;" title="我的邀请码">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span id="profileInviteCode">--</span>
+            </span>
           </div>
           <div class="profile-stats">
             <div class="profile-stat">
@@ -2160,6 +2180,20 @@ async function completeNewbieTask(taskId) {
       const uidEl = document.getElementById('profileUid');
       if (uidEl) {
         uidEl.querySelector('span').textContent = 'UID: ' + user.id;
+      }
+
+      // 自己的主页：在 UID 旁展示自己的邀请码（不泄露给他人的公开主页）
+      const inviteChip = document.getElementById('profileInviteChip');
+      const inviteCodeEl = document.getElementById('profileInviteCode');
+      const _isOwnProfile = currentLoggedInUser && currentLoggedInUser.id === userId;
+      const _myInviteCode = _isOwnProfile && currentLoggedInUser.inviteCode;
+      if (inviteChip && inviteCodeEl) {
+        if (_myInviteCode) {
+          inviteCodeEl.textContent = _myInviteCode;
+          inviteChip.style.display = '';
+        } else {
+          inviteChip.style.display = 'none';
+        }
       }
 
       const creditInline = document.getElementById('userCreditInline');

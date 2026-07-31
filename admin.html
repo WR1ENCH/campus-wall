@@ -5037,6 +5037,8 @@
       html += '<div><span style="color:#8a7a6a;">状态：</span><span class="type-badge ' + statusClass(u.status) + '">' + statusText(u.status) + '</span></div>';
       html += '<div><span style="color:#8a7a6a;">发帖数：</span><strong>' + (u.postCount || 0) + '</strong></div>';
       html += '<div><span style="color:#8a7a6a;">注册 IP：</span>' + escHtml(u.regIp || '-') + '</div>';
+      html += '<div><span style="color:#8a7a6a;">邀请码：</span>' + (u.inviteCode ? '<strong>' + escHtml(u.inviteCode) + '</strong>' : '-') + '</div>';
+      html += '<div><span style="color:#8a7a6a;">被邀请码：</span>' + (u.invitedBy ? escHtml(u.invitedBy) : '未填写') + '</div>';
       html += '<div><span style="color:#8a7a6a;">注册时间：</span>' + (u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN') : '-') + '</div>';
       if (u.bindAdminId) {
         html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">绑定管理员：</span>@' + escHtml(u.bindAdminId) + '（' + escHtml(u.bindAdminRole || '-') + '）</div>';

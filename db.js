@@ -570,6 +570,25 @@ function migrate() {
       console.warn('[db.js] ⚠️ 添加列 users.firstRechargeBonusClaimed 失败:', e.message);
     }
   }
+  // 邀请码相关字段迁移
+  const inviteCols = [
+    { name: 'inviteCode', def: ' TEXT' },
+    { name: 'invitedBy', def: ' TEXT' },
+    { name: 'invitedByUserId', def: ' TEXT' },
+    { name: 'inviteRewardTotal', def: ' INTEGER DEFAULT 0' },
+    { name: 'inviteRewardedToday', def: ' INTEGER DEFAULT 0' },
+    { name: 'inviteRewardedDate', def: ' TEXT' }
+  ];
+  for (const col of inviteCols) {
+    if (!existingUserCols.includes(col.name)) {
+      try {
+        db.exec(`ALTER TABLE "users" ADD COLUMN "${col.name}"${col.def}`);
+        console.log(`[db.js] ✅ 已添加列 users.${col.name}`);
+      } catch (e) {
+        console.warn(`[db.js] ⚠️ 添加列 users.${col.name} 失败:`, e.message);
+      }
+    }
+  }
   // credibility_logs 表
   db.exec(`CREATE TABLE IF NOT EXISTS "credibility_logs" (
     "id" TEXT PRIMARY KEY,
@@ -580,6 +599,21 @@ function migrate() {
     "type" TEXT DEFAULT 'exchange',
     "createdAt" TEXT
   )`);
+  // 邀请码审计日志表（反作弊留痕：奖励发放/阻止原因）
+  db.exec(`CREATE TABLE IF NOT EXISTS "invite_audit_logs" (
+    "id" TEXT PRIMARY KEY,
+    "inviteeUserId" TEXT,
+    "inviterUserId" TEXT,
+    "inviterCode" TEXT,
+    "ip" TEXT,
+    "deviceHash" TEXT,
+    "credibilityAtRegister" INTEGER,
+    "status" TEXT DEFAULT 'rewarded',
+    "reason" TEXT,
+    "createdAt" TEXT
+  )`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_audit_invitee ON "invite_audit_logs"("inviteeUserId")`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_audit_inviter ON "invite_audit_logs"("inviterUserId", "createdAt")`);
 
   // 为旧数据回填 reportId，并将旧 r_ 格式 id 统一为 REPO- 格式
   const badReports = db.prepare(`SELECT id, reportId FROM "reports" WHERE reportId IS NULL OR reportId = '' OR id LIKE 'r_%'`).all();
@@ -781,6 +815,10 @@ function writeCreditLogs(data) { dropAndInsert('credit_logs', data); }
 function readCredibilityLogs() { return all('credibility_logs'); }
 function writeCredibilityLogs(data) { dropAndInsert('credibility_logs', data); }
 function insertCredibilityLog(log) { insertRow('credibility_logs', log); }
+// Invite audit logs
+function readInviteAudit() { return all('invite_audit_logs'); }
+function writeInviteAudit(data) { dropAndInsert('invite_audit_logs', data); }
+function insertInviteAudit(log) { insertRow('invite_audit_logs', log); }
 
 // Credit cards
 function readCreditCards() { return all('credit_cards'); }
@@ -1229,6 +1267,7 @@ module.exports = {
   readBullying, writeBullying,
   readCreditLogs, writeCreditLogs,
   readCredibilityLogs, writeCredibilityLogs, insertCredibilityLog,
+  readInviteAudit, writeInviteAudit, insertInviteAudit,
   readCreditCards, writeCreditCards,
   readSubscriptions, writeSubscriptions, addSubscription, updateSubscription,
   readPlusCards, writePlusCards,
