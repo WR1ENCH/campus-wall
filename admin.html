@@ -5822,7 +5822,9 @@
     const list = qaAdminFilter ? qaAdminAll.filter(q => q.status === qaAdminFilter) : qaAdminAll;
     if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;">暂无数据</div>'; return; }
     const statusMap = { open: '<span style="background:#e8f5e9;color:#388e3c;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">🟢 进行中</span>', accepted: '<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">✅ 已采纳</span>', expired: '<span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">⏰ 已到期</span>' };
-    el.innerHTML = list.map(q => `
+    el.innerHTML = list.map(q => {
+      const expanded = qaExpandedAnswers[q.id];
+      return `
       <div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">
           <div style="flex:1;min-width:0;">
@@ -5836,12 +5838,96 @@
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
             ${statusMap[q.status] || ''}
+            <button onclick="toggleQAAnswers('${q.id}')" style="background:#f0f9ff;color:#0284c7;border:1px solid #0284c7;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">
+              ${expanded ? '收起回答' : '查看回答'}
+            </button>
             <button onclick="adminDeleteQAQuestion('${q.id}')" style="background:#fff0f0;color:#e04;border:1px solid #e04;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🗑 删除</button>
           </div>
         </div>
         ${q.content ? '<div style="font-size:13px;color:#666;margin-top:8px;word-break:break-word;">' + escAdminHtml(q.content.slice(0, 150)) + (q.content.length > 150 ? '...' : '') + '</div>' : ''}
+        <div id="qaAnswersPanel_${q.id}" style="display:${expanded ? 'block' : 'none'};margin-top:12px;border-top:1px dashed #eee;padding-top:10px;">
+          ${expanded ? renderQAAnswers(q.id) : '<div style="text-align:center;color:#aaa;font-size:12px;">点击"查看回答"加载</div>'}
+        </div>
       </div>
-    `).join('');
+    `}).join('');
+  }
+
+  let qaExpandedAnswers = {};
+  let qaAnswersCache = {};
+
+  async function toggleQAAnswers(qid) {
+    if (qaExpandedAnswers[qid]) {
+      qaExpandedAnswers[qid] = false;
+      renderAdminQAList();
+      return;
+    }
+    qaExpandedAnswers[qid] = true;
+    // 如果缓存中有数据，直接渲染
+    if (qaAnswersCache[qid]) {
+      renderAdminQAList();
+      return;
+    }
+    // 先渲染展开状态（显示加载中）
+    renderAdminQAList();
+    try {
+      const res = await fetch('/api/admin/qa/questions/' + qid + '/answers', { headers: authHeaders() });
+      const json = await res.json();
+      if (json.ok) {
+        qaAnswersCache[qid] = json.data.answers || [];
+      } else {
+        qaAnswersCache[qid] = [];
+      }
+      renderAdminQAList();
+    } catch {
+      qaAnswersCache[qid] = [];
+      renderAdminQAList();
+    }
+  }
+
+  function renderQAAnswers(qid) {
+    const answers = qaAnswersCache[qid] || [];
+    if (!answers.length) {
+      return '<div style="text-align:center;color:#aaa;font-size:12px;padding:8px;">暂无回答</div>';
+    }
+    return '<div style="display:flex;flex-direction:column;gap:8px;">' + answers.map(a => {
+      const acceptedTag = a.accepted ? '<span style="background:#e8f5e9;color:#388e3c;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:600;margin-left:4px;">✅ 已采纳</span>' : '';
+      const rewardTag = a.reward > 0 ? '<span style="background:#fff3e0;color:#e65100;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:600;margin-left:4px;">💰 ' + a.reward + '</span>' : '';
+      return `
+        <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border-left:3px solid #3b82f6;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px;">
+            <div style="font-size:12px;color:#666;">
+              <b>${escAdminHtml(a.author)}</b> · ${new Date(a.createdAt).toLocaleString('zh-CN')}
+              ${acceptedTag}${rewardTag}
+              · 👍 ${a.likes || 0}
+            </div>
+            <button onclick="adminDeleteQAAnswer('${a.id}', '${qid}')" style="background:#fff0f0;color:#e04;border:1px solid #e04;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;">🗑 删除</button>
+          </div>
+          <div style="font-size:13px;color:#333;margin-top:4px;word-break:break-word;">${escAdminHtml(a.content || '(无内容)').slice(0, 200)}${(a.content || '').length > 200 ? '...' : ''}</div>
+        </div>
+      `;
+    }).join('') + '</div>';
+  }
+
+  async function adminDeleteQAAnswer(aid, qid) {
+    if (!confirm('确定删除此回答？')) return;
+    try {
+      const res = await fetch('/api/admin/qa/answers/' + aid, { method: 'DELETE', headers: authHeaders() });
+      const json = await res.json();
+      if (json.ok) {
+        showToast('✅ 回答已删除');
+        // 清除缓存并重新加载
+        delete qaAnswersCache[qid];
+        if (qaExpandedAnswers[qid]) {
+          toggleQAAnswers(qid);
+        }
+        // 更新问题的回答数
+        const q = qaAdminAll.find(x => x.id === qid);
+        if (q) q.answerCount = Math.max(0, (q.answerCount || 0) - 1);
+        renderAdminQAList();
+      } else {
+        showToast('⚠️ ' + (json.msg || '删除失败'));
+      }
+    } catch { showToast('⚠️ 网络错误'); }
   }
 
   async function adminDeleteQAQuestion(qid) {

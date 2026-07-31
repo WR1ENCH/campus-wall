@@ -1996,12 +1996,39 @@ app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
   const questions = readQAQuestions();
   const idx = questions.findIndex(q => q.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
-  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
-    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
-    if (remain > 0) changeCredit(questions[idx].userId, remain, '管理员删除问题退还剩余悬赏');
+  const q = questions[idx];
+  if (q.status === 'open' && q.bounty > 0) {
+    const remain = Math.max(0, q.bounty - (q.distributedCredits || 0));
+    if (remain > 0) changeCredit(q.userId, remain, '管理员删除问题退还剩余悬赏');
   }
-  questions[idx].deleted = true;
+  // 记录到已删除内容
+  saveDeletedItem('qa_question', q, req.admin?.name || 'admin');
+  q.deleted = true;
+  q.deletedAt = new Date().toISOString();
   writeQAQuestions(questions);
+  res.json({ ok: true });
+});
+
+// ===== 问答回答管理 =====
+app.get('/api/admin/qa/questions/:id/answers', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  const answers = readQAAnswers().filter(a => a.questionId === req.params.id && !a.deleted);
+  answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: { question: q, answers } });
+});
+
+app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
+  const answers = readQAAnswers();
+  const idx = answers.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  const a = answers[idx];
+  // 记录到已删除内容
+  saveDeletedItem('qa_answer', a, req.admin?.name || 'admin', { questionId: a.questionId });
+  a.deleted = true;
+  a.deletedAt = new Date().toISOString();
+  writeQAAnswers(answers);
   res.json({ ok: true });
 });
 
