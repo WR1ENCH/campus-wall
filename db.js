@@ -123,6 +123,8 @@ function migrate() {
     "certRealName" TEXT,
     "certClassName" TEXT,
     "noticePublisher" INTEGER DEFAULT 0,
+    "email" TEXT,
+    "emailVerified" INTEGER DEFAULT 0,
     "mbti" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "posts" (
@@ -305,6 +307,8 @@ function migrate() {
     "distributedCredits" INTEGER DEFAULT 0,
     "createdAt" TEXT,
     "deleted" INTEGER DEFAULT 0,
+    "deletedAt" TEXT,
+    "deletedBy" TEXT,
     "images" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "qa_answers" (
@@ -320,6 +324,8 @@ function migrate() {
     "reward" INTEGER DEFAULT 0,
     "createdAt" TEXT,
     "deleted" INTEGER DEFAULT 0,
+    "deletedAt" TEXT,
+    "deletedBy" TEXT,
     "images" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "pickup_auctions" (
@@ -476,6 +482,8 @@ function migrate() {
     "createdAt" TEXT NOT NULL,
     "read" INTEGER DEFAULT 0
   )`);
+  db.exec(`CREATE TABLE IF NOT EXISTS "smtp_config" ("_key" TEXT PRIMARY KEY, "_value" TEXT)`);
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_target_created ON wall_messages(targetUserId, createdAt DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_sender_created ON wall_messages(senderId, createdAt DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_wm_target_read ON wall_messages(targetUserId, read)`);
@@ -485,14 +493,14 @@ function migrate() {
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous', 'visibility', 'allowComments', 'visibleTo', 'invisibleTo'] },
     { name: 'votes', columns: ['allowCustom'] },
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
-    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'mbti'] },
+    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'email', 'emailVerified', 'mbti'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
-    { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
-    { name: 'discussions', columns: ['official', 'expiresAt', 'deleted'] },
+     { name: 'qa_questions', columns: ['pinned'] },
+     { name: 'qa_questions', columns: ['deletedAt', 'deletedBy'] },
+     { name: 'qa_answers', columns: ['deletedAt', 'deletedBy'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
     { name: 'punishments', columns: ['credibilityDeducted'] },
      { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
-     { name: 'qa_questions', columns: ['pinned'] },
     { name: 'notices', columns: ['deletedAt', 'syncedAt', 'updatedAt', 'pinned', 'images'] },
   ];
   for (const t of tableMigrations) {
@@ -724,7 +732,10 @@ function readUsers() {
     ...u,
     nickname: u.nickname == null ? '' : String(u.nickname),
     username: u.username == null ? '' : String(u.username),
-    id: u.id == null ? '' : String(u.id)
+    id: u.id == null ? '' : String(u.id),
+    // ponytail: emailVerified 历史写入可能存成字符串（如 "1.0"），统一转数值，
+    // 保证下游严格比较 emailVerified === 1 在各调用点（/api/user/me、admin 面板等）一致生效
+    emailVerified: u.emailVerified == null ? 0 : Number(u.emailVerified)
   }));
 }
 function writeUsers(data) { dropAndInsert('users', data); }
@@ -928,6 +939,27 @@ function writeMaintenance(data) {
   tx();
 }
 
+
+// SMTP config (KV table, same pattern as maintenance)
+function readSmtpConfig() {
+  return getDb().prepare('SELECT * FROM "smtp_config"').all();
+}
+function writeSmtpConfig(data) {
+  const d = getDb();
+  d.exec('DELETE FROM "smtp_config"');
+  if (!data || Object.keys(data).length === 0) return;
+  const ins = d.prepare('INSERT INTO "smtp_config" ("_key", "_value") VALUES (?, ?)');
+  const tx = d.transaction(() => {
+    for (const [k, v] of Object.entries(data)) {
+      ins.run(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+    }
+  });
+  tx();
+}
+function getSmtpConfigValue(key) {
+  const row = getDb().prepare('SELECT "_value" FROM "smtp_config" WHERE "_key" = ?').get(key);
+  return row ? row._value : null;
+}
 // Passkey
 function readPasskey() {
   // 表结构为 _key / _value，需要重构为对象
@@ -1250,6 +1282,7 @@ module.exports = {
   readMaintenance, writeMaintenance,
   readNotices, writeNotices,
   readPasskey, writePasskey,
+  readSmtpConfig, writeSmtpConfig, getSmtpConfigValue,
   readApps, writeApps,
   readDeletedItems, writeDeletedItems, addDeletedItem,
   readVotes, writeVotes,

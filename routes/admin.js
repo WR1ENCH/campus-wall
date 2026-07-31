@@ -1996,12 +1996,39 @@ app.delete('/api/admin/qa/questions/:id', requireAdmin, (req, res) => {
   const questions = readQAQuestions();
   const idx = questions.findIndex(q => q.id === req.params.id);
   if (idx === -1) return res.json({ ok: false, msg: '问题不存在' });
-  if (questions[idx].status === 'open' && questions[idx].bounty > 0) {
-    const remain = Math.max(0, questions[idx].bounty - (questions[idx].distributedCredits || 0));
-    if (remain > 0) changeCredit(questions[idx].userId, remain, '管理员删除问题退还剩余悬赏');
+  const q = questions[idx];
+  if (q.status === 'open' && q.bounty > 0) {
+    const remain = Math.max(0, q.bounty - (q.distributedCredits || 0));
+    if (remain > 0) changeCredit(q.userId, remain, '管理员删除问题退还剩余悬赏');
   }
-  questions[idx].deleted = true;
+  // 记录到已删除内容
+  saveDeletedItem('qa_question', q, req.admin?.name || 'admin');
+  q.deleted = true;
+  q.deletedAt = new Date().toISOString();
   writeQAQuestions(questions);
+  res.json({ ok: true });
+});
+
+// ===== 问答回答管理 =====
+app.get('/api/admin/qa/questions/:id/answers', requireAdmin, (req, res) => {
+  const questions = readQAQuestions();
+  const q = questions.find(x => x.id === req.params.id);
+  if (!q) return res.json({ ok: false, msg: '问题不存在' });
+  const answers = readQAAnswers().filter(a => a.questionId === req.params.id && !a.deleted);
+  answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json({ ok: true, data: { question: q, answers } });
+});
+
+app.delete('/api/admin/qa/answers/:id', requireAdmin, (req, res) => {
+  const answers = readQAAnswers();
+  const idx = answers.findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.json({ ok: false, msg: '回答不存在' });
+  const a = answers[idx];
+  // 记录到已删除内容
+  saveDeletedItem('qa_answer', a, req.admin?.name || 'admin', { questionId: a.questionId });
+  a.deleted = true;
+  a.deletedAt = new Date().toISOString();
+  writeQAAnswers(answers);
   res.json({ ok: true });
 });
 
@@ -2133,6 +2160,73 @@ app.get('/api/admin/subscriptions/overview', requireAdmin, (req, res) => {
       weeklyCount: active.filter(s => s.plan === 'weekly').length,
       monthlyCount: active.filter(s => s.plan === 'monthly').length
     }
+  });
+});
+
+// ===== SMTP 邮箱配置 =====
+app.get('/api/admin/smtp-config', requireAdmin, (req, res) => {
+  const rows = db.readSmtpConfig();
+  const data = { host: null, port: null, user: null, pass: null, fromName: null };
+  if (rows && rows.length > 0) {
+    for (const r of rows) {
+      if (r._key === 'pass') {
+        data[r._key] = '******';
+      } else if (r._key === 'port') {
+        data[r._key] = parseInt(r._value) || null;
+      } else {
+        data[r._key] = r._value;
+      }
+    }
+  }
+  res.json({ ok: true, data });
+});
+
+app.post('/api/admin/smtp-config', requireAdmin, requireSuper, (req, res) => {
+  const { host, port, user, pass, fromName } = req.body;
+  if (!host || typeof host !== 'string' || host.trim().length === 0) {
+    return res.json({ ok: false, msg: 'SMTP 服务器地址不能为空' });
+  }
+  const portNum = parseInt(port);
+  if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+    return res.json({ ok: false, msg: '端口号范围为 1~65535' });
+  }
+  if (!user || typeof user !== 'string' || user.trim().length === 0) {
+    return res.json({ ok: false, msg: '用户名不能为空' });
+  }
+  // 构建新配置
+  const data = { host: host.trim(), port: String(portNum), user: user.trim(), fromName: (fromName || '校园墙').trim() };
+  // 密码：如果传入了新密码则更新，否则保留旧密码（从 DB 读取）
+  if (pass && typeof pass === 'string' && pass.trim().length > 0) {
+    data.pass = pass;
+  } else {
+    const existing = db.readSmtpConfig();
+    const existingPass = existing.find(r => r._key === 'pass');
+    if (existingPass) data.pass = existingPass._value;
+  }
+  db.writeSmtpConfig(data);
+  // 重置 email 模块的缓存，下次发送重新加载
+  const email = require('../lib/email');
+  email.resetTransport();
+  console.warn('[AUDIT] 超级管理员 ' + req.admin.id + ' 更新了 SMTP 配置');
+  res.json({ ok: true, msg: 'SMTP 配置已保存' });
+});
+
+app.post('/api/admin/smtp-config/test', requireAdmin, (req, res) => {
+  const { host, port, user, pass } = req.body;
+  if (!host || !user) {
+    return res.json({ ok: false, msg: '请先保存 SMTP 配置' });
+  }
+  // 使用提交的密码，如果为空则从 DB 读取
+  let password = pass;
+  if (!password || password === '******') {
+    const existing = db.readSmtpConfig();
+    const existingPass = existing.find(r => r._key === 'pass');
+    password = existingPass ? existingPass._value : '';
+  }
+  require('../lib/email').testTransport({ host, port, user, pass: password }).then(result => {
+    res.json(result);
+  }).catch(e => {
+    res.json({ ok: false, msg: '测试失败：' + e.message });
   });
 });
 

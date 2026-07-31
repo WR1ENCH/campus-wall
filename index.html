@@ -648,7 +648,6 @@ transition: top 0.3s ease, padding var(--ease-linear);
  }
  .pickup-btn-bid {
  padding: 10px 24px; border-radius: 10px; border: none;
- background: linear-gradient(135deg, #f5c518, #e0a800);
  color: #5a3d00; font-weight: 700; cursor: pointer;
  font-size: 14px; white-space: nowrap; transition: .12s;
  }
@@ -3325,6 +3324,39 @@ backdrop-filter: blur(4px);
       </svg>
     </div>
 
+    <!-- Step 2.5: 邮箱验证（可选） -->
+    <div class="onb-step" id="onbStepEmail" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:280px;">
+      <div style="font-size:15px;color:#5a3d00;margin-bottom:4px;font-weight:600;">验证邮箱（可选）</div>
+      <div style="font-size:12px;color:#b8a898;margin-bottom:16px;">绑定邮箱可用于找回密码和接收通知</div>
+      <div style="position:relative;width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;">
+        <input id="onbEmailInput" type="email" placeholder="your@email.com"
+          style="padding:10px 14px;border:2px solid #d4b892;border-radius:12px;font-size:15px;outline:none;background:#fef9e7;color:#3a2210;transition:border-color 0.3s;"
+          autocomplete="email" oninput="onbEmailInputChanged()">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="onbSendCodeBtn" onclick="onbSendCode()"
+            style="flex:1;padding:10px 14px;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.3s;"
+            disabled>发送验证码</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="onbCodeInput" type="text" placeholder="输入6位验证码" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+            style="flex:1;padding:10px 14px;border:2px solid #d4b892;border-radius:12px;font-size:15px;outline:none;background:#fef9e7;color:#3a2210;transition:border-color 0.3s;"
+            oninput="onbCodeInputChanged()">
+          <button id="onbVerifyBtn" onclick="onbVerifyCode()"
+            style="padding:10px 18px;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s;white-space:nowrap;">验证</button>
+        </div>
+      </div>
+      <div id="onbEmailStatus" style="font-size:12px;color:#999;margin-top:8px;min-height:18px;"></div>
+      <div style="display:flex;gap:12px;margin-top:14px;align-items:center;">
+        <button id="onbEmailSkipBtn" onclick="onbSkipEmail()"
+          style="padding:8px 24px;border:none;border-radius:999px;background:transparent;color:#b8a898;font-size:13px;cursor:pointer;transition:color 0.3s;"
+          onmouseover="this.style.color='#5a3d00'" onmouseout="this.style.color='#b8a898'">跳过，稍后验证</button>
+        <button id="onbEmailNextBtn" onclick="onbGoNickname()"
+          style="padding:10px 36px;border:none;border-radius:999px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s,transform 0.3s;opacity:0;">
+          下一步 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Step 3: 昵称输入 -->
     <div class="onb-step" id="onbStepNickname" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:220px;">
       <div style="font-size:15px;color:#5a3d00;margin-bottom:16px;font-weight:600;">给自己取一个名字吧</div>
@@ -3417,6 +3449,24 @@ backdrop-filter: blur(4px);
       <p id="onbFinalText" style="color:#5a3d00;font-size:18px;font-weight:600;margin-top:16px;opacity:0;font-family:'Ma Shan Zheng',cursive;">
         尽情开始你的校园墙之旅吧
       </p>
+    </div>
+  </div>
+  <!-- ===== 邮箱绑定提示弹窗（每次访问未绑定邮箱时弹出） ===== -->
+  <div class="modal-overlay" id="emailBindPromptOverlay" style="z-index:300;" onclick="if(event.target===this)closeEmailBindPrompt()">
+    <div class="modal" style="max-width:380px;text-align:center;">
+      <div class="modal-header" style="border-bottom:none;justify-content:center;">
+        <h3 style="margin:0;">绑定邮箱</h3>
+      </div>
+      <div class="modal-body" style="padding-top:4px;">
+        <div style="font-size:14px;color:#5a3d00;line-height:1.7;margin-bottom:8px;">
+          你还没有绑定邮箱。绑定邮箱可用于找回密码、接收重要通知，并提升账号安全。
+        </div>
+        <div style="font-size:13px;color:#b8a898;margin-bottom:18px;">
+          请前往个人主页完成邮箱绑定。
+        </div>
+        <button onclick="goBindEmail()" style="width:100%;padding:11px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">前往绑定</button>
+        <button onclick="closeEmailBindPrompt()" style="width:100%;padding:10px 0;margin-top:10px;border:1px solid #d4b892;background:transparent;color:#7a6a5a;border-radius:12px;font-size:14px;cursor:pointer;">暂不绑定</button>
+      </div>
     </div>
   </div>
 
@@ -4433,8 +4483,8 @@ function renderVoteList(voteList) {
  });
  const json = await res.json();
   if (json.ok) {
-  const { token, id, username, nickname, avatar, credit, zhixueStatus, pinCount } = json.data;
-  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null, pinCount: pinCount || 0 };
+  const { token, id, username, nickname, avatar, credit, zhixueStatus, pinCount, email, emailVerified } = json.data;
+  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null, pinCount: pinCount || 0, email: email || null, emailVerified: !!emailVerified };
   // 获取 PLUS 订阅状态
   try {
     const plusRes = await checkUserPlusStatus();
@@ -4868,35 +4918,159 @@ function renderVoteList(voteList) {
         mark.style.transition = 'none';
         mark.style.strokeDashoffset = '60';
         text.style.opacity = '0';
-        onbShowNickname();
+        onbShowEmail();
       }, 700);
     }, 2200);
   }
 
-  function onbPlayHello() {
-    document.getElementById('onbStepHello').style.display = 'flex';
-    const textEl = document.getElementById('onbHelloText');
-    // Phase 1: 描边动画 — 模拟书写轨迹 (2s)
-    textEl.style.transition = 'stroke-dashoffset 2s ease-in-out';
-    textEl.style.strokeDashoffset = '0';
-    // Phase 2: 描边完成后填充颜色 — 霓虹点亮 (0.4s)
-    setTimeout(() => {
-      textEl.style.transition = 'fill 0.4s ease-in';
-      textEl.setAttribute('fill', 'url(#neonFillGrad)');
-    }, 2000);
-    // 3s 后进入昵称
-    setTimeout(() => {
-      const el = document.getElementById('onbStepHello');
-      el.classList.add('onb-step-disappear');
-      setTimeout(() => {
-        el.style.display = 'none';
-        el.classList.remove('onb-step-disappear');
-        textEl.style.transition = 'none';
-        textEl.style.strokeDashoffset = '600';
-        textEl.setAttribute('fill', 'none');
-        onbShowNickname();
-      }, 700);
-    }, 3000);
+
+  // ===== Email onboarding step =====
+  let onbEmailCountdown = null;
+  let onbEmailVerified = false;
+
+  function onbShowEmail() {
+    document.getElementById('onbStepEmail').style.display = 'flex';
+    document.getElementById('onbEmailInput').classList.add('onb-slide-down');
+    setTimeout(() => document.getElementById('onbEmailInput').focus(), 400);
+    // Reset UI state
+    document.getElementById('onbSendCodeBtn').disabled = true;
+    document.getElementById('onbVerifyBtn').style.display = 'none';
+    document.getElementById('onbEmailNextBtn').style.display = 'none';
+    document.getElementById('onbEmailStatus').textContent = '';
+    onbEmailVerified = false;
+  }
+
+  function onbEmailInputChanged() {
+    const input = document.getElementById('onbEmailInput');
+    const btn = document.getElementById('onbSendCodeBtn');
+    const email = input.value.trim();
+    if (email && /.+@.+\..+/.test(email)) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    }
+  }
+
+  function onbCodeInputChanged() {
+    const code = document.getElementById('onbCodeInput').value.trim();
+    const verifyBtn = document.getElementById('onbVerifyBtn');
+    if (code.length === 6 && /^\d{6}$/.test(code)) {
+      verifyBtn.style.display = 'inline-flex';
+    } else {
+      verifyBtn.style.display = 'none';
+    }
+  }
+
+  async function onbSendCode() {
+    const email = document.getElementById('onbEmailInput').value.trim();
+    if (!email || !/.+@.+\..+/.test(email)) {
+      document.getElementById('onbEmailStatus').textContent = '请输入有效的邮箱地址';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      return;
+    }
+    const btn = document.getElementById('onbSendCodeBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    document.getElementById('onbEmailStatus').textContent = '发送中...';
+    document.getElementById('onbEmailStatus').style.color = '#b8a898';
+    try {
+      const res = await fetch('/api/user/send-email-code', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ email })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        document.getElementById('onbEmailStatus').textContent = '验证码已发送，请检查邮箱';
+        document.getElementById('onbEmailStatus').style.color = '#22c55e';
+        startEmailCountdown();
+      } else {
+        document.getElementById('onbEmailStatus').textContent = json.msg || '发送失败';
+        document.getElementById('onbEmailStatus').style.color = '#ef4444';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (json.code === 'EMAIL_NOT_CONFIGURED') {
+          // SMTP not configured — show skip prompt but don't block
+          document.getElementById('onbEmailSkipBtn').textContent = '跳过（邮箱未配置）';
+        }
+      }
+    } catch (e) {
+      document.getElementById('onbEmailStatus').textContent = '网络错误，请稍后重试';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+
+  function startEmailCountdown() {
+    const btn = document.getElementById('onbSendCodeBtn');
+    let seconds = 60;
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    clearInterval(onbEmailCountdown);
+    onbEmailCountdown = setInterval(() => {
+      seconds--;
+      btn.textContent = seconds + 's';
+      if (seconds <= 0) {
+        clearInterval(onbEmailCountdown);
+        btn.textContent = '重新发送';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    }, 1000);
+  }
+
+  async function onbVerifyCode() {
+    const email = document.getElementById('onbEmailInput').value.trim();
+    const code = document.getElementById('onbCodeInput').value.trim();
+    if (!code || code.length !== 6) {
+      document.getElementById('onbEmailStatus').textContent = '请输入6位验证码';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      return;
+    }
+    document.getElementById('onbEmailStatus').textContent = '验证中...';
+    document.getElementById('onbEmailStatus').style.color = '#b8a898';
+    try {
+      const res = await fetch('/api/user/verify-email', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ email, code })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        document.getElementById('onbEmailStatus').innerHTML = '<span style="color:#22c55e;font-weight:600;">验证成功 ✓</span>';
+        document.getElementById('onbEmailStatus').style.color = '#22c55e';
+        document.getElementById('onbVerifyBtn').style.display = 'none';
+        document.getElementById('onbCodeInput').disabled = true;
+        document.getElementById('onbEmailSkipBtn').style.display = 'none';
+        onbEmailVerified = true;
+        // Show "下一步" button
+        const nextBtn = document.getElementById('onbEmailNextBtn');
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.style.animation = 'onbBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+        nextBtn.style.opacity = '1';
+      } else {
+        document.getElementById('onbEmailStatus').textContent = json.msg || '验证失败';
+        document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      }
+    } catch (e) {
+      document.getElementById('onbEmailStatus').textContent = '网络错误，请稍后重试';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+    }
+  }
+
+  function onbSkipEmail() {
+    clearInterval(onbEmailCountdown);
+    document.getElementById('onbStepEmail').style.display = 'none';
+    onbShowNickname();
+  }
+
+  function onbGoNickname() {
+    clearInterval(onbEmailCountdown);
+    document.getElementById('onbStepEmail').style.display = 'none';
+    onbShowNickname();
   }
 
   function onbShowNickname() {
@@ -5176,6 +5350,23 @@ function renderVoteList(voteList) {
     }
   }
 
+  // ===== 邮箱绑定提示（每次访问未绑定邮箱时弹出） =====
+  function closeEmailBindPrompt() {
+    document.getElementById('emailBindPromptOverlay').classList.remove('show');
+  }
+  function goBindEmail() {
+    closeEmailBindPrompt();
+    window.location.href = 'user.html';
+  }
+  function promptEmailBinding() {
+    if (!currentUser) return;
+    // 引导流程进行中不弹（引导本身含邮箱环节）
+    if (document.getElementById('registrationOnboarding').style.display !== 'none') return;
+    // 已绑定邮箱则不弹
+    if (currentUser.emailVerified) return;
+    if (currentUser.email) return;
+    document.getElementById('emailBindPromptOverlay').classList.add('show');
+  }
  function doUserSkip() {
  currentUser = null;
  hideLoginModal();
@@ -5260,6 +5451,8 @@ function updateUserBar() {
       currentUser.zhixueStatus = json.data.zhixueStatus || null;
       if (json.data.avatar !== undefined) currentUser.avatar = json.data.avatar;
       if (json.data.nickname !== undefined) currentUser.nickname = json.data.nickname;
+      currentUser.email = json.data.email || null;
+      currentUser.emailVerified = !!json.data.emailVerified;
       // 获取 PLUS 订阅状态
       try {
         const plusRes = await checkUserPlusStatus();
@@ -5291,6 +5484,10 @@ function updateUserBar() {
   // 已登录 → 检查是否有进行中处罚
   if (currentUser) {
   checkPunishment();
+  }
+  // 已登录但未绑定邮箱 → 每次访问弹出绑定提示
+  if (currentUser) {
+    promptEmailBinding();
   }
 
   // 检查新手任务
@@ -6232,7 +6429,7 @@ let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记
  posts.forEach(p => {
  if (p.rotate === undefined) p.rotate = rand(-4, 4);
  if (p.zIndex === undefined) p.zIndex = randInt(1, 5);
- p.time = formatTime(p.time);
+ p.timeText = formatTime(p.time);
  });
  }
  } catch (e) {
@@ -6549,6 +6746,8 @@ function isPostAnonymous(post) {
   return !!(post && (post.isAnonymous || post.author === '匿名'));
 }
 
+function postImageUrl(post, idx) { return API + '/api/posts/' + post.id + '/image/' + idx; }
+
  // ===== 渲染 =====
 function renderNotes(filter = '全部') {
   if (isScrolling) {
@@ -6605,9 +6804,9 @@ function _doRenderNotes(filter = '全部') {
    ${pinHtml}
    ${post.authorIsPlus ? '<div class="plus-corner-badge"><span>PLUS</span></div>' : ''}
    ${post.pinned ? '<div class="post-pinned-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 置顶</div>' : ''}
-     <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
+     <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${post.imageCount ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.imageCount : ''}</div>
     <div class="note-content">${renderPostContent(post)}</div>
-    ${post.images && post.images.length ? '<div class="note-image-stack">' + post.images.slice(-3).reverse().map(function(imgSrc) { return '<img class="stack-img" src="' + escHtml(imgSrc) + '" loading="lazy" onerror="this.style.display=\'none\'">'; }).join('') + '</div>' : ''}
+    ${post.imageCount ? '<div class="note-image-stack">' + [post.imageCount - 1, post.imageCount - 2, post.imageCount - 3].filter(function(i) { return i >= 0; }).map(function(i) { return '<img class="stack-img" src="' + escHtml(postImageUrl(post, i)) + '" loading="lazy" onerror="this.style.display=\'none\'">'; }).join('') + '</div>' : ''}
   <div class="note-footer" onclick="event.stopPropagation()">
   <div class="note-author">
    ${post.userId && !isPostAnonymous(post) ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
@@ -6616,7 +6815,7 @@ function _doRenderNotes(filter = '全部') {
  ${post.userId && !isPostAnonymous(post) ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
    <span style="${isPostAnonymous(post) ? 'cursor:default;' : ''}">${post.author}</span>${post.authorAdminRole === 'super' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10"/></svg> 超管认证' : post.authorAdminRole === 'admin' ? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管认证' : ''}  ${post.authorIsPlus ? '<span class="plus-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>PLUS++</span>' : ''}${post.authorMbti ? '<span class="mbti-pill mbti-' + post.authorMbti.toLowerCase() + '">' + post.authorMbti + '人</span>' : ''}
  ${post.userId && !isPostAnonymous(post) ? '</a>' : ''}
-  <span class="note-time">· ${post.time}</span>
+  <span class="note-time">· ${post.timeText}</span>
  </div>
  <div style="display:flex;gap:4px;align-items:center;">
  <button class="note-action ${post.liked ? 'liked' : ''}"
@@ -6639,7 +6838,7 @@ function _doRenderNotes(filter = '全部') {
 
  const temp = document.createElement('div');
  temp.style.cssText = `position:absolute;visibility:hidden;width:${sizeInfo.width}px;padding:${sizeInfo.padding}px;padding-top:${sizeInfo.padding + 10}px;font-family:'Ma Shan Zheng',cursive;`;
-  var _stackCount = post.images ? Math.min(post.images.length, 3) : 0;
+  var _stackCount = post.imageCount ? Math.min(post.imageCount, 3) : 0;
   var stackHtml = _stackCount > 0 ? '<div style="display:flex;flex-direction:row;margin:8px 0 2px;">' : '';
   for (var _si = 0; _si < _stackCount; _si++) {
   stackHtml += '<div style="width:72px;height:72px;border-radius:14px;background:rgba(0,0,0,0.04);flex-shrink:0;' + (_si > 0 ? 'margin-left:-24px;' : '') + '"></div>';
@@ -6964,6 +7163,7 @@ function _doRenderNotes(filter = '全部') {
     const json = await res.json();
     if (json.ok) {
       post = json.data;
+      post.timeText = formatTime(post.time);
     } else if (json.code === 'SELF_ONLY') {
       showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 此内容仅自己可见');
       return;
@@ -6992,11 +7192,11 @@ function _doRenderNotes(filter = '全部') {
  // 帖子附图
  const detailImagesEl = document.getElementById('detailImages');
  if (detailImagesEl) {
- if (Array.isArray(post.images) && post.images.length) {
- detailImagesEl.style.display = 'flex';
- detailImagesEl.innerHTML = post.images.map(function(src){
- return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
- }).join('');
+if (post.imageCount) {
+detailImagesEl.style.display = 'flex';
+detailImagesEl.innerHTML = Array.from({ length: post.imageCount }, function(_, i) {
+var src = postImageUrl(post, i); return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
+}).join('');
  } else {
  detailImagesEl.style.display = 'none';
  detailImagesEl.innerHTML = '';
@@ -7015,7 +7215,7 @@ function _doRenderNotes(filter = '全部') {
  avatarEmoji.style.display = '';
  }
  document.getElementById('detailAuthor').textContent = post.author;
- document.getElementById('detailTime').textContent = '· ' + post.time;
+ document.getElementById('detailTime').textContent = '· ' + post.timeText;
  // 管理员认证标识
  const adminBadge = document.getElementById('detailAdminBadge');
  if (post.authorAdminRole === 'super') {
@@ -7786,19 +7986,16 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
 
   const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, false, pinned);
   if (newPost) {
-  newPost.time = '刚刚';
-  newPost.rotate = rand(-4, 4);
-  newPost.zIndex = randInt(1, 5);
-  // Update local pin count after successful pinned post
-  if (newPost.pinned && currentUser) {
-    currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-  }
-  // 放弃本地插入：用服务端权威数据刷新，避免 SSE fetchPosts 覆盖本地数组
-  await fetchPosts();
-  renderNotes(currentFilter);
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
-  closeModal();
+    newPost.time = '刚刚';
+    newPost.rotate = rand(-4, 4);
+    newPost.zIndex = randInt(1, 5);
+    if (newPost.pinned && currentUser) {
+      currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
+      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+    }
+    showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
+    closeModal();
+    fetchPosts().then(() => renderNotes(currentFilter)).catch(() => {});
   } else if (_returnToEdit) {
   _returnToEdit = false;
   } else {
