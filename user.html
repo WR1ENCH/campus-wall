@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="data:,">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>用户 · 校园墙</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2594,13 +2595,15 @@ async function completeNewbieTask(taskId) {
     }
     // ===== 邮箱绑定弹窗 =====
     let _emailCountdown = null;
+    let _emailOverlay = null;
     function openEmailBindModal(prefillEmail) {
-      var overlay = document.getElementById('emailBindModalOverlay');
+      var overlay = _emailOverlay;
       if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'emailBindModalOverlay';
         overlay.className = 'modal-overlay';
         overlay.onclick = function(e) { if (e.target === overlay) closeEmailBindModal(); };
+        _emailOverlay = overlay;
         overlay.innerHTML =
           '<div class="modal" style="max-width:380px;">' +
             '<div class="modal-header"><h3 style="margin:0;">绑定邮箱</h3>' +
@@ -2630,7 +2633,7 @@ async function completeNewbieTask(taskId) {
       overlay.classList.add('show');
     }
     function closeEmailBindModal() {
-      if (overlay) overlay.classList.remove('show');
+      if (_emailOverlay) _emailOverlay.classList.remove('show');
       if (_emailCountdown) { clearInterval(_emailCountdown); _emailCountdown = null; }
     }
     async function emailBindSendCode() {
