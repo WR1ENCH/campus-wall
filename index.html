@@ -3314,6 +3314,39 @@ backdrop-filter: blur(4px);
       </svg>
     </div>
 
+    <!-- Step 2.5: 邮箱验证（可选） -->
+    <div class="onb-step" id="onbStepEmail" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:280px;">
+      <div style="font-size:15px;color:#5a3d00;margin-bottom:4px;font-weight:600;">验证邮箱（可选）</div>
+      <div style="font-size:12px;color:#b8a898;margin-bottom:16px;">绑定邮箱可用于找回密码和接收通知</div>
+      <div style="position:relative;width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;">
+        <input id="onbEmailInput" type="email" placeholder="your@email.com"
+          style="padding:10px 14px;border:2px solid #d4b892;border-radius:12px;font-size:15px;outline:none;background:#fef9e7;color:#3a2210;transition:border-color 0.3s;"
+          autocomplete="email" oninput="onbEmailInputChanged()">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="onbSendCodeBtn" onclick="onbSendCode()"
+            style="flex:1;padding:10px 14px;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.3s;"
+            disabled>发送验证码</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="onbCodeInput" type="text" placeholder="输入6位验证码" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+            style="flex:1;padding:10px 14px;border:2px solid #d4b892;border-radius:12px;font-size:15px;outline:none;background:#fef9e7;color:#3a2210;transition:border-color 0.3s;"
+            oninput="onbCodeInputChanged()">
+          <button id="onbVerifyBtn" onclick="onbVerifyCode()"
+            style="padding:10px 18px;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s;white-space:nowrap;">验证</button>
+        </div>
+      </div>
+      <div id="onbEmailStatus" style="font-size:12px;color:#999;margin-top:8px;min-height:18px;"></div>
+      <div style="display:flex;gap:12px;margin-top:14px;align-items:center;">
+        <button id="onbEmailSkipBtn" onclick="onbSkipEmail()"
+          style="padding:8px 24px;border:none;border-radius:999px;background:transparent;color:#b8a898;font-size:13px;cursor:pointer;transition:color 0.3s;"
+          onmouseover="this.style.color='#5a3d00'" onmouseout="this.style.color='#b8a898'">跳过，稍后验证</button>
+        <button id="onbEmailNextBtn" onclick="onbGoNickname()"
+          style="padding:10px 36px;border:none;border-radius:999px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;display:none;transition:opacity 0.3s,transform 0.3s;opacity:0;">
+          下一步 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+
     <!-- Step 3: 昵称输入 -->
     <div class="onb-step" id="onbStepNickname" style="display:none;flex-direction:column;align-items:center;padding:10px 0;min-height:220px;">
       <div style="font-size:15px;color:#5a3d00;margin-bottom:16px;font-weight:600;">给自己取一个名字吧</div>
@@ -4799,7 +4832,7 @@ function renderVoteList(voteList) {
         mark.style.transition = 'none';
         mark.style.strokeDashoffset = '60';
         text.style.opacity = '0';
-        onbShowNickname();
+        onbPlayHello();
       }, 700);
     }, 2200);
   }
@@ -4825,9 +4858,158 @@ function renderVoteList(voteList) {
         textEl.style.transition = 'none';
         textEl.style.strokeDashoffset = '600';
         textEl.setAttribute('fill', 'none');
-        onbShowNickname();
+        onbShowEmail();
       }, 700);
     }, 3000);
+  }
+
+  // ===== Email onboarding step =====
+  let onbEmailCountdown = null;
+  let onbEmailVerified = false;
+
+  function onbShowEmail() {
+    document.getElementById('onbStepEmail').style.display = 'flex';
+    document.getElementById('onbEmailInput').classList.add('onb-slide-down');
+    setTimeout(() => document.getElementById('onbEmailInput').focus(), 400);
+    // Reset UI state
+    document.getElementById('onbSendCodeBtn').disabled = true;
+    document.getElementById('onbVerifyBtn').style.display = 'none';
+    document.getElementById('onbEmailNextBtn').style.display = 'none';
+    document.getElementById('onbEmailStatus').textContent = '';
+    onbEmailVerified = false;
+  }
+
+  function onbEmailInputChanged() {
+    const input = document.getElementById('onbEmailInput');
+    const btn = document.getElementById('onbSendCodeBtn');
+    const email = input.value.trim();
+    if (email && /.+@.+\..+/.test(email)) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    }
+  }
+
+  function onbCodeInputChanged() {
+    const code = document.getElementById('onbCodeInput').value.trim();
+    const verifyBtn = document.getElementById('onbVerifyBtn');
+    if (code.length === 6 && /^\d{6}$/.test(code)) {
+      verifyBtn.style.display = 'inline-flex';
+    } else {
+      verifyBtn.style.display = 'none';
+    }
+  }
+
+  async function onbSendCode() {
+    const email = document.getElementById('onbEmailInput').value.trim();
+    if (!email || !/.+@.+\..+/.test(email)) {
+      document.getElementById('onbEmailStatus').textContent = '请输入有效的邮箱地址';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      return;
+    }
+    const btn = document.getElementById('onbSendCodeBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    document.getElementById('onbEmailStatus').textContent = '发送中...';
+    document.getElementById('onbEmailStatus').style.color = '#b8a898';
+    try {
+      const res = await fetch('/api/user/send-email-code', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ email })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        document.getElementById('onbEmailStatus').textContent = '验证码已发送，请检查邮箱';
+        document.getElementById('onbEmailStatus').style.color = '#22c55e';
+        startEmailCountdown();
+      } else {
+        document.getElementById('onbEmailStatus').textContent = json.msg || '发送失败';
+        document.getElementById('onbEmailStatus').style.color = '#ef4444';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        if (json.code === 'EMAIL_NOT_CONFIGURED') {
+          // SMTP not configured — show skip prompt but don't block
+          document.getElementById('onbEmailSkipBtn').textContent = '跳过（邮箱未配置）';
+        }
+      }
+    } catch (e) {
+      document.getElementById('onbEmailStatus').textContent = '网络错误，请稍后重试';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+
+  function startEmailCountdown() {
+    const btn = document.getElementById('onbSendCodeBtn');
+    let seconds = 60;
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    clearInterval(onbEmailCountdown);
+    onbEmailCountdown = setInterval(() => {
+      seconds--;
+      btn.textContent = seconds + 's';
+      if (seconds <= 0) {
+        clearInterval(onbEmailCountdown);
+        btn.textContent = '重新发送';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    }, 1000);
+  }
+
+  async function onbVerifyCode() {
+    const email = document.getElementById('onbEmailInput').value.trim();
+    const code = document.getElementById('onbCodeInput').value.trim();
+    if (!code || code.length !== 6) {
+      document.getElementById('onbEmailStatus').textContent = '请输入6位验证码';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      return;
+    }
+    document.getElementById('onbEmailStatus').textContent = '验证中...';
+    document.getElementById('onbEmailStatus').style.color = '#b8a898';
+    try {
+      const res = await fetch('/api/user/verify-email', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ email, code })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        document.getElementById('onbEmailStatus').innerHTML = '<span style="color:#22c55e;font-weight:600;">验证成功 ✓</span>';
+        document.getElementById('onbEmailStatus').style.color = '#22c55e';
+        document.getElementById('onbVerifyBtn').style.display = 'none';
+        document.getElementById('onbCodeInput').disabled = true;
+        document.getElementById('onbEmailSkipBtn').style.display = 'none';
+        onbEmailVerified = true;
+        // Show "下一步" button
+        const nextBtn = document.getElementById('onbEmailNextBtn');
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.style.animation = 'onbBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
+        nextBtn.style.opacity = '1';
+      } else {
+        document.getElementById('onbEmailStatus').textContent = json.msg || '验证失败';
+        document.getElementById('onbEmailStatus').style.color = '#ef4444';
+      }
+    } catch (e) {
+      document.getElementById('onbEmailStatus').textContent = '网络错误，请稍后重试';
+      document.getElementById('onbEmailStatus').style.color = '#ef4444';
+    }
+  }
+
+  function onbSkipEmail() {
+    clearInterval(onbEmailCountdown);
+    document.getElementById('onbStepEmail').style.display = 'none';
+    onbShowNickname();
+  }
+
+  function onbGoNickname() {
+    clearInterval(onbEmailCountdown);
+    document.getElementById('onbStepEmail').style.display = 'none';
+    onbShowNickname();
   }
 
   function onbShowNickname() {

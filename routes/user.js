@@ -3,9 +3,10 @@ const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verif
 const { generateId } = require('../lib/uniqueId');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
-const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX } = require('../lib/state');
+const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX, emailVerificationStore, emailCodeRateLimit } = require('../lib/state');
 const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
+const { sendEmail } = require('../lib/email');
 const nodeCrypto = require('crypto');
 const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
@@ -215,6 +216,82 @@ module.exports = function(app) {
         zhixueStatus: null // 新用户未认证
       }
     });
+  });
+
+  // 邮箱验证码发送
+  app.post('/api/user/send-email-code', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+    const { email } = req.body;
+    if (!email || !/.+@.+\..+/.test(email)) {
+      return res.json({ ok: false, msg: '请输入有效的邮箱地址' });
+    }
+    // 检查是否已验证
+    const users = readUsers();
+    const user = users.find(u => u.id === session.id);
+    if (user && user.emailVerified === 1) {
+      return res.json({ ok: false, msg: '邮箱已验证' });
+    }
+    // 60s 发送冷却
+    const lastSend = emailCodeRateLimit.get(session.id);
+    if (lastSend && Date.now() - lastSend < 60000) {
+      return res.json({ ok: false, msg: '操作过于频繁，请 60 秒后再试' });
+    }
+    // 生成 6 位验证码
+    const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    emailVerificationStore.set(session.id, { email, code, expiresAt: Date.now() + 600000 });
+    emailCodeRateLimit.set(session.id, Date.now());
+    // 发送
+    sendEmail(email, '校园墙邮箱验证', '<p>你的验证码是：<b>' + code + '</b></p><p>验证码 10 分钟内有效。</p>').then(result => {
+      if (result.ok) {
+        res.json({ ok: true, msg: '验证码已发送' });
+      } else {
+        if (result.code === 'EMAIL_NOT_CONFIGURED') {
+          res.json({ ok: false, msg: '管理员暂未配置邮箱服务，请跳过此步骤', code: 'EMAIL_NOT_CONFIGURED' });
+        } else {
+          res.json({ ok: false, msg: result.msg || '邮件发送失败，请稍后重试' });
+        }
+      }
+    }).catch(() => {
+      res.json({ ok: false, msg: '邮件发送失败，请稍后重试' });
+    });
+  });
+
+  // 邮箱验证码校验
+  app.post('/api/user/verify-email', (req, res) => {
+    const token = req.headers['x-user-token'];
+    if (!token) return res.json({ ok: false, msg: '未登录', code: 'NOT_LOGIN' });
+    const session = verifyUserToken(token);
+    if (!session) return res.json({ ok: false, msg: '登录已过期', code: 'TOKEN_EXPIRED' });
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.json({ ok: false, msg: '请提供邮箱和验证码' });
+    }
+    const entry = emailVerificationStore.get(session.id);
+    if (!entry) {
+      return res.json({ ok: false, msg: '请先获取验证码' });
+    }
+    if (entry.expiresAt < Date.now()) {
+      emailVerificationStore.delete(session.id);
+      return res.json({ ok: false, msg: '验证码已过期，请重新获取' });
+    }
+    if (entry.email !== email) {
+      return res.json({ ok: false, msg: '邮箱地址不一致' });
+    }
+    if (entry.code !== code) {
+      return res.json({ ok: false, msg: '验证码错误' });
+    }
+    // 验证通过
+    const users = readUsers();
+    const userIndex = users.findIndex(u => u.id === session.id);
+    if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
+    users[userIndex].email = email;
+    users[userIndex].emailVerified = 1;
+    writeUsers(users);
+    emailVerificationStore.delete(session.id);
+    res.json({ ok: true, msg: '邮箱验证成功' });
   });
   app.post('/api/user/login', rateLimitLogin('username'), (req, res) => {
     const { username, password, captchaId, captchaText } = req.body;
@@ -664,8 +741,20 @@ module.exports = function(app) {
     const user = users[userIndex];
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   
-    const { nickname, avatar, mbti, birthday } = req.body;
+    const { nickname, avatar, mbti, birthday, email } = req.body;
     let updated = false;
+
+    // 更新邮箱（重置验证状态）
+    if (email !== undefined) {
+      if (!/.+@.+\..+/.test(email)) {
+        return res.json({ ok: false, msg: '请输入有效的邮箱地址' });
+      }
+      if (email !== user.email) {
+        user.email = email;
+        user.emailVerified = 0;
+        updated = true;
+      }
+    }
 
     // 更新昵称
     if (nickname !== undefined) {
