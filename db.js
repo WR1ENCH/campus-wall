@@ -307,6 +307,8 @@ function migrate() {
     "distributedCredits" INTEGER DEFAULT 0,
     "createdAt" TEXT,
     "deleted" INTEGER DEFAULT 0,
+    "deletedAt" TEXT,
+    "deletedBy" TEXT,
     "images" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "qa_answers" (
@@ -322,6 +324,8 @@ function migrate() {
     "reward" INTEGER DEFAULT 0,
     "createdAt" TEXT,
     "deleted" INTEGER DEFAULT 0,
+    "deletedAt" TEXT,
+    "deletedBy" TEXT,
     "images" TEXT
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "pickup_auctions" (
@@ -491,12 +495,12 @@ function migrate() {
     // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
     { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'email', 'emailVerified', 'mbti'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
-    { name: 'reports', columns: ['reportId', 'handledResult', 'punishmentId', 'evidenceContent', 'reportedUserId'] },
-    { name: 'discussions', columns: ['official', 'expiresAt', 'deleted'] },
+     { name: 'qa_questions', columns: ['pinned'] },
+     { name: 'qa_questions', columns: ['deletedAt', 'deletedBy'] },
+     { name: 'qa_answers', columns: ['deletedAt', 'deletedBy'] },
     { name: 'whispers', columns: ['signed', 'signTime'] },
     { name: 'punishments', columns: ['credibilityDeducted'] },
      { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
-     { name: 'qa_questions', columns: ['pinned'] },
     { name: 'notices', columns: ['deletedAt', 'syncedAt', 'updatedAt', 'pinned', 'images'] },
   ];
   for (const t of tableMigrations) {
