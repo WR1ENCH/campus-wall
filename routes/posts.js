@@ -93,6 +93,10 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function toPublicPost(p) {
+  return { ...p, images: undefined, imageCount: Array.isArray(p.images) ? p.images.length : 0 };
+}
+
 module.exports = function(app) {
 
 app.get('/api/posts', (req, res) => {
@@ -181,12 +185,12 @@ app.get('/api/posts', (req, res) => {
           authorMbti: authorMbtiFirst
         };
         if (p.isAnonymous) enriched.userId = undefined;
-        return enriched;
+        return toPublicPost(enriched);
       }
     }
     const fallback = { ...p, likes: Number(p.likes) || 0, likedBy: Array.isArray(p.likedBy) ? p.likedBy : [] };
     if (p.isAnonymous) fallback.userId = undefined;
-    return fallback;
+    return toPublicPost(fallback);
   });
   res.json({ ok: true, data: postsWithAdmin });
 });
@@ -262,12 +266,71 @@ app.get('/api/posts/:id', (req, res) => {
       }
       const detail = { ...post, authorIsPlus: isUserPlus(author.id), authorMbti: getMbtiFirst(author), authorZhixueStatus: zhixueStatus, authorZhixueCertType: author.zhixueCertType || null };
       if (post.isAnonymous) detail.userId = undefined;
-      return res.json({ ok: true, data: detail });
+      return res.json({ ok: true, data: toPublicPost(detail) });
     }
   }
   if (post.isAnonymous) post.userId = undefined;
-  res.json({ ok: true, data: post });
+  res.json({ ok: true, data: toPublicPost(post) });
 });
+app.get('/api/posts/:id/image/:idx', (req, res) => {
+  const rows = db.queryRows('posts', 'id = ?', [req.params.id]);
+  const post = rows[0] || null;
+  if (!post || post.deleted) return res.status(404).end();
+  // 仅自己可见：非作者不可查看
+  if (post.visibility === 'self_only') {
+    const token = req.headers['x-user-token'];
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session && post.userId && session.id === post.userId) isOwner = true;
+    }
+    if (!isOwner) return res.status(404).end();
+  }
+  // 白名单：非作者且不在 visibleTo 中不可查看
+  if (post.visibility === 'whitelist') {
+    const token = req.headers['x-user-token'];
+    let currentUserId = null;
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) {
+        currentUserId = session.id;
+        if (post.userId && session.id === post.userId) isOwner = true;
+      }
+    }
+    if (!isOwner) {
+      const vt = Array.isArray(post.visibleTo) ? post.visibleTo : [];
+      if (!currentUserId || !vt.includes(currentUserId)) return res.status(404).end();
+    }
+  }
+  // 黑名单：在 invisibleTo 中的用户不可查看（作者例外）
+  if (post.visibility === 'blacklist') {
+    const token = req.headers['x-user-token'];
+    let currentUserId = null;
+    let isOwner = false;
+    if (token) {
+      const session = verifyUserToken(token);
+      if (session) {
+        currentUserId = session.id;
+        if (post.userId && session.id === post.userId) isOwner = true;
+      }
+    }
+    if (!isOwner && currentUserId) {
+      const ivt = Array.isArray(post.invisibleTo) ? post.invisibleTo : [];
+      if (ivt.includes(currentUserId)) return res.status(404).end();
+    }
+  }
+  const idx = Number(req.params.idx);
+  const images = Array.isArray(post.images) ? post.images : [];
+  const src = images[idx];
+  if (!src || typeof src !== 'string' || !src.startsWith('data:')) return res.status(404).end();
+  const comma = src.indexOf(',');
+  const mime = (src.slice(5, comma).split(';')[0]) || 'application/octet-stream';
+  res.setHeader('Content-Type', mime);
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(Buffer.from(src.slice(comma + 1), 'base64'));
+});
+
 
 app.post('/api/posts', (req, res) => {
   // 验证用户 Token（可选：没 token 以匿名身份发帖，有 token 必须有效）
@@ -315,11 +378,10 @@ app.post('/api/posts', (req, res) => {
   // 每日发帖次数限额（PLUS 无限制，非PLUS 5次/天，超出需39 credit）
   if (realUserId) {
     const today = new Date().toISOString().slice(0, 10);
-    const allPosts = readPosts();
     const uid = String(realUserId);
-    const todayPosts = allPosts.filter(p => String(p.userId) === uid && p.time && String(p.time).startsWith(today));
+    const todayPostsCount = db.countRows('posts', 'userId = ? AND time LIKE ?', [uid, today + '%']);
     const dailyLimit = isUserPlus(realUserId) ? Infinity : 5;
-    if (todayPosts.length >= dailyLimit) {
+    if (todayPostsCount >= dailyLimit) {
       if (!payWithCredit) {
         return res.json({ ok: false, code: 'DAILY_POST_LIMIT', msg: '今日免费发帖次数已用完（' + dailyLimit + '/' + dailyLimit + '），每次需消耗 39 credit', cost: 39 });
       }
@@ -345,11 +407,10 @@ app.post('/api/posts', (req, res) => {
   // 匿名发帖配额检测（PLUS 20次/天免费，非PLUS 2次/天免费，超出需50credit）
   if (anonymousFlag && realUserId) {
     const today = new Date().toISOString().slice(0, 10);
-    const allPosts = readPosts();
     const uid = String(realUserId);
-    const todayAnonPosts = allPosts.filter(p => String(p.userId) === uid && p.isAnonymous && p.time && String(p.time).startsWith(today));
+    const todayAnonPosts = db.countRows('posts', 'userId = ? AND isAnonymous = 1 AND time LIKE ?', [uid, today + '%']);
     const anonLimit = isUserPlus(realUserId) ? 20 : 2;
-    if (todayAnonPosts.length >= anonLimit) {
+    if (todayAnonPosts >= anonLimit) {
       if (!payWithCredit) {
         return res.json({ ok: false, code: 'ANON_QUOTA_EXCEEDED', msg: '今日匿名发帖次数已用完（' + anonLimit + '/' + anonLimit + '），每次需消耗 50 credit', cost: 50 });
       }
@@ -467,7 +528,6 @@ if (!content || !content.trim()) {
     });
   }
 
-  const posts = readPosts();
 
   // 验证图片（base64 data URL，每张≤10MB，最多4张）
   var validImages = [];
@@ -516,8 +576,6 @@ if (!content || !content.trim()) {
     newPost.pinnedAt = Date.now();
   }
 
-  posts.unshift(newPost);
-  writePosts(posts);
 
   // 自动话题识别：内容以 # 开头时，提取话题名并关联/创建讨论区
   var finalSyncDiscussionId = req.body.syncDiscussionId;
@@ -542,9 +600,11 @@ if (!content || !content.trim()) {
       }
       finalSyncDiscussionId = _disc.id;
       newPost.discussionId = _disc.id;
-      writePosts(posts);
     }
   }
+  if (finalSyncDiscussionId && !newPost.discussionId) newPost.discussionId = finalSyncDiscussionId;
+  db.insertPost(newPost);
+  broadcastSSE('postUpdate', { t: Date.now() });
 
   // 敏感词命中：自动生成举报记录挂到后台
   if (hasSensitive) {
@@ -572,11 +632,6 @@ if (!content || !content.trim()) {
     incUserPostCount(realAuthor);
   }
 
-  // 通过 syncDiscussionId 自动补全的场景：确保 post.discussionId 已设置
-  if (finalSyncDiscussionId && !newPost.discussionId) {
-    newPost.discussionId = finalSyncDiscussionId;
-    writePosts(posts);
-  }
 
   // 同步到讨论区（如果用户指定了话题或自动识别了话题）
   if (finalSyncDiscussionId && realUserId) {
@@ -608,7 +663,7 @@ if (!content || !content.trim()) {
 
   res.json({
     ok: true,
-    data: newPost,
+    data: { ...newPost, images: undefined, imageCount: Array.isArray(newPost.images) ? newPost.images.length : 0 },
     warning: false,
     warningMsg: undefined
   });

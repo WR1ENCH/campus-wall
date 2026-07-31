@@ -6432,6 +6432,8 @@ function isPostAnonymous(post) {
   return !!(post && (post.isAnonymous || post.author === '匿名'));
 }
 
+function postImageUrl(post, idx) { return API + '/api/posts/' + post.id + '/image/' + idx; }
+
  // ===== 渲染 =====
 function renderNotes(filter = '全部') {
   if (isScrolling) {
@@ -6488,9 +6490,9 @@ function _doRenderNotes(filter = '全部') {
    ${pinHtml}
    ${post.authorIsPlus ? '<div class="plus-corner-badge"><span>PLUS</span></div>' : ''}
    ${post.pinned ? '<div class="post-pinned-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 置顶</div>' : ''}
-     <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${(post.images && post.images.length) ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.images.length : ''}</div>
+     <div class="note-type">${cfg.emoji} ${post.type}${post.visibility === 'self_only' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 仅自己可见' : (post.visibility === 'whitelist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 仅指定用户可见' : (post.visibility === 'blacklist' ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><line x1="1" y1="1" x2="23" y2="23"/></svg> 仅指定用户不可见' : ''))}${post.imageCount ? ' · <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' + post.imageCount : ''}</div>
     <div class="note-content">${renderPostContent(post)}</div>
-    ${post.images && post.images.length ? '<div class="note-image-stack">' + post.images.slice(-3).reverse().map(function(imgSrc) { return '<img class="stack-img" src="' + escHtml(imgSrc) + '" loading="lazy" onerror="this.style.display=\'none\'">'; }).join('') + '</div>' : ''}
+    ${post.imageCount ? '<div class="note-image-stack">' + [post.imageCount - 1, post.imageCount - 2, post.imageCount - 3].filter(function(i) { return i >= 0; }).map(function(i) { return '<img class="stack-img" src="' + escHtml(postImageUrl(post, i)) + '" loading="lazy" onerror="this.style.display=\'none\'">'; }).join('') + '</div>' : ''}
   <div class="note-footer" onclick="event.stopPropagation()">
   <div class="note-author">
    ${post.userId && !isPostAnonymous(post) ? `<a href="user.html?id=${post.userId}" style="text-decoration:none; color:inherit;">` : ''}
@@ -6522,7 +6524,7 @@ function _doRenderNotes(filter = '全部') {
 
  const temp = document.createElement('div');
  temp.style.cssText = `position:absolute;visibility:hidden;width:${sizeInfo.width}px;padding:${sizeInfo.padding}px;padding-top:${sizeInfo.padding + 10}px;font-family:'Ma Shan Zheng',cursive;`;
-  var _stackCount = post.images ? Math.min(post.images.length, 3) : 0;
+  var _stackCount = post.imageCount ? Math.min(post.imageCount, 3) : 0;
   var stackHtml = _stackCount > 0 ? '<div style="display:flex;flex-direction:row;margin:8px 0 2px;">' : '';
   for (var _si = 0; _si < _stackCount; _si++) {
   stackHtml += '<div style="width:72px;height:72px;border-radius:14px;background:rgba(0,0,0,0.04);flex-shrink:0;' + (_si > 0 ? 'margin-left:-24px;' : '') + '"></div>';
@@ -6875,11 +6877,11 @@ function _doRenderNotes(filter = '全部') {
  // 帖子附图
  const detailImagesEl = document.getElementById('detailImages');
  if (detailImagesEl) {
- if (Array.isArray(post.images) && post.images.length) {
- detailImagesEl.style.display = 'flex';
- detailImagesEl.innerHTML = post.images.map(function(src){
- return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
- }).join('');
+if (post.imageCount) {
+detailImagesEl.style.display = 'flex';
+detailImagesEl.innerHTML = Array.from({ length: post.imageCount }, function(_, i) {
+var src = postImageUrl(post, i); return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid rgba(0,0,0,0.1);" onerror="this.style.display=\'none\'">';
+}).join('');
  } else {
  detailImagesEl.style.display = 'none';
  detailImagesEl.innerHTML = '';
@@ -7669,19 +7671,16 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
 
   const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, false, pinned);
   if (newPost) {
-  newPost.time = '刚刚';
-  newPost.rotate = rand(-4, 4);
-  newPost.zIndex = randInt(1, 5);
-  // Update local pin count after successful pinned post
-  if (newPost.pinned && currentUser) {
-    currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-  }
-  // 放弃本地插入：用服务端权威数据刷新，避免 SSE fetchPosts 覆盖本地数组
-  await fetchPosts();
-  renderNotes(currentFilter);
-  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
-  closeModal();
+    newPost.time = '刚刚';
+    newPost.rotate = rand(-4, 4);
+    newPost.zIndex = randInt(1, 5);
+    if (newPost.pinned && currentUser) {
+      currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
+      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+    }
+    showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4"/><path d="M12 3a4 4 0 0 0-4 4c0 2 1 3 2 4h4c1-1 2-2 2-4a4 4 0 0 0-4-4z"/></svg> 便利贴已贴上！');
+    closeModal();
+    fetchPosts().then(() => renderNotes(currentFilter)).catch(() => {});
   } else if (_returnToEdit) {
   _returnToEdit = false;
   } else {
