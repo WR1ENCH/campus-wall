@@ -648,7 +648,6 @@ transition: top 0.3s ease, padding var(--ease-linear);
  }
  .pickup-btn-bid {
  padding: 10px 24px; border-radius: 10px; border: none;
- background: linear-gradient(135deg, #f5c518, #e0a800);
  color: #5a3d00; font-weight: 700; cursor: pointer;
  font-size: 14px; white-space: nowrap; transition: .12s;
  }
@@ -3441,6 +3440,24 @@ backdrop-filter: blur(4px);
       </p>
     </div>
   </div>
+  <!-- ===== 邮箱绑定提示弹窗（每次访问未绑定邮箱时弹出） ===== -->
+  <div class="modal-overlay" id="emailBindPromptOverlay" style="z-index:300;" onclick="if(event.target===this)closeEmailBindPrompt()">
+    <div class="modal" style="max-width:380px;text-align:center;">
+      <div class="modal-header" style="border-bottom:none;justify-content:center;">
+        <h3 style="margin:0;">绑定邮箱</h3>
+      </div>
+      <div class="modal-body" style="padding-top:4px;">
+        <div style="font-size:14px;color:#5a3d00;line-height:1.7;margin-bottom:8px;">
+          你还没有绑定邮箱。绑定邮箱可用于找回密码、接收重要通知，并提升账号安全。
+        </div>
+        <div style="font-size:13px;color:#b8a898;margin-bottom:18px;">
+          请前往个人主页完成邮箱绑定。
+        </div>
+        <button onclick="goBindEmail()" style="width:100%;padding:11px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#5a3d00,#7a5500);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">前往绑定</button>
+        <button onclick="closeEmailBindPrompt()" style="width:100%;padding:10px 0;margin-top:10px;border:1px solid #d4b892;background:transparent;color:#7a6a5a;border-radius:12px;font-size:14px;cursor:pointer;">暂不绑定</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 登录表单 -->
   <div id="loginForm">
@@ -4455,8 +4472,8 @@ function renderVoteList(voteList) {
  });
  const json = await res.json();
   if (json.ok) {
-  const { token, id, username, nickname, avatar, credit, zhixueStatus, pinCount } = json.data;
-  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null, pinCount: pinCount || 0 };
+  const { token, id, username, nickname, avatar, credit, zhixueStatus, pinCount, email, emailVerified } = json.data;
+  currentUser = { id, username, nickname, avatar, token, credit: credit || 0, checkinToday: false, checkinStreak: 0, zhixueStatus: zhixueStatus || null, pinCount: pinCount || 0, email: email || null, emailVerified: !!emailVerified };
   // 获取 PLUS 订阅状态
   try {
     const plusRes = await checkUserPlusStatus();
@@ -4832,36 +4849,11 @@ function renderVoteList(voteList) {
         mark.style.transition = 'none';
         mark.style.strokeDashoffset = '60';
         text.style.opacity = '0';
-        onbPlayHello();
+        onbShowEmail();
       }, 700);
     }, 2200);
   }
 
-  function onbPlayHello() {
-    document.getElementById('onbStepHello').style.display = 'flex';
-    const textEl = document.getElementById('onbHelloText');
-    // Phase 1: 描边动画 — 模拟书写轨迹 (2s)
-    textEl.style.transition = 'stroke-dashoffset 2s ease-in-out';
-    textEl.style.strokeDashoffset = '0';
-    // Phase 2: 描边完成后填充颜色 — 霓虹点亮 (0.4s)
-    setTimeout(() => {
-      textEl.style.transition = 'fill 0.4s ease-in';
-      textEl.setAttribute('fill', 'url(#neonFillGrad)');
-    }, 2000);
-    // 3s 后进入昵称
-    setTimeout(() => {
-      const el = document.getElementById('onbStepHello');
-      el.classList.add('onb-step-disappear');
-      setTimeout(() => {
-        el.style.display = 'none';
-        el.classList.remove('onb-step-disappear');
-        textEl.style.transition = 'none';
-        textEl.style.strokeDashoffset = '600';
-        textEl.setAttribute('fill', 'none');
-        onbShowEmail();
-      }, 700);
-    }, 3000);
-  }
 
   // ===== Email onboarding step =====
   let onbEmailCountdown = null;
@@ -5241,6 +5233,23 @@ function renderVoteList(voteList) {
     }, 5000);
   }
 
+  // ===== 邮箱绑定提示（每次访问未绑定邮箱时弹出） =====
+  function closeEmailBindPrompt() {
+    document.getElementById('emailBindPromptOverlay').classList.remove('show');
+  }
+  function goBindEmail() {
+    closeEmailBindPrompt();
+    window.location.href = 'user.html';
+  }
+  function promptEmailBinding() {
+    if (!currentUser) return;
+    // 引导流程进行中不弹（引导本身含邮箱环节）
+    if (document.getElementById('registrationOnboarding').style.display !== 'none') return;
+    // 已绑定邮箱则不弹
+    if (currentUser.emailVerified) return;
+    if (currentUser.email) return;
+    document.getElementById('emailBindPromptOverlay').classList.add('show');
+  }
  function doUserSkip() {
  currentUser = null;
  hideLoginModal();
@@ -5325,6 +5334,8 @@ function updateUserBar() {
       currentUser.zhixueStatus = json.data.zhixueStatus || null;
       if (json.data.avatar !== undefined) currentUser.avatar = json.data.avatar;
       if (json.data.nickname !== undefined) currentUser.nickname = json.data.nickname;
+      currentUser.email = json.data.email || null;
+      currentUser.emailVerified = !!json.data.emailVerified;
       // 获取 PLUS 订阅状态
       try {
         const plusRes = await checkUserPlusStatus();
@@ -5356,6 +5367,10 @@ function updateUserBar() {
   // 已登录 → 检查是否有进行中处罚
   if (currentUser) {
   checkPunishment();
+  }
+  // 已登录但未绑定邮箱 → 每次访问弹出绑定提示
+  if (currentUser) {
+    promptEmailBinding();
   }
 
   // 检查新手任务

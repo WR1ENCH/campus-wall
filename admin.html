@@ -5041,6 +5041,10 @@
       if (u.bindAdminId) {
         html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">绑定管理员：</span>@' + escHtml(u.bindAdminId) + '（' + escHtml(u.bindAdminRole || '-') + '）</div>';
       }
+      if (u.email) {
+        const emailVerified = u.emailVerified === 1;
+        html += '<div style="grid-column:span 2;"><span style="color:#8a7a6a;">绑定邮箱：</span>' + escHtml(u.email) + (emailVerified ? ' <span class="type-badge badge-success">已验证</span>' : ' <span class="type-badge badge-normal">未验证</span>') + '</div>';
+      }
       html += '</div></div>';
 
       // 同学认证信息区域

@@ -1746,6 +1746,17 @@
           </div>
           <div class="cert-item-actions" id="adminCertActions"></div>
         </div>
+        <!-- 邮箱绑定 -->
+        <div class="cert-item" id="certItemEmail">
+          <div class="cert-badge-icon email">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+          </div>
+          <div class="cert-item-info">
+            <div class="cert-item-name">邮箱绑定</div>
+            <div class="cert-item-status" id="emailBindStatus">未绑定</div>
+          </div>
+          <div class="cert-item-actions" id="emailBindActions"></div>
+        </div>
       </div>
     </div>
 
@@ -2523,6 +2534,27 @@ async function completeNewbieTask(taskId) {
         adminBtn.onclick = function() { openAdminCert(); };
         adminActions.appendChild(adminBtn);
       }
+      // 渲染邮箱绑定行
+      var emailStatus = document.getElementById('emailBindStatus');
+      var emailActions = document.getElementById('emailBindActions');
+      var emailVal = null;
+      var emailVerifiedVal = false;
+      if (isSelf && meData && meData.ok && meData.data) {
+        emailVal = meData.data.email || null;
+        emailVerifiedVal = !!meData.data.emailVerified;
+      } else if (!isSelf && viewedUser) {
+        emailVal = viewedUser.email || null;
+        emailVerifiedVal = !!viewedUser.emailVerified;
+      }
+      emailStatus.textContent = emailVerifiedVal ? ('已绑定 · ' + (emailVal || '')) : (emailVal ? '已绑定（未验证）' : '未绑定');
+      emailActions.innerHTML = '';
+      if (isSelf && !emailVerifiedVal) {
+        var emailBtn = document.createElement('button');
+        emailBtn.className = 'btn-sm primary';
+        emailBtn.textContent = emailVal ? '重新验证' : '绑定邮箱';
+        emailBtn.onclick = function() { openEmailBindModal(emailVal); };
+        emailActions.appendChild(emailBtn);
+      }
 
       // 判断是否需要隐藏整个认证区域
       var hasApproved = schoolStatusRaw === 'approved' || isAdminBound;
@@ -2559,6 +2591,144 @@ async function completeNewbieTask(taskId) {
 
     function openSchoolCertModal() {
       openBindZhixueModal(_pendingEditData);
+    }
+    // ===== 邮箱绑定弹窗 =====
+    let _emailCountdown = null;
+    function openEmailBindModal(prefillEmail) {
+      var overlay = document.getElementById('emailBindModalOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'emailBindModalOverlay';
+        overlay.className = 'modal-overlay';
+        overlay.onclick = function(e) { if (e.target === overlay) closeEmailBindModal(); };
+        overlay.innerHTML =
+          '<div class="modal" style="max-width:380px;">' +
+            '<div class="modal-header"><h3 style="margin:0;">绑定邮箱</h3>' +
+            '<button class="modal-close" onclick="closeEmailBindModal()">&times;</button></div>' +
+            '<div class="modal-body">' +
+              '<div style="font-size:13px;color:var(--text-sub);margin-bottom:14px;">绑定邮箱可用于找回密码和接收重要通知，请填写你常用且可用的邮箱。</div>' +
+              '<input type="email" id="emailBindInput" class="form-input" placeholder="your@email.com" autocomplete="email" style="margin-bottom:10px;">' +
+              '<div id="emailBindCodeWrap" style="display:none;gap:8px;margin-bottom:10px;">' +
+                '<input type="text" id="emailBindCode" class="form-input" placeholder="6位验证码" maxlength="6" style="flex:1;">' +
+              '</div>' +
+              '<button id="emailBindSendBtn" class="btn btn-primary" style="width:100%;margin-bottom:8px;">发送验证码</button>' +
+              '<button id="emailBindVerifyBtn" class="btn btn-primary" style="width:100%;display:none;margin-bottom:8px;">验证并绑定</button>' +
+              '<div id="emailBindStatusLine" style="font-size:13px;min-height:18px;"></div>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(overlay);
+        document.getElementById('emailBindSendBtn').onclick = emailBindSendCode;
+        document.getElementById('emailBindVerifyBtn').onclick = emailBindVerifyCode;
+      }
+      var input = document.getElementById('emailBindInput');
+      input.value = prefillEmail || '';
+      document.getElementById('emailBindCodeWrap').style.display = 'none';
+      document.getElementById('emailBindVerifyBtn').style.display = 'none';
+      document.getElementById('emailBindSendBtn').style.display = '';
+      document.getElementById('emailBindStatusLine').textContent = '';
+      document.getElementById('emailBindStatusLine').style.color = 'var(--text-sub)';
+      overlay.classList.add('show');
+    }
+    function closeEmailBindModal() {
+      if (overlay) overlay.classList.remove('show');
+      if (_emailCountdown) { clearInterval(_emailCountdown); _emailCountdown = null; }
+    }
+    async function emailBindSendCode() {
+      var input = document.getElementById('emailBindInput');
+      var email = input.value.trim();
+      var statusLine = document.getElementById('emailBindStatusLine');
+      var sendBtn = document.getElementById('emailBindSendBtn');
+      if (!email || !/.+@.+\..+/.test(email)) {
+        statusLine.textContent = '请输入有效的邮箱地址';
+        statusLine.style.color = '#ef4444';
+        return;
+      }
+      sendBtn.disabled = true;
+      statusLine.textContent = '发送中...';
+      statusLine.style.color = 'var(--text-sub)';
+      try {
+        var token = localStorage.getItem('campus_user_token');
+        var res = await fetch('/api/user/send-email-code', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'x-user-token': token }),
+          body: JSON.stringify({ email: email })
+        });
+        var json = await res.json();
+        if (json.ok) {
+          statusLine.textContent = '验证码已发送，请检查邮箱';
+          statusLine.style.color = '#22c55e';
+          document.getElementById('emailBindCodeWrap').style.display = 'flex';
+          document.getElementById('emailBindVerifyBtn').style.display = '';
+          startEmailBindCountdown();
+        } else {
+          statusLine.textContent = json.msg || '发送失败';
+          statusLine.style.color = '#ef4444';
+          sendBtn.disabled = false;
+          if (json.code === 'EMAIL_NOT_CONFIGURED') {
+            statusLine.textContent = '管理员尚未配置邮箱服务，暂无法发送验证码';
+          }
+        }
+      } catch (e) {
+        statusLine.textContent = '网络错误，请稍后重试';
+        statusLine.style.color = '#ef4444';
+        sendBtn.disabled = false;
+      }
+    }
+    function startEmailBindCountdown() {
+      var btn = document.getElementById('emailBindSendBtn');
+      var seconds = 60;
+      btn.disabled = true;
+      clearInterval(_emailCountdown);
+      _emailCountdown = setInterval(function() {
+        seconds--;
+        btn.textContent = seconds + 's';
+        if (seconds <= 0) {
+          clearInterval(_emailCountdown);
+          _emailCountdown = null;
+          btn.textContent = '重新发送';
+          btn.disabled = false;
+        }
+      }, 1000);
+    }
+    async function emailBindVerifyCode() {
+      var email = document.getElementById('emailBindInput').value.trim();
+      var code = document.getElementById('emailBindCode').value.trim();
+      var statusLine = document.getElementById('emailBindStatusLine');
+      if (!code || code.length !== 6) {
+        statusLine.textContent = '请输入6位验证码';
+        statusLine.style.color = '#ef4444';
+        return;
+      }
+      statusLine.textContent = '验证中...';
+      statusLine.style.color = 'var(--text-sub)';
+      try {
+        var token = localStorage.getItem('campus_user_token');
+        var res = await fetch('/api/user/verify-email', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, { 'x-user-token': token }),
+          body: JSON.stringify({ email: email, code: code })
+        });
+        var json = await res.json();
+        if (json.ok) {
+          statusLine.textContent = '邮箱绑定成功';
+          statusLine.style.color = '#22c55e';
+          if (_emailCountdown) { clearInterval(_emailCountdown); _emailCountdown = null; }
+          // 重新拉取最新资料并刷新展示
+          await refreshUserProfile();
+          setTimeout(closeEmailBindModal, 800);
+        } else {
+          statusLine.textContent = json.msg || '验证失败';
+          statusLine.style.color = '#ef4444';
+        }
+      } catch (e) {
+        statusLine.textContent = '网络错误，请稍后重试';
+        statusLine.style.color = '#ef4444';
+      }
+    }
+    async function refreshUserProfile() {
+      try {
+        await renderCertSection(currentLoggedInUser && currentLoggedInUser.id === userId ? null : null);
+      } catch (e) { /* ignore */ }
     }
 
     var _certCaptchaToken = null;
