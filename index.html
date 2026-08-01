@@ -5494,6 +5494,11 @@ function updateUserBar() {
   if (currentUser) {
     checkAndShowNewbieTask();
   }
+  // 已登录且有邀请码 → 一次性弹出邀请码分享弹窗（localStorage 记录已展示）
+  if (currentUser && currentUser.inviteCode && !localStorage.getItem('campus_invite_popup_shown')) {
+    showInviteCodePopup(currentUser.inviteCode);
+    localStorage.setItem('campus_invite_popup_shown', '1');
+  }
   }
 
  // ===== 公告 =====

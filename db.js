@@ -589,6 +589,40 @@ function migrate() {
       }
     }
   }
+  // ===== 老用户邀请码补发：启动时为所有 inviteCode 为 NULL 的用户自动生成 =====
+  try {
+    const { generateInviteCode } = require('./lib/invite');
+    const usersWithoutCode = getDb().prepare(
+      `SELECT id FROM "users" WHERE "inviteCode" IS NULL OR "inviteCode" = ''`
+    ).all();
+    if (usersWithoutCode.length > 0) {
+      // 收集已有邀请码用于去重
+      const existingCodes = getDb().prepare(
+        `SELECT "inviteCode" FROM "users" WHERE "inviteCode" IS NOT NULL AND "inviteCode" != ''`
+      ).all().map(r => r.inviteCode);
+      const codeSet = new Set(existingCodes);
+      const stmt = getDb().prepare('UPDATE "users" SET "inviteCode" = ? WHERE id = ?');
+      let assigned = 0;
+      const txn = getDb().transaction(() => {
+        for (const row of usersWithoutCode) {
+          let code;
+          try {
+            code = generateInviteCode(codeSet);
+          } catch (e) {
+            console.error(`[db.js] 为用户 ${row.id} 生成邀请码失败:`, e.message);
+            continue;
+          }
+          stmt.run(code, row.id);
+          codeSet.add(code);
+          assigned++;
+        }
+      });
+      txn();
+      console.log(`[db.js] ✅ 已为 ${assigned} 位老用户补发邀请码`);
+    }
+  } catch (e) {
+    console.warn('[db.js] ⚠️ 老用户邀请码补发失败:', e.message);
+  }
   // credibility_logs 表
   db.exec(`CREATE TABLE IF NOT EXISTS "credibility_logs" (
     "id" TEXT PRIMARY KEY,
