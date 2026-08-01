@@ -62,6 +62,14 @@ function deleteSyncedDiscComment(postId) {
   } catch(e) { console.warn('[delete] deleteSyncedDiscComment failed:', e.message); }
 }
 
+// 邮箱查重：判断该邮箱是否已被其他账号绑定（不区分大小写）。
+// 只要其他账号的 email 字段等于目标邮箱即视为已绑定（无论是否已验证）。
+function isEmailBoundByOther(email, excludeUserId) {
+  const target = String(email || '').trim().toLowerCase();
+  if (!target) return null;
+  return readUsers().find(u => u.id !== excludeUserId && u.email && String(u.email).trim().toLowerCase() === target) || null;
+}
+
 function addLoginLog(type, account, success, ip, ua) {
   const cutoff = Date.now() - 100 * 24 * 60 * 60 * 1000;
   const logs = db.readLogs().filter(l => new Date(l.time).getTime() >= cutoff);
@@ -370,6 +378,10 @@ module.exports = function(app) {
     if (!email || !/.+@.+\..+/.test(email)) {
       return res.json({ ok: false, msg: '请输入有效的邮箱地址' });
     }
+    // 邮箱查重：该邮箱已被其他账号绑定时拒绝发送，防止跨账号重复绑定
+    if (isEmailBoundByOther(email, session.id)) {
+      return res.json({ ok: false, msg: '该邮箱已被其他账号绑定' });
+    }
     // 检查是否已验证
     const users = readUsers();
     const user = users.find(u => u.id === session.id);
@@ -426,6 +438,11 @@ module.exports = function(app) {
       return res.json({ ok: false, msg: '验证码错误' });
     }
     // 验证通过
+    // 邮箱查重（提交时权威校验）：防止验证码发送与校验之间，邮箱被其他账号抢先绑定
+    if (isEmailBoundByOther(email, session.id)) {
+      emailVerificationStore.delete(session.id);
+      return res.json({ ok: false, msg: '该邮箱已被其他账号绑定' });
+    }
     const users = readUsers();
     const userIndex = users.findIndex(u => u.id === session.id);
     if (userIndex === -1) return res.json({ ok: false, msg: '用户不存在' });
