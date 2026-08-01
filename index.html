@@ -3555,23 +3555,61 @@ backdrop-filter: blur(4px);
  <div class="user-login-overlay" id="forgotPwdOverlay">
  <div class="user-login-box">
  <h3><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 找回密码</h3>
+ <div class="cert-tabs" style="margin-bottom:16px;">
+ <button id="forgotTabEmail" class="cert-tab active" onclick="switchForgotTab('email')">邮箱验证码</button>
+ <button id="forgotTabZhixue" class="cert-tab" onclick="switchForgotTab('zhixue')">智学网密码</button>
+ </div>
+ <div id="forgotPanelEmail" class="cert-panel active">
+ <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
+ 通过已绑定并验证的邮箱获取验证码重置密码
+ </div>
+ <div class="user-login-field">
+ <label class="user-login-label">绑定邮箱</label>
+ <input class="user-login-input" id="forgotEmailInput" type="email"
+ placeholder="输入绑定的邮箱地址" maxlength="80"
+ onkeydown="if(event.key==='Enter') sendForgotEmailCode()">
+ </div>
+ <div class="user-login-field" style="display:none;" id="forgotEmailCodeField">
+ <label class="user-login-label">邮箱验证码</label>
+ <div style="display:flex;gap:8px;align-items:center;">
+ <input class="user-login-input" id="forgotEmailCodeInput"
+ placeholder="6位验证码" maxlength="6" style="flex:1;"
+ onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailNewPwdInput').focus()">
+ <button class="user-login-confirm" id="forgotEmailSendBtn" onclick="sendForgotEmailCode()"
+ style="white-space:nowrap;padding:10px 14px;font-size:13px;">发送验证码</button>
+ </div>
+ </div>
+ <div class="user-login-field" id="forgotEmailNewField" style="display:none;">
+ <label class="user-login-label">新密码</label>
+ <input class="user-login-input" id="forgotEmailNewPwdInput" type="password"
+ placeholder="至少 6 位" maxlength="20"
+ onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailConfirmPwdInput').focus()">
+ </div>
+ <div class="user-login-field" id="forgotEmailConfirmField" style="display:none;">
+ <label class="user-login-label">确认新密码</label>
+ <input class="user-login-input" id="forgotEmailConfirmPwdInput" type="password"
+ placeholder="再次输入新密码" maxlength="20"
+ onkeydown="if(event.key==='Enter') doForgotPasswordEmail()">
+ </div>
+ </div>
+ <div id="forgotPanelZhixue" class="cert-panel">
  <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
  通过已认证的智学网账号重置密码
  </div>
  <div class="user-login-field">
  <label class="user-login-label">绑定的智学网</label>
-  <input class="user-login-input" id="forgotZhixueInput"
-  placeholder="输入绑定的智学网账号" maxlength="50"
-  onkeydown="if(event.key==='Enter') document.getElementById('forgotZhixuePwdInput').focus()">
-  </div>
-  <div class="user-login-field">
-  <label class="user-login-label">智学网密码</label>
-  <input class="user-login-input" id="forgotZhixuePwdInput" type="password"
-  placeholder="输入绑定的智学网密码以验证身份" maxlength="50"
-  onkeydown="if(event.key==='Enter') document.getElementById('forgotNewPwdInput').focus()">
-  </div>
-  <div class="user-login-field">
-  <label class="user-login-label">新密码</label>
+ <input class="user-login-input" id="forgotZhixueInput"
+ placeholder="输入绑定的智学网账号" maxlength="50"
+ onkeydown="if(event.key==='Enter') document.getElementById('forgotZhixuePwdInput').focus()">
+ </div>
+ <div class="user-login-field">
+ <label class="user-login-label">智学网密码</label>
+ <input class="user-login-input" id="forgotZhixuePwdInput" type="password"
+ placeholder="输入绑定的智学网密码以验证身份" maxlength="50"
+ onkeydown="if(event.key==='Enter') document.getElementById('forgotNewPwdInput').focus()">
+ </div>
+ <div class="user-login-field">
+ <label class="user-login-label">新密码</label>
  <input class="user-login-input" id="forgotNewPwdInput" type="password"
  placeholder="至少 6 位" maxlength="20"
  onkeydown="if(event.key==='Enter') document.getElementById('forgotConfirmPwdInput').focus()">
@@ -3582,10 +3620,11 @@ backdrop-filter: blur(4px);
  placeholder="再次输入新密码" maxlength="20"
  onkeydown="if(event.key==='Enter') doForgotPassword()">
  </div>
+ </div>
  <div class="user-login-error" id="forgotPwdError"></div>
  <div class="user-login-actions">
  <button class="user-login-skip" onclick="hideForgotPwdModal()">取消</button>
- <button class="user-login-confirm" onclick="doForgotPassword()">提交重置</button>
+ <button class="user-login-confirm" id="forgotSubmitBtn" onclick="doForgotPasswordDispatch()">提交重置</button>
  </div>
  </div>
  </div>
@@ -4516,57 +4555,177 @@ function renderVoteList(voteList) {
  }
 
  // ===== 找回密码弹窗控制 =====
+ function switchForgotTab(tab) {
+   document.getElementById('forgotTabEmail').className = 'cert-tab' + (tab === 'email' ? ' active' : '');
+   document.getElementById('forgotTabZhixue').className = 'cert-tab' + (tab === 'zhixue' ? ' active' : '');
+   document.getElementById('forgotPanelEmail').className = 'cert-panel' + (tab === 'email' ? ' active' : '');
+   document.getElementById('forgotPanelZhixue').className = 'cert-panel' + (tab === 'zhixue' ? ' active' : '');
+   document.getElementById('forgotPwdError').textContent = '';
+ }
+
  function showForgotPwdModal() {
- document.getElementById('forgotPwdOverlay').classList.add('show');
- document.getElementById('forgotPwdError').textContent = '';
-  document.getElementById('forgotZhixueInput').value = '';
-  document.getElementById('forgotZhixuePwdInput').value = '';
-  document.getElementById('forgotNewPwdInput').value = '';
- document.getElementById('forgotConfirmPwdInput').value = '';
- setTimeout(() => document.getElementById('forgotZhixueInput').focus(), 50);
+   document.getElementById('forgotPwdOverlay').classList.add('show');
+   document.getElementById('forgotPwdError').textContent = '';
+   document.getElementById('forgotEmailInput').value = '';
+   document.getElementById('forgotEmailCodeInput').value = '';
+   document.getElementById('forgotEmailNewPwdInput').value = '';
+   document.getElementById('forgotEmailConfirmPwdInput').value = '';
+   document.getElementById('forgotZhixueInput').value = '';
+   document.getElementById('forgotZhixuePwdInput').value = '';
+   document.getElementById('forgotNewPwdInput').value = '';
+   document.getElementById('forgotConfirmPwdInput').value = '';
+   // 重置邮箱面板：仅显示邮箱输入 + 发送按钮
+   document.getElementById('forgotEmailCodeField').style.display = 'none';
+   document.getElementById('forgotEmailNewField').style.display = 'none';
+   document.getElementById('forgotEmailConfirmField').style.display = 'none';
+   document.getElementById('forgotEmailSendBtn').textContent = '发送验证码';
+   document.getElementById('forgotEmailSendBtn').disabled = false;
+   clearForgotEmailCountdown();
+   setTimeout(() => document.getElementById('forgotEmailInput').focus(), 50);
  }
 
  function hideForgotPwdModal() {
- document.getElementById('forgotPwdOverlay').classList.remove('show');
+   document.getElementById('forgotPwdOverlay').classList.remove('show');
+   clearForgotEmailCountdown();
+ }
+
+ function doForgotPasswordDispatch() {
+   if (document.getElementById('forgotTabEmail').classList.contains('active')) {
+     doForgotPasswordEmail();
+   } else {
+     doForgotPassword();
+   }
+ }
+
+ function setForgotPwdError(msg) {
+   document.getElementById('forgotPwdError').textContent = msg;
+ }
+
+ let forgotEmailCountdownTimer = null;
+ function startForgotEmailCountdown() {
+   const btn = document.getElementById('forgotEmailSendBtn');
+   let seconds = 60;
+   btn.disabled = true;
+   btn.textContent = seconds + 's';
+   clearInterval(forgotEmailCountdownTimer);
+   forgotEmailCountdownTimer = setInterval(() => {
+     seconds--;
+     btn.textContent = seconds + 's';
+     if (seconds <= 0) {
+       clearInterval(forgotEmailCountdownTimer);
+       forgotEmailCountdownTimer = null;
+       btn.textContent = '重新发送';
+       btn.disabled = false;
+     }
+   }, 1000);
+ }
+ function clearForgotEmailCountdown() {
+   if (forgotEmailCountdownTimer) { clearInterval(forgotEmailCountdownTimer); forgotEmailCountdownTimer = null; }
+ }
+
+ async function sendForgotEmailCode() {
+   const email = document.getElementById('forgotEmailInput').value.trim();
+   setForgotPwdError('');
+   if (!email || !/.+@.+\..+/.test(email)) {
+     setForgotPwdError('请输入有效的邮箱地址');
+     return;
+   }
+   const btn = document.getElementById('forgotEmailSendBtn');
+   btn.disabled = true;
+   const oldText = btn.textContent;
+   btn.textContent = '发送中...';
+   try {
+     const res = await fetch('/api/user/forgot-password/send-code', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ email })
+     });
+     const json = await res.json();
+     if (json.ok) {
+       setForgotPwdError(json.msg || '验证码已发送');
+       document.getElementById('forgotEmailCodeField').style.display = 'flex';
+       document.getElementById('forgotEmailNewField').style.display = 'block';
+       document.getElementById('forgotEmailConfirmField').style.display = 'block';
+       startForgotEmailCountdown();
+       setTimeout(() => document.getElementById('forgotEmailCodeInput').focus(), 50);
+     } else {
+       btn.disabled = false;
+       btn.textContent = oldText;
+       setForgotPwdError(json.msg || '发送失败');
+     }
+   } catch (e) {
+     btn.disabled = false;
+     btn.textContent = oldText;
+     setForgotPwdError('网络错误，请稍后重试');
+   }
+ }
+
+ async function doForgotPasswordEmail() {
+   const email = document.getElementById('forgotEmailInput').value.trim();
+   const code = document.getElementById('forgotEmailCodeInput').value.trim();
+   const newPassword = document.getElementById('forgotEmailNewPwdInput').value;
+   const confirmPassword = document.getElementById('forgotEmailConfirmPwdInput').value;
+   setForgotPwdError('');
+   if (!email || !/.+@.+\..+/.test(email)) { setForgotPwdError('请输入有效的邮箱地址'); return; }
+   if (!code || code.length !== 6) { setForgotPwdError('请输入6位验证码'); return; }
+   if (!newPassword || newPassword.length < 6) { setForgotPwdError('新密码至少 6 位'); return; }
+   if (newPassword !== confirmPassword) { setForgotPwdError('两次输入的密码不一致'); return; }
+   try {
+     const res = await fetch('/api/user/forgot-password/reset', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ email, code, newPassword, confirmPassword })
+     });
+     const json = await res.json();
+     if (json.ok) {
+       hideForgotPwdModal();
+       showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> ' + (json.msg || '密码重置成功'));
+     } else {
+       setForgotPwdError(json.msg || '操作失败');
+     }
+   } catch {
+     setForgotPwdError('网络错误，请稍后重试');
+   }
  }
 
  async function doForgotPassword() {
-  const zhixueUsername = document.getElementById('forgotZhixueInput').value.trim();
-  const zhixuePassword = document.getElementById('forgotZhixuePwdInput').value;
-  const newPassword = document.getElementById('forgotNewPwdInput').value;
-  const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
-  if (!zhixueUsername) {
-  document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网账号';
-  return;
-  }
-  if (!zhixuePassword) {
-  document.getElementById('forgotPwdError').textContent = '请输入绑定的智学网密码';
-  return;
-  }
- if (!newPassword || newPassword.length < 6) {
- document.getElementById('forgotPwdError').textContent = '新密码至少 6 位';
- return;
- }
- if (newPassword !== confirmPassword) {
- document.getElementById('forgotPwdError').textContent = '两次输入的密码不一致';
- return;
- }
- try {
- const res = await fetch('/api/user/forgot-password', {
- method: 'POST',
- headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-  body: JSON.stringify({ zhixueUsername, zhixuePassword, newPassword, confirmPassword })
- });
- const json = await res.json();
- if (json.ok) {
- hideForgotPwdModal();
- showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> ' + (json.msg || '密码重置成功'));
- } else {
- document.getElementById('forgotPwdError').textContent = json.msg || '操作失败';
- }
- } catch {
- document.getElementById('forgotPwdError').textContent = '网络错误，请稍后重试';
- }
+   const zhixueUsername = document.getElementById('forgotZhixueInput').value.trim();
+   const zhixuePassword = document.getElementById('forgotZhixuePwdInput').value;
+   const newPassword = document.getElementById('forgotNewPwdInput').value;
+   const confirmPassword = document.getElementById('forgotConfirmPwdInput').value;
+   setForgotPwdError('');
+   if (!zhixueUsername) {
+     setForgotPwdError('请输入绑定的智学网账号');
+     return;
+   }
+   if (!zhixuePassword) {
+     setForgotPwdError('请输入绑定的智学网密码');
+     return;
+   }
+   if (!newPassword || newPassword.length < 6) {
+     setForgotPwdError('新密码至少 6 位');
+     return;
+   }
+   if (newPassword !== confirmPassword) {
+     setForgotPwdError('两次输入的密码不一致');
+     return;
+   }
+   try {
+     const res = await fetch('/api/user/forgot-password', {
+       method: 'POST',
+       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+       body: JSON.stringify({ zhixueUsername, zhixuePassword, newPassword, confirmPassword })
+     });
+     const json = await res.json();
+     if (json.ok) {
+       hideForgotPwdModal();
+       showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg> ' + (json.msg || '密码重置成功'));
+     } else {
+       setForgotPwdError(json.msg || '操作失败');
+     }
+   } catch {
+     setForgotPwdError('网络错误，请稍后重试');
+   }
  }
 
  // ===== 滑块验证码 =====

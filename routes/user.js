@@ -3,7 +3,7 @@ const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verif
 const { generateId } = require('../lib/uniqueId');
 const { getClientIP } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
-const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX, inviteCheckLimit, INVITE_CHECK_MIN_MS, INVITE_CHECK_HOUR_MAX, INVITE_CHECK_HOUR_MS, emailVerificationStore, emailCodeRateLimit } = require('../lib/state');
+const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX, inviteCheckLimit, INVITE_CHECK_MIN_MS, INVITE_CHECK_HOUR_MAX, INVITE_CHECK_HOUR_MS, emailVerificationStore, emailCodeRateLimit, forgotPwdCodeStore, forgotPwdRateLimit } = require('../lib/state');
 const invite = require('../lib/invite');
 const { rateLimitLogin, recordLoginFail } = require('../lib/middleware');
 const db = require('../db');
@@ -777,6 +777,80 @@ module.exports = function(app) {
     users[userIndex].password = hashPassword(newPassword);
     writeUsers(users);
   
+    res.json({ ok: true, msg: '密码重置成功，请使用新密码登录' });
+  });
+  // 找回密码（邮箱验证码）—— 发送验证码到已绑定邮箱
+  // 防枚举：无论邮箱是否绑定，均返回同一提示，避免泄露账号是否存在。
+  app.post('/api/user/forgot-password/send-code', (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    if (!email || !/.+@.+\..+/.test(email)) {
+      return res.json({ ok: false, msg: '请输入有效的邮箱地址' });
+    }
+    // 60s 发送冷却（按邮箱）
+    const lastSend = forgotPwdRateLimit.get(email);
+    if (lastSend && Date.now() - lastSend < 60000) {
+      return res.json({ ok: false, msg: '操作过于频繁，请 60 秒后再试', code: 'RATE_LIMITED' });
+    }
+    forgotPwdRateLimit.set(email, Date.now());
+    const users = readUsers();
+    const user = users.find(u => u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
+    if (!user) {
+      // 统一提示，防枚举
+      return res.json({ ok: true, msg: '若该邮箱已绑定账号，验证码已发送，请查收' });
+    }
+    const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+    forgotPwdCodeStore.set(email, { code, expiresAt: Date.now() + 600000 });
+    sendEmail(email, '校园墙找回密码', '<p>你的找回密码验证码是：<b>' + code + '</b></p><p>验证码 10 分钟内有效，请勿泄露给他人。若非本人操作请忽略。</p>').then(result => {
+      if (result.ok) {
+        res.json({ ok: true, msg: '验证码已发送，请检查邮箱' });
+      } else {
+        if (result.code === 'EMAIL_NOT_CONFIGURED') {
+          res.json({ ok: false, msg: '管理员暂未配置邮箱服务，无法通过邮箱找回密码', code: 'EMAIL_NOT_CONFIGURED' });
+        } else {
+          forgotPwdCodeStore.delete(email);
+          res.json({ ok: false, msg: result.msg || '邮件发送失败，请稍后重试' });
+        }
+      }
+    }).catch(() => {
+      forgotPwdCodeStore.delete(email);
+      res.json({ ok: false, msg: '邮件发送失败，请稍后重试' });
+    });
+  });
+
+  // 找回密码（邮箱验证码）—— 校验验证码并重置密码
+  app.post('/api/user/forgot-password/reset', (req, res) => {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const { code, newPassword, confirmPassword } = req.body;
+    if (!email || !code) {
+      return res.json({ ok: false, msg: '请提供邮箱和验证码' });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.json({ ok: false, msg: '新密码至少 6 位' });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.json({ ok: false, msg: '两次输入的新密码不一致' });
+    }
+    const entry = forgotPwdCodeStore.get(email);
+    if (!entry) {
+      return res.json({ ok: false, msg: '请先获取验证码' });
+    }
+    if (entry.expiresAt < Date.now()) {
+      forgotPwdCodeStore.delete(email);
+      return res.json({ ok: false, msg: '验证码已过期，请重新获取' });
+    }
+    if (entry.code !== String(code).trim()) {
+      return res.json({ ok: false, msg: '验证码错误' });
+    }
+    const users = readUsers();
+    const userIndex = users.findIndex(u => u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
+    if (userIndex === -1) {
+      forgotPwdCodeStore.delete(email);
+      return res.json({ ok: false, msg: '该邮箱未绑定账号或未验证' });
+    }
+    // 验证通过 → 重置密码（一次性，用完即删）
+    forgotPwdCodeStore.delete(email);
+    users[userIndex].password = hashPassword(newPassword);
+    writeUsers(users);
     res.json({ ok: true, msg: '密码重置成功，请使用新密码登录' });
   });
   app.get('/api/user/me', (req, res) => {
