@@ -2189,7 +2189,7 @@ async function completeNewbieTask(taskId) {
       const _myInviteCode = _isOwnProfile && currentLoggedInUser.inviteCode;
       if (inviteChip && inviteCodeEl) {
         if (_myInviteCode) {
-          inviteCodeEl.textContent = _myInviteCode;
+          inviteCodeEl.textContent = '邀请码：' + _myInviteCode;
           inviteChip.style.display = '';
         } else {
           inviteChip.style.display = 'none';
