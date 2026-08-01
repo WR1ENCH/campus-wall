@@ -5494,10 +5494,13 @@ function updateUserBar() {
   if (currentUser) {
     checkAndShowNewbieTask();
   }
-  // 已登录且有邀请码 → 一次性弹出邀请码分享弹窗（localStorage 记录已展示）
-  if (currentUser && currentUser.inviteCode && !localStorage.getItem('campus_invite_popup_shown')) {
-    showInviteCodePopup(currentUser.inviteCode);
-    localStorage.setItem('campus_invite_popup_shown', '1');
+  // 已登录且有邀请码 → 每日弹出邀请码分享弹窗（localStorage 记录上次展示日期，每天只弹一次）
+  if (currentUser && currentUser.inviteCode) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('campus_invite_popup_shown') !== today) {
+      showInviteCodePopup(currentUser.inviteCode);
+      localStorage.setItem('campus_invite_popup_shown', today);
+    }
   }
   }
 
