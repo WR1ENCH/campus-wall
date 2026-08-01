@@ -122,7 +122,9 @@ function applyInviteReward(inviter, newUser, req, regIp) {
     if (invite.isSelfReferral(inv, newUser.id)) { blocked('self_referral'); return false; }
     if (inv.status === 'banned') { blocked('inviter_banned'); return false; }
     if (inv.credibility_score != null && inv.credibility_score < 80) { blocked('low_credibility'); return false; }
-    if (inv.regIp && inv.regIp === ip) { blocked('same_ip'); return false; }
+    // 同 IP 不作为拦截条件：校园场景下全校师生共用出口 NAT/反向代理 IP，
+    // 邀请人与被邀请人注册 IP 相同是常态（本地调试亦全为 ::1），硬拦截会让邀请奖励永远无法发放。
+    // 防刷由下方同设备(deviceHash)指纹 + 每日/累计上限 + 封禁/信用分门槛承担。
     // 同设备多账号：查当日已有 rewarded audit 中是否出现相同 deviceHash（且指向同一邀请人）
     const audits = db.readInviteAudit();
     const sameDeviceToday = audits.some(a =>
