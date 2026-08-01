@@ -802,8 +802,12 @@ module.exports = function(app) {
   // 防枚举：无论邮箱是否绑定，均返回同一提示，避免泄露账号是否存在。
   app.post('/api/user/forgot-password/send-code', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
+    const username = String(req.body.username || '').trim();
     if (!email || !/.+@.+\..+/.test(email)) {
       return res.json({ ok: false, msg: '请输入有效的邮箱地址' });
+    }
+    if (!username) {
+      return res.json({ ok: false, msg: '请输入账号' });
     }
     // 60s 发送冷却（按邮箱）
     const lastSend = forgotPwdRateLimit.get(email);
@@ -812,13 +816,13 @@ module.exports = function(app) {
     }
     forgotPwdRateLimit.set(email, Date.now());
     const users = readUsers();
-    const user = users.find(u => u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
+    const user = users.find(u => u.username === username && u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
     if (!user) {
-      // 统一提示，防枚举
-      return res.json({ ok: true, msg: '若该邮箱已绑定账号，验证码已发送，请查收' });
+      // 统一提示，防枚举：账号 + 邮箱不匹配时不泄露具体哪个不对
+      return res.json({ ok: true, msg: '若该账号和邮箱匹配，验证码已发送，请查收' });
     }
     const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-    forgotPwdCodeStore.set(email, { code, expiresAt: Date.now() + 600000 });
+    forgotPwdCodeStore.set(email, { code, expiresAt: Date.now() + 600000, username });
     sendEmail(email, '校园墙找回密码', '<p>你的找回密码验证码是：<b>' + code + '</b></p><p>验证码 10 分钟内有效，请勿泄露给他人。若非本人操作请忽略。</p>').then(result => {
       if (result.ok) {
         res.json({ ok: true, msg: '验证码已发送，请检查邮箱' });
@@ -839,9 +843,10 @@ module.exports = function(app) {
   // 找回密码（邮箱验证码）—— 校验验证码并重置密码
   app.post('/api/user/forgot-password/reset', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
+    const username = String(req.body.username || '').trim();
     const { code, newPassword, confirmPassword } = req.body;
-    if (!email || !code) {
-      return res.json({ ok: false, msg: '请提供邮箱和验证码' });
+    if (!email || !username || !code) {
+      return res.json({ ok: false, msg: '请提供账号、邮箱和验证码' });
     }
     if (!newPassword || newPassword.length < 6) {
       return res.json({ ok: false, msg: '新密码至少 6 位' });
@@ -861,10 +866,15 @@ module.exports = function(app) {
       return res.json({ ok: false, msg: '验证码错误' });
     }
     const users = readUsers();
-    const userIndex = users.findIndex(u => u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
+    const userIndex = users.findIndex(u => u.username === username && u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
     if (userIndex === -1) {
       forgotPwdCodeStore.delete(email);
-      return res.json({ ok: false, msg: '该邮箱未绑定账号或未验证' });
+      return res.json({ ok: false, msg: '该账号和邮箱不匹配或未验证' });
+    }
+    // 校验验证码时记录的账号与本次提交一致，防止验证码被挪用于其他账号
+    if (entry.username && entry.username !== username) {
+      forgotPwdCodeStore.delete(email);
+      return res.json({ ok: false, msg: '账号与获取验证码时不一致，请重新获取验证码' });
     }
     // 验证通过 → 重置密码（一次性，用完即删）
     forgotPwdCodeStore.delete(email);

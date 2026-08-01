@@ -3563,22 +3563,28 @@ backdrop-filter: blur(4px);
  <div style="font-size:12px;color:rgba(90,74,0,0.6);text-align:center;margin-bottom:14px;">
  通过已绑定并验证的邮箱获取验证码重置密码
  </div>
- <div class="user-login-field">
- <label class="user-login-label">绑定邮箱</label>
- <input class="user-login-input" id="forgotEmailInput" type="email"
- placeholder="输入绑定的邮箱地址" maxlength="80"
- onkeydown="if(event.key==='Enter') sendForgotEmailCode()">
- </div>
- <div class="user-login-field" style="display:none;" id="forgotEmailCodeField">
- <label class="user-login-label">邮箱验证码</label>
- <div style="display:flex;gap:8px;align-items:center;">
- <input class="user-login-input" id="forgotEmailCodeInput"
- placeholder="6位验证码" maxlength="6" style="flex:1;"
- onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailNewPwdInput').focus()">
- <button class="user-login-confirm" id="forgotEmailSendBtn" onclick="sendForgotEmailCode()"
- style="white-space:nowrap;padding:10px 14px;font-size:13px;">发送验证码</button>
- </div>
- </div>
+<div class="user-login-field">
+<label class="user-login-label">账号</label>
+<input class="user-login-input" id="forgotEmailAccountInput"
+placeholder="输入登录账号" maxlength="16"
+onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailInput').focus()">
+</div>
+<div class="user-login-field">
+<label class="user-login-label">绑定邮箱</label>
+<div style="display:flex;gap:8px;align-items:center;">
+<input class="user-login-input" id="forgotEmailInput" type="email"
+placeholder="输入绑定的邮箱地址" maxlength="80" style="flex:1;"
+onkeydown="if(event.key==='Enter') sendForgotEmailCode()">
+<button class="user-login-confirm" id="forgotEmailSendBtn" onclick="sendForgotEmailCode()"
+style="white-space:nowrap;padding:10px 14px;font-size:13px;">发送验证码</button>
+</div>
+</div>
+<div class="user-login-field" style="display:none;" id="forgotEmailCodeField">
+<label class="user-login-label">邮箱验证码</label>
+<input class="user-login-input" id="forgotEmailCodeInput"
+placeholder="6位验证码" maxlength="6"
+onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailNewPwdInput').focus()">
+</div>
  <div class="user-login-field" id="forgotEmailNewField" style="display:none;">
  <label class="user-login-label">新密码</label>
  <input class="user-login-input" id="forgotEmailNewPwdInput" type="password"
@@ -4566,7 +4572,8 @@ function renderVoteList(voteList) {
  function showForgotPwdModal() {
    document.getElementById('forgotPwdOverlay').classList.add('show');
    document.getElementById('forgotPwdError').textContent = '';
-   document.getElementById('forgotEmailInput').value = '';
+  document.getElementById('forgotEmailAccountInput').value = '';
+  document.getElementById('forgotEmailInput').value = '';
    document.getElementById('forgotEmailCodeInput').value = '';
    document.getElementById('forgotEmailNewPwdInput').value = '';
    document.getElementById('forgotEmailConfirmPwdInput').value = '';
@@ -4622,14 +4629,18 @@ function renderVoteList(voteList) {
  function clearForgotEmailCountdown() {
    if (forgotEmailCountdownTimer) { clearInterval(forgotEmailCountdownTimer); forgotEmailCountdownTimer = null; }
  }
-
- async function sendForgotEmailCode() {
-   const email = document.getElementById('forgotEmailInput').value.trim();
-   setForgotPwdError('');
-   if (!email || !/.+@.+\..+/.test(email)) {
-     setForgotPwdError('请输入有效的邮箱地址');
-     return;
-   }
+async function sendForgotEmailCode() {
+  const username = document.getElementById('forgotEmailAccountInput').value.trim();
+  const email = document.getElementById('forgotEmailInput').value.trim();
+  setForgotPwdError('');
+  if (!username) {
+    setForgotPwdError('请输入账号');
+    return;
+  }
+  if (!email || !/.+@.+\..+/.test(email)) {
+    setForgotPwdError('请输入有效的邮箱地址');
+    return;
+  }
    const btn = document.getElementById('forgotEmailSendBtn');
    btn.disabled = true;
    const oldText = btn.textContent;
@@ -4637,8 +4648,7 @@ function renderVoteList(voteList) {
    try {
      const res = await fetch('/api/user/forgot-password/send-code', {
        method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ email })
+      body: JSON.stringify({ username, email })
      });
      const json = await res.json();
      if (json.ok) {
@@ -4661,12 +4671,14 @@ function renderVoteList(voteList) {
  }
 
  async function doForgotPasswordEmail() {
-   const email = document.getElementById('forgotEmailInput').value.trim();
+  const username = document.getElementById('forgotEmailAccountInput').value.trim();
+  const email = document.getElementById('forgotEmailInput').value.trim();
    const code = document.getElementById('forgotEmailCodeInput').value.trim();
    const newPassword = document.getElementById('forgotEmailNewPwdInput').value;
    const confirmPassword = document.getElementById('forgotEmailConfirmPwdInput').value;
    setForgotPwdError('');
-   if (!email || !/.+@.+\..+/.test(email)) { setForgotPwdError('请输入有效的邮箱地址'); return; }
+  if (!username) { setForgotPwdError('请输入账号'); return; }
+  if (!email || !/.+@.+\..+/.test(email)) { setForgotPwdError('请输入有效的邮箱地址'); return; }
    if (!code || code.length !== 6) { setForgotPwdError('请输入6位验证码'); return; }
    if (!newPassword || newPassword.length < 6) { setForgotPwdError('新密码至少 6 位'); return; }
    if (newPassword !== confirmPassword) { setForgotPwdError('两次输入的密码不一致'); return; }
@@ -4674,7 +4686,7 @@ function renderVoteList(voteList) {
      const res = await fetch('/api/user/forgot-password/reset', {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ email, code, newPassword, confirmPassword })
+      body: JSON.stringify({ username, email, code, newPassword, confirmPassword })
      });
      const json = await res.json();
      if (json.ok) {
