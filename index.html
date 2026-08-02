@@ -4648,6 +4648,7 @@ async function sendForgotEmailCode() {
    try {
      const res = await fetch('/api/user/forgot-password/send-code', {
        method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email })
      });
      const json = await res.json();
