@@ -2164,7 +2164,24 @@ backdrop-filter: blur(4px);
   #pickupMyBidsList { max-height: 260px !important; }
 
   .search-dropdown { width: calc(100vw - 24px); max-width: 360px; right: 0; max-height: 360px; }
+ /* 移动端登录后隐藏 top-bar 中与侧边栏重复的按钮 */
+ .top-bar.logged-in .user-info-bar #checkinBtn { display: none; }
+ .top-bar.logged-in .user-info-bar .user-logout-sm[onclick*="credit.html"] { display: none; }
+ /* 移动端隐藏 action-bar 中与侧边栏重复的 Credits / PLUS++ 按钮 */
+ .action-btns .compose-btn[onclick*="credit.html"],
+ .action-btns .compose-btn[onclick*="plus.html"] {
+   display: none !important;
+ }
   }
+
+@media (max-width: 360px) {
+  .action-btns {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .action-btns::-webkit-scrollbar { display: none; }
+}
 
   /* ===== 桌面端隐藏侧边导航 ===== */
  @media (min-width: 769px) {
