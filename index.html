@@ -11144,8 +11144,6 @@ async function checkAndShowNewbieTask() {
   // 每日节流：仅自动弹出受限制，?newbie-task=1 已在上面 return
   const today = new Date().toISOString().slice(0, 10);
   if (localStorage.getItem('campus_newbie_popup_shown') === today) return;
-  localStorage.setItem('campus_newbie_popup_shown', today);
-
   try {
     const res = await fetch('/api/user/newbie-task/progress', {
       headers: { 'x-user-token': token }
@@ -11153,6 +11151,7 @@ async function checkAndShowNewbieTask() {
     const json = await res.json();
     if (!json.ok) return;
     if (json.data.completed) return;
+    localStorage.setItem('campus_newbie_popup_shown', today);
     openNewbieTask();
   } catch(e) { /* silent */ }
 }
