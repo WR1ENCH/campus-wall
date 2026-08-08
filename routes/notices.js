@@ -3,7 +3,6 @@ const { verifySignedToken, verifyUserToken } = require('../lib/crypto');
 const { requireAdmin } = require('../lib/middleware');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
-const { check: checkSensitive } = require('../sensitiveWords');
 const { check: checkBullyingNames } = require('../bullyingNames');
 
 function readNotices() { return db.readNotices(); }
@@ -73,8 +72,6 @@ module.exports = function(app) {
     if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
     if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
     const combinedText = (title || '') + ' ' + (content || '');
-    const sensitiveWords = checkSensitive(combinedText);
-    if (sensitiveWords.length > 0) return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
     const blockedNames = checkBullyingNames(combinedText);
     if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
     var validImages = [];
@@ -158,12 +155,10 @@ module.exports = function(app) {
     const isSC = sc && sc.id === session.id;
     const isPublisher = users.find(u => u.id === session.id && u.noticePublisher && u.status !== 'banned');
     if (!isSC && !isPublisher) return res.json({ ok: false, msg: '无通知发布权限', code: 'NO_PERMISSION' });
-    const { title, content, author, level, images, sensitiveForce } = req.body;
+    const { title, content, author, level, images } = req.body;
     if (!title || !title.trim()) return res.json({ ok: false, msg: '请填写标题' });
     if (!content || !content.trim()) return res.json({ ok: false, msg: '请填写内容' });
     const combinedText = (title || '') + ' ' + (content || '');
-    const sensitiveWords = checkSensitive(combinedText);
-    if (sensitiveWords.length > 0 && !sensitiveForce) return res.json({ ok: false, warning: true, msg: '内容包含敏感词 [' + sensitiveWords.join(', ') + ']，请修改后重新提交', words: sensitiveWords });
     const blockedNames = checkBullyingNames(combinedText);
     if (blockedNames.length > 0) return res.json({ ok: false, bullying: true, msg: '内容涉及受保护人员姓名，无法发送' });
     const notices = readNotices();
