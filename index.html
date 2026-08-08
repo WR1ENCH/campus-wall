@@ -2826,6 +2826,22 @@ backdrop-filter: blur(4px);
  #notifContent::-webkit-scrollbar { width: 5px; }
  #notifContent::-webkit-scrollbar-track { background: transparent; }
  #notifContent::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+/* 通知详情跳转按钮 */
+.notif-detail-link {
+display:inline-block;
+padding:8px 16px;
+margin:2px 0 12px;
+background:#2563eb;
+color:#fff;
+font-size:13px;
+font-weight:500;
+text-decoration:none;
+border-radius:10px;
+border:none;
+transition:transform .3s cubic-bezier(.2,.9,.2,1);
+}
+.notif-detail-link:hover { transform:translateY(-1px); }
+.notif-detail-link:active { transform:scale(0.97); }
 /* Red dot indicators for Credit/PLUS++ */
 .side-nav-red-dot { width:6px; height:6px; border-radius:50%; background:#ef4444; margin-left:4px; flex-shrink:0; }
 .action-bar-red-dot { position:absolute; top:2px; right:2px; width:6px; height:6px; border-radius:50%; background:#ef4444; flex-shrink:0; pointer-events:none; }
@@ -6173,7 +6189,8 @@ function closeWallMessageViewModal() {
  isNew: nu,
  content: n.content || '',
  type: n.author || '通知',
- level: n.level || 'T1'
+				level: n.level || 'T1',
+				noticeId: (!n.auto && !n.deleted && !n.targetUserId) ? n.id : null
  });
  if (nu) unreadCount++;
  });
@@ -6293,6 +6310,7 @@ function closeWallMessageViewModal() {
  '<div style="font-size:20px;margin-bottom:4px;">' + item.icon + '</div>' +
  '<h2 style="font-size:18px;font-weight:600;margin:0 0 8px;color:#1f2937;">' + item.title + '</h2>' +
  (item.time ? '<div style="font-size:12px;color:#9ca3af;margin-bottom:14px;">' + item.time + '</div>' : '') +
+			(item.noticeId ? '<a class="notif-detail-link" href="/notice-detail.html?id=' + encodeURIComponent(item.noticeId) + '">查看详情 →</a>' : '') +
  '<div style="font-size:14px;color:#374151;line-height:1.8;white-space:pre-wrap;">' + 
  _renderMd(item.content) + '</div>';
  };

@@ -41,6 +41,13 @@ module.exports = function(app) {
     const list = sorted.slice(offset, offset + limit);
     res.json({ ok: true, data: list, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   });
+  // 获取单条人工发布通知详情（auto/专属/已删除不暴露）
+  app.get('/api/notices/:id', (req, res) => {
+    const notices = readNotices();
+    const notice = notices.find(n => n.id === req.params.id && !n.deleted && !n.auto && !n.targetUserId);
+    if (!notice) return res.json({ ok: false, msg: '通知不存在' });
+    res.json({ ok: true, data: notice });
+  });
   // 获取用户专属通知（包括公共通知和用户特定通知）
   app.get('/api/user/notices', (req, res) => {
     const token = req.headers['x-user-token'];
