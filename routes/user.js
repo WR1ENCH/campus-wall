@@ -798,8 +798,6 @@ module.exports = function(app) {
   
     res.json({ ok: true, msg: '密码重置成功，请使用新密码登录' });
   });
-  // 找回密码（邮箱验证码）—— 发送验证码到已绑定邮箱
-  // 防枚举：无论邮箱是否绑定，均返回同一提示，避免泄露账号是否存在。
   app.post('/api/user/forgot-password/send-code', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const username = String(req.body.username || '').trim();
@@ -818,8 +816,8 @@ module.exports = function(app) {
     const users = readUsers();
     const user = users.find(u => u.username === username && u.email && String(u.email).toLowerCase() === email && u.emailVerified === 1);
     if (!user) {
-      // 统一提示，防枚举：账号 + 邮箱不匹配时不泄露具体哪个不对
-      return res.json({ ok: true, msg: '若该账号和邮箱匹配，验证码已发送，请查收' });
+      // 明确校验：输入的邮箱必须与填写的账号已绑定并已验证，否则拒绝发送验证码
+      return res.json({ ok: false, msg: '该邮箱未与账号绑定或未通过邮箱验证，无法发送验证码', code: 'EMAIL_NOT_BOUND' });
     }
     const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
     forgotPwdCodeStore.set(email, { code, expiresAt: Date.now() + 600000, username });
