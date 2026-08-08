@@ -1437,7 +1437,7 @@ var _sliderCaptchaToken = null;
     renderPublishPreview();
   };
 
-  window.doPublish = async function(sensitiveForce) {
+  window.doPublish = async function() {
     var title = document.getElementById('notifTitle').value.trim();
     var content = document.getElementById('notifContent').value.trim();
     var author = document.getElementById('notifAuthor').value.trim();
@@ -1454,7 +1454,7 @@ var _sliderCaptchaToken = null;
       var res = await fetch('/api/notices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
-        body: JSON.stringify({ title: title, content: content, author: author, level: _selectedNotifLevel, images: _publishImages, sensitiveForce: sensitiveForce === true })
+        body: JSON.stringify({ title: title, content: content, author: author, level: _selectedNotifLevel, images: _publishImages })
       });
       var json = await res.json();
       if (json.ok) {
@@ -1468,11 +1468,6 @@ var _sliderCaptchaToken = null;
         loadNotices();
       } else if (json.bullying) {
         showBullyingWarning(function() {});
-      } else if (json.warning) {
-        showSensitiveWarning(
-          function() {},
-          function() { doPublish(true); }
-        );
       } else {
         errEl.textContent = json.msg || '\u53D1\u5E03\u5931\u8D25';
         if (json.code === 'NOT_LOGIN') {
@@ -1558,7 +1553,7 @@ var _sliderCaptchaToken = null;
     document.getElementById('editError').textContent = '';
   };
 
-  window.doEditNotice = async function(sensitiveForce) {
+  window.doEditNotice = async function() {
     var title = document.getElementById('editTitle').value.trim();
     var content = document.getElementById('editContent').value.trim();
     var author = document.getElementById('editAuthor').value.trim();
@@ -1575,7 +1570,7 @@ var _sliderCaptchaToken = null;
       var res = await fetch('/api/notices/' + _editNotifId, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-sc-token': token || '' },
-        body: JSON.stringify({ title: title, content: content, author: author, level: _editSelectedLevel, sensitiveForce: sensitiveForce === true })
+        body: JSON.stringify({ title: title, content: content, author: author, level: _editSelectedLevel })
       });
       var json = await res.json();
       if (json.ok) {
@@ -1584,11 +1579,6 @@ var _sliderCaptchaToken = null;
         loadNotices();
       } else if (json.bullying) {
         showBullyingWarning(function() {});
-      } else if (json.warning) {
-        showSensitiveWarning(
-          function() {},
-          function() { doEditNotice(true); }
-        );
       } else {
         errEl.textContent = json.msg || '\u4FEE\u6539\u5931\u8D25';
         if (json.code === 'NOT_LOGIN') { showToast('\u767B\u5F55\u5DF2\u8FC7\u671F', 'error'); doLogout(); }
@@ -2065,20 +2055,6 @@ function escHtml(str) {
     setTimeout(function() { t.remove(); }, 2500);
   }
 
-  // ===== 敏感词警告弹窗 =====
-  function showSensitiveWarning(onEdit, onContinue) {
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);';
-    overlay.innerHTML = '<div style="background:#fffbe6;border:2px solid #f5c518;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.2);animation:modalIn 0.3s ease;">' +
-      '<div style="font-size:40px;margin-bottom:8px;"><svg class="icon" width="1em" height="1em"><use href="#icon-warning"/></svg></div>' +
-      '<h3 style="margin:0 0 6px;font-size:17px;color:#5a3d00;">内容包含敏感词</h3>' +
-      '<p style="font-size:13px;color:#7a5a2a;line-height:1.6;margin-bottom:20px;">检测到内容中包含敏感词，请修改后重新提交。<br>如果你确认内容合规，也可以选择继续发布。</p>' +
-      '<div style="display:flex;gap:10px;justify-content:center;">' +
-      '<button onclick="this.closest(\'[style*=\\"position:fixed\\"]\').remove()" style="padding:9px 20px;border:1px solid #e8c84a;border-radius:8px;background:#fff;color:#5a3d00;font-size:14px;cursor:pointer;font-family:inherit;">返回修改</button>' +
-      '<button onclick="var o=this.closest(\'[style*=\\"position:fixed\\"]\');o.remove();(' + onContinue.toString() + ')()" style="padding:9px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#f5c518,#e0a800);color:#5a3d00;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">继续发布</button>' +
-      '</div></div>';
-    document.body.appendChild(overlay);
-  }
 
   // ===== 反霸凌警告弹窗（仅返回编辑，不可强制发送）=====
   function showBullyingWarning(onEdit) {
