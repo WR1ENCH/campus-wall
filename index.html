@@ -1950,7 +1950,8 @@ backdrop-filter: blur(4px);
  /* 移动端按钮只显示图标 */
  .compose-btn .btn-label { display: none; }
  .compose-btn { font-size: 16px; padding: 6px 10px; min-width: 36px; justify-content: center; border-radius: 999px; }
- .action-btns { gap: 5px; }
+ .action-btns { gap: 5px; overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+ .action-btns::-webkit-scrollbar { display: none; }
  .action-btns .compose-btn { flex: 0 0 auto; }
  .pickup-bar { height: 32px; min-width: 140px; }
  .pickup-label { font-size: 11px; padding: 0 10px; }
@@ -2174,14 +2175,7 @@ backdrop-filter: blur(4px);
  }
   }
 
-@media (max-width: 360px) {
-  .action-btns {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .action-btns::-webkit-scrollbar { display: none; }
-}
+
 
   /* ===== 桌面端隐藏侧边导航 ===== */
  @media (min-width: 769px) {
