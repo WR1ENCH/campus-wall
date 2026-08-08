@@ -561,6 +561,23 @@ function migrate() {
       console.warn('[db.js] ⚠️ 添加列 users.birthday 失败:', e.message);
     }
   }
+  // 用户简介与封面背景字段
+  if (!existingUserCols.includes('bio')) {
+    try {
+      db.exec(`ALTER TABLE "users" ADD COLUMN "bio" TEXT`);
+      console.log('[db.js] ✅ 已添加列 users.bio');
+    } catch (e) {
+      console.warn('[db.js] ⚠️ 添加列 users.bio 失败:', e.message);
+    }
+  }
+  if (!existingUserCols.includes('background')) {
+    try {
+      db.exec(`ALTER TABLE "users" ADD COLUMN "background" TEXT`);
+      console.log('[db.js] ✅ 已添加列 users.background');
+    } catch (e) {
+      console.warn('[db.js] ⚠️ 添加列 users.background 失败:', e.message);
+    }
+  }
   // 首冲福利标记字段
   if (!existingUserCols.includes('firstRechargeBonusClaimed')) {
     try {
