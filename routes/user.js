@@ -891,7 +891,7 @@ module.exports = function(app) {
     const user = users.find(u => u.id === session.id);
     if (!user) return res.json({ ok: false, msg: '用户不存在' });
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
-    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, email: user.email || null, emailVerified: user.emailVerified === 1, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed, inviteCode: user.inviteCode || null } });
+    res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, status: user.status, email: user.email || null, emailVerified: user.emailVerified === 1, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, credit: user.credit || 0, checkinToday: user.lastCheckinDate === new Date().toISOString().slice(0, 10), checkinStreak: user.checkinStreak || 0, zhixueStatus: getDisplayZhixueStatus(user), zhixueUsername: user.zhixueUsername || null, mbti: user.mbti || null, pinCount: isUserPlus(user.id) ? Math.max(0, 40 - getUserMonthlyPinCount(user.id)) : 0, firstRechargeBonusClaimed: !!user.firstRechargeBonusClaimed, inviteCode: user.inviteCode || null, bio: user.bio || null, background: user.background || null } });
   });
   app.get('/api/user/credit-logs', (req, res) => {
     const token = req.headers['x-user-token'];
@@ -984,7 +984,7 @@ module.exports = function(app) {
     const user = users[userIndex];
     if (user.status === 'banned') return res.json({ ok: false, msg: '账号已被禁用', code: 'BANNED' });
   
-    const { nickname, avatar, mbti, birthday, email } = req.body;
+    const { nickname, avatar, mbti, birthday, email, bio, background } = req.body;
     let updated = false;
 
     // 更新邮箱（重置验证状态）
@@ -1104,13 +1104,61 @@ module.exports = function(app) {
       }
     }
 
+    // 更新个人简介
+    if (bio !== undefined) {
+      if (typeof bio !== 'string') {
+        return res.json({ ok: false, msg: '简介数据格式错误' });
+      }
+      const bioTrimmed = bio.trim();
+      if (bioTrimmed === '') {
+        user.bio = null;
+        updated = true;
+      } else if (bioTrimmed.length > 120) {
+        return res.json({ ok: false, msg: '简介最多 120 个字符' });
+      } else {
+        const sensitiveFound = checkSensitive(bioTrimmed);
+        if (sensitiveFound.length > 0) {
+          return res.json({ ok: false, msg: '简介包含违禁词语：' + sensitiveFound.slice(0, 3).join('、'), code: 'SENSITIVE_WORD' });
+        }
+        user.bio = bioTrimmed;
+        updated = true;
+      }
+    }
+
+    // 更新背景图（base64 data URL）
+    if (background !== undefined) {
+      if (background === '' || background === null) {
+        user.background = null;
+        updated = true;
+      } else if (typeof background !== 'string') {
+        return res.json({ ok: false, msg: '背景图数据格式错误' });
+      } else if (!/^data:image\/.*;base64,/.test(background)) {
+        return res.json({ ok: false, msg: '背景图仅支持图片格式' });
+      } else {
+        const base64Data = background.split(',')[1];
+        if (!base64Data) {
+          return res.json({ ok: false, msg: '背景图数据不完整' });
+        }
+        if (base64Data.length > 14000000) {
+          return res.json({ ok: false, msg: '背景图太大，请压缩到 10MB 以内' });
+        }
+        try {
+          Buffer.from(base64Data, 'base64');
+        } catch (e) {
+          return res.json({ ok: false, msg: '背景图数据格式无效' });
+        }
+        user.background = background;
+        updated = true;
+      }
+    }
+
     if (!updated) {
       return res.json({ ok: false, msg: '未提供可更新的字段' });
     }
 
     users[userIndex] = user;
     writeUsers(users);
-    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null, birthday: user.birthday || null, credit: user.credit || 0 } });
+    res.json({ ok: true, data: { id: user.id, nickname: user.nickname, avatar: user.avatar, mbti: user.mbti || null, birthday: user.birthday || null, credit: user.credit || 0, bio: user.bio || null, background: user.background || null } });
   });
   app.post('/api/user/bind-admin', (req, res) => {
     const token = req.headers['x-user-token'];
@@ -1429,7 +1477,7 @@ app.get('/api/users/:id', (req, res) => {
   if (!user) return res.json({ ok: false, msg: '用户不存在' });
   if (user.status === 'banned') return res.json({ ok: false, msg: '该账号已被禁用', code: 'BANNED' });
   // 不返回密码等敏感信息
-  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, zhixueStatus: getDisplayZhixueStatus(user), mbti: user.mbti || null, isPlus: isUserPlus(user.id) } });
+  res.json({ ok: true, data: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar, createdAt: user.createdAt, postCount: user.postCount || 0, status: user.status, bindAdminId: user.bindAdminId, bindAdminRole: user.bindAdminRole, zhixueStatus: getDisplayZhixueStatus(user), mbti: user.mbti || null, isPlus: isUserPlus(user.id), bio: user.bio || null, background: user.background || null } });
 });
 
 app.get('/api/users/:id/posts', (req, res) => {
