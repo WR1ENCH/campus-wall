@@ -2258,8 +2258,8 @@ async function completeNewbieTask(taskId) {
                plusBadge.style.display = isPlus ? 'inline-block' : 'none';
                plusBtn.style.display = 'inline-flex';
                plusLabel.textContent = isPlus ? 'PLUS++会员' : '加入PLUS++';
-               if (typeof renderUser === 'function' && currentLoggedInUser) {
-                 renderUser(currentLoggedInUser);
+               if (typeof renderUser === 'function' && user) {
+                 renderUser(user);
                }
              })
              .catch(function(){
