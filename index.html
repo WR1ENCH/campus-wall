@@ -6623,22 +6623,35 @@ let _suggestIndex = -1; // 当前高亮索引
 let _returnToEdit = false; // 用户从警告弹窗点击"返回编辑"时标记，避免误报"发帖失败"
 
  // ===== API 调用 =====
+ // 贴纸几何记忆：仅当服务器未存 rotate/zIndex（老帖）时补随机一次，
+ // 之后刷新复用记忆值，避免定时刷新时贴纸角度/层级变化
+ const postGeoMemo = new Map();
+ function applyPostGeo(p) {
+   if (p.rotate !== undefined && p.zIndex !== undefined) return; // 服务器已存几何，直接用
+   let g = postGeoMemo.get(p.id);
+   if (!g) {
+     g = { rotate: rand(-4, 4), zIndex: randInt(1, 5) };
+     postGeoMemo.set(p.id, g);
+   }
+   p.rotate = g.rotate;
+   p.zIndex = g.zIndex;
+ }
+
  async function fetchPosts() {
  try {
-  const res = await fetch(API + '/api/posts', { headers: authHeaders() });
-  const json = await res.json();
-  if (json.ok) {
-  // 过滤掉被隐藏的帖子（举报数>20）
-  posts = json.data.filter(p => !p.hidden);
- // 为每个帖子补充前端随机属性（不在后端存，每次刷新不同）
- posts.forEach(p => {
- if (p.rotate === undefined) p.rotate = rand(-4, 4);
- if (p.zIndex === undefined) p.zIndex = randInt(1, 5);
- p.timeText = formatTime(p.time);
- });
- }
+   const res = await fetch(API + '/api/posts', { headers: authHeaders() });
+   const json = await res.json();
+   if (json.ok) {
+   // 过滤掉被隐藏的帖子（举报数>20）
+   posts = json.data.filter(p => !p.hidden);
+   // 为每个帖子补充前端随机属性（首次生成，之后复用记忆值）
+   posts.forEach(p => {
+     applyPostGeo(p);
+     p.timeText = formatTime(p.time);
+   });
+   }
  } catch (e) {
- console.error('加载帖子失败:', e);
+   console.error('加载帖子失败:', e);
  }
  }
 
@@ -8191,9 +8204,8 @@ if (file.size > 10 * 1024 * 1024) { showToast('<svg width="1em" height="1em" vie
 
   const newPost = await createPost(currentTag, content, false, isAnonymous, visibility, allowComments, visibleTo, invisibleTo, false, pinned);
   if (newPost) {
-    newPost.time = '刚刚';
-    newPost.rotate = rand(-4, 4);
-    newPost.zIndex = randInt(1, 5);
+   newPost.time = '刚刚';
+   applyPostGeo(newPost); // 与刷新路径共用几何记忆，后续刷新位置不变
     if (newPost.pinned && currentUser) {
       currentUser.pinCount = Math.max(0, (currentUser.pinCount || 0) - 1);
       localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
@@ -8390,17 +8402,43 @@ function closeCreditInsufficientModal() {
  }
  }
 
- // 心跳 + 在线统计（每 10 秒）
+ // 心跳 + 在线统计（每 10 秒；后台标签页跳过）
  setInterval(async () => {
- sendHeartbeat();
- refreshStats();
+   if (document.hidden) return;
+   sendHeartbeat();
+   refreshStats();
  }, 10000);
 
+ // 帖子刷新统一入口：30s 定时、SSE postUpdate、切回前台共用同一个并发闸门，
+ // 合并连续触发，避免整墙连续重建；后台标签页不刷，回前台时补一次
+ let _refreshInFlight = false;
+ // 帖子内容签名：判断刷新后内容是否真的变化。
+ // 没变就不重建 DOM —— 避免 30s 定时刷新时整墙清空重排
+ // （懒加载图片闪烁 + WallPacker 位置/胶带角度全部重新随机）
+ function postsSignature() {
+   return posts.map(p => p.id + ':' + (p.likes || 0) + ':' + (p.commentsCount || 0) + ':' + (p.pinned ? 1 : 0) + ':' + (p.deleted ? 1 : 0)).join('|');
+ }
+ async function refreshPosts() {
+   if (_refreshInFlight || document.hidden) return;
+   const before = postsSignature();
+   _refreshInFlight = true;
+   try {
+     await fetchPosts();
+     if (before !== postsSignature()) renderNotes(currentFilter); // 内容变了才重建
+   } catch (e) {
+     console.error('刷新帖子失败:', e);
+   } finally {
+     _refreshInFlight = false;
+   }
+ }
+
  // 定时刷新数据（每 30 秒拉一次最新帖子）
- setInterval(async () => {
- await fetchPosts();
- renderNotes(currentFilter);
- }, 30000);
+ setInterval(refreshPosts, 30000);
+
+ // 从后台切回前台立即补刷一次（浏览器节流可能漏掉了多个 30s tick）
+ document.addEventListener('visibilitychange', () => {
+   if (!document.hidden) refreshPosts();
+ });
 
   // ===== 悄悄话功能 =====
   var _whisperSearchTimer = null;
@@ -8638,9 +8676,9 @@ function closeCreditInsufficientModal() {
 	(function initSSE() {
 	try {
 		const es = new EventSource('/api/stream');
-	es.addEventListener('postUpdate', () => {
-		fetchPosts().then(() => renderNotes(currentFilter));
-	});
+ 	es.addEventListener('postUpdate', () => {
+ 		refreshPosts();
+ 	});
 	es.addEventListener('noticeUpdate', () => {
 		checkNotifBadge();
 		checkPunishment();
