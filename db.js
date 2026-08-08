@@ -172,6 +172,7 @@ function migrate() {
   )`);
   db.exec(`CREATE TABLE IF NOT EXISTS "reports" (
     "id" TEXT PRIMARY KEY,
+    "reportId" TEXT,
     "type" TEXT,
     "targetId" TEXT,
     "postId" TEXT,

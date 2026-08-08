@@ -6487,6 +6487,15 @@ function closeWallMessageViewModal() {
   var password = document.getElementById('zhixueInputPassword').value;
   if (!username) { showErr('请填写智学网账号'); return; }
   if (!password) { showErr('请填写智学网密码'); return; }
+  var token = localStorage.getItem('campus_user_token');
+  var uniq = await fetch('/api/user/check-zhixue-unique', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-user-token': token || '' },
+  body: JSON.stringify({ zhixueUsername: username })
+  }).then(function(r){ return r.json(); });
+  if (uniq.ok && uniq.data && !uniq.data.available) {
+  showErr('此智学网账号已被绑定，请更换'); return;
+  }
   body = { type: 'zhixue', zhixueUsername: username, zhixuePassword: password };
   } else {
   var name = document.getElementById('manualName').value.trim();

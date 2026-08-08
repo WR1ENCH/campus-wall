@@ -1,5 +1,5 @@
 const { hashPassword, verifyPassword, encryptCert, decryptCert, makeToken, verifySignedToken, getDisplayZhixueStatus } = require('../lib/crypto');
-const { getClientIP } = require('../lib/helpers');
+const { getClientIP, findZhixueOwner } = require('../lib/helpers');
 const { requireAdmin, requireSuper } = require('../lib/middleware');
 const { broadcastSSE } = require('../lib/sse');
 const db = require('../db');
@@ -805,6 +805,14 @@ app.put('/api/admin/zhixue/:userId/review', requireAdmin, (req, res) => {
   const hasManualName = u.zhixueManualName;
   if (!isManual && !hasManualName && (!realName || !realName.trim())) {
     return res.json({ ok: false, msg: '请填写学生姓名' });
+  }
+
+  // 智学认证通过前复查占用：同一智学号待审核重复提交的场景，第二条不可通过
+  if (u.zhixueCertType !== 'manual' && u.zhixueUsername) {
+    const conflict = findZhixueOwner(users, u.zhixueUsername, u.id);
+    if (conflict) {
+      return res.json({ ok: false, msg: '该智学网账号已被账号 ' + (conflict.nickname || conflict.username) + ' 绑定，无法通过审核' });
+    }
   }
 
   // 智学认证 → pending_confirm（等待用户确认）
