@@ -270,7 +270,7 @@
 
     <!-- ===== 已登录：主内容 ===== -->
     <div class="sticky-card" id="mainContent" style="display:none;">
-      <a class="back-link" href="index.html">← 返回校园墙</a>
+      <a class="back-link" href="/?mf=1">← 返回校园墙</a>
 
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px;background:#fffdf5;border-radius:8px;" id="userInfoBar">
         <span id="userAvatar" style="font-size:32px;">🙋</span>
@@ -334,7 +334,7 @@
           userToken = localStorage.getItem('campus_user_token') || '';
         } catch(e) {}
 
-        let url = 'http://154.37.221.232/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_sliderCaptchaToken) + '&captchaText=1';
+        let url = '/api/user/qrcode/generate?captchaId=' + encodeURIComponent(_sliderCaptchaToken) + '&captchaText=1';
         if (userToken) url += '&userToken=' + encodeURIComponent(userToken);
 
         const res = await fetch(url);
