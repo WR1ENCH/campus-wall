@@ -1,7 +1,7 @@
 // ===== routes/user.js - 用户相关路由 =====
 const { hashPassword, verifyPassword, encryptCert, decryptCert, signToken, verifySignedToken, makeUserToken, verifyUserToken, getDisplayZhixueStatus } = require('../lib/crypto');
 const { generateId } = require('../lib/uniqueId');
-const { getClientIP } = require('../lib/helpers');
+const { getClientIP, findZhixueOwner } = require('../lib/helpers');
 const { broadcastSSE } = require('../lib/sse');
 const { captchaStore, postRateLimit, qrCodeStore, redeemRateLimit, onlineUsers, captchaGrantLimit, CAPTCHA_GRANT_WINDOW_MS, CAPTCHA_GRANT_MAX, inviteCheckLimit, INVITE_CHECK_MIN_MS, INVITE_CHECK_HOUR_MAX, INVITE_CHECK_HOUR_MS, emailVerificationStore, emailCodeRateLimit, forgotPwdCodeStore, forgotPwdRateLimit } = require('../lib/state');
 const invite = require('../lib/invite');
@@ -528,7 +528,15 @@ module.exports = function(app) {
     }
   
     const users = readUsers();
-    let user = users.find(u => String(u.zhixueUsername) === String(zhixueUsername) && (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
+    // 唯一性防线：若某智学号仍命中多个账号（历史脏数据/绕过），拒绝登录避免歧义
+    const matches = users.filter(u =>
+      String(u.zhixueUsername).trim() === String(zhixueUsername).trim() &&
+      (u.zhixueStatus === 'approved' || u.zhixueStatus === 'pending_confirm'));
+    if (matches.length > 1) {
+      addLoginLog('user', zhixueUsername, false, ip, ua);
+      return res.json({ ok: false, msg: '该智学网账号存在重复绑定，请联系管理员处理' });
+    }
+    let user = matches[0] || null;
     // 防御：approved 必须有审核记录
     if (user && user.zhixueStatus === 'approved' && !user.zhixueReviewedBy) {
       console.warn('[zhixue-login] 用户', user.id, '状态为 approved 但缺少审核记录，拒绝登录');
@@ -589,10 +597,11 @@ module.exports = function(app) {
     const { zhixueUsername } = req.body;
     if (!zhixueUsername) return res.json({ ok: false, msg: '请提供智学网账号' });
     const users = readUsers();
-    const existing = users.find(u =>
-      String(u.zhixueUsername) === String(zhixueUsername) &&
-      u.zhixueStatus === 'approved'
-    );
+    // 排除本人：绑定 / 修改认证时，本人重提自己的号不算他人占用
+    let selfId = null;
+    const session = verifyUserToken(req.headers['x-user-token'] || '');
+    if (session) selfId = session.id;
+    const existing = findZhixueOwner(users, zhixueUsername, selfId);
     res.json({ ok: true, data: { available: !existing } });
   });
   app.post('/api/user/trust-browser', (req, res) => {
@@ -782,7 +791,13 @@ module.exports = function(app) {
     }
   
     const users = readUsers();
-    const userIndex = users.findIndex(u => u.zhixueUsername === zhixueUsername && u.zhixueStatus === 'approved');
+    const matches = users.filter(u =>
+      String(u.zhixueUsername).trim() === String(zhixueUsername).trim() &&
+      u.zhixueStatus === 'approved');
+    if (matches.length > 1) {
+      return res.json({ ok: false, msg: '该智学网账号存在重复绑定，请联系管理员处理' });
+    }
+    const userIndex = matches.length === 1 ? users.indexOf(matches[0]) : -1;
     if (userIndex === -1) {
       return res.json({ ok: false, msg: '该智学网账号未认证或不存在' });
     }
@@ -1241,18 +1256,14 @@ module.exports = function(app) {
       if (!zhixueUsername) return res.json({ ok: false, msg: '请填写绑定的智学网账号' });
       if (!zhixuePassword) return res.json({ ok: false, msg: '请填写智学网密码' });
   
-      // 唯一性检查：已认证（approved）的智学账号不允许被其他校园墙账号重复绑定
-      const existingUser = users.find(u =>
-        u.zhixueUsername === zhixueUsername &&
-        u.zhixueStatus === 'approved' &&
-        u.id !== users[userIndex].id
-      );
+      // 唯一性检查：任意状态的智学账号不允许被其他校园墙账号重复绑定
+      const existingUser = findZhixueOwner(users, zhixueUsername, users[userIndex].id);
       if (existingUser) {
-        return res.json({ ok: false, msg: '该智学网账号已被其他账号绑定' });
+        return res.json({ ok: false, msg: '该智学网账号已被其他账号绑定，如需使用请联系管理员解除' });
       }
   
       users[userIndex].zhixueCertType = 'zhixue';
-      users[userIndex].zhixueUsername = zhixueUsername;
+      users[userIndex].zhixueUsername = String(zhixueUsername).trim();
       users[userIndex].zhixuePassword = encryptCert(zhixuePassword);
       users[userIndex].zhixueManualNote = null;
       users[userIndex].zhixueManualImages = null;
