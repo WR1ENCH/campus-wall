@@ -3645,6 +3645,7 @@ async function completeNewbieTask(taskId) {
         var wallMessages = (msgData.ok && msgData.data && msgData.data.messages) ? msgData.data.messages : [];
 
         document.getElementById('visitorLoading').style.display = 'none';
+        _visitorData = (listData && listData.ok && listData.data) ? listData.data : null;
         if (!_visitorData || _visitorData.visits.length === 0) {
           document.getElementById('visitorEmpty').style.display = '';
           return;

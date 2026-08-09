@@ -5823,11 +5823,12 @@ function openVisitorModal() {
       var wallMessages = (msgData.ok && msgData.data && msgData.data.messages) ? msgData.data.messages : [];
 
       document.getElementById('visitorLoading').style.display = 'none';
-      if (!_visitorData || _visitorData.visits.length === 0) {
+      var visitorData = (listData && listData.ok && listData.data) ? listData.data : null;
+      if (!visitorData || visitorData.visits.length === 0) {
         document.getElementById('visitorEmpty').style.display = '';
         return;
       }
-      renderVisitorList(_visitorData, canReveal, isPlus, wallMessages);
+      renderVisitorList(visitorData, canReveal, isPlus, wallMessages);
     }).catch(function() {
       document.getElementById('visitorLoading').textContent = '加载失败，请重试';
     });
