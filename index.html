@@ -7506,6 +7506,7 @@ function renderNotes(filter = '全部') {
 
 function _doRenderNotes(filter = '全部') {
  const grid = document.getElementById('notesGrid');
+ const _savedScrollY = window.scrollY;
  const filtered = filter === '全部' ? posts : posts.filter(p => p.type === filter);
   // 置顶帖优先，然后按时间降序
   filtered.sort((a, b) => {
@@ -7631,6 +7632,7 @@ function _doRenderNotes(filter = '全部') {
     grid.innerHTML = finalHtml;
     grid.style.height = (packer.totalHeight + 40) + 'px';
   }
+  window.scrollTo(0, _savedScrollY);
   document.body.removeChild(tempContainer);
  }
 
@@ -9355,12 +9357,15 @@ function closeCreditInsufficientModal() {
     }
   });
 
-  // 窗口大小变化时重新排布
+  // 窗口大小变化时重新排布（仅宽度变化触发，移动端地址栏伸缩不触发）
   let resizeTimer;
- window.addEventListener('resize', () => {
- clearTimeout(resizeTimer);
- resizeTimer = setTimeout(() => renderNotes(currentFilter), 300);
- });
+  let lastResizeWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === lastResizeWidth) return;
+    lastResizeWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => renderNotes(currentFilter), 300);
+  });
 
  // ===== 启动：从后端加载数据 =====
  (async function init() {
