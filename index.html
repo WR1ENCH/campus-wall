@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="spa-transitions.css">
    <link rel="stylesheet" href="slider-captcha/slidercaptcha.min.css">
    <link rel="stylesheet" href="css/plus.css">
+<script>try{var t=localStorage.getItem('campus_wall_theme');if(t==='flat')document.documentElement.setAttribute('data-theme','flat')}catch(e){}</script>
   <style>
  /* ===== Design Tokens ===== */
  :root {
@@ -109,6 +110,24 @@
  --z-overlay: 999;
 --z-toast: 100000;
  }
+/* ===== 简约扁平主题 ===== */
+[data-theme="flat"] {
+  --brand-brick: #F6F5F3;
+  --note-yellow: #fff9b1;
+  --note-pink: #ffc9de;
+  --note-green: #b5f5c5;
+  --note-blue: #bde0fe;
+  --note-orange: #ffd6a5;
+  --accent: #8B6F5E;
+  --accent-light: rgba(139,111,94,0.08);
+  --accent-hover: rgba(139,111,94,0.15);
+  --danger: #DC4A3D;
+  --danger-light: #FDEBEC;
+  --success: #346538;
+  --success-light: #EDF3EC;
+  --warning: #956400;
+  --warning-light: #FBF3DB;
+}
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -117,6 +136,7 @@
  min-height: 100vh;
  overflow-x: hidden;
  color: var(--text-primary);
+ background-color: var(--brand-brick);
  -webkit-font-smoothing: antialiased;
  -moz-osx-font-smoothing: grayscale;
  }
@@ -178,6 +198,15 @@
  radial-gradient(circle at 85% 85%, rgba(139,111,94,0.12) 0%, transparent 7%);
  pointer-events: none; z-index: 0;
  }
+[data-theme="flat"] .wall {
+  background-color: var(--brand-brick);
+  background-image: none;
+  cursor: default;
+}
+[data-theme="flat"] .wall::before,
+[data-theme="flat"] .wall::after {
+  display: none;
+}
 
  /* ===== 顶部栏 ===== */
 .top-bar {
@@ -309,6 +338,19 @@ transition: top 0.3s ease, padding var(--ease-linear);
  text-shadow: 0 0 8px rgba(255,249,177,0.5);
  font-weight: 700;
  }
+[data-theme="flat"] .top-bar {
+  background: rgba(246,245,243,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #E8E6E4;
+}
+[data-theme="flat"] .top-bar .wall-title,
+[data-theme="flat"] .top-bar .top-stats {
+  color: #1C1B1A;
+}
+[data-theme="flat"] .top-bar .top-stats strong {
+  color: var(--accent);
+  text-shadow: none;
+}
 
  /* ===== 操作栏 ===== */
  .action-bar {
@@ -345,6 +387,28 @@ transition: top 0.3s ease, padding var(--ease-linear);
  transform: translateY(0);
  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
  }
+[data-theme="flat"] .action-bar {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid #E8E6E4;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+[data-theme="flat"] .compose-btn {
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid #E8E6E4;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  box-shadow: none;
+}
+[data-theme="flat"] .compose-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
 
  .action-btns {
  display: flex; gap: 6px; flex-wrap: nowrap;
@@ -967,6 +1031,384 @@ transition: top 0.3s ease, padding var(--ease-linear);
  .note-action.liked { background: rgba(255,0,0,0.1); color: var(--danger); }
  .note-action.report-action { font-size: 12px; opacity: 0.5; }
  .note-action.report-action:hover { background: rgba(239,68,68,0.12); opacity: 1; }
+/* ===== 扁平帖子卡片 ===== */
+[data-theme="flat"] .notes-area {
+  max-width: 680px;
+  padding: 12px 16px;
+}
+[data-theme="flat"] .notes-grid {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+[data-theme="flat"] .sticky-note {
+  position: static !important;
+  width: 100% !important;
+  transform: none !important;
+  z-index: auto !important;
+  animation: flatCardIn 0.3s var(--ease-smooth) both;
+  background: #fff;
+  border: 1px solid #E8E6E4;
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  flex-direction: column;
+  gap: 0;
+}
+[data-theme="flat"] .sticky-note:hover {
+  transform: none !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-color: #D4D2D0;
+}
+[data-theme="flat"] .sticky-note:active {
+  transform: scale(0.99) !important;
+}
+[data-theme="flat"] .sticky-note .pin,
+[data-theme="flat"] .sticky-note .tape,
+[data-theme="flat"] .sticky-note::after {
+  display: none;
+}
+[data-theme="flat"] .sticky-note .note-type {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+  background: var(--accent-light);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+}
+[data-theme="flat"] .sticky-note .note-content {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: 0;
+  color: #1C1B1A;
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="flat"] .sticky-note .note-footer {
+  border-top: 1px solid #F0EEEC;
+  margin-top: 12px;
+  padding-top: 10px;
+  font-size: 12px;
+  opacity: 1;
+}
+[data-theme="flat"] .sticky-note .note-author {
+  color: #8C8A88;
+  gap: 6px;
+}
+[data-theme="flat"] .sticky-note .note-author a {
+  color: #1C1B1A;
+  font-weight: 500;
+}
+[data-theme="flat"] .sticky-note .note-time {
+  color: #B8B6B4;
+}
+[data-theme="flat"] .sticky-note .note-action {
+  font-size: 13px;
+  color: #8C8A88;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+[data-theme="flat"] .sticky-note .note-action:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+  transform: none;
+}
+[data-theme="flat"] .sticky-note .note-action.liked {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+[data-theme="flat"] .note-yellow .note-type { background: var(--warning-light); color: var(--warning); }
+[data-theme="flat"] .note-pink .note-type { background: var(--danger-light); color: var(--danger); }
+[data-theme="flat"] .note-green .note-type { background: var(--success-light); color: var(--success); }
+[data-theme="flat"] .note-blue .note-type { background: #E1F3FE; color: #1F6C9F; }
+[data-theme="flat"] .note-orange .note-type { background: #FDF0E6; color: #8D6E4E; }
+[data-theme="flat"] .note-yellow,
+[data-theme="flat"] .note-pink,
+[data-theme="flat"] .note-green,
+[data-theme="flat"] .note-blue,
+[data-theme="flat"] .note-orange {
+  background: #fff;
+  color: #1C1B1A;
+}
+@keyframes flatCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.flat-detail-panel { display: none; }
+/* ===== 扁平帖子详情面板 ===== */
+[data-theme="flat"] .flat-detail-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+[data-theme="flat"] .flat-detail-panel.show {
+  display: block;
+}
+[data-theme="flat"] .flat-detail-shadow {
+  position: absolute;
+  inset: 0;
+  background: rgba(28,27,26,0.4);
+  backdrop-filter: blur(4px);
+  animation: flatShadowIn 0.3s ease forwards;
+}
+@keyframes flatShadowIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+[data-theme="flat"] .flat-detail-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  animation: flatPanelSlideDown 0.35s var(--ease-smooth) forwards;
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@keyframes flatPanelSlideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+[data-theme="flat"] .flat-detail-card {
+  padding: 20px 20px 0;
+}
+[data-theme="flat"] .flat-detail-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+[data-theme="flat"] .flat-detail-content {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #1C1B1A;
+  word-break: break-word;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+}
+[data-theme="flat"] .flat-detail-author-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #F0EEEC;
+}
+[data-theme="flat"] .flat-detail-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #8C8A88;
+}
+[data-theme="flat"] .flat-detail-author #flatDetailAuthorName {
+  color: #1C1B1A;
+  font-weight: 500;
+}
+[data-theme="flat"] .flat-detail-close {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8C8A88;
+  transition: background 0.15s;
+}
+[data-theme="flat"] .flat-detail-close:hover {
+  background: #F0EEEC;
+}
+[data-theme="flat"] .flat-detail-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #F0EEEC;
+  overflow-x: auto;
+}
+[data-theme="flat"] .flat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #E8E6E4;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1C1B1A;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+[data-theme="flat"] .flat-action-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+[data-theme="flat"] .flat-action-btn:active {
+  transform: scale(0.97);
+}
+[data-theme="flat"] .flat-action-btn.liked {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+[data-theme="flat"] .flat-detail-comments {
+  padding: 16px 20px;
+  border-top: 1px solid #F0EEEC;
+}
+[data-theme="flat"] .flat-comment-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+[data-theme="flat"] .flat-comment-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #E8E6E4;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  background: #F9F8F6;
+  transition: border-color 0.2s;
+  outline: none;
+}
+[data-theme="flat"] .flat-comment-input-row input:focus {
+  border-color: var(--accent);
+}
+[data-theme="flat"] .flat-comment-input-row button {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+[data-theme="flat"] .flat-comment-input-row button:hover {
+  background: #7A5F4E;
+}
+[data-theme="flat"] .flat-comment-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+[data-theme="flat"] .flat-comment-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #F5F4F2;
+  font-size: 13px;
+  color: #1C1B1A;
+}
+[data-theme="flat"] .flat-comment-item:last-child {
+  border-bottom: none;
+}
+[data-theme="flat"] .flat-comment-author {
+  font-weight: 500;
+  color: var(--accent);
+  margin-right: 6px;
+}
+[data-theme="flat"] .flat-comment-time {
+  font-size: 11px;
+  color: #B8B6B4;
+  margin-left: 6px;
+}
+[data-theme="flat"] .flat-detail-id {
+  padding: 8px 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 扁平主题 - 其他UI元素 */
+[data-theme="flat"] .empty-state {
+  background: #fff;
+  border: 2px dashed #E8E6E4;
+  border-radius: 12px;
+  color: #8C8A88;
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+}
+[data-theme="flat"] .page-banner {
+  background: #fff;
+  border: 1px solid #E8E6E4;
+  border-radius: 10px;
+  color: #1C1B1A;
+  margin: 0 16px 12px;
+}
+[data-theme="flat"] .side-nav {
+  background: #fff;
+}
+[data-theme="flat"] .side-nav-header {
+  background: var(--accent);
+}
+[data-theme="flat"] .side-nav-item:hover {
+  background: var(--accent-light);
+}
+[data-theme="flat"] .footer {
+  background: var(--brand-brick);
+  color: #8C8A88;
+  border-top: 1px solid #E8E6E4;
+}
+[data-theme="flat"] .modal-overlay {
+  background: rgba(28,27,26,0.4);
+  backdrop-filter: blur(4px);
+}
+[data-theme="flat"] .modal-note,
+[data-theme="flat"] .report-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+}
+[data-theme="flat"] .modal-note .tape,
+[data-theme="flat"] .report-box .tape {
+  display: none;
+}
+[data-theme="flat"] .post-sheet {
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+}
+[data-theme="flat"] .post-sheet .post-note-card {
+  background: #F9F8F6;
+  border: 1px solid #E8E6E4;
+}
+[data-theme="flat"] .post-sheet .post-tags .post-tag {
+  border-radius: 999px;
+  border: 1px solid #E8E6E4;
+}
+[data-theme="flat"] .post-sheet .post-btn-submit {
+  background: var(--accent);
+  border-radius: 8px;
+}
 
  /* ===== 尺寸系统 ===== */
  .size-tiny { font-size: 15px; }
@@ -3170,6 +3612,66 @@ transition:transform .3s cubic-bezier(.2,.9,.2,1);
  </div>
  </div>
  </div>
+<!-- ===== 扁平主题帖子详情面板 ===== -->
+<div class="flat-detail-panel" id="flatDetailPanel" onclick="closeFlatDetail(event)">
+  <div class="flat-detail-shadow" id="flatDetailShadow"></div>
+  <div class="flat-detail-container" id="flatDetailContainer" onclick="event.stopPropagation()">
+    <div class="flat-detail-card" id="flatDetailCard">
+      <div class="flat-detail-type" id="flatDetailType"></div>
+      <div class="flat-detail-content" id="flatDetailContent"></div>
+      <div id="flatDetailImages" style="display:none;flex-wrap:wrap;gap:8px;margin:10px 0;"></div>
+      <div class="flat-detail-author-row">
+        <div class="flat-detail-author" id="flatDetailAuthorArea">
+          <span id="flatDetailAvatarEmoji" style="font-size:20px;"></span>
+          <img id="flatDetailAvatar" style="width:24px;height:24px;border-radius:50%;object-fit:cover;display:none;" onerror="this.style.display='none'">
+          <span id="flatDetailAuthorName"></span>
+          <span id="flatDetailAdminBadge" style="display:none;"></span>
+          <span id="flatDetailPlusBadge" style="display:none;"></span>
+          <span id="flatDetailMbtiBadge" style="display:none;"></span>
+          <span id="flatDetailCertBadge" style="display:none;"></span>
+          <span id="flatDetailTime" style="color:#B8B6B4;font-size:12px;"></span>
+        </div>
+        <button class="flat-detail-close" onclick="closeFlatDetail()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- 操作按钮行 -->
+    <div class="flat-detail-actions" id="flatDetailActions">
+      <button class="flat-action-btn" id="flatDetailLikeBtn" onclick="handleFlatDetailLike()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>点赞</span>
+      </button>
+      <button class="flat-action-btn" id="flatDetailDeleteBtn" onclick="doDeleteMyPost()" style="display:none;color:var(--danger);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        <span>删除</span>
+      </button>
+      <button class="flat-action-btn" id="flatDetailReportBtn" onclick="openReportModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>举报</span>
+      </button>
+      <button class="flat-action-btn" id="flatDetailLinkBtn" onclick="openDetailInNewWindow()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span>详情</span>
+      </button>
+    </div>
+    <!-- 评论区 -->
+    <div class="flat-detail-comments" id="flatDetailComments">
+      <div class="flat-comment-input-row">
+        <input type="text" id="flatDetailCommentInput" placeholder="写下你的评论..." maxlength="100"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();submitFlatComment()}">
+        <button id="flatDetailCommentSubmitBtn" onclick="submitFlatComment()">发布</button>
+      </div>
+      <div id="flatDetailCommentList" class="flat-comment-list"></div>
+    </div>
+    <!-- 帖子ID -->
+    <div class="flat-detail-id">
+      <span id="flatDetailPostIdValue" style="font-family:monospace;font-size:11px;color:#B8B6B4;"></span>
+      <button onclick="copyFlatPostId()" style="background:none;border:none;cursor:pointer;color:#8C8A88;font-size:11px;">复制</button>
+    </div>
+  </div>
+</div>
+
 
  <!-- ===== 公告弹窗 ===== -->
  <div class="modal-overlay" id="announcementOverlay" style="display:none;z-index:1000;">
@@ -4164,6 +4666,11 @@ onkeydown="if(event.key==='Enter') document.getElementById('forgotEmailNewPwdInp
  <span class="nav-label">任务中心</span>
  <span id="sideNavTaskBadge" style="display:none;margin-left:auto;font-size:10px;font-weight:700;color:#fff;background:#ef4444;padding:1px 7px;border-radius:10px;min-width:16px;text-align:center;"></span>
  </button>
+<button class="side-nav-item" id="themeToggleBtn" onclick="toggleTheme()">
+  <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+  <span class="nav-label" id="themeToggleLabel">切换简约风格</span>
+</button>
+
   <div class="side-nav-divider"></div>
   <button class="side-nav-item" onclick="toggleSideNav(); window.open('report.html','_blank');">
   <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
@@ -7040,7 +7547,7 @@ function _doRenderNotes(filter = '全部') {
    <div class="sticky-note ${cfg.color} ${sizeInfo.sizeClass}${plusGoldClass}"
    style="width:${sizeInfo.width}px; padding:${sizeInfo.padding}px; padding-top:${sizeInfo.padding + 10}px; transform:rotate(${post.rotate}deg); z-index:${post.zIndex}; animation-delay:${idx * 0.04}s"
    data-id="${post.id}"
-   onclick="openNoteDetail('${post.id}')">
+  onclick="getTheme()==='flat'?openFlatDetail('${post.id}'):openNoteDetail('${post.id}')">
    ${pinHtml}
    ${post.authorIsPlus ? '<div class="plus-corner-badge"><span>PLUS</span></div>' : ''}
    ${post.pinned ? '<div class="post-pinned-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> 置顶</div>' : ''}
@@ -7103,22 +7610,28 @@ function _doRenderNotes(filter = '全部') {
  return { post, idx, width: sizeInfo.width, height: measuredHeight, html };
  });
 
- document.body.removeChild(tempContainer);
-
- const gridWidth = grid.clientWidth;
- const packer = new WallPacker(gridWidth);
-
- let finalHtml = '';
- notesData.forEach(data => {
- const pos = packer.place(data.width, data.height);
- finalHtml += data.html.replace(
- 'style="',
- `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
- );
- });
-
- grid.innerHTML = finalHtml;
- grid.style.height = (packer.totalHeight + 40) + 'px';
+  const isFlat = getTheme() === 'flat';
+  if (isFlat) {
+    // Flat theme: simple vertical stack, no packer
+    let finalHtml = '';
+    notesData.forEach(data => { finalHtml += data.html; });
+    grid.innerHTML = finalHtml;
+    grid.style.height = '';
+  } else {
+    const gridWidth = grid.clientWidth;
+    const packer = new WallPacker(gridWidth);
+    let finalHtml = '';
+    notesData.forEach(data => {
+      const pos = packer.place(data.width, data.height);
+      finalHtml += data.html.replace(
+        'style="',
+        `style="left:${Math.round(pos.x)}px; top:${Math.round(pos.y)}px; `
+      );
+    });
+    grid.innerHTML = finalHtml;
+    grid.style.height = (packer.totalHeight + 40) + 'px';
+  }
+  document.body.removeChild(tempContainer);
  }
 
  // ===== 交互 =====
@@ -7159,6 +7672,11 @@ function _doRenderNotes(filter = '全部') {
  }
 
  async function submitCommentFromDetail() {
+  // Sync flat detail input if in flat theme
+  if (getTheme() === 'flat' && typeof flatCurrentDetailId !== 'undefined' && flatCurrentDetailId) {
+    var flatInput = document.getElementById('flatDetailCommentInput');
+    if (flatInput) document.getElementById('detailCommentInput').value = flatInput.value;
+  }
  const postId = currentDetailId;
  const input = document.getElementById('detailCommentInput');
  if (!input || !postId) return;
@@ -7187,6 +7705,10 @@ function _doRenderNotes(filter = '全部') {
  const json = await res.json();
  if (json.ok) {
  input.value = '';
+  if (getTheme() === 'flat') {
+    var fi = document.getElementById('flatDetailCommentInput');
+    if (fi) fi.value = '';
+  }
  showToast('<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 评论已发布！');
  // 更新本地评论计数
  const post = posts.find(p => p.id === postId);
@@ -7561,6 +8083,154 @@ authorLink.style.pointerEvents = 'none';
  document.getElementById('noteDetailOverlay').classList.remove('show');
  currentDetailId = null;
  }
+// ===== 扁平主题帖子详情 =====
+let flatCurrentDetailId = null;
+
+function openFlatDetail(id) {
+  if (getTheme() !== 'flat') return openNoteDetail(id);
+  let post = posts.find(p => p.id === id);
+  if (!post) return;
+  // Fetch latest post data
+  fetch(API + '/api/posts/' + id, { headers: authHeaders() })
+    .then(r => r.json())
+    .then(json => {
+      if (json.ok) {
+        post = json.data;
+        post.timeText = formatTime(post.time);
+      } else if (json.code) {
+        showToast(json.msg || '无法查看');
+        return;
+      }
+      renderFlatDetail(post);
+    })
+    .catch(() => renderFlatDetail(post));
+  if (post.userId && !isPostAnonymous(post)) {
+    recordProfileVisit(post.userId);
+  }
+}
+
+function renderFlatDetail(post) {
+  flatCurrentDetailId = post.id;
+  currentDetailId = post.id;
+  const cfg = typeConfig[post.type] || { emoji: '💬' };
+  document.getElementById('flatDetailType').innerHTML = cfg.emoji + ' ' + post.type;
+  document.getElementById('flatDetailContent').textContent = post.content;
+  // Images
+  const imagesEl = document.getElementById('flatDetailImages');
+  if (post.imageCount) {
+    imagesEl.style.display = 'flex';
+    imagesEl.innerHTML = Array.from({ length: post.imageCount }, (_, i) => {
+      const src = postImageUrl(post, i);
+      return '<img src="' + src + '" onclick="showQAImgPreview(\'' + src + '\')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #E8E6E4;" onerror="this.style.display=\'none\'">';
+    }).join('');
+  } else {
+    imagesEl.style.display = 'none';
+  }
+  // Avatar
+  const avatarEmoji = document.getElementById('flatDetailAvatarEmoji');
+  const avatarImg = document.getElementById('flatDetailAvatar');
+  if (post.avatar && post.avatar.startsWith('data:')) {
+    avatarImg.src = post.avatar;
+    avatarImg.style.display = 'inline-block';
+    avatarEmoji.style.display = 'none';
+  } else {
+    avatarImg.style.display = 'none';
+    avatarEmoji.textContent = (post.avatar && post.avatar.length <= 4) ? post.avatar : '👤';
+    avatarEmoji.style.display = '';
+  }
+  document.getElementById('flatDetailAuthorName').textContent = post.author;
+  document.getElementById('flatDetailTime').textContent = '· ' + post.timeText;
+  // Badges
+  const adminBadge = document.getElementById('flatDetailAdminBadge');
+  const plusBadge = document.getElementById('flatDetailPlusBadge');
+  const mbtiBadge = document.getElementById('flatDetailMbtiBadge');
+  const certBadge = document.getElementById('flatDetailCertBadge');
+  adminBadge.style.display = 'none';
+  plusBadge.style.display = 'none';
+  mbtiBadge.style.display = 'none';
+  certBadge.style.display = 'none';
+  if (post.authorAdminRole === 'super') {
+    adminBadge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> 超管';
+    adminBadge.style.display = '';
+  } else if (post.authorAdminRole === 'admin') {
+    adminBadge.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="4 2"/></svg> 普管';
+    adminBadge.style.display = '';
+  }
+  if (post.authorIsPlus) {
+    plusBadge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> PLUS';
+    plusBadge.style.display = '';
+  }
+  if (post.authorMbti) {
+    mbtiBadge.textContent = post.authorMbti;
+    mbtiBadge.style.display = '';
+  }
+  if (post.authorCertVerified) {
+    certBadge.innerHTML = '✓ 实名';
+    certBadge.style.display = '';
+  }
+  // Delete button
+  const deleteBtn = document.getElementById('flatDetailDeleteBtn');
+  deleteBtn.style.display = (currentUser && post.userId && currentUser.id === post.userId) ? '' : 'none';
+  // Like button state
+  updateFlatLikeBtn(post);
+  // Comment input
+  const commentInput = document.getElementById('flatDetailCommentInput');
+  const commentSubmitBtn = document.getElementById('flatDetailCommentSubmitBtn');
+  if (!post.allowComments) {
+    commentInput.placeholder = '本帖不允许评论';
+    commentInput.disabled = true;
+    commentSubmitBtn.disabled = true;
+  } else {
+    commentInput.placeholder = '写下你的评论...';
+    commentInput.disabled = false;
+    commentSubmitBtn.disabled = false;
+  }
+  commentInput.value = '';
+  // Post ID
+  document.getElementById('flatDetailPostIdValue').textContent = post.id;
+  // Show panel
+  document.getElementById('flatDetailPanel').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function updateFlatLikeBtn(post) {
+  const likeBtn = document.getElementById('flatDetailLikeBtn');
+  likeBtn.className = 'flat-action-btn' + (post.liked ? ' liked' : '');
+  likeBtn.querySelector('span').textContent = post.liked ? '已赞' : '点赞';
+}
+
+function handleFlatDetailLike() {
+  if (!flatCurrentDetailId) return;
+  handleLike(flatCurrentDetailId);
+  setTimeout(() => {
+    const post = posts.find(p => p.id === flatCurrentDetailId);
+    if (post) updateFlatLikeBtn(post);
+  }, 300);
+}
+
+function closeFlatDetail(e) {
+  if (e && e.target !== e.currentTarget && !e.target.classList.contains('flat-detail-shadow')) return;
+  document.getElementById('flatDetailPanel').classList.remove('show');
+  document.body.style.overflow = '';
+  flatCurrentDetailId = null;
+  currentDetailId = null;
+}
+
+function submitFlatComment() {
+  if (!flatCurrentDetailId) return;
+  const input = document.getElementById('flatDetailCommentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  document.getElementById('detailCommentInput').value = text;
+  submitCommentFromDetail();
+  input.value = '';
+}
+
+function copyFlatPostId() {
+  if (!flatCurrentDetailId) return;
+  navigator.clipboard.writeText(flatCurrentDetailId).then(() => showToast('已复制帖子ID'));
+}
+
 
  function openDetailInNewWindow() {
  if (!currentDetailId) return;
@@ -7631,11 +8301,12 @@ authorLink.style.pointerEvents = 'none';
  headers: { 'x-user-token': localStorage.getItem('campus_user_token') || '' }
  });
  const json = await res.json();
- if (json.ok) {
- closeNoteDetail();
- showToast('帖子已删除');
- posts = posts.filter(p => p.id !== currentDetailId);
- renderNotes(currentFilter);
+  if (json.ok) {
+    var _delId = currentDetailId;
+    if (getTheme() === 'flat') closeFlatDetail(); else closeNoteDetail();
+    showToast('帖子已删除');
+    posts = posts.filter(p => p.id !== _delId);
+    renderNotes(currentFilter);
  } else {
  showToast(json.msg || '删除失败');
  }
@@ -11046,6 +11717,27 @@ textarea.form-input{resize:vertical;min-height:80px;line-height:1.5;}
 <script src="slider-captcha/longbow.slidercaptcha.min.js"></script>
 <script src="spa.js"></script>
 <script>
+// ===== 主题切换 =====
+function getTheme() {
+  return localStorage.getItem('campus_wall_theme') || 'classic';
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'flat' ? 'flat' : '');
+  var themeToggleLabel = document.getElementById('themeToggleLabel');
+  if (themeToggleLabel) themeToggleLabel.textContent = theme === 'flat' ? '切换经典风格' : '切换简约风格';
+  if (typeof renderNotes === 'function') renderNotes();
+}
+function toggleTheme() {
+  var current = getTheme();
+  var next = current === 'flat' ? 'classic' : 'flat';
+  localStorage.setItem('campus_wall_theme', next);
+  applyTheme(next);
+  if (typeof toggleSideNav === 'function') {
+    var nav = document.getElementById('sideNav');
+    if (nav && nav.classList.contains('active')) toggleSideNav();
+  }
+}
+applyTheme(getTheme());
   document.addEventListener('DOMContentLoaded', function() {
     window.router = new SpaRouter({
       container: '#main-content',
