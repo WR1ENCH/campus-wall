@@ -262,6 +262,7 @@
 <script>
 // ===== Markdown 渲染（与 notice.html renderMarkdown 一致，blockquote 用 var(--accent)）=====
 function renderMarkdown(text) {
+  text = (text == null) ? '' : String(text);
   if (!text) return '';
   var html = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -326,11 +327,14 @@ function showError() {
 }
 
 function renderNotice(n) {
-  var author = (n.author && n.author.trim()) ? n.author : '通知';
+  var author = (n.author == null) ? '' : String(n.author);
+  author = author.trim() ? author : '通知';
   var time = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '';
-  var title = (n.title && n.title.trim()) ? n.title : '（无标题）';
-  var contentHtml = (n.content && n.content.trim())
-    ? renderMarkdown(n.content)
+  var title = (n.title == null) ? '' : String(n.title);
+  title = title.trim() ? title : '（无标题）';
+  var content = (n.content == null) ? '' : String(n.content);
+  var contentHtml = content.trim()
+    ? renderMarkdown(content)
     : '<div class="empty-content">暂无内容</div>';
 
   var imagesHtml = '';
