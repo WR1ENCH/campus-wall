@@ -1240,9 +1240,22 @@ app.delete('/api/admin/user/:id', requireAdmin, (req, res) => {
   });
   posts = posts.filter(p => !(p.userId === userId || p.author === user.nickname) || p.deleted);
   writePosts(posts);
+  // 处理该用户的待审核通知发布申请，避免留下孤儿申请阻塞后台审核队列
+  let apps = readApps();
+  let orphanApps = 0;
+  apps = apps.map(a => {
+    if (a.userId === userId && a.status === 'pending') {
+      a.status = 'rejected';
+      a.reviewedAt = new Date().toISOString();
+      a.reviewedBy = req.admin.id;
+      orphanApps++;
+    }
+    return a;
+  });
+  if (orphanApps > 0) writeApps(apps);
   const updated = users.filter(u => u.id !== userId);
   writeUsers(updated);
-  res.json({ ok: true, deletedPosts: softDeleted });
+  res.json({ ok: true, deletedPosts: softDeleted, closedApplications: orphanApps });
 });
 
 app.post('/api/admin/user/:id/reset-password', requireAdmin, (req, res) => {
