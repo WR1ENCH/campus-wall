@@ -123,6 +123,8 @@ function migrate() {
     "certRealName" TEXT,
     "certClassName" TEXT,
     "noticePublisher" INTEGER DEFAULT 0,
+    "noticePublisherAddedAt" TEXT,
+    "_noticeAppNotification" TEXT,
     "email" TEXT,
     "emailVerified" INTEGER DEFAULT 0,
     "mbti" TEXT
@@ -385,6 +387,7 @@ function migrate() {
     "contact" TEXT,
     "reason" TEXT,
     "userId" TEXT,
+    "accountId" TEXT,
     "userNickname" TEXT,
     "status" TEXT DEFAULT 'pending',
     "createdAt" TEXT,
@@ -492,9 +495,7 @@ function migrate() {
   // 已有表的列迁移
   const tableMigrations = [
     { name: 'posts', columns: ['type', 'likes', 'images', 'discussionId', 'likedBy', 'comments', 'commentsCount', 'liked', 'rotate', 'zIndex', 'isAnonymous', 'visibility', 'allowComments', 'visibleTo', 'invisibleTo'] },
-    { name: 'votes', columns: ['allowCustom'] },
-    // ponytail: 已有库补齐智学/认证字段（与 CREATE TABLE 声明保持一致）
-    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'email', 'emailVerified', 'mbti'] },
+    { name: 'users', columns: ['zhixueCertType', 'zhixueUsername', 'zhixuePassword', 'zhixueManualName', 'zhixueManualEmail', 'zhixueManualNote', 'zhixueManualImages', 'zhixueSubmittedAt', 'zhixueRejectReason', 'zhixueRejectedAt', 'zhixueConfirmedAt', 'certRealName', 'certClassName', 'bullyingProtection', 'email', 'emailVerified', 'mbti', 'noticePublisherAddedAt', '_noticeAppNotification'] },
     // 新版举报：唯一举报ID(REPO-)、处理结果、关联处罚ID、证据快照
      { name: 'qa_questions', columns: ['pinned'] },
      { name: 'qa_questions', columns: ['deletedAt', 'deletedBy'] },
@@ -502,6 +503,7 @@ function migrate() {
     { name: 'whispers', columns: ['signed', 'signTime'] },
     { name: 'punishments', columns: ['credibilityDeducted'] },
      { name: 'bullying', columns: ['involvedUsers', 'contentIds', 'handledResult'] },
+    { name: 'notice_applications', columns: ['accountId'] },
     { name: 'notices', columns: ['deletedAt', 'syncedAt', 'updatedAt', 'pinned', 'images'] },
   ];
   for (const t of tableMigrations) {
