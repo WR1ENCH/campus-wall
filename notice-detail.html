@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通知详情 · 校园墙</title>
+  <style>
+    :root {
+      --bg: #F7F6F3;
+      --surface: #FFFFFF;
+      --border: #ECEAE7;
+      --text: #1C1B1A;
+      --text-sub: #8C8A88;
+      --accent: #2563EB;
+      --accent-light: rgba(37, 99, 235, 0.08);
+      --danger: #DC4A3D;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --ease-spring: cubic-bezier(.2, .9, .2, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', 'Geist Sans', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Top Bar ===== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: none;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: transform .3s var(--ease-spring);
+    }
+    .back-btn:hover { transform: translateX(-1px); }
+    .back-btn:active { transform: scale(0.97); }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .topbar-logo svg { color: var(--accent); }
+
+    /* ===== Main Container ===== */
+    .main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* ===== States ===== */
+    .state-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 90px 20px;
+      text-align: center;
+      color: var(--text-sub);
+    }
+    .state-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .state-text { font-size: 15px; }
+    .state-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: transform .3s var(--ease-spring);
+    }
+    .state-btn:hover { transform: translateY(-1px); }
+    .state-btn:active { transform: scale(0.97); }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid var(--accent-light);
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Notice Card ===== */
+    .notice-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 26px;
+      box-shadow: 0 2px 16px rgba(37, 99, 235, 0.06);
+    }
+
+    .notice-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .badge-author {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+    .badge-author svg { flex-shrink: 0; }
+    .badge-t0 {
+      font-size: 12px;
+      color: #fff;
+      background: var(--danger);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .notice-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 8px 0 6px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .notice-time {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+    }
+    .notice-time svg { color: var(--text-sub); }
+
+    .notice-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 20px;
+    }
+
+    /* ===== Markdown Content ===== */
+    .md-content {
+      font-size: 15px;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .md-content h1, .md-content h2, .md-content h3 {
+      color: var(--text);
+      font-weight: 700;
+      margin: 18px 0 8px;
+      line-height: 1.4;
+    }
+    .md-content h1 { font-size: 20px; }
+    .md-content h2 { font-size: 18px; }
+    .md-content h3 { font-size: 16px; }
+    .md-content p { margin: 8px 0; }
+    .md-content ul, .md-content ol { margin: 8px 0 8px 20px; padding: 0; }
+    .md-content li { margin: 4px 0; }
+    .md-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .md-content code {
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    .md-content img {
+      max-width: 100%;
+      border-radius: var(--radius-sm);
+      margin: 8px 0;
+    }
+
+    /* ===== Attached Images ===== */
+    .attached-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-sm);
+      margin: 12px 0 0;
+      border: 1px solid var(--border);
+    }
+
+    .empty-content {
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      返回
+    </button>
+    <div class="topbar-logo" onclick="location.href='index.html'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><path d="M18 9a6 6 0 0 0-6-6 6 6 0 0 0-6 6"/><path d="M6 9a6 6 0 0 0 6 6 6 6 0 0 0 6-6"/><circle cx="12" cy="19" r="2"/></svg>
+      通知详情
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent"></div>
+
+<script>
+// ===== Markdown 渲染（与 notice.html renderMarkdown 一致，blockquote 用 var(--accent)）=====
+function renderMarkdown(text) {
+  if (!text) return '';
+  var html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+    .replace(/__([^_]+)__/g, '<u>$1</u>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\^([^^]+)\^/g, '<sup>$1</sup>')
+    .replace(/~([^~]+)~/g, '<sub>$1</sub>')
+    .replace(/^[\*\-\+] (.+)$/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^---+\s*$/gm, '<hr>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^\|(.+)\|$/gm, function(m, content) {
+      var cells = content.split('|').map(function(c) { return c.trim(); });
+      if (cells.length > 0 && /^[-:\s]+$/.test(cells[0])) return '';
+      return '<tr><td>' + cells.join('</td><td>') + '</td></tr>';
+    })
+    .replace(/((?:<tr>.*?<\/tr>\s*)+)/g, '<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>$1</tbody></table>')
+    .replace(/<td>/g, '<td style="border:1px solid var(--border);padding:8px 10px;">')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:6px 0;">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="nofollow">$1</a>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  html = html.replace(/((?:<li>.*?<\/li>)+)/g, '<ul>$1</ul>');
+  html = html.replace(/<blockquote>/g, '<blockquote style="margin:10px 0;padding:10px 14px;border-left:3px solid var(--accent);background:rgba(0,0,0,0.02);border-radius:0 6px 6px 0;color:var(--text-sub);">');
+  return '<p>' + html + '</p>';
+}
+
+// ===== Utilities =====
+function goBack() {
+  if (history.length > 1) history.back();
+  else location.href = 'index.html';
+}
+
+function getNoticeId() {
+  var params = new URLSearchParams(location.search);
+  return params.get('id');
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showLoading() {
+  document.getElementById('mainContent').innerHTML =
+    '<div class="state-wrap"><div class="spinner"></div><div class="state-text">加载中…</div></div>';
+}
+
+function showError() {
+  document.getElementById('mainContent').innerHTML =
+    '<div class="state-wrap">' +
+      '<div class="state-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>' +
+      '<div class="state-text">通知不存在或已被删除</div>' +
+      '<button class="state-btn" onclick="location.href=\'index.html\'">返回首页</button>' +
+    '</div>';
+}
+
+function renderNotice(n) {
+  var author = (n.author && n.author.trim()) ? n.author : '通知';
+  var time = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-CN') : '';
+  var title = (n.title && n.title.trim()) ? n.title : '（无标题）';
+  var contentHtml = (n.content && n.content.trim())
+    ? renderMarkdown(n.content)
+    : '<div class="empty-content">暂无内容</div>';
+
+  var imagesHtml = '';
+  if (Array.isArray(n.images) && n.images.length > 0) {
+    n.images.forEach(function(src) {
+      imagesHtml += '<img class="attached-img" src="' + escapeHtml(src) + '" alt="通知图片">';
+    });
+  }
+
+  document.getElementById('mainContent').innerHTML =
+    '<div class="notice-card">' +
+      '<div class="notice-head">' +
+        '<span class="badge-author">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+          escapeHtml(author) +
+        '</span>' +
+        (n.level === 'T0' ? '<span class="badge-t0">重要</span>' : '') +
+      '</div>' +
+      '<h1 class="notice-title">' + escapeHtml(title) + '</h1>' +
+      (time ? '<div class="notice-time">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+        escapeHtml(time) + '</div>' : '') +
+      '<hr class="notice-divider">' +
+      '<div class="md-content">' + contentHtml + '</div>' +
+      imagesHtml +
+    '</div>';
+}
+
+// ===== Load =====
+async function loadNotice() {
+  var id = getNoticeId();
+  if (!id) {
+    showError();
+    return;
+  }
+  showLoading();
+  try {
+    var res = await fetch('/api/notices/' + encodeURIComponent(id));
+    var json = await res.json();
+    if (json.ok && json.data) {
+      renderNotice(json.data);
+    } else {
+      showError();
+    }
+  } catch(e) {
+    showError();
+  }
+}
+
+loadNotice();
+</script>
+
+</body>
+</html>
